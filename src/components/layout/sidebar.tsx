@@ -42,9 +42,9 @@ const navSections: NavSection[] = [
     title: 'MAIN',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package },
       { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus },
       { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck },
-      { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package },
     ],
   },
   {
