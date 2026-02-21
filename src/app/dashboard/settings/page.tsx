@@ -28,9 +28,12 @@ import {
   WifiOff,
   TestTube,
   Mail,
-  MessageSquare,
   Upload,
-  Trash2 } from 'lucide-react';
+  Trash2,
+  Smartphone,
+  Sparkles,
+  TrendingUp,
+  FileText } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -131,6 +134,11 @@ export default function SettingsPage() {
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpFrom, setSmtpFrom] = useState('notifications@shipstation.com');
   const [smsProvider, setSmsProvider] = useState('twilio');
+  const [smsDefaultArrival, setSmsDefaultArrival] = useState(true);
+
+  // Receipt preferences
+  const [receiptPreference, setReceiptPreference] = useState('sms');
+  const [showReceiptOptions, setShowReceiptOptions] = useState(true);
 
   // Printers
   const [printers, setPrinters] = useState(mockPrinters);
@@ -382,6 +390,73 @@ export default function SettingsPage() {
           {/*  RECEIPTS                                                        */}
           {/* ================================================================ */}
           <TabPanel active={activeTab === 'receipts'}>
+            {/* Digital Receipt preference */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary-400" />
+                  Receipt Delivery Preference
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3.5 mb-5">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 flex-shrink-0 mt-0.5">
+                      <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-surface-200">📱 75% of customers prefer digital receipts</p>
+                      <p className="text-xs text-surface-400 mt-1">
+                        Digital receipts are faster, greener, and easier for customers to reference later. SMS receipts have the highest open rates.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-surface-300 mb-2.5 block">Default Receipt Method</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { value: 'sms', label: 'SMS', desc: 'Text message', recommended: true },
+                        { value: 'email', label: 'Email', desc: 'Email receipt', recommended: false },
+                        { value: 'print', label: 'Print', desc: 'Paper receipt', recommended: false },
+                        { value: 'sms_print', label: 'SMS + Print', desc: 'Both options', recommended: false },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setReceiptPreference(option.value)}
+                          className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-3.5 text-center transition-all ${
+                            receiptPreference === option.value
+                              ? 'border-primary-500/40 bg-primary-500/10 ring-1 ring-primary-500/20'
+                              : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600/50'
+                          }`}
+                        >
+                          {option.recommended && (
+                            <span className="absolute -top-2 right-2 inline-flex items-center rounded-full bg-primary-500/15 px-2 py-0.5 text-[9px] font-bold text-primary-400 border border-primary-500/20">
+                              ★ BEST
+                            </span>
+                          )}
+                          <span className={`text-sm font-medium ${receiptPreference === option.value ? 'text-surface-100' : 'text-surface-300'}`}>
+                            {option.label}
+                          </span>
+                          <span className="text-[11px] text-surface-500">{option.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <ToggleSwitch
+                    checked={showReceiptOptions}
+                    onChange={setShowReceiptOptions}
+                    label="Show receipt options to customer at checkout"
+                    description="Let customers choose their preferred receipt method during check-out"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Receipt Configuration</CardTitle>
@@ -401,6 +476,8 @@ export default function SettingsPage() {
                       { value: 'print', label: 'Print Only' },
                       { value: 'email', label: 'Email Only' },
                       { value: 'both', label: 'Print & Email' },
+                      { value: 'sms', label: 'SMS Only' },
+                      { value: 'sms_print', label: 'SMS & Print' },
                       { value: 'none', label: 'None' },
                     ]}
                     value={receiptDelivery}
@@ -526,6 +603,59 @@ export default function SettingsPage() {
           {/* ================================================================ */}
           <TabPanel active={activeTab === 'notifications'}>
             <div className="space-y-6">
+              {/* SMS-First callout */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-primary-400" />
+                    SMS Notifications
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary-400 border border-primary-500/20">
+                      <Sparkles className="h-3 w-3" />
+                      Recommended
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border border-primary-500/15 bg-primary-500/5 p-3.5 mb-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/15 flex-shrink-0 mt-0.5">
+                        <TrendingUp className="h-4 w-4 text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-surface-200">📊 SMS has 98% open rate vs 20% for email</p>
+                        <p className="text-xs text-surface-400 mt-1">
+                          Customers respond 5× faster to SMS. Enable SMS as the default channel for time-sensitive notifications like package arrivals.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <ToggleSwitch
+                      checked={smsDefaultArrival}
+                      onChange={setSmsDefaultArrival}
+                      label="Send SMS by default for package arrivals"
+                      description="New check-ins will automatically trigger an SMS notification"
+                    />
+
+                    <Select
+                      label="SMS Provider"
+                      options={[
+                        { value: 'twilio', label: 'Twilio' },
+                        { value: 'vonage', label: 'Vonage' },
+                        { value: 'sns', label: 'Amazon SNS' },
+                      ]}
+                      value={smsProvider}
+                      onChange={(e) => setSmsProvider(e.target.value)}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input label="Account SID" value="••••••••••••••••" type="password" readOnly />
+                      <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -554,31 +684,6 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <Input label="SMTP Username" value="apikey" readOnly />
                     <Input label="SMTP Password" value="••••••••••••••••" type="password" readOnly />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-primary-400" />
-                    SMS Provider
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select
-                    label="SMS Provider"
-                    options={[
-                      { value: 'twilio', label: 'Twilio' },
-                      { value: 'vonage', label: 'Vonage' },
-                      { value: 'sns', label: 'Amazon SNS' },
-                    ]}
-                    value={smsProvider}
-                    onChange={(e) => setSmsProvider(e.target.value)}
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <Input label="Account SID" value="••••••••••••••••" type="password" readOnly />
-                    <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly />
                   </div>
                 </CardContent>
               </Card>
