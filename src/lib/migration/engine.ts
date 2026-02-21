@@ -15,12 +15,8 @@
 import {
   MigrationAnalysis,
   MigrationProgress,
-  MigrationConfig,
   MigrationError,
   CARRIER_MAP,
-  MB_STATUS_MAP,
-  PKG_TYPE_MAP,
-  PKG_STATUS_MAP,
 } from './types';
 
 // ── Carrier name normalizer ──────────────────────────────────────────────────

@@ -600,7 +600,7 @@ export default function MigrationPage() {
                           variant={
                             data.status === 'completed' ? 'success' :
                             data.status === 'in_progress' ? 'warning' :
-                            data.status === 'skipped' ? 'secondary' : 'secondary'
+                            data.status === 'skipped' ? 'muted' : 'muted'
                           }
                         >
                           {data.status === 'in_progress' ? 'Migrating...' : data.status}
@@ -711,6 +711,28 @@ export default function MigrationPage() {
               <RotateCcw className="h-4 w-4 mr-2" />
               New Migration
             </Button>
+            {migrationId && (
+              <Button
+                variant="danger"
+                onClick={async () => {
+                  if (confirm('This will remove all imported data. Are you sure?')) {
+                    await fetch('/api/migration/rollback', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ migrationId }),
+                    });
+                    setStep('upload');
+                    setFile(null);
+                    setAnalysis(null);
+                    setProgress(null);
+                    setMigrationId(null);
+                  }
+                }}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Rollback Migration
+              </Button>
+            )}
             <Link href="/dashboard">
               <Button>
                 Go to Dashboard →

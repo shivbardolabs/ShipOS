@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { MigrationConfig } from '@/lib/migration/types';
 import {
   initMigrationProgress,
   updateMigrationProgress,
 } from '@/lib/migration/engine';
-import { MigrationConfig } from '@/lib/migration/types';
 
 /**
  * POST /api/migration/start
@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       conflictResolution: 'skip',
     };
 
-    const sourceFile = body.sourceFile ?? 'PMBackup.7z';
     const analysisData = body.analysis;
 
     // Generate migration ID
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Start migration in background (simulated for now)
     // In production, this would process the actual Firebird data
-    simulateMigration(migrationId, config).catch(console.error);
+    simulateMigration(migrationId).catch(console.error);
 
     return NextResponse.json({
       success: true,
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
  * Simulates migration progress for the initial version.
  * In production, this would be replaced with actual Firebird data processing.
  */
-async function simulateMigration(migrationId: string, config: MigrationConfig) {
+async function simulateMigration(migrationId: string) {
   const entityOrder = ['customers', 'addresses', 'shipments', 'packages', 'invoices'];
 
   for (const entity of entityOrder) {
