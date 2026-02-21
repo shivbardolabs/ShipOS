@@ -71,7 +71,7 @@ export function Modal({
     >
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-surface-100/60 backdrop-blur-sm"
         onClick={persistent ? undefined : onClose}
       />
 
@@ -79,7 +79,7 @@ export function Modal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
           className={cn(
-            'relative w-full rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-black/40',
+            'relative w-full rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-slate-200/40',
             sizeMap[size],
             'animate-in fade-in-0 zoom-in-95'
           )}
@@ -87,10 +87,10 @@ export function Modal({
         >
           {/* Header */}
           {(title || true) && (
-            <div className="flex items-start justify-between border-b border-surface-800 px-6 py-4">
+            <div className="flex items-start justify-between border-b border-surface-700 px-6 py-4">
               <div>
                 {title && (
-                  <h2 className="text-lg font-semibold text-white">{title}</h2>
+                  <h2 className="text-lg font-semibold text-surface-100">{title}</h2>
                 )}
                 {description && (
                   <p className="mt-1 text-sm text-surface-400">{description}</p>
@@ -113,7 +113,7 @@ export function Modal({
 
           {/* Footer */}
           {footer && (
-            <div className="flex items-center justify-end gap-3 border-t border-surface-800 px-6 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-surface-700 px-6 py-4">
               {footer}
             </div>
           )}

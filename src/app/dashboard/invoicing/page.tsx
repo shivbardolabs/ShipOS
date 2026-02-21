@@ -174,7 +174,7 @@ export default function InvoicingPage() {
       label: 'Invoice #',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-sm text-primary-400 font-medium">{row.number}</span>
+        <span className="font-mono text-sm text-primary-600 font-medium">{row.number}</span>
       ),
     },
     {
@@ -216,7 +216,7 @@ export default function InvoicingPage() {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="text-white font-semibold">{formatCurrency(row.total)}</span>
+        <span className="text-surface-100 font-semibold">{formatCurrency(row.total)}</span>
       ),
     },
     {
@@ -236,7 +236,7 @@ export default function InvoicingPage() {
         const isOverdue =
           row.status !== 'paid' && new Date(row.dueDate) < today;
         return (
-          <span className={`text-xs ${isOverdue ? 'text-red-400 font-medium' : 'text-surface-400'}`}>
+          <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-surface-400'}`}>
             {formatDate(row.dueDate)}
           </span>
         );
@@ -402,7 +402,7 @@ export default function InvoicingPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-surface-300">Total</label>
               <div className="flex items-center h-[38px] rounded-lg border border-surface-700 bg-surface-800 px-3.5 text-sm">
-                <span className="text-white font-semibold">$0.00</span>
+                <span className="text-surface-100 font-semibold">$0.00</span>
               </div>
               <p className="text-xs text-surface-500">Auto-calculated</p>
             </div>

@@ -259,7 +259,7 @@ export default function SettingsPage() {
                         </tr>
                       ) : (
                         filteredRates.map((rate) => (
-                          <tr key={rate.id} className="border-b border-surface-800/50 table-row-hover">
+                          <tr key={rate.id} className="border-b border-surface-700/60 table-row-hover">
                             <td className="px-4 py-3 text-surface-200 font-medium">{rate.service}</td>
                             <td className="px-4 py-3 text-surface-400">{rate.addOnName || '—'}</td>
                             <td className="px-4 py-3 text-right text-surface-400">{formatCurrency(rate.wholesaleRate)}</td>
@@ -269,11 +269,11 @@ export default function SettingsPage() {
                                 {rate.marginType}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-right text-emerald-400 font-medium">{rate.marginValue}%</td>
+                            <td className="px-4 py-3 text-right text-emerald-600 font-medium">{rate.marginValue}%</td>
                             <td className="px-4 py-3 text-center">
                               {rate.isActive ? (
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20">
-                                  <Check className="h-3 w-3 text-emerald-400" />
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100">
+                                  <Check className="h-3 w-3 text-emerald-600" />
                                 </span>
                               ) : (
                                 <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-surface-700">
@@ -395,15 +395,15 @@ export default function SettingsPage() {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary-400" />
+                  <FileText className="h-4 w-4 text-primary-600" />
                   Receipt Delivery Preference
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3.5 mb-5">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 flex-shrink-0 mt-0.5">
-                      <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 flex-shrink-0 mt-0.5">
+                      <TrendingUp className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-surface-200">📱 75% of customers prefer digital receipts</p>
@@ -430,12 +430,12 @@ export default function SettingsPage() {
                           onClick={() => setReceiptPreference(option.value)}
                           className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-3.5 text-center transition-all ${
                             receiptPreference === option.value
-                              ? 'border-primary-500/40 bg-primary-500/10 ring-1 ring-primary-500/20'
+                              ? 'border-primary-300 bg-primary-500/10 ring-1 ring-primary-500/20'
                               : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600/50'
                           }`}
                         >
                           {option.recommended && (
-                            <span className="absolute -top-2 right-2 inline-flex items-center rounded-full bg-primary-500/15 px-2 py-0.5 text-[9px] font-bold text-primary-400 border border-primary-500/20">
+                            <span className="absolute -top-2 right-2 inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-[9px] font-bold text-primary-600 border border-primary-500/20">
                               ★ BEST
                             </span>
                           )}
@@ -545,12 +545,12 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-4">
                       <div
                         className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                          printer.status === 'online' ? 'bg-emerald-500/15' : 'bg-surface-800'
+                          printer.status === 'online' ? 'bg-emerald-50' : 'bg-surface-800'
                         }`}
                       >
                         <Printer
                           className={`h-6 w-6 ${
-                            printer.status === 'online' ? 'text-emerald-400' : 'text-surface-500'
+                            printer.status === 'online' ? 'text-emerald-600' : 'text-surface-500'
                           }`}
                         />
                       </div>
@@ -563,9 +563,9 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         {printer.status === 'online' ? (
-                          <Wifi className="h-4 w-4 text-emerald-400" />
+                          <Wifi className="h-4 w-4 text-emerald-600" />
                         ) : (
-                          <WifiOff className="h-4 w-4 text-red-400" />
+                          <WifiOff className="h-4 w-4 text-red-600" />
                         )}
                         <Badge variant={printer.status === 'online' ? 'success' : 'danger'} dot>
                           {printer.status === 'online' ? 'Connected' : 'Offline'}
@@ -590,7 +590,7 @@ export default function SettingsPage() {
                         Test Print
                       </Button>
                       <Button variant="ghost" size="sm" iconOnly>
-                        <Trash2 className="h-4 w-4 text-red-400" />
+                        <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>
                   </div>
@@ -608,9 +608,9 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Smartphone className="h-4 w-4 text-primary-400" />
+                    <Smartphone className="h-4 w-4 text-primary-600" />
                     SMS Notifications
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary-400 border border-primary-500/20">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 border border-primary-500/20">
                       <Sparkles className="h-3 w-3" />
                       Recommended
                     </span>
@@ -619,8 +619,8 @@ export default function SettingsPage() {
                 <CardContent>
                   <div className="rounded-lg border border-primary-500/15 bg-primary-500/5 p-3.5 mb-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/15 flex-shrink-0 mt-0.5">
-                        <TrendingUp className="h-4 w-4 text-primary-400" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 flex-shrink-0 mt-0.5">
+                        <TrendingUp className="h-4 w-4 text-primary-600" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-surface-200">📊 SMS has 98% open rate vs 20% for email</p>
@@ -660,7 +660,7 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary-400" />
+                    <Mail className="h-4 w-4 text-primary-600" />
                     Email (SMTP) Settings
                   </CardTitle>
                 </CardHeader>
@@ -830,7 +830,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-primary-400" />
+                  <Upload className="h-5 w-5 text-primary-600" />
                   PostalMate Migration
                 </CardTitle>
               </CardHeader>

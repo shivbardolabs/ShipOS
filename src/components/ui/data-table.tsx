@@ -180,9 +180,9 @@ export function DataTable<T extends Record<string, unknown>>({
                       <span className="text-surface-600">
                         {sortKey === col.key ? (
                           sortDir === 'asc' ? (
-                            <ChevronUp className="h-3.5 w-3.5 text-primary-400" />
+                            <ChevronUp className="h-3.5 w-3.5 text-primary-600" />
                           ) : (
-                            <ChevronDown className="h-3.5 w-3.5 text-primary-400" />
+                            <ChevronDown className="h-3.5 w-3.5 text-primary-600" />
                           )
                         ) : (
                           <ChevronsUpDown className="h-3.5 w-3.5" />
@@ -202,7 +202,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   className="py-20 text-center text-surface-400"
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
                     <span className="text-sm">Loading…</span>
                   </div>
                 </td>
@@ -225,7 +225,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   key={keyAccessor(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    'border-b border-surface-800/50 table-row-hover',
+                    'border-b border-surface-700/60 table-row-hover',
                     onRowClick && 'cursor-pointer'
                   )}
                 >

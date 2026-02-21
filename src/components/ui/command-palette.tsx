@@ -304,7 +304,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-surface-100/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -312,13 +312,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       <div
         className="relative w-full max-w-[560px] mx-4 overflow-hidden rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-top-4 duration-200"
         style={{
-          background: 'rgba(18, 19, 48, 0.95)',
-          borderColor: 'rgba(192, 198, 212, 0.1)',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.08)',
+          background: 'rgba(255, 255, 255, 0.98)',
+          borderColor: '#e2e8f0',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.05)',
         }}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'rgba(192, 198, 212, 0.07)' }}>
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#e2e8f0' }}>
           <Search className="h-5 w-5 text-surface-500 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -334,7 +334,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           <button
             onClick={onClose}
             className="flex h-6 items-center rounded border px-1.5 text-[11px] font-medium text-surface-500 transition-colors hover:text-surface-300"
-            style={{ borderColor: 'rgba(192, 198, 212, 0.12)' }}
+            style={{ borderColor: '#cbd5e1' }}
           >
             ESC
           </button>
@@ -381,7 +381,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       <div
                         className={`flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 ${
                           isActive
-                            ? 'bg-primary-500/20 text-primary-400'
+                            ? 'bg-primary-500/20 text-primary-600'
                             : 'bg-surface-800 text-surface-400'
                         }`}
                       >
@@ -399,13 +399,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       </div>
                       {isActive && (
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <ArrowRight className="h-3.5 w-3.5 text-primary-400" />
+                          <ArrowRight className="h-3.5 w-3.5 text-primary-600" />
                         </div>
                       )}
                       {item.shortcut && (
                         <span
                           className="flex-shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-mono text-surface-500"
-                          style={{ borderColor: 'rgba(192, 198, 212, 0.1)' }}
+                          style={{ borderColor: '#e2e8f0' }}
                         >
                           {item.shortcut}
                         </span>
@@ -421,7 +421,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         {/* Footer */}
         <div
           className="flex items-center justify-between px-4 py-2.5 text-[11px] text-surface-600 border-t"
-          style={{ borderColor: 'rgba(192, 198, 212, 0.07)' }}
+          style={{ borderColor: '#e2e8f0' }}
         >
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

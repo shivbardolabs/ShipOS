@@ -37,13 +37,13 @@ import { DropdownMenu } from '@/components/ui/dropdown-menu';
 /* -------------------------------------------------------------------------- */
 
 const notifTypeIcon: Record<string, React.ReactNode> = {
-  package_arrival: <Package className="h-4 w-4 text-blue-400" />,
-  package_reminder: <CalendarClock className="h-4 w-4 text-amber-400" />,
-  mail_received: <MailOpen className="h-4 w-4 text-indigo-400" />,
-  id_expiring: <AlertTriangle className="h-4 w-4 text-red-400" />,
+  package_arrival: <Package className="h-4 w-4 text-blue-600" />,
+  package_reminder: <CalendarClock className="h-4 w-4 text-amber-600" />,
+  mail_received: <MailOpen className="h-4 w-4 text-indigo-600" />,
+  id_expiring: <AlertTriangle className="h-4 w-4 text-red-600" />,
   renewal_reminder: <Clock className="h-4 w-4 text-yellow-400" />,
-  shipment_update: <Truck className="h-4 w-4 text-emerald-400" />,
-  welcome: <UserPlus className="h-4 w-4 text-primary-400" /> };
+  shipment_update: <Truck className="h-4 w-4 text-emerald-600" />,
+  welcome: <UserPlus className="h-4 w-4 text-primary-600" /> };
 
 type NotifRow = Notification & Record<string, unknown>;
 
@@ -118,13 +118,13 @@ export default function NotificationsPage() {
       render: (row) => (
         <div className="flex items-center gap-1.5">
           {(row.channel === 'email' || row.channel === 'both') && (
-            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">
+            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">
               <Mail className="h-3 w-3" />
               Email
             </span>
           )}
           {(row.channel === 'sms' || row.channel === 'both') && (
-            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">
               <Smartphone className="h-3 w-3" />
               SMS
             </span>
@@ -267,12 +267,12 @@ export default function NotificationsPage() {
                 <p className="text-xs text-surface-500">Channel</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   {(detailModal.channel === 'email' || detailModal.channel === 'both') && (
-                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">
+                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">
                       <Mail className="h-3 w-3" /> Email
                     </span>
                   )}
                   {(detailModal.channel === 'sms' || detailModal.channel === 'both') && (
-                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">
                       <Smartphone className="h-3 w-3" /> SMS
                     </span>
                   )}

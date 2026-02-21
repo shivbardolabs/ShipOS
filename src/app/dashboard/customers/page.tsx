@@ -50,9 +50,9 @@ function hashColor(name: string): string {
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
-  iPostal: { label: 'iPostal', classes: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  anytime: { label: 'Anytime', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' } };
+  iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
+  anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
+  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' } };
 
 const statusDot: Record<string, string> = {
   active: 'bg-emerald-400',
@@ -64,10 +64,10 @@ function getIdExpirationStatus(customer: Customer): { label: string; color: stri
   const now = new Date();
   const exp = new Date(customer.idExpiration);
   const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
-  if (days < 0) return { label: 'EXPIRED', color: 'bg-red-500/20 text-red-400 border-red-500/30' };
-  if (days <= 30) return { label: `${days}d left`, color: 'bg-red-500/20 text-red-400 border-red-500/30' };
+  if (days < 0) return { label: 'EXPIRED', color: 'bg-red-100 text-red-600 border-red-200' };
+  if (days <= 30) return { label: `${days}d left`, color: 'bg-red-100 text-red-600 border-red-200' };
   if (days <= 90) return { label: `${days}d left`, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
-  return { label: `${days}d left`, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' };
+  return { label: `${days}d left`, color: 'bg-emerald-100 text-emerald-600 border-emerald-200' };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -188,7 +188,7 @@ export default function CustomersPage() {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   statusFilter === f.id
-                    ? 'bg-primary-600/20 text-primary-400 border border-primary-500/30'
+                    ? 'bg-primary-50 text-primary-600 border border-primary-200'
                     : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-transparent'
                 )}
               >
@@ -244,7 +244,7 @@ export default function CustomersPage() {
                   {/* Avatar */}
                   <div
                     className={cn(
-                      'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-lg',
+                      'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-surface-100 shadow-lg',
                       hashColor(`${customer.firstName} ${customer.lastName}`)
                     )}
                   >
@@ -254,7 +254,7 @@ export default function CustomersPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-white truncate group-hover:text-primary-400 transition-colors">
+                      <h3 className="text-sm font-semibold text-surface-100 truncate group-hover:text-primary-600 transition-colors">
                         {customer.firstName} {customer.lastName}
                       </h3>
                       <span className={cn('h-2 w-2 rounded-full flex-shrink-0', statusDot[customer.status])} />
@@ -331,7 +331,7 @@ export default function CustomersPage() {
               >
                 <div
                   className={cn(
-                    'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
+                    'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-surface-100',
                     hashColor(`${customer.firstName} ${customer.lastName}`)
                   )}
                 >
@@ -341,7 +341,7 @@ export default function CustomersPage() {
                 <div className="flex-1 min-w-0 flex items-center gap-4 flex-wrap">
                   <div className="min-w-[180px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white group-hover:text-primary-400 transition-colors">
+                      <span className="text-sm font-semibold text-surface-100 group-hover:text-primary-600 transition-colors">
                         {customer.firstName} {customer.lastName}
                       </span>
                       <span className={cn('h-2 w-2 rounded-full', statusDot[customer.status])} />

@@ -49,7 +49,7 @@ export function Tabs({
               className={cn(
                 'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left',
                 isActive
-                  ? 'bg-primary-600/20 text-primary-400 border-l-2 border-primary-500'
+                  ? 'bg-primary-50 text-primary-600 border-l-2 border-primary-500'
                   : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200'
               )}
             >
@@ -90,7 +90,7 @@ export function Tabs({
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative',
               isActive
-                ? 'text-primary-400'
+                ? 'text-primary-600'
                 : 'text-surface-400 hover:text-surface-200'
             )}
           >

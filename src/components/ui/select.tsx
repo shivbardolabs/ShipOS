@@ -60,7 +60,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             <ChevronDown className="h-4 w-4" />
           </div>
         </div>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-red-600">{error}</p>}
         {!error && helperText && (
           <p className="text-xs text-surface-500">{helperText}</p>
         )}

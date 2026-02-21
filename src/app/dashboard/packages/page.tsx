@@ -26,8 +26,8 @@ import type { Package as PackageType } from '@/lib/types';
 /* -------------------------------------------------------------------------- */
 const carrierConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   ups: { label: 'UPS', bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-400', dot: 'bg-indigo-400' },
-  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
+  fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
+  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
   amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
   dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' } };
 
@@ -230,7 +230,7 @@ export default function PackagesPage() {
                     <tr
                       key={pkg.id}
                       onClick={() => setSelectedPackage(pkg)}
-                      className="border-b border-surface-800/50 table-row-hover cursor-pointer"
+                      className="border-b border-surface-700/60 table-row-hover cursor-pointer"
                     >
                       <td className="px-4 py-3">
                         <Badge status={pkg.status}>
@@ -268,7 +268,7 @@ export default function PackagesPage() {
                           className={cn(
                             'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold',
                             isOverdue
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-red-100 text-red-600'
                               : held > 3
                                 ? 'bg-yellow-500/20 text-yellow-400'
                                 : 'bg-surface-700/50 text-surface-400'
@@ -299,7 +299,7 @@ export default function PackagesPage() {
                               onClick={(e) => e.stopPropagation()}
                               title="Notify"
                             >
-                              <Bell className="h-4 w-4 text-amber-400" />
+                              <Bell className="h-4 w-4 text-amber-600" />
                             </Button>
                           )}
                           {pkg.status !== 'released' && (
@@ -310,7 +310,7 @@ export default function PackagesPage() {
                               onClick={(e) => e.stopPropagation()}
                               title="Release"
                             >
-                              <PackageCheck className="h-4 w-4 text-emerald-400" />
+                              <PackageCheck className="h-4 w-4 text-emerald-600" />
                             </Button>
                           )}
                         </div>
@@ -325,7 +325,7 @@ export default function PackagesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-800/50">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-700/60">
             <span className="text-xs text-surface-500">
               Showing {page * PAGE_SIZE + 1}–
               {Math.min((page + 1) * PAGE_SIZE, filtered.length)} of{' '}

@@ -51,9 +51,9 @@ const last14Days = Array.from({ length: 14 }, (_, i) => {
 /*  Revenue breakdown data                                                    */
 /* -------------------------------------------------------------------------- */
 const revenueBreakdown = [
-  { category: 'Shipping', amount: 12847.50, color: 'bg-primary-500', textColor: 'text-primary-400' },
-  { category: 'Storage Fees', amount: 2340.00, color: 'bg-accent-indigo', textColor: 'text-indigo-400' },
-  { category: 'Receiving Fees', amount: 4560.00, color: 'bg-emerald-500', textColor: 'text-emerald-400' },
+  { category: 'Shipping', amount: 12847.50, color: 'bg-primary-500', textColor: 'text-primary-600' },
+  { category: 'Storage Fees', amount: 2340.00, color: 'bg-accent-indigo', textColor: 'text-indigo-600' },
+  { category: 'Receiving Fees', amount: 4560.00, color: 'bg-emerald-500', textColor: 'text-emerald-600' },
 ];
 const totalBreakdown = revenueBreakdown.reduce((s, r) => s + r.amount, 0);
 
@@ -184,7 +184,7 @@ export default function ReportsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary-400" />
+              <BarChart3 className="h-4 w-4 text-primary-600" />
               Package Volume (Last 14 Days)
             </CardTitle>
           </CardHeader>
@@ -245,7 +245,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary-400" />
+              <PieChartIcon className="h-4 w-4 text-primary-600" />
               Revenue Breakdown
             </CardTitle>
           </CardHeader>
@@ -280,7 +280,7 @@ export default function ReportsPage() {
                   })()}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-lg font-bold text-white">
+                  <span className="text-lg font-bold text-surface-100">
                     {formatCurrency(totalBreakdown)}
                   </span>
                   <span className="text-[10px] text-surface-500">Total</span>
@@ -314,7 +314,7 @@ export default function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary-400" />
+            <TrendingUp className="h-4 w-4 text-primary-600" />
             Shipping Profit Report
           </CardTitle>
         </CardHeader>
@@ -345,7 +345,7 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {carrierProfits.map((row) => (
-                  <tr key={row.carrier} className="border-b border-surface-800/50 table-row-hover">
+                  <tr key={row.carrier} className="border-b border-surface-700/60 table-row-hover">
                     <td className="px-4 py-3 text-surface-200 font-medium">{row.carrier}</td>
                     <td className="px-4 py-3 text-right text-surface-300">{row.shipments}</td>
                     <td className="px-4 py-3 text-right text-surface-400">
@@ -354,7 +354,7 @@ export default function ReportsPage() {
                     <td className="px-4 py-3 text-right text-surface-200">
                       {formatCurrency(row.retail)}
                     </td>
-                    <td className="px-4 py-3 text-right text-emerald-400 font-medium">
+                    <td className="px-4 py-3 text-right text-emerald-600 font-medium">
                       {formatCurrency(row.profit)}
                     </td>
                     <td className="px-4 py-3 text-right text-surface-300">
@@ -364,20 +364,20 @@ export default function ReportsPage() {
                 ))}
                 {/* Total Row */}
                 <tr className="bg-surface-800/40 border-t border-surface-700">
-                  <td className="px-4 py-3 text-white font-bold">TOTAL</td>
-                  <td className="px-4 py-3 text-right text-white font-bold">
+                  <td className="px-4 py-3 text-surface-100 font-bold">TOTAL</td>
+                  <td className="px-4 py-3 text-right text-surface-100 font-bold">
                     {totalProfitRow.shipments}
                   </td>
-                  <td className="px-4 py-3 text-right text-white font-bold">
+                  <td className="px-4 py-3 text-right text-surface-100 font-bold">
                     {formatCurrency(totalProfitRow.wholesale)}
                   </td>
-                  <td className="px-4 py-3 text-right text-white font-bold">
+                  <td className="px-4 py-3 text-right text-surface-100 font-bold">
                     {formatCurrency(totalProfitRow.retail)}
                   </td>
-                  <td className="px-4 py-3 text-right text-emerald-400 font-bold">
+                  <td className="px-4 py-3 text-right text-emerald-600 font-bold">
                     {formatCurrency(totalProfitRow.profit)}
                   </td>
-                  <td className="px-4 py-3 text-right text-white font-bold">
+                  <td className="px-4 py-3 text-right text-surface-100 font-bold">
                     {totalProfitRow.margin.toFixed(1)}%
                   </td>
                 </tr>
@@ -393,7 +393,7 @@ export default function ReportsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary-400" />
+              <Users className="h-4 w-4 text-primary-600" />
               Top Customers by Package Volume
             </CardTitle>
           </CardHeader>
@@ -436,7 +436,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-primary-400" />
+              <Receipt className="h-4 w-4 text-primary-600" />
               Sales Tax Summary
             </CardTitle>
           </CardHeader>
@@ -446,7 +446,7 @@ export default function ReportsPage() {
                 <p className="text-xs text-surface-500 uppercase tracking-wider mb-1">
                   Gross Sales
                 </p>
-                <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue)}</p>
+                <p className="text-2xl font-bold text-surface-100">{formatCurrency(totalRevenue)}</p>
               </div>
               <div className="h-px bg-surface-800" />
               <div>
@@ -464,8 +464,8 @@ export default function ReportsPage() {
                 <p className="text-xs text-surface-500">NY state + city</p>
               </div>
               <div className="h-px bg-surface-800" />
-              <div className="p-3 rounded-lg bg-primary-600/10 border border-primary-500/20">
-                <p className="text-xs text-primary-400 uppercase tracking-wider mb-1">
+              <div className="p-3 rounded-lg bg-primary-50 border border-primary-500/20">
+                <p className="text-xs text-primary-600 uppercase tracking-wider mb-1">
                   Tax Collected
                 </p>
                 <p className="text-2xl font-bold text-primary-300">

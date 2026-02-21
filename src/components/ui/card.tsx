@@ -103,12 +103,12 @@ interface StatCardProps {
 
 export function StatCard({ icon, title, value, change, className }: StatCardProps) {
   const isPositive = change !== undefined && change >= 0;
-  const changeColor = isPositive ? 'text-emerald-400' : 'text-red-400';
+  const changeColor = isPositive ? 'text-emerald-600' : 'text-red-600';
 
   return (
     <div className={cn('glass-card p-5', className)}>
       <div className="flex items-start justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-600/15 text-primary-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
           {icon}
         </div>
         {change !== undefined && (
@@ -122,7 +122,7 @@ export function StatCard({ icon, title, value, change, className }: StatCardProp
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-bold text-white">{value}</p>
+      <p className="mt-3 text-2xl font-bold text-surface-100">{value}</p>
       <p className="mt-1 text-xs text-surface-400">{title}</p>
     </div>
   );

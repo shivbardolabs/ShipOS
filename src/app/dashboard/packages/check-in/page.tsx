@@ -41,11 +41,11 @@ const STEPS = [
 const carrierOptions = [
   { id: 'amazon', label: 'Amazon', color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20', active: 'border-orange-500 bg-orange-500/20' },
   { id: 'ups', label: 'UPS', color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30', active: 'border-amber-600 bg-amber-900/30' },
-  { id: 'fedex', label: 'FedEx', color: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20', active: 'border-indigo-500 bg-indigo-500/20' },
-  { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20', active: 'border-blue-500 bg-blue-500/20' },
+  { id: 'fedex', label: 'FedEx', color: 'border-indigo-300 bg-indigo-50 text-indigo-600 hover:bg-indigo-100', active: 'border-indigo-500 bg-indigo-100' },
+  { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-50 text-blue-600 hover:bg-blue-100', active: 'border-blue-500 bg-blue-100' },
   { id: 'dhl', label: 'DHL', color: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', active: 'border-yellow-500 bg-yellow-500/20' },
   { id: 'walmart', label: 'Walmart', color: 'border-blue-600/40 bg-blue-600/10 text-blue-300 hover:bg-blue-600/20', active: 'border-blue-600 bg-blue-600/20' },
-  { id: 'target', label: 'Target', color: 'border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20', active: 'border-red-500 bg-red-500/20' },
+  { id: 'target', label: 'Target', color: 'border-red-500/40 bg-red-50 text-red-600 hover:bg-red-100', active: 'border-red-500 bg-red-100' },
   { id: 'other', label: 'Other', color: 'border-surface-600/40 bg-surface-700/20 text-surface-400 hover:bg-surface-700/30', active: 'border-surface-500 bg-surface-700/30' },
 ];
 
@@ -203,9 +203,9 @@ export default function CheckInPage() {
               className={cn(
                 'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all',
                 step === s.id
-                  ? 'bg-primary-600/20 text-primary-400 font-medium'
+                  ? 'bg-primary-50 text-primary-600 font-medium'
                   : s.id < step
-                    ? 'text-emerald-400 cursor-pointer hover:bg-surface-800'
+                    ? 'text-emerald-600 cursor-pointer hover:bg-surface-800'
                     : 'text-surface-500 cursor-default'
               )}
             >
@@ -215,7 +215,7 @@ export default function CheckInPage() {
                   step === s.id
                     ? 'bg-primary-600 text-white'
                     : s.id < step
-                      ? 'bg-emerald-500/20 text-emerald-400'
+                      ? 'bg-emerald-100 text-emerald-600'
                       : 'bg-surface-700 text-surface-500'
                 )}
               >
@@ -243,7 +243,7 @@ export default function CheckInPage() {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 className="text-lg font-semibold text-surface-100 mb-1">
                 Identify Customer
               </h2>
               <p className="text-sm text-surface-400">
@@ -268,7 +268,7 @@ export default function CheckInPage() {
                     className={cn(
                       'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
                       isSelected
-                        ? 'border-primary-500 bg-primary-600/10 ring-1 ring-primary-500/30'
+                        ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
                         : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
                     )}
                   >
@@ -300,7 +300,7 @@ export default function CheckInPage() {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-xs font-mono text-primary-400">
+                        <span className="text-xs font-mono text-primary-600">
                           {cust.pmbNumber}
                         </span>
                         {cust.businessName && (
@@ -311,7 +311,7 @@ export default function CheckInPage() {
                       </div>
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className="h-5 w-5 text-primary-400 shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
                     )}
                   </button>
                 );
@@ -332,7 +332,7 @@ export default function CheckInPage() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 className="text-lg font-semibold text-surface-100 mb-1">
                 Carrier & Sender
               </h2>
               <p className="text-sm text-surface-400">
@@ -384,7 +384,7 @@ export default function CheckInPage() {
         {step === 3 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 className="text-lg font-semibold text-surface-100 mb-1">
                 Package Details
               </h2>
               <p className="text-sm text-surface-400">
@@ -407,7 +407,7 @@ export default function CheckInPage() {
                       className={cn(
                         'flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all',
                         isActive
-                          ? 'border-primary-500 bg-primary-600/15 ring-1 ring-primary-500/30'
+                          ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
                           : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600'
                       )}
                     >
@@ -415,7 +415,7 @@ export default function CheckInPage() {
                       <span
                         className={cn(
                           'text-sm font-medium',
-                          isActive ? 'text-primary-400' : 'text-surface-300'
+                          isActive ? 'text-primary-600' : 'text-surface-300'
                         )}
                       >
                         {pt.label}
@@ -452,13 +452,13 @@ export default function CheckInPage() {
             <div className="flex flex-wrap gap-4">
               <ToggleSwitch
                 label="Hazardous Materials"
-                icon={<AlertTriangle className="h-4 w-4 text-amber-400" />}
+                icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
                 checked={hazardous}
                 onChange={setHazardous}
               />
               <ToggleSwitch
                 label="Perishable"
-                icon={<Snowflake className="h-4 w-4 text-blue-400" />}
+                icon={<Snowflake className="h-4 w-4 text-blue-600" />}
                 checked={perishable}
                 onChange={setPerishable}
               />
@@ -498,7 +498,7 @@ export default function CheckInPage() {
         {step === 4 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 className="text-lg font-semibold text-surface-100 mb-1">
                 Confirm & Notify
               </h2>
               <p className="text-sm text-surface-400">
@@ -580,7 +580,7 @@ export default function CheckInPage() {
 
               {selectedCustomer?.email && (
                 <div className="flex items-center gap-3 text-sm text-surface-400">
-                  <Mail className="h-4 w-4 text-blue-400" />
+                  <Mail className="h-4 w-4 text-blue-600" />
                   <span>
                     Email will be sent to{' '}
                     <span className="text-surface-200">
@@ -591,7 +591,7 @@ export default function CheckInPage() {
               )}
               {selectedCustomer?.phone && (
                 <div className="flex items-center gap-3 text-sm text-surface-400">
-                  <MessageSquare className="h-4 w-4 text-emerald-400" />
+                  <MessageSquare className="h-4 w-4 text-emerald-600" />
                   <span>
                     SMS will be sent to{' '}
                     <span className="text-surface-200">
@@ -679,10 +679,10 @@ export default function CheckInPage() {
         }
       >
         <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 mb-4">
-            <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
+            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-1">
+          <h3 className="text-lg font-semibold text-surface-100 mb-1">
             Successfully Checked In!
           </h3>
           <p className="text-sm text-surface-400 max-w-xs">
@@ -694,7 +694,7 @@ export default function CheckInPage() {
             have been sent.
           </p>
           {trackingNumber && (
-            <p className="mt-3 font-mono text-xs text-primary-400 bg-primary-600/10 px-3 py-1.5 rounded-lg">
+            <p className="mt-3 font-mono text-xs text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg">
               {trackingNumber}
             </p>
           )}
@@ -723,7 +723,7 @@ function ToggleSwitch({
       className={cn(
         'flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm transition-all',
         checked
-          ? 'border-primary-500/40 bg-primary-600/10 text-primary-400'
+          ? 'border-primary-300 bg-primary-50 text-primary-600'
           : 'border-surface-700/50 bg-surface-900/60 text-surface-400 hover:border-surface-600'
       )}
     >
@@ -771,7 +771,7 @@ function CheckboxOption({
         className={cn(
           'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all',
           checked
-            ? 'bg-primary-600 border-primary-500 text-white'
+            ? 'bg-primary-600 border-primary-500 text-surface-100'
             : 'bg-surface-900 border-surface-600 text-transparent'
         )}
       >
