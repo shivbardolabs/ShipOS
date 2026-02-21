@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("employee") // employee, manager, admin
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
+  checkins  Package[]  @relation("CheckedInBy")
+  checkouts Package[]  @relation("CheckedOutBy")
+}
+
+model Customer {
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  businessName String?
+  pmbNumber    String  @unique
+  platform     String  @default("physical") // physical, iPostal, anytime, postscan
+  status       String  @default("active") // active, closed, suspended
+
+  dateOpened   DateTime  @default(now())
+  dateClosed   DateTime?
+  renewalDate  DateTime?
+  billingTerms String?
+  notes        String?
+
+  // CMRA Compliance
+  idType             String?   // drivers_license, passport, both
+  idExpiration       DateTime?
+  passportExpiration DateTime?
+  form1583Status     String?   @default("pending") // pending, submitted, approved, expired
+  form1583Date       DateTime?
+
+  // Notification preferences
+  notifyEmail Boolean @default(true)
+  notifySms   Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete
+
+  packages      Package[]
+  mailPieces    MailPiece[]
+  shipments     Shipment[]
+  notifications Notification[]
+}
+
+model Package {
+  id             String  @id @default(cuid())
+  trackingNumber String?
+  carrier        String // amazon, ups, fedex, usps, dhl, walmart, target, other
+  senderName     String?
+  packageType    String  @default("medium") // letter, small, medium, large, oversized
+  status         String  @default("checked_in") // checked_in, notified, ready, released, returned
+  hazardous      Boolean @default(false)
+  perishable     Boolean @default(false)
+  notes          String?
+  condition      String?
+
+  // Fees
+  storageFee   Float @default(0)
+  receivingFee Float @default(0)
+  quotaFee     Float @default(0)
+
+  checkedInAt DateTime  @default(now())
+  notifiedAt  DateTime?
+  releasedAt  DateTime?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  checkedInById String?
+  checkedInBy   User?   @relation("CheckedInBy", fields: [checkedInById], references: [id])
+
+  checkedOutById String?
+  checkedOutBy   User?   @relation("CheckedOutBy", fields: [checkedOutById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MailPiece {
+  id        String  @id @default(cuid())
+  type      String  @default("letter") // letter, magazine, catalog, legal, other
+  sender    String?
+  status    String  @default("received") // received, scanned, notified, held, forwarded, discarded
+  scanImage String?
+  action    String? // hold, forward, discard, open_scan
+  notes     String?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  receivedAt DateTime  @default(now())
+  actionAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Shipment {
+  id             String  @id @default(cuid())
+  carrier        String
+  service        String?
+  trackingNumber String?
+  destination    String?
+  weight         Float?
+  dimensions     String?
+
+  wholesaleCost Float @default(0)
+  retailPrice   Float @default(0)
+  insuranceCost Float @default(0)
+  packingCost   Float @default(0)
+
+  status        String @default("pending") // pending, label_created, shipped, delivered, returned
+  paymentStatus String @default("unpaid") // unpaid, paid, invoiced
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Notification {
+  id      String  @id @default(cuid())
+  type    String // package_checkin, package_reminder, id_expiration, mail_received, custom
+  channel String // email, sms, both
+  status  String  @default("pending") // pending, sent, delivered, failed, bounced
+  subject String?
+  body    String?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  action     String // package_checkin, package_release, customer_update, etc.
+  entityType String // package, customer, shipment, etc.
+  entityId   String
+  details    String? // JSON string with change details
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model CarrierRate {
+  id            String   @id @default(cuid())
+  carrier       String
+  service       String
+  addOnName     String?
+  wholesaleRate Float
+  retailRate    Float
+  marginType    String   @default("markup") // markup, margin
+  marginValue   Float    @default(0)
+  isActive      Boolean  @default(true)
+  lastUpdated   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DropoffSetting {
+  id                 String @id @default(cuid())
+  carrier            String
+  isEnabled          Boolean @default(false)
+  compensationAmount Float   @default(0)
+  retailCharge       Float   @default(0)
+  department         String?
+  credentials        String? // encrypted JSON
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  customerId    String?
+  type          String // shipping, storage, service
+  amount        Float
+  tax           Float    @default(0)
+  status        String   @default("draft") // draft, sent, paid, overdue, void
+  dueDate       DateTime?
+  paidAt        DateTime?
+  items         String? // JSON string of line items
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model EndOfDayRecord {
+  id           String   @id @default(cuid())
+  date         DateTime
+  carrier      String
+  manifestId   String?
+  packageCount Int      @default(0)
+  status       String   @default("open") // open, picked_up, closed
+  pickupTime   DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

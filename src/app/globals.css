@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme {
+  /* ShipOS Dark Theme - Professional postal/shipping management */
+
+  /* Primary Blues */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Dark surface colors */
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-850: #172033;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  /* Accent colors */
+  --color-accent-teal: #14b8a6;
+  --color-accent-amber: #f59e0b;
+  --color-accent-rose: #f43f5e;
+  --color-accent-violet: #8b5cf6;
+  --color-accent-emerald: #10b981;
+
+  /* Carrier brand colors */
+  --color-carrier-ups: #351c15;
+  --color-carrier-fedex: #4d148c;
+  --color-carrier-usps: #333366;
+  --color-carrier-dhl: #ffcc00;
+  --color-carrier-amazon: #ff9900;
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Border radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/* Base dark theme styles */
+body {
+  @apply bg-surface-950 text-surface-200 antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-surface-600;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-500;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-150;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply hover:bg-surface-800/80 hover:border-surface-600 cursor-pointer;
+}
+
+/* Status badge base */
+.status-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border;
+}
+
+/* Table styles */
+.table-row-hover {
+  @apply hover:bg-surface-800/50 transition-colors;
+}
+
+/* Sidebar active link */
+.nav-active {
+  @apply bg-primary-600/20 text-primary-400 border-l-2 border-primary-500;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  @apply bg-surface-900/80 backdrop-blur-sm border border-surface-700/50 rounded-xl;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-primary-400 to-accent-teal bg-clip-text text-transparent;
+}

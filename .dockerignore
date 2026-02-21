@@ -1,0 +1,53 @@
+# Dependencies
+node_modules
+ios/node_modules
+
+# Build output
+.next
+out
+dist
+build
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Version control
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker (avoid recursive copies)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation & non-runtime files
+docs/
+ios/
+*.md
+LICENSE
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Misc
+.turbo
+.vercel

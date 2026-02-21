@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+ios/node_modules/
+
+# Next.js
+.next/
+out/
+
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build artifacts
+*.tsbuildinfo
+next-env.d.ts
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Build markers
+.scaffold_done
+.ui_done
+.pages1_done
+.pages2_done
+.pages3_done
+.docs_done
+
+# iOS builds
+ios/dist/
+ios/.expo/
+ios/ios/
+ios/android/
