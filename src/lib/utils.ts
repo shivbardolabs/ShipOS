@@ -76,6 +76,16 @@ export function getStatusColor(status: string): string {
     approved: "bg-green-500/20 text-green-400 border-green-500/30",
     submitted: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     expired: "bg-red-500/20 text-red-400 border-red-500/30",
+    // Reconciliation statuses
+    matched: "bg-green-500/20 text-green-400 border-green-500/30",
+    overcharge: "bg-red-500/20 text-red-400 border-red-500/30",
+    late_delivery: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    unmatched: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    disputed: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    resolved: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    credited: "bg-teal-500/20 text-teal-400 border-teal-500/30",
+    processing: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    completed: "bg-green-500/20 text-green-400 border-green-500/30",
   };
   return colors[status] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
 }

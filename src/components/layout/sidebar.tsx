@@ -21,6 +21,7 @@ import {
   Settings,
   Menu,
   X,
+  Scale,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -53,6 +54,7 @@ const navSections: NavSection[] = [
       { label: 'Customers', href: '/dashboard/customers', icon: Users },
       { label: 'Mail', href: '/dashboard/mail', icon: Mail },
       { label: 'Shipping', href: '/dashboard/shipping', icon: Truck },
+      { label: 'Reconciliation', href: '/dashboard/reconciliation', icon: Scale },
       { label: 'End of Day', href: '/dashboard/end-of-day', icon: Clock },
     ],
   },

@@ -141,3 +141,70 @@ export interface DashboardStats {
 }
 
 export type CarrierType = 'amazon' | 'ups' | 'fedex' | 'usps' | 'dhl' | 'walmart' | 'target' | 'other';
+
+/* -------------------------------------------------------------------------- */
+/*  Shipping Reconciliation                                                   */
+/* -------------------------------------------------------------------------- */
+
+export type DiscrepancyType =
+  | 'weight_overcharge'
+  | 'service_mismatch'
+  | 'duplicate_charge'
+  | 'invalid_surcharge'
+  | 'address_correction'
+  | 'residential_surcharge'
+  | 'late_delivery';
+
+export type ReconciliationItemStatus = 'matched' | 'overcharge' | 'late_delivery' | 'unmatched' | 'disputed' | 'resolved' | 'credited';
+
+export interface ReconciliationItem {
+  id: string;
+  trackingNumber: string;
+  carrier: string;
+  service: string;
+  shipDate: string;
+  deliveryDate?: string;
+  guaranteedDate?: string;
+  /** What ShipOS expected to be charged */
+  expectedCharge: number;
+  /** What the carrier actually billed */
+  billedCharge: number;
+  /** The difference (billedCharge - expectedCharge) */
+  difference: number;
+  expectedWeight?: number;
+  billedWeight?: number;
+  discrepancyType?: DiscrepancyType;
+  status: ReconciliationItemStatus;
+  /** Customer associated with this shipment */
+  customerName?: string;
+  destination?: string;
+  surcharges?: { name: string; amount: number }[];
+  notes?: string;
+}
+
+export interface ReconciliationRun {
+  id: string;
+  fileName: string;
+  carrier: string;
+  uploadedAt: string;
+  recordsProcessed: number;
+  matchedCount: number;
+  discrepancyCount: number;
+  lateDeliveryCount: number;
+  unmatchedCount: number;
+  totalBilled: number;
+  totalExpected: number;
+  totalOvercharge: number;
+  potentialRefund: number;
+  status: 'processing' | 'completed' | 'failed';
+  items: ReconciliationItem[];
+}
+
+export interface ReconciliationStats {
+  totalAudited: number;
+  totalDiscrepancies: number;
+  potentialRefunds: number;
+  successRate: number;
+  runsThisMonth: number;
+  avgRefundPerRun: number;
+}

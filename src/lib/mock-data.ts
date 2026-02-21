@@ -8,6 +8,11 @@ import type {
   AuditLogEntry,
   CarrierRate,
   DashboardStats,
+  ReconciliationItem,
+  ReconciliationRun,
+  ReconciliationStats,
+  DiscrepancyType,
+  ReconciliationItemStatus,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -296,3 +301,140 @@ export const recentActivity = [
   { id: 'act_09', type: 'shipment' as const, description: 'DHL International shipment delivered - PMB-0019', time: hoursAgo(5), icon: 'truck' as const },
   { id: 'act_10', type: 'notification' as const, description: 'Renewal reminder sent to Patricia Williams', time: hoursAgo(6), icon: 'bell' as const },
 ];
+
+// ---------------------------------------------------------------------------
+// Shipping Reconciliation Data
+// ---------------------------------------------------------------------------
+
+// Carriers supported for reconciliation: ups, fedex, usps, dhl
+const reconServices: Record<string, string[]> = {
+  ups: ['Ground', '2nd Day Air', 'Next Day Air', '3 Day Select'],
+  fedex: ['Ground', 'Express Saver', 'Overnight', '2Day'],
+  usps: ['Priority Mail', 'Priority Mail Express', 'Ground Advantage', 'First Class'],
+  dhl: ['International Economy', 'International Express'],
+};
+const reconDiscrepancies: DiscrepancyType[] = [
+  'weight_overcharge', 'service_mismatch', 'duplicate_charge',
+  'invalid_surcharge', 'address_correction', 'residential_surcharge', 'late_delivery',
+];
+const customerNames = [
+  'James Morrison', 'Linda Nakamura', 'Robert Singh', 'Maria Gonzalez',
+  'David Kim', 'Patricia Williams', 'Michael Brown', 'Jennifer Lee',
+  'Thomas Anderson', 'Elizabeth Martinez', 'Sarah Taylor', 'Daniel Harris',
+  'Karen Thompson', 'Matthew Garcia', 'Anthony Clark', 'Jessica White',
+];
+
+function makeReconItems(carrier: string, count: number, dateOffset: number): ReconciliationItem[] {
+  const services = reconServices[carrier] || ['Standard'];
+  return Array.from({ length: count }, (_, i) => {
+    const isOvercharge = i % 5 < 2;
+    const isLate = i % 7 === 3;
+    const isUnmatched = i % 11 === 0;
+    const isDuplicate = i % 13 === 0;
+
+    const expectedCharge = parseFloat((8 + Math.random() * 52).toFixed(2));
+    let billedCharge = expectedCharge;
+    let discrepancyType: DiscrepancyType | undefined;
+    let status: ReconciliationItemStatus = 'matched';
+
+    if (isDuplicate) {
+      billedCharge = expectedCharge * 2;
+      discrepancyType = 'duplicate_charge';
+      status = 'overcharge';
+    } else if (isOvercharge) {
+      const overchargeAmount = parseFloat((2 + Math.random() * 15).toFixed(2));
+      billedCharge = expectedCharge + overchargeAmount;
+      discrepancyType = reconDiscrepancies[Math.floor(Math.random() * 6)] as DiscrepancyType;
+      status = 'overcharge';
+    } else if (isLate) {
+      discrepancyType = 'late_delivery';
+      status = 'late_delivery';
+    } else if (isUnmatched) {
+      status = 'unmatched';
+      billedCharge = parseFloat((12 + Math.random() * 40).toFixed(2));
+    }
+
+    if (i % 9 === 0 && status === 'overcharge') {
+      status = 'disputed';
+    }
+    if (i % 15 === 0 && status === 'overcharge') {
+      status = 'resolved';
+    }
+
+    const shipDay = dateOffset + Math.floor(i / 3);
+    const service = services[i % services.length];
+    const expectedWeight = parseFloat((1 + Math.random() * 25).toFixed(1));
+
+    return {
+      id: `recon_${carrier}_${dateOffset}_${String(i + 1).padStart(3, '0')}`,
+      trackingNumber: makeTrackingNumber(carrier, 9000 + dateOffset * 100 + i),
+      carrier,
+      service,
+      shipDate: daysAgo(shipDay),
+      deliveryDate: daysAgo(shipDay - (isLate ? 0 : 2)),
+      guaranteedDate: isLate ? daysAgo(shipDay - 1) : undefined,
+      expectedCharge,
+      billedCharge,
+      difference: parseFloat((billedCharge - expectedCharge).toFixed(2)),
+      expectedWeight,
+      billedWeight: discrepancyType === 'weight_overcharge'
+        ? parseFloat((expectedWeight + 2 + Math.random() * 5).toFixed(1))
+        : expectedWeight,
+      discrepancyType,
+      status,
+      customerName: customerNames[i % customerNames.length],
+      destination: destinations[i % destinations.length],
+      surcharges: discrepancyType === 'invalid_surcharge'
+        ? [{ name: 'Delivery Area Surcharge', amount: 4.50 }, { name: 'Extended Area', amount: 3.75 }]
+        : discrepancyType === 'residential_surcharge'
+        ? [{ name: 'Residential Surcharge', amount: 5.80 }]
+        : discrepancyType === 'address_correction'
+        ? [{ name: 'Address Correction', amount: 17.00 }]
+        : undefined,
+    };
+  });
+}
+
+const run1Items = makeReconItems('ups', 45, 14);
+const run2Items = makeReconItems('fedex', 32, 7);
+const run3Items = makeReconItems('ups', 50, 21);
+const run4Items = makeReconItems('usps', 28, 10);
+
+function summarizeRun(items: ReconciliationItem[]): Omit<ReconciliationRun, 'id' | 'fileName' | 'carrier' | 'uploadedAt' | 'status' | 'items'> {
+  const matched = items.filter(i => i.status === 'matched').length;
+  const discrepancies = items.filter(i => ['overcharge', 'disputed', 'resolved', 'credited'].includes(i.status)).length;
+  const late = items.filter(i => i.status === 'late_delivery').length;
+  const unmatched = items.filter(i => i.status === 'unmatched').length;
+  const totalBilled = items.reduce((s, i) => s + i.billedCharge, 0);
+  const totalExpected = items.reduce((s, i) => s + i.expectedCharge, 0);
+  const totalOvercharge = items.filter(i => i.difference > 0).reduce((s, i) => s + i.difference, 0);
+  const lateRefund = items.filter(i => i.status === 'late_delivery').reduce((s, i) => s + i.billedCharge, 0);
+  return {
+    recordsProcessed: items.length,
+    matchedCount: matched,
+    discrepancyCount: discrepancies,
+    lateDeliveryCount: late,
+    unmatchedCount: unmatched,
+    totalBilled: parseFloat(totalBilled.toFixed(2)),
+    totalExpected: parseFloat(totalExpected.toFixed(2)),
+    totalOvercharge: parseFloat(totalOvercharge.toFixed(2)),
+    potentialRefund: parseFloat((totalOvercharge + lateRefund).toFixed(2)),
+  };
+}
+
+export const reconciliationRuns: ReconciliationRun[] = [
+  { id: 'recon_run_001', fileName: 'UPS_Invoice_Feb_Wk2_2026.xlsx', carrier: 'ups', uploadedAt: daysAgo(1), status: 'completed', items: run1Items, ...summarizeRun(run1Items) },
+  { id: 'recon_run_002', fileName: 'FedEx_Invoice_Feb_Wk1_2026.csv', carrier: 'fedex', uploadedAt: daysAgo(4), status: 'completed', items: run2Items, ...summarizeRun(run2Items) },
+  { id: 'recon_run_003', fileName: 'UPS_Invoice_Jan_Wk4_2026.xlsx', carrier: 'ups', uploadedAt: daysAgo(8), status: 'completed', items: run3Items, ...summarizeRun(run3Items) },
+  { id: 'recon_run_004', fileName: 'USPS_Statement_Feb_2026.csv', carrier: 'usps', uploadedAt: daysAgo(3), status: 'completed', items: run4Items, ...summarizeRun(run4Items) },
+];
+
+const allReconItems = [...run1Items, ...run2Items, ...run3Items, ...run4Items];
+export const reconciliationStats: ReconciliationStats = {
+  totalAudited: allReconItems.length,
+  totalDiscrepancies: allReconItems.filter(i => ['overcharge', 'disputed', 'resolved', 'credited', 'late_delivery'].includes(i.status)).length,
+  potentialRefunds: parseFloat(reconciliationRuns.reduce((s, r) => s + r.potentialRefund, 0).toFixed(2)),
+  successRate: parseFloat((allReconItems.filter(i => i.status === 'matched').length / allReconItems.length * 100).toFixed(1)),
+  runsThisMonth: reconciliationRuns.length,
+  avgRefundPerRun: parseFloat((reconciliationRuns.reduce((s, r) => s + r.potentialRefund, 0) / reconciliationRuns.length).toFixed(2)),
+};
