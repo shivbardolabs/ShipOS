@@ -55,7 +55,10 @@ export function Header() {
   const notifCount = dashboardStats.notificationsSent;
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-surface-800 bg-surface-950/80 backdrop-blur-md px-6">
+    <header
+      className="sticky top-0 z-20 flex h-16 items-center justify-between backdrop-blur-md px-6"
+      style={{ background: 'rgba(8, 8, 26, 0.8)', borderBottom: '1px solid rgba(192, 198, 212, 0.07)' }}
+    >
       {/* Left – Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-sm">
         {crumbs.map((crumb, i) => (
@@ -84,10 +87,10 @@ export function Header() {
         />
 
         {/* Notification bell */}
-        <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors">
+        <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-surface-400 hover:text-surface-200 transition-colors" style={{ }}>
           <Bell className="h-[18px] w-[18px]" />
           {notifCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-500 px-1 text-[10px] font-bold text-white">
               {notifCount > 99 ? '99+' : notifCount}
             </span>
           )}
@@ -96,7 +99,7 @@ export function Header() {
         {/* User avatar + dropdown */}
         <DropdownMenu
           trigger={
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-accent-violet text-xs font-bold text-white cursor-pointer hover:ring-2 hover:ring-primary-500/40 transition-all">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all">
               {currentUser.name
                 .split(' ')
                 .map((n) => n[0])

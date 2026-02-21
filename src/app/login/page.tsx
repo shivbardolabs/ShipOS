@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Package } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,7 +10,7 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate login - in production this would auth
+    // Simulate login — in production this would use NextAuth
     setTimeout(() => {
       window.location.href = '/dashboard';
     }, 1000);
@@ -19,27 +18,33 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-950 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-600/8 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,var(--color-surface-950)_70%)]" />
-      </div>
+      {/* Ambient purple orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full" style={{ background: 'rgba(139, 92, 246, 0.06)', filter: 'blur(100px)' }} />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full" style={{ background: 'rgba(139, 92, 246, 0.04)', filter: 'blur(80px)' }} />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,#08081a_70%)]" />
 
       <div className="relative z-10 w-full max-w-md px-6">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-xl shadow-primary-900/40 mb-4">
-            <Package className="h-7 w-7 text-white" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/shipos-logo-mark.svg"
+            alt="ShipOS"
+            width={56}
+            height={56}
+            className="mb-4 purple-glow rounded-2xl"
+          />
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-bold text-surface-100">Ship</span>
+            <span className="text-3xl font-bold text-primary-500">OS</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">ShipOS</h1>
           <p className="text-sm text-surface-500 mt-1">Postal Management System</p>
         </div>
 
         {/* Login card */}
-        <div className="rounded-2xl border border-surface-700/50 bg-surface-900/80 backdrop-blur-md shadow-2xl shadow-black/30 p-8">
+        <div className="rounded-2xl p-8 shadow-2xl shadow-black/30" style={{ background: '#121330', border: '1px solid rgba(192, 198, 212, 0.07)' }}>
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white">Sign in</h2>
+            <h2 className="text-xl font-semibold text-surface-100">Sign in</h2>
             <p className="text-sm text-surface-400 mt-1">Welcome back. Enter your credentials to continue.</p>
           </div>
 
@@ -55,7 +60,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full rounded-lg border bg-surface-900 px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500 border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30 transition-colors duration-150 outline-none"
+                className="w-full rounded-lg px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-600 outline-none transition-colors duration-150"
+                style={{
+                  background: '#0e0f26',
+                  border: '1px solid rgba(192, 198, 212, 0.07)',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.12)'; }}
+                onBlur={(e) => { e.target.style.borderColor = 'rgba(192, 198, 212, 0.07)'; e.target.style.boxShadow = 'none'; }}
                 required
               />
             </div>
@@ -79,7 +90,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border bg-surface-900 px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500 border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30 transition-colors duration-150 outline-none"
+                className="w-full rounded-lg px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-600 outline-none transition-colors duration-150"
+                style={{
+                  background: '#0e0f26',
+                  border: '1px solid rgba(192, 198, 212, 0.07)',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.12)'; }}
+                onBlur={(e) => { e.target.style.borderColor = 'rgba(192, 198, 212, 0.07)'; e.target.style.boxShadow = 'none'; }}
                 required
               />
             </div>
@@ -89,7 +106,7 @@ export default function LoginPage() {
               <input
                 id="remember"
                 type="checkbox"
-                className="h-4 w-4 rounded border-surface-600 bg-surface-800 text-primary-600 focus:ring-primary-500/30"
+                className="h-4 w-4 rounded accent-primary-500"
               />
               <label htmlFor="remember" className="text-sm text-surface-400">
                 Remember me for 30 days
@@ -100,7 +117,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-500 active:bg-primary-700 transition-colors duration-150 shadow-sm shadow-primary-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-500 active:bg-primary-700 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}
             >
               {loading ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -115,35 +133,24 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-800" />
+              <div className="w-full" style={{ borderTop: '1px solid rgba(192, 198, 212, 0.07)' }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-surface-900 px-3 text-surface-500">or</span>
+              <span className="px-3 text-surface-600" style={{ background: '#121330' }}>or</span>
             </div>
           </div>
 
           {/* SSO placeholder */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-surface-700 bg-surface-800/50 px-4 py-2.5 text-sm font-medium text-surface-300 hover:bg-surface-800 hover:text-surface-200 transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-surface-300 hover:text-surface-200 transition-colors"
+            style={{ background: '#0e0f26', border: '1px solid rgba(192, 198, 212, 0.07)' }}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             Continue with Google
           </button>
@@ -151,7 +158,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-surface-600 mt-6">
-          © 2026 ShipOS. Powered by ShipStation Express.
+          © 2026 ShipOS · Powered by <span className="text-surface-500">Bardo Labs</span>
         </p>
       </div>
     </div>
