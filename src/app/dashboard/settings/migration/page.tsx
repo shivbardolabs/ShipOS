@@ -304,10 +304,10 @@ export default function MigrationPage() {
 
       {error && (
         <div className="mb-6 bg-red-900/20 border border-red-700/30 rounded-lg p-4 flex items-start gap-3">
-          <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-red-300 text-sm font-medium">Error</p>
-            <p className="text-red-400/80 text-sm">{error}</p>
+            <p className="text-red-600/80 text-sm">{error}</p>
           </div>
         </div>
       )}
@@ -317,7 +317,7 @@ export default function MigrationPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary-400" />
+              <Upload className="h-5 w-5 text-primary-600" />
               Upload PostalMate Backup
             </CardTitle>
           </CardHeader>
@@ -333,7 +333,7 @@ export default function MigrationPage() {
             >
               {file ? (
                 <div className="space-y-3">
-                  <FileArchive className="h-12 w-12 text-primary-400 mx-auto" />
+                  <FileArchive className="h-12 w-12 text-primary-600 mx-auto" />
                   <p className="text-surface-200 font-medium">{file.name}</p>
                   <p className="text-surface-500 text-sm">
                     {(file.size / (1024 * 1024)).toFixed(1)} MB
@@ -404,7 +404,7 @@ export default function MigrationPage() {
               <ol className="text-sm text-surface-500 space-y-1 list-decimal list-inside">
                 <li>In PostalMate, go to <span className="text-surface-300">System Utilities → Backup</span></li>
                 <li>Select a backup location and click <span className="text-surface-300">Backup Now</span></li>
-                <li>Find the resulting <code className="text-primary-400 bg-surface-800 px-1 rounded">.7z</code> file (usually named PMBackup_...)</li>
+                <li>Find the resulting <code className="text-primary-600 bg-surface-800 px-1 rounded">.7z</code> file (usually named PMBackup_...)</li>
                 <li>Upload it here to migrate your data</li>
               </ol>
             </div>
@@ -418,7 +418,7 @@ export default function MigrationPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary-400" />
+                <BarChart3 className="h-5 w-5 text-primary-600" />
                 Backup Analysis
               </CardTitle>
             </CardHeader>
@@ -462,7 +462,7 @@ export default function MigrationPage() {
                     className="flex items-center justify-between bg-surface-800/30 rounded-lg px-4 py-2"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-primary-400">{item.icon}</span>
+                      <span className="text-primary-600">{item.icon}</span>
                       <span className="text-sm text-surface-300">{item.label}</span>
                     </div>
                     <span className="text-sm font-mono text-surface-200">{fmt(item.count)}</span>
@@ -513,7 +513,7 @@ export default function MigrationPage() {
                     onChange={() => setOptions(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
                     className="h-5 w-5 rounded border-surface-600 bg-surface-800 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-primary-400">{item.icon}</span>
+                  <span className="text-primary-600">{item.icon}</span>
                   <div>
                     <p className="text-sm text-surface-200 font-medium">{item.label}</p>
                     <p className="text-xs text-surface-500">{item.desc}</p>
@@ -553,10 +553,10 @@ export default function MigrationPage() {
           </Card>
 
           <div className="bg-amber-900/20 border border-amber-700/30 rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-amber-300 text-sm font-medium">Important</p>
-              <p className="text-amber-400/80 text-sm">
+              <p className="text-amber-600/80 text-sm">
                 Migration may take several minutes depending on data size.
                 All migrated records are tagged with a migration ID so they can be rolled back if needed.
               </p>
@@ -579,7 +579,7 @@ export default function MigrationPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
               Migration in Progress
             </CardTitle>
           </CardHeader>
@@ -613,7 +613,7 @@ export default function MigrationPage() {
                     <div key={entity} className="bg-surface-800/30 rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-primary-400">{entityIcon(entity)}</span>
+                          <span className="text-primary-600">{entityIcon(entity)}</span>
                           <span className="text-sm text-surface-200">{entityLabel(entity)}</span>
                         </div>
                         <Badge
@@ -642,7 +642,7 @@ export default function MigrationPage() {
                       )}
                       <div className="flex gap-4 mt-1 text-xs text-surface-500">
                         <span>{fmt(data.migrated)} migrated</span>
-                        {data.errors > 0 && <span className="text-red-400">{data.errors} errors</span>}
+                        {data.errors > 0 && <span className="text-red-600">{data.errors} errors</span>}
                         {data.skipped > 0 && <span>{data.skipped} skipped</span>}
                       </div>
                     </div>
@@ -660,7 +660,7 @@ export default function MigrationPage() {
 
             {!progress && (
               <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary-400 mx-auto mb-3" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-3" />
                 <p className="text-surface-400">Initializing migration...</p>
               </div>
             )}
@@ -677,7 +677,7 @@ export default function MigrationPage() {
                 {progress.status === 'completed' ? (
                   <CheckCircle2 className="h-5 w-5 text-green-400" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-400" />
+                  <XCircle className="h-5 w-5 text-red-600" />
                 )}
                 Migration {progress.status === 'completed' ? 'Complete' : 'Failed'}
               </CardTitle>
@@ -687,13 +687,13 @@ export default function MigrationPage() {
                 {Object.entries(progress.entities).map(([entity, data]) => (
                   data.total > 0 && (
                     <div key={entity} className="bg-surface-800/50 rounded-lg p-3 text-center">
-                      <span className="text-primary-400 flex justify-center mb-1">
+                      <span className="text-primary-600 flex justify-center mb-1">
                         {entityIcon(entity)}
                       </span>
                       <p className="text-lg font-semibold text-surface-200">{fmt(data.migrated)}</p>
                       <p className="text-xs text-surface-500">{entityLabel(entity)}</p>
                       {data.errors > 0 && (
-                        <p className="text-xs text-red-400 mt-1">{data.errors} errors</p>
+                        <p className="text-xs text-red-600 mt-1">{data.errors} errors</p>
                       )}
                     </div>
                   )
@@ -707,7 +707,7 @@ export default function MigrationPage() {
                   </h4>
                   <div className="max-h-40 overflow-y-auto space-y-1">
                     {progress.errors.map((err, i) => (
-                      <p key={i} className="text-xs text-red-400/80 font-mono">
+                      <p key={i} className="text-xs text-red-600/80 font-mono">
                         [{err.entity}:{err.sourceId}] {err.message}
                       </p>
                     ))}

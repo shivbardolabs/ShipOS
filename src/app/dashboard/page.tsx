@@ -45,11 +45,11 @@ import { formatCurrency } from '@/lib/utils';
 /*  Activity icon mapping                                                     */
 /* -------------------------------------------------------------------------- */
 const activityIconMap: Record<string, { icon: React.ElementType; color: string }> = {
-  package_checkin: { icon: PackagePlus, color: 'text-blue-400 bg-blue-500/15' },
-  package_release: { icon: CheckCircle2, color: 'text-emerald-400 bg-emerald-500/15' },
-  notification: { icon: Bell, color: 'text-amber-400 bg-amber-500/15' },
-  shipment: { icon: Truck, color: 'text-indigo-400 bg-indigo-500/15' },
-  mail: { icon: Mail, color: 'text-cyan-400 bg-cyan-500/15' },
+  package_checkin: { icon: PackagePlus, color: 'text-blue-600 bg-blue-50' },
+  package_release: { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
+  notification: { icon: Bell, color: 'text-amber-600 bg-amber-50' },
+  shipment: { icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
+  mail: { icon: Mail, color: 'text-cyan-600 bg-cyan-500/15' },
   customer: { icon: UserPlus, color: 'text-teal-400 bg-teal-500/15' },
   alert: { icon: ShieldAlert, color: 'text-rose-400 bg-rose-500/15' },
 };
@@ -72,15 +72,15 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Check In Package',
     icon: PackagePlus,
     href: '/dashboard/packages/check-in',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/15 hover:bg-blue-500/25',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-500/25',
   },
   {
     label: 'Check Out Package',
     icon: PackageOpen,
     href: '/dashboard/packages/check-out',
-    color: 'text-emerald-400',
-    bgColor: 'bg-emerald-500/15 hover:bg-emerald-500/25',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 hover:bg-emerald-500/25',
     badge: `${dashboardStats.packagesHeld} held`,
   },
   {
@@ -94,22 +94,22 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Send SMS',
     icon: Send,
     href: '/dashboard/notifications',
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/15 hover:bg-amber-500/25',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50 hover:bg-amber-500/25',
     subtitle: '98% open rate',
   },
   {
     label: 'New Shipment',
     icon: Truck,
     href: '/dashboard/shipping',
-    color: 'text-indigo-400',
-    bgColor: 'bg-indigo-500/15 hover:bg-indigo-500/25',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50 hover:bg-indigo-500/25',
   },
   {
     label: 'Mail Scan',
     icon: Mail,
     href: '/dashboard/mail',
-    color: 'text-cyan-400',
+    color: 'text-cyan-600',
     bgColor: 'bg-cyan-500/15 hover:bg-cyan-500/25',
   },
   {
@@ -123,15 +123,15 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Daily Report',
     icon: BarChart3,
     href: '/dashboard/reports',
-    color: 'text-indigo-400',
-    bgColor: 'bg-indigo-500/15 hover:bg-indigo-500/25',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50 hover:bg-indigo-500/25',
   },
   {
     label: 'ID Expiring',
     icon: AlertTriangle,
     href: '/dashboard/compliance',
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/15 hover:bg-red-500/25',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50 hover:bg-red-500/25',
     badge: `${dashboardStats.idExpiringSoon}`,
   },
   {
@@ -152,8 +152,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Package Mgmt',
     icon: Package,
     href: '/dashboard/packages',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/15 hover:bg-blue-500/25',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-500/25',
   },
 ];
 
@@ -244,10 +244,10 @@ export default function DashboardPage() {
 
   /* Secondary stats for the "Quick Stats" sidebar */
   const secondaryStats = [
-    { label: 'Active Customers', value: s.activeCustomers, icon: Users, color: 'text-primary-400', bgColor: 'bg-primary-600/15' },
+    { label: 'Active Customers', value: s.activeCustomers, icon: Users, color: 'text-primary-600', bgColor: 'bg-primary-50' },
     { label: 'ID Expiring Soon', value: s.idExpiringSoon, icon: AlertTriangle, color: 'text-rose-400', bgColor: 'bg-rose-500/15' },
-    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/15' },
-    { label: 'Notifications Sent', value: s.notificationsSent, icon: Bell, color: 'text-primary-400', bgColor: 'bg-primary-600/15' },
+    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+    { label: 'Notifications Sent', value: s.notificationsSent, icon: Bell, color: 'text-primary-600', bgColor: 'bg-primary-50' },
   ];
 
   return (
@@ -270,8 +270,8 @@ export default function DashboardPage() {
             {/* Header row */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600/15">
-                  <Sparkles className="h-5 w-5 text-primary-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50">
+                  <Sparkles className="h-5 w-5 text-primary-600" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-surface-100">
@@ -312,10 +312,10 @@ export default function DashboardPage() {
                   <Link
                     key={step.label}
                     href={step.href}
-                    className="group flex items-start gap-3 rounded-xl border border-surface-800/60 bg-surface-900/40 p-3.5 hover:border-primary-500/30 hover:bg-surface-800/50 transition-all duration-150"
+                    className="group flex items-start gap-3 rounded-xl border border-surface-700/60 bg-surface-900/40 p-3.5 hover:border-primary-200 hover:bg-surface-800/50 transition-all duration-150"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-800/80 group-hover:bg-primary-600/15 transition-colors">
-                      <Icon className="h-4 w-4 text-surface-400 group-hover:text-primary-400 transition-colors" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-800/80 group-hover:bg-primary-50 transition-colors">
+                      <Icon className="h-4 w-4 text-surface-400 group-hover:text-primary-600 transition-colors" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-surface-200 leading-snug">
@@ -343,7 +343,7 @@ export default function DashboardPage() {
           </h2>
           <button
             onClick={() => setShowAllStats(!showAllStats)}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
           >
             {showAllStats ? 'Show Less' : 'Show All'}
             {showAllStats ? (
@@ -357,11 +357,11 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Primary 4 — always visible */}
           <StatCard
-            icon={<Package className="h-5 w-5 text-amber-400" />}
+            icon={<Package className="h-5 w-5 text-amber-600" />}
             title="Packages Held"
             value={s.packagesHeld}
             change={-3}
-            className="[&>div>div]:bg-amber-500/15 [&>div>div]:text-amber-400"
+            className="[&>div>div]:bg-amber-50 [&>div>div]:text-amber-600"
           />
           <StatCard
             icon={<PackagePlus className="h-5 w-5 text-teal-400" />}
@@ -371,11 +371,11 @@ export default function DashboardPage() {
             className="[&>div>div]:bg-teal-500/15 [&>div>div]:text-teal-400"
           />
           <StatCard
-            icon={<PackageCheck className="h-5 w-5 text-emerald-400" />}
+            icon={<PackageCheck className="h-5 w-5 text-emerald-600" />}
             title="Released Today"
             value={s.packagesReleasedToday}
             change={8}
-            className="[&>div>div]:bg-emerald-500/15 [&>div>div]:text-emerald-400"
+            className="[&>div>div]:bg-emerald-50 [&>div>div]:text-emerald-600"
           />
           <StatCard
             icon={<DollarSign className="h-5 w-5 text-green-400" />}
@@ -389,11 +389,11 @@ export default function DashboardPage() {
           {showAllStats && (
             <>
               <StatCard
-                icon={<Users className="h-5 w-5 text-primary-400" />}
+                icon={<Users className="h-5 w-5 text-primary-600" />}
                 title="Active Customers"
                 value={s.activeCustomers}
                 change={2}
-                className="[&>div>div]:bg-primary-600/15 [&>div>div]:text-primary-400"
+                className="[&>div>div]:bg-primary-50 [&>div>div]:text-primary-600"
               />
               <StatCard
                 icon={<AlertTriangle className="h-5 w-5 text-rose-400" />}
@@ -402,17 +402,17 @@ export default function DashboardPage() {
                 className="[&>div>div]:bg-rose-500/15 [&>div>div]:text-rose-400"
               />
               <StatCard
-                icon={<Truck className="h-5 w-5 text-indigo-400" />}
+                icon={<Truck className="h-5 w-5 text-indigo-600" />}
                 title="Shipments Today"
                 value={s.shipmentsToday}
                 change={15}
-                className="[&>div>div]:bg-indigo-500/15 [&>div>div]:text-indigo-400"
+                className="[&>div>div]:bg-indigo-50 [&>div>div]:text-indigo-600"
               />
               <StatCard
-                icon={<Bell className="h-5 w-5 text-primary-400" />}
+                icon={<Bell className="h-5 w-5 text-primary-600" />}
                 title="Notifications Sent"
                 value={s.notificationsSent}
-                className="[&>div>div]:bg-primary-600/15 [&>div>div]:text-primary-400"
+                className="[&>div>div]:bg-primary-50 [&>div>div]:text-primary-600"
               />
             </>
           )}
@@ -433,11 +433,11 @@ export default function DashboardPage() {
               <Link
                 key={tile.label}
                 href={tile.href}
-                className={`group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-800/60 p-4 min-h-[88px] text-center transition-all duration-150 hover:border-surface-700/50 hover:scale-[1.02] active:scale-[0.98] ${tile.bgColor}`}
+                className={`group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-700/60 p-4 min-h-[88px] text-center transition-all duration-150 hover:border-surface-700/50 hover:scale-[1.02] active:scale-[0.98] ${tile.bgColor}`}
               >
                 {/* Badge */}
                 {tile.badge && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-red-500/25">
+                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
                     {tile.badge}
                   </span>
                 )}
@@ -524,7 +524,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-surface-500 leading-snug">
                       {stat.label}
                     </p>
-                    <p className="text-lg font-bold text-white leading-snug">
+                    <p className="text-lg font-bold text-surface-100 leading-snug">
                       {stat.value}
                     </p>
                   </div>

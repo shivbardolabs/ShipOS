@@ -35,8 +35,8 @@ import type { Customer, Package as PackageType } from '@/lib/types';
 /* -------------------------------------------------------------------------- */
 const carrierColors: Record<string, { bg: string; text: string; dot: string }> = {
   ups: { bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { bg: 'bg-indigo-900/30', text: 'text-indigo-400', dot: 'bg-indigo-400' },
-  usps: { bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
+  fedex: { bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
+  usps: { bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
   amazon: { bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
   dhl: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
 };
@@ -246,29 +246,29 @@ export default function CheckOutPage() {
   /* ============================================================================ */
   if (showSuccess) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08081A]/95 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
         <div className="text-center max-w-md mx-auto px-6 animate-in fade-in-0 zoom-in-95 duration-300">
           {/* Animated checkmark */}
           <div className="relative mx-auto mb-8">
-            <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-emerald-500/15 ring-4 ring-emerald-500/10">
+            <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-emerald-50 ring-4 ring-emerald-500/10">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/25">
-                <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
               </div>
             </div>
             <div className="absolute -inset-4 rounded-full bg-emerald-500/5 animate-pulse" />
           </div>
 
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-surface-100 mb-2">
             Packages Released Successfully!
           </h2>
           <p className="text-lg text-surface-300 mb-2">
-            <span className="text-white font-semibold">{selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''}</span>{' '}
+            <span className="text-surface-100 font-semibold">{selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''}</span>{' '}
             released to{' '}
-            <span className="text-white font-semibold">{foundCustomer?.firstName} {foundCustomer?.lastName}</span>{' '}
+            <span className="text-surface-100 font-semibold">{foundCustomer?.firstName} {foundCustomer?.lastName}</span>{' '}
             ({foundCustomer?.pmbNumber})
           </p>
           <p className="text-surface-400 mb-2">
-            Total charged: <span className="text-emerald-400 font-bold text-lg">{formatCurrency(fees.total)}</span>
+            Total charged: <span className="text-emerald-600 font-bold text-lg">{formatCurrency(fees.total)}</span>
           </p>
           <p className="text-sm text-surface-500 mb-10">
             {receiptMethodLabel[receiptMethod]}
@@ -307,11 +307,11 @@ export default function CheckOutPage() {
       <Card padding="lg">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600/15">
-              <ScanLine className="h-6 w-6 text-primary-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50">
+              <ScanLine className="h-6 w-6 text-primary-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Enter or Scan PMB Number</h2>
+              <h2 className="text-lg font-semibold text-surface-100">Enter or Scan PMB Number</h2>
               <p className="text-sm text-surface-400">Look up a customer to release their packages</p>
             </div>
           </div>
@@ -347,12 +347,12 @@ export default function CheckOutPage() {
           {/* ---- Customer Info Banner ---- */}
           <Card padding="md">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-600/20 text-primary-300 text-base font-bold">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-300 text-base font-bold">
                 {foundCustomer.firstName[0]}{foundCustomer.lastName[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-surface-100">
                     {foundCustomer.firstName} {foundCustomer.lastName}
                   </h3>
                   <Badge status={foundCustomer.status}>{foundCustomer.status}</Badge>
@@ -361,13 +361,13 @@ export default function CheckOutPage() {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-4 mt-1 text-sm text-surface-400">
-                  <span className="font-mono text-primary-400 font-semibold">{foundCustomer.pmbNumber}</span>
+                  <span className="font-mono text-primary-600 font-semibold">{foundCustomer.pmbNumber}</span>
                   {foundCustomer.email && <span>{foundCustomer.email}</span>}
                   {foundCustomer.phone && <span>{foundCustomer.phone}</span>}
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-3xl font-bold text-white">{customerPackages.length}</p>
+                <p className="text-3xl font-bold text-surface-100">{customerPackages.length}</p>
                 <p className="text-xs text-surface-400">package{customerPackages.length !== 1 ? 's' : ''} in inventory</p>
               </div>
             </div>
@@ -410,7 +410,7 @@ export default function CheckOutPage() {
                     </Button>
                   </div>
                   <p className="text-sm text-surface-400">
-                    <span className="text-white font-semibold">{selectedIds.size}</span> of {customerPackages.length} selected
+                    <span className="text-surface-100 font-semibold">{selectedIds.size}</span> of {customerPackages.length} selected
                   </p>
                 </div>
 
@@ -428,7 +428,7 @@ export default function CheckOutPage() {
                         className={cn(
                           'glass-card p-4 flex items-center gap-4 cursor-pointer transition-all duration-150',
                           isSelected
-                            ? 'ring-1 ring-primary-500/50 bg-primary-600/5'
+                            ? 'ring-1 ring-primary-500/50 bg-primary-50/60'
                             : 'hover:bg-surface-800/50'
                         )}
                       >
@@ -438,7 +438,7 @@ export default function CheckOutPage() {
                           className={cn(
                             'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all',
                             isSelected
-                              ? 'bg-primary-600 border-primary-500 text-white'
+                              ? 'bg-primary-600 border-primary-500 text-surface-100'
                               : 'bg-surface-900 border-surface-600 hover:border-surface-400'
                           )}
                         >
@@ -473,7 +473,7 @@ export default function CheckOutPage() {
                             className={cn(
                               'inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold min-w-[42px]',
                               held > 7
-                                ? 'bg-red-500/20 text-red-400'
+                                ? 'bg-red-100 text-red-600'
                                 : held > 3
                                   ? 'bg-yellow-500/20 text-yellow-400'
                                   : 'bg-surface-700/50 text-surface-400'
@@ -513,7 +513,7 @@ export default function CheckOutPage() {
               {/* ============================================================ */}
               <TabPanel active={activeTab === 'addons'}>
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-1">Recommended Services</h3>
+                  <h3 className="text-lg font-semibold text-surface-100 mb-1">Recommended Services</h3>
                   <p className="text-sm text-surface-400">Enhance your customer&apos;s experience with these optional add-ons</p>
                 </div>
 
@@ -527,7 +527,7 @@ export default function CheckOutPage() {
                         className={cn(
                           'glass-card p-5 flex items-center gap-4 cursor-pointer transition-all duration-150',
                           isEnabled
-                            ? 'ring-1 ring-primary-500/50 bg-primary-600/5'
+                            ? 'ring-1 ring-primary-500/50 bg-primary-50/60'
                             : 'hover:bg-surface-800/50'
                         )}
                       >
@@ -537,9 +537,9 @@ export default function CheckOutPage() {
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-white">{addon.name}</h4>
+                            <h4 className="text-sm font-semibold text-surface-100">{addon.name}</h4>
                             {addon.recommended && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-600 border border-emerald-200 px-1.5 py-0.5 rounded">
                                 Recommended
                               </span>
                             )}
@@ -549,7 +549,7 @@ export default function CheckOutPage() {
 
                         {/* Price */}
                         <div className="shrink-0 text-right mr-2">
-                          <p className="text-base font-bold text-white">{formatCurrency(addon.price)}</p>
+                          <p className="text-base font-bold text-surface-100">{formatCurrency(addon.price)}</p>
                           <p className="text-xs text-surface-500">{addon.priceUnit}</p>
                         </div>
 
@@ -559,7 +559,7 @@ export default function CheckOutPage() {
                           className="shrink-0"
                         >
                           {isEnabled ? (
-                            <ToggleRight className="h-8 w-8 text-primary-400" />
+                            <ToggleRight className="h-8 w-8 text-primary-600" />
                           ) : (
                             <ToggleLeft className="h-8 w-8 text-surface-600" />
                           )}
@@ -571,9 +571,9 @@ export default function CheckOutPage() {
 
                 {/* Add-on subtotal */}
                 {enabledAddOns.size > 0 && (
-                  <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-primary-600/10 border border-primary-500/20">
+                  <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-primary-50 border border-primary-500/20">
                     <span className="text-sm text-primary-300">Add-on subtotal</span>
-                    <span className="text-lg font-bold text-white">{formatCurrency(fees.addOnTotal)}</span>
+                    <span className="text-lg font-bold text-surface-100">{formatCurrency(fees.addOnTotal)}</span>
                   </div>
                 )}
 
@@ -601,7 +601,7 @@ export default function CheckOutPage() {
                   {/* Left column: Fee breakdown */}
                   <div className="lg:col-span-3 space-y-6">
                     <Card padding="md">
-                      <h3 className="text-base font-semibold text-white mb-5">Fee Breakdown</h3>
+                      <h3 className="text-base font-semibold text-surface-100 mb-5">Fee Breakdown</h3>
 
                       {/* Package fees — itemized */}
                       <div className="mb-4">
@@ -659,8 +659,8 @@ export default function CheckOutPage() {
                       </div>
                       <div className="border-t border-surface-700 pt-3 mt-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-bold text-white">Total</span>
-                          <span className="text-2xl font-bold text-white">{formatCurrency(fees.total)}</span>
+                          <span className="text-lg font-bold text-surface-100">Total</span>
+                          <span className="text-2xl font-bold text-surface-100">{formatCurrency(fees.total)}</span>
                         </div>
                       </div>
                     </Card>
@@ -680,7 +680,7 @@ export default function CheckOutPage() {
                   {/* Right column: Receipt delivery + Actions */}
                   <div className="lg:col-span-2 space-y-6">
                     <Card padding="md">
-                      <h3 className="text-base font-semibold text-white mb-4">Receipt Delivery</h3>
+                      <h3 className="text-base font-semibold text-surface-100 mb-4">Receipt Delivery</h3>
                       <div className="space-y-2">
                         <ReceiptOption
                           icon={<MessageSquare className="h-5 w-5" />}
@@ -779,21 +779,21 @@ function ReceiptOption({
       className={cn(
         'w-full flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-left',
         selected
-          ? 'border-primary-500 bg-primary-600/10'
+          ? 'border-primary-500 bg-primary-50'
           : 'border-surface-700 bg-surface-900/50 hover:border-surface-500'
       )}
     >
       <div className={cn(
         'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-        selected ? 'bg-primary-600/20 text-primary-400' : 'bg-surface-800 text-surface-400'
+        selected ? 'bg-primary-50 text-primary-600' : 'bg-surface-800 text-surface-400'
       )}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn('text-sm font-medium', selected ? 'text-white' : 'text-surface-300')}>{label}</span>
+          <span className={cn('text-sm font-medium', selected ? 'text-surface-100' : 'text-surface-300')}>{label}</span>
           {recommended && (
-            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">
+            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded">
               75% prefer this
             </span>
           )}

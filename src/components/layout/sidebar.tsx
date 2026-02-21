@@ -87,7 +87,7 @@ export function Sidebar() {
 
   const roleColor =
     currentUser.role === 'admin'
-      ? 'bg-primary-500/15 text-primary-400 border-primary-500/30'
+      ? 'bg-primary-50 text-primary-600 border-primary-200'
       : currentUser.role === 'manager'
       ? 'bg-accent-amber/15 text-accent-amber border-accent-amber/30'
       : 'bg-surface-600/20 text-surface-400 border-surface-600/40';
@@ -95,7 +95,7 @@ export function Sidebar() {
   const navContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid rgba(192, 198, 212, 0.07)' }}>
+      <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid #e2e8f0' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/shipos-logo-mark.svg"
@@ -143,7 +143,7 @@ export function Sidebar() {
                     )}
                     style={!active ? { } : undefined}
                   >
-                    <item.icon className={cn('h-[18px] w-[18px] flex-shrink-0', active && 'text-primary-400')} />
+                    <item.icon className={cn('h-[18px] w-[18px] flex-shrink-0', active && 'text-primary-600')} />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
@@ -154,7 +154,7 @@ export function Sidebar() {
       </nav>
 
       {/* User info at bottom */}
-      <div className="px-4 py-4" style={{ borderTop: '1px solid rgba(192, 198, 212, 0.07)' }}>
+      <div className="px-4 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white">
             {currentUser.name
@@ -184,8 +184,8 @@ export function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="fixed top-4 left-4 z-50 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border text-surface-300 hover:text-white"
-        style={{ background: '#121330', borderColor: 'rgba(192, 198, 212, 0.07)' }}
+        className="fixed top-4 left-4 z-50 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border text-surface-300 hover:text-surface-100"
+        style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
         onClick={() => setMobileOpen(true)}
       >
         <Menu className="h-5 w-5" />
@@ -194,7 +194,7 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-surface-100/50 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -205,7 +205,7 @@ export function Sidebar() {
           'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col transition-transform duration-300 lg:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={{ background: '#0e0f26', borderRight: '1px solid rgba(192, 198, 212, 0.07)' }}
+        style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}
       >
         {navContent}
       </aside>
@@ -213,7 +213,7 @@ export function Sidebar() {
       {/* Sidebar – desktop */}
       <aside
         className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[260px] flex-col"
-        style={{ background: '#0e0f26', borderRight: '1px solid rgba(192, 198, 212, 0.07)' }}
+        style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}
       >
         {navContent}
       </aside>

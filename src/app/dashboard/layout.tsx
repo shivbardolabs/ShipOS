@@ -15,7 +15,7 @@ export default function DashboardLayout({
   /* Kiosk mode — full-screen, no sidebar or header */
   if (isKiosk) {
     return (
-      <div className="min-h-screen bg-[#08081A]">
+      <div className="min-h-screen bg-white">
         {children}
       </div>
     );

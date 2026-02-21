@@ -12,10 +12,10 @@ export default function Home() {
     <div className="min-h-screen bg-surface-950 flex flex-col relative overflow-hidden">
       {/* Ambient background orbs */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-30" style={{ background: 'rgba(99, 102, 241, 0.05)', filter: 'blur(100px)' }} />
-      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'rgba(99, 102, 241, 0.08)', filter: 'blur(80px)' }} />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'rgba(99, 102, 241, 0.05)', filter: 'blur(80px)' }} />
 
       {/* Header */}
-      <header className="relative z-10 px-6 py-4" style={{ borderBottom: '1px solid rgba(192, 198, 212, 0.07)' }}>
+      <header className="relative z-10 px-6 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -32,7 +32,7 @@ export default function Home() {
           </div>
           <a
             href="/dashboard"
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
           >
             Go to Dashboard
             <ArrowRight className="w-4 h-4" />
@@ -45,7 +45,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-5xl font-extrabold text-surface-100 mb-4">
             Your postal store,{" "}
-            <em className="brand-italic text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#818CF8" }}>
+            <em className="brand-italic text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#4F46E5" }}>
               fully managed
             </em>
           </h2>
@@ -82,7 +82,7 @@ export default function Home() {
                 key={feature.title}
                 className="glass-card p-6 text-left card-hover"
               >
-                <feature.icon className="w-8 h-8 text-primary-400 mb-3" />
+                <feature.icon className="w-8 h-8 text-primary-600 mb-3" />
                 <h3 className="text-sm font-semibold text-surface-100 mb-1">
                   {feature.title}
                 </h3>
@@ -119,7 +119,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-4" style={{ borderTop: '1px solid rgba(192, 198, 212, 0.07)' }}>
+      <footer className="relative z-10 px-6 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-surface-600">
           <span>ShipOS v0.1.0</span>
           <span>Built by <span className="text-surface-400">Bardo Labs</span></span>

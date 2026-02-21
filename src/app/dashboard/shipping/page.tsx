@@ -118,7 +118,7 @@ export default function ShippingPage() {
       label: 'Tracking #',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-xs text-primary-400">{row.trackingNumber}</span>
+        <span className="font-mono text-xs text-primary-600">{row.trackingNumber}</span>
       ) },
     {
       key: 'customer',
@@ -167,7 +167,7 @@ export default function ShippingPage() {
       render: (row) => {
         const profit = row.retailPrice - row.wholesaleCost;
         return (
-          <span className={profit > 0 ? 'text-emerald-400 font-medium' : 'text-red-400'}>
+          <span className={profit > 0 ? 'text-emerald-600 font-medium' : 'text-red-600'}>
             {formatCurrency(profit)}
           </span>
         );
@@ -426,7 +426,7 @@ export default function ShippingPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-surface-300">Retail Price</label>
               <div className="flex items-center h-[38px] rounded-lg border border-surface-700 bg-surface-800 px-3.5 text-sm">
-                <span className="text-emerald-400 font-semibold">
+                <span className="text-emerald-600 font-semibold">
                   {formatCurrency(retailPrice)}
                 </span>
               </div>

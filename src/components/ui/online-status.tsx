@@ -29,8 +29,8 @@ export function OnlineStatus() {
     <div
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all duration-500 ${
         isOnline
-          ? 'bg-emerald-500/10 text-emerald-400'
-          : 'bg-amber-500/10 text-amber-400'
+          ? 'bg-emerald-50 text-emerald-600'
+          : 'bg-amber-50 text-amber-600'
       }`}
       style={{
         border: `1px solid ${isOnline ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}`,

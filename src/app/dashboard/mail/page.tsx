@@ -35,10 +35,10 @@ import {
 /* -------------------------------------------------------------------------- */
 
 const mailTypeIcon: Record<string, React.ReactNode> = {
-  letter: <Mail className="h-4 w-4 text-blue-400" />,
-  magazine: <BookOpen className="h-4 w-4 text-indigo-400" />,
-  catalog: <ScrollText className="h-4 w-4 text-amber-400" />,
-  legal: <FileText className="h-4 w-4 text-red-400" />,
+  letter: <Mail className="h-4 w-4 text-blue-600" />,
+  magazine: <BookOpen className="h-4 w-4 text-indigo-600" />,
+  catalog: <ScrollText className="h-4 w-4 text-amber-600" />,
+  legal: <FileText className="h-4 w-4 text-red-600" />,
   other: <Inbox className="h-4 w-4 text-surface-400" /> };
 
 type MailRow = MailPiece & Record<string, unknown>;

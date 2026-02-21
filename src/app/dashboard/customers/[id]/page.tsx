@@ -58,9 +58,9 @@ function hashColor(name: string): string {
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
-  iPostal: { label: 'iPostal', classes: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  anytime: { label: 'Anytime', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' } };
+  iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
+  anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
+  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' } };
 
 function getDaysUntil(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -137,10 +137,10 @@ const notifCols: Column<Notification & Record<string, unknown>>[] = [
     render: (row) => (
       <div className="flex items-center gap-1">
         {(row.channel === 'email' || row.channel === 'both') && (
-          <span className="status-badge text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">Email</span>
+          <span className="status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">Email</span>
         )}
         {(row.channel === 'sms' || row.channel === 'both') && (
-          <span className="status-badge text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">SMS</span>
+          <span className="status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">SMS</span>
         )}
       </div>
     ) },
@@ -231,7 +231,7 @@ export default function CustomerDetailPage() {
           {/* Avatar */}
           <div
             className={cn(
-              'flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-white shadow-lg',
+              'flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-surface-100 shadow-lg',
               hashColor(fullName)
             )}
           >
@@ -241,7 +241,7 @@ export default function CustomerDetailPage() {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-white">{fullName}</h1>
+              <h1 className="text-xl font-bold text-surface-100">{fullName}</h1>
               <Badge status={customer.status}>{customer.status}</Badge>
               <span className={cn('status-badge text-xs', plat.classes)}>{plat.label}</span>
             </div>
@@ -259,7 +259,7 @@ export default function CustomerDetailPage() {
             <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />}>
               Send Notification
             </Button>
-            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10" leftIcon={<UserX className="h-3.5 w-3.5" />}>
+            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-300 hover:bg-red-50" leftIcon={<UserX className="h-3.5 w-3.5" />}>
               Deactivate
             </Button>
           </div>
@@ -332,10 +332,10 @@ export default function CustomerDetailPage() {
                   )}
                 >
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
-                    {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-400" /> :
+                    {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
                      entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
-                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-400" /> :
-                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-400" /> :
+                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
+                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
                      <FileText className="h-3.5 w-3.5 text-surface-400" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -373,7 +373,7 @@ export default function CustomerDetailPage() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5 text-xs">
                     {customer.notifyEmail ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-surface-600" />
                     )}
@@ -381,7 +381,7 @@ export default function CustomerDetailPage() {
                   </span>
                   <span className="flex items-center gap-1.5 text-xs">
                     {customer.notifySms ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-surface-600" />
                     )}

@@ -37,9 +37,9 @@ interface CarrierPickup {
 
 function buildCarrierPickups(): CarrierPickup[] {
   const carrierConfig: { id: string; name: string; color: string; bgColor: string; borderColor: string; iconBg: string }[] = [
-    { id: 'ups', name: 'UPS', color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', iconBg: 'bg-amber-500/20' },
-    { id: 'fedex', name: 'FedEx', color: 'text-indigo-400', bgColor: 'bg-indigo-500/10', borderColor: 'border-indigo-500/30', iconBg: 'bg-indigo-500/20' },
-    { id: 'usps', name: 'USPS', color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30', iconBg: 'bg-blue-500/20' },
+    { id: 'ups', name: 'UPS', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBg: 'bg-amber-100' },
+    { id: 'fedex', name: 'FedEx', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', iconBg: 'bg-indigo-100' },
+    { id: 'usps', name: 'USPS', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-500/30', iconBg: 'bg-blue-100' },
     { id: 'dhl', name: 'DHL', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', iconBg: 'bg-yellow-500/20' },
     { id: 'amazon', name: 'Amazon', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30', iconBg: 'bg-orange-500/20' },
   ];
@@ -121,22 +121,22 @@ export default function EndOfDayPage() {
       <Card>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600/15 text-primary-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
               <Calendar className="h-6 w-6" />
             </div>
             <div>
               <p className="text-xs text-surface-500 uppercase tracking-wider">Shipping Day</p>
-              <p className="text-xl font-bold text-white">{todayStr}</p>
+              <p className="text-xl font-bold text-surface-100">{todayStr}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-white">{totalPackages}</p>
+              <p className="text-2xl font-bold text-surface-100">{totalPackages}</p>
               <p className="text-xs text-surface-500">Total Packages</p>
             </div>
             <div className="h-8 w-px bg-surface-700" />
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-emerald-400">{totalPickedUp}</p>
+              <p className="text-2xl font-bold text-emerald-600">{totalPickedUp}</p>
               <p className="text-xs text-surface-500">Picked Up</p>
             </div>
             <div className="h-8 w-px bg-surface-700" />
@@ -149,11 +149,11 @@ export default function EndOfDayPage() {
       </Card>
 
       {dayClosed && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           <div>
             <p className="text-sm font-medium text-emerald-300">Day Closed Successfully</p>
-            <p className="text-xs text-emerald-400/70">
+            <p className="text-xs text-emerald-600/70">
               All carrier pickups have been processed for {todayStr}
             </p>
           </div>
@@ -199,11 +199,11 @@ export default function EndOfDayPage() {
               {/* Status */}
               <div className="mb-4">
                 {carrier.status === 'picked_up' && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-500/20">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <div>
                       <p className="text-xs font-medium text-emerald-300">Picked Up</p>
-                      <p className="text-[10px] text-emerald-400/70">{carrier.pickupTime}</p>
+                      <p className="text-[10px] text-emerald-600/70">{carrier.pickupTime}</p>
                     </div>
                   </div>
                 )}
@@ -299,7 +299,7 @@ export default function EndOfDayPage() {
           )}
 
           <p className="text-sm text-surface-300">
-            Are you sure you want to close the shipping day for <span className="text-white font-medium">{todayStr}</span>?
+            Are you sure you want to close the shipping day for <span className="text-surface-100 font-medium">{todayStr}</span>?
           </p>
 
           <div className="space-y-2">
@@ -349,11 +349,11 @@ export default function EndOfDayPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
                 <p className="text-xs text-surface-500 mb-1">Total Packages</p>
-                <p className="text-lg font-bold text-white">{manifestCarrier.packages}</p>
+                <p className="text-lg font-bold text-surface-100">{manifestCarrier.packages}</p>
               </div>
               <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
                 <p className="text-xs text-surface-500 mb-1">Pickup Time</p>
-                <p className="text-lg font-bold text-white">{manifestCarrier.pickupTime}</p>
+                <p className="text-lg font-bold text-surface-100">{manifestCarrier.pickupTime}</p>
               </div>
             </div>
 
@@ -361,7 +361,7 @@ export default function EndOfDayPage() {
               <p className="text-xs text-surface-500 uppercase tracking-wider mb-2">
                 Manifest ID
               </p>
-              <p className="font-mono text-sm text-primary-400 bg-surface-800/50 px-3 py-2 rounded-lg border border-surface-700/50">
+              <p className="font-mono text-sm text-primary-600 bg-surface-800/50 px-3 py-2 rounded-lg border border-surface-700/50">
                 {manifestCarrier.manifestId}
               </p>
             </div>

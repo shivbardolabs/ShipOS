@@ -80,7 +80,7 @@ export function BottomNav() {
       {/* Drawer overlay */}
       {drawerOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[60] bg-surface-100/50 backdrop-blur-sm lg:hidden"
           onClick={() => setDrawerOpen(false)}
         />
       )}
@@ -95,8 +95,8 @@ export function BottomNav() {
         <div
           className="mx-2 mb-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] rounded-2xl border overflow-hidden"
           style={{
-            background: 'rgba(18, 19, 48, 0.97)',
-            borderColor: 'rgba(192, 198, 212, 0.1)',
+            background: 'rgba(255, 255, 255, 0.97)',
+            borderColor: '#e2e8f0',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
           }}
@@ -104,7 +104,7 @@ export function BottomNav() {
           {/* Drawer header */}
           <div
             className="flex items-center justify-between px-5 py-3.5"
-            style={{ borderBottom: '1px solid rgba(192, 198, 212, 0.07)' }}
+            style={{ borderBottom: '1px solid #e2e8f0' }}
           >
             <span className="text-sm font-semibold text-surface-200">
               More
@@ -130,7 +130,7 @@ export function BottomNav() {
                   className={cn(
                     'flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 transition-all duration-150',
                     active
-                      ? 'bg-primary-600/15 text-primary-400'
+                      ? 'bg-primary-50 text-primary-600'
                       : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800/50'
                   )}
                 >
@@ -155,8 +155,8 @@ export function BottomNav() {
         <div
           className="flex h-16 items-center justify-around border-t"
           style={{
-            background: 'rgba(14, 15, 38, 0.92)',
-            borderColor: 'rgba(192, 198, 212, 0.07)',
+            background: 'rgba(255, 255, 255, 0.92)',
+            borderColor: '#e2e8f0',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
           }}
@@ -170,7 +170,7 @@ export function BottomNav() {
                 href={item.href}
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-colors duration-150',
-                  active ? 'text-primary-400' : 'text-surface-500 active:text-surface-300'
+                  active ? 'text-primary-600' : 'text-surface-500 active:text-surface-300'
                 )}
               >
                 {/* Active pill indicator */}
@@ -201,7 +201,7 @@ export function BottomNav() {
             className={cn(
               'relative flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-colors duration-150',
               moreActive || drawerOpen
-                ? 'text-primary-400'
+                ? 'text-primary-600'
                 : 'text-surface-500 active:text-surface-300'
             )}
           >

@@ -3,52 +3,54 @@
 
 @theme {
   /* ================================================================
-     ShipOS — Indigo Premium Dark Theme
-     Color System v2.0 — Feb 2026
+     ShipOS — Indigo Premium Light Theme
+     Color System v3.0 — Feb 2026
      ================================================================ */
 
-  /* Primary: Indigo spectrum */
+  /* Primary: Indigo spectrum (unchanged — works on both light & dark) */
   --color-primary-50: #eef2ff;
   --color-primary-100: #e0e7ff;
   --color-primary-200: #c7d2fe;
   --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;   /* Hover / Soft Indigo */
+  --color-primary-400: #818cf8;
   --color-primary-500: #6366f1;   /* Signal / Indigo */
-  --color-primary-600: #4f46e5;   /* Signal Deep / Core Indigo */
+  --color-primary-600: #4f46e5;   /* Core Indigo */
   --color-primary-700: #4338ca;
   --color-primary-800: #3730a3;
   --color-primary-900: #312e81;
   --color-primary-950: #1e1b4b;
 
-  /* Surface: Slate spectrum on Void */
-  --color-surface-50: #f8fafc;
-  --color-surface-100: #e8eaf0;   /* Headings, primary text */
-  --color-surface-200: #d1d5e0;   /* Subheadings, card titles */
-  --color-surface-300: #b0b6c6;   /* Secondary emphasis */
-  --color-surface-400: #9ca3b4;   /* Body text, descriptions */
-  --color-surface-500: #7a8198;   /* Muted text, timestamps */
-  --color-surface-600: #5a607a;   /* Tertiary, disabled */
-  --color-surface-700: #3d4055;   /* Borders, dividers */
-  --color-surface-800: #121330;   /* Surface Dark — cards, panels */
-  --color-surface-850: #0e0f26;   /* Surface Darker — nested surfaces */
-  --color-surface-900: #0d0e24;   /* Void Up — elevated backgrounds */
-  --color-surface-950: #08081a;   /* Void — primary backgrounds */
+  /* Surface: Slate spectrum — light-first
+     950 = page bg (lightest), 100 = primary text (darkest)
+     Keeps all existing class references working correctly */
+  --color-surface-50: #020617;
+  --color-surface-100: #0f172a;   /* Primary text (headings) */
+  --color-surface-200: #1e293b;   /* Subheadings, card titles */
+  --color-surface-300: #334155;   /* Secondary text emphasis */
+  --color-surface-400: #475569;   /* Body text */
+  --color-surface-500: #64748b;   /* Muted text, timestamps */
+  --color-surface-600: #94a3b8;   /* Tertiary, disabled, placeholders */
+  --color-surface-700: #e2e8f0;   /* Borders, dividers */
+  --color-surface-800: #f1f5f9;   /* Cards, panels, hover bg */
+  --color-surface-850: #f5f7fa;   /* Nested surfaces */
+  --color-surface-900: #f8fafc;   /* Elevated backgrounds, inputs */
+  --color-surface-950: #ffffff;   /* Page background */
 
   /* Accent colors */
-  --color-accent-teal: #06b6d4;    /* Cyan — info, transit, links */
-  --color-accent-amber: #f59e0b;   /* Amber — warnings */
-  --color-accent-rose: #ef4444;    /* Red — errors, danger */
-  --color-accent-indigo: #6366f1;  /* Indigo — matches primary */
-  --color-accent-emerald: #22c55e; /* Emerald — success, live, shipped */
+  --color-accent-teal: #0891b2;    /* Cyan — info, transit, links */
+  --color-accent-amber: #d97706;   /* Amber — warnings */
+  --color-accent-rose: #dc2626;    /* Red — errors, danger */
+  --color-accent-indigo: #4f46e5;  /* Indigo — matches primary */
+  --color-accent-emerald: #059669; /* Emerald — success, live, shipped */
 
   /* Carrier brand colors */
   --color-carrier-ups: #351c15;
   --color-carrier-fedex: #4d148c;
   --color-carrier-usps: #333366;
-  --color-carrier-dhl: #ffcc00;
-  --color-carrier-amazon: #ff9900;
+  --color-carrier-dhl: #b8860b;
+  --color-carrier-amazon: #e67e00;
 
-  /* Fonts — brand stack */
+  /* Fonts */
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -60,7 +62,7 @@
   --radius-xl: 1rem;
 }
 
-/* Base dark theme styles */
+/* Base light theme styles */
 body {
   @apply bg-surface-950 text-surface-400 antialiased;
 }
@@ -72,7 +74,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d0e24;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -83,7 +85,7 @@ body {
   @apply bg-surface-600;
 }
 
-/* Focus styles — indigo glow */
+/* Focus styles — indigo ring */
 *:focus-visible {
   @apply outline-2 outline-offset-2 outline-primary-500;
 }
@@ -95,11 +97,11 @@ body {
 
 /* Card hover effects */
 .card-hover {
-  @apply hover:border-primary-500/20 cursor-pointer;
+  @apply hover:border-primary-500/30 cursor-pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .card-hover:hover {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.05);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
 }
 
 /* Status badge base */
@@ -117,23 +119,22 @@ body {
 
 /* Sidebar active link — indigo accent */
 .nav-active {
-  @apply bg-primary-500/15 text-primary-400 border-l-2 border-primary-500;
+  @apply bg-primary-50 text-primary-600 border-l-2 border-primary-600;
 }
 
-/* Glassmorphism card — brand surfaces */
+/* Card — clean white surface */
 .glass-card {
-  background: #121330;
-  border: 1px solid rgba(192, 198, 212, 0.07);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
-  backdrop-filter: blur(8px);
 }
 .glass-card:hover {
-  border-color: rgba(192, 198, 212, 0.14);
+  border-color: #cbd5e1;
 }
 
 /* Gradient text — brand indigo gradient */
 .gradient-text {
-  background: linear-gradient(135deg, #6366F1, #818CF8, #A5B4FC);
+  background: linear-gradient(135deg, #4F46E5, #6366F1, #818CF8);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -149,19 +150,19 @@ body {
 
 /* Indigo glow effect for key elements */
 .purple-glow {
-  box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
 }
 
-/* Signal soft background (for badges, tints) */
+/* Signal soft background */
 .signal-soft {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.06);
 }
 
 /* Ambient background orbs */
 .ambient-orb {
   position: absolute;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(99, 102, 241, 0.04);
   filter: blur(80px);
   pointer-events: none;
 }
@@ -170,13 +171,13 @@ body {
 .brand-italic {
   font-family: "Instrument Serif", Georgia, serif;
   font-style: italic;
-  color: #818CF8;
+  color: #4F46E5;
 }
 
 /* Border using brand system */
 .brand-border {
-  border-color: rgba(192, 198, 212, 0.07);
+  border-color: #e2e8f0;
 }
 .brand-border-hover:hover {
-  border-color: rgba(192, 198, 212, 0.14);
+  border-color: #cbd5e1;
 }

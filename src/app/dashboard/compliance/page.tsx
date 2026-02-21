@@ -245,13 +245,13 @@ export default function CompliancePage() {
       {(hasExpired || hasExpiringSoon) && (
         <div className="space-y-2">
           {hasExpired && (
-            <div className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-red-300">
                   {stats.expired} customer{stats.expired !== 1 ? 's have' : ' has'} expired IDs
                 </p>
-                <p className="text-xs text-red-400/70 mt-0.5">
+                <p className="text-xs text-red-600/70 mt-0.5">
                   Expired IDs require immediate attention for CMRA compliance.
                 </p>
               </div>
@@ -261,13 +261,13 @@ export default function CompliancePage() {
             </div>
           )}
           {hasExpiringSoon && (
-            <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-              <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-amber-300">
                   {stats.expiring30} customer{stats.expiring30 !== 1 ? 's have' : ' has'} IDs expiring within 30 days
                 </p>
-                <p className="text-xs text-amber-400/70 mt-0.5">
+                <p className="text-xs text-amber-600/70 mt-0.5">
                   Send reminders to ensure timely renewal.
                 </p>
               </div>
@@ -288,20 +288,20 @@ export default function CompliancePage() {
         />
         <div className="glass-card p-5 border-red-500/20">
           <div className="flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-600/15 text-red-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-600/15 text-red-600">
               <AlertCircle className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-3 text-2xl font-bold text-red-400">{stats.expired + stats.expiring30}</p>
+          <p className="mt-3 text-2xl font-bold text-red-600">{stats.expired + stats.expiring30}</p>
           <p className="mt-1 text-xs text-surface-400">IDs Expiring (&lt; 30d)</p>
         </div>
         <div className="glass-card p-5 border-amber-500/20">
           <div className="flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600/15 text-amber-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600/15 text-amber-600">
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-3 text-2xl font-bold text-amber-400">{stats.expiring90}</p>
+          <p className="mt-3 text-2xl font-bold text-amber-600">{stats.expiring90}</p>
           <p className="mt-1 text-xs text-surface-400">IDs Expiring (30-90d)</p>
         </div>
         <div className="glass-card p-5 border-yellow-500/20">
@@ -315,11 +315,11 @@ export default function CompliancePage() {
         </div>
         <div className="glass-card p-5 border-emerald-500/20">
           <div className="flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/15 text-emerald-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/15 text-emerald-600">
               <CheckCircle className="h-5 w-5" />
             </div>
           </div>
-          <p className="mt-3 text-2xl font-bold text-emerald-400">{stats.allCompliant}</p>
+          <p className="mt-3 text-2xl font-bold text-emerald-600">{stats.allCompliant}</p>
           <p className="mt-1 text-xs text-surface-400">All Compliant</p>
         </div>
       </div>
@@ -327,17 +327,17 @@ export default function CompliancePage() {
       {/* ID Expiration Tracking */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-400" />
+          <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary-600" />
             ID Expiration Tracking
           </h2>
           <div className="flex items-center gap-1">
             {[
               { id: 'all' as const, label: 'All' },
-              { id: 'expired' as const, label: 'Expired', color: 'text-red-400' },
-              { id: 'critical' as const, label: '< 30 days', color: 'text-red-400' },
-              { id: 'warning' as const, label: '30-90 days', color: 'text-amber-400' },
-              { id: 'ok' as const, label: '> 90 days', color: 'text-emerald-400' },
+              { id: 'expired' as const, label: 'Expired', color: 'text-red-600' },
+              { id: 'critical' as const, label: '< 30 days', color: 'text-red-600' },
+              { id: 'warning' as const, label: '30-90 days', color: 'text-amber-600' },
+              { id: 'ok' as const, label: '> 90 days', color: 'text-emerald-600' },
             ].map((f) => (
               <button
                 key={f.id}
@@ -369,8 +369,8 @@ export default function CompliancePage() {
 
       {/* Form 1583 Status Overview */}
       <div>
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-          <FileText className="h-5 w-5 text-primary-400" />
+        <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2 mb-4">
+          <FileText className="h-5 w-5 text-primary-600" />
           Form 1583 Status Overview
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -378,10 +378,10 @@ export default function CompliancePage() {
           <Card className="border-emerald-500/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
                 Approved
               </CardTitle>
-              <span className="text-lg font-bold text-emerald-400">{form1583Groups.approved.length}</span>
+              <span className="text-lg font-bold text-emerald-600">{form1583Groups.approved.length}</span>
             </CardHeader>
             <CardContent>
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
@@ -404,10 +404,10 @@ export default function CompliancePage() {
           <Card className="border-blue-500/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-400" />
+                <Clock className="h-4 w-4 text-blue-600" />
                 Submitted
               </CardTitle>
-              <span className="text-lg font-bold text-blue-400">{form1583Groups.submitted.length}</span>
+              <span className="text-lg font-bold text-blue-600">{form1583Groups.submitted.length}</span>
             </CardHeader>
             <CardContent>
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
@@ -452,10 +452,10 @@ export default function CompliancePage() {
           <Card className="border-red-500/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-red-400" />
+                <XCircle className="h-4 w-4 text-red-600" />
                 Expired
               </CardTitle>
-              <span className="text-lg font-bold text-red-400">{form1583Groups.expired.length}</span>
+              <span className="text-lg font-bold text-red-600">{form1583Groups.expired.length}</span>
             </CardHeader>
             <CardContent>
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
