@@ -38,7 +38,7 @@ type KioskScreen =
 const carriers = [
   { id: 'amazon', label: 'Amazon', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', emoji: '📦' },
   { id: 'ups', label: 'UPS', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', emoji: '🟤' },
-  { id: 'fedex', label: 'FedEx', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', emoji: '📮' },
+  { id: 'fedex', label: 'FedEx', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', emoji: '📮' },
   { id: 'usps', label: 'USPS', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', emoji: '🏤' },
   { id: 'dhl', label: 'DHL', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', emoji: '✈️' },
   { id: 'other', label: 'Other', color: 'bg-surface-600/30 text-surface-400 border-surface-600/40', emoji: '📋' },
@@ -211,7 +211,7 @@ export default function KioskPage() {
               icon={<UserPlus className="h-10 w-10" />}
               label="New Mailbox"
               sublabel="Sign up for a PMB"
-              color="violet"
+              color="indigo"
               onClick={() => {}}
             />
           </div>
@@ -533,11 +533,11 @@ const tileColors: Record<string, { bg: string; border: string; text: string; ico
     text: 'text-cyan-400',
     iconBg: 'bg-cyan-500/15',
   },
-  violet: {
-    bg: 'hover:bg-violet-500/5 active:bg-violet-500/10',
-    border: 'border-violet-500/20 hover:border-violet-500/40',
-    text: 'text-violet-400',
-    iconBg: 'bg-violet-500/15',
+  indigo: {
+    bg: 'hover:bg-indigo-500/5 active:bg-indigo-500/10',
+    border: 'border-indigo-500/20 hover:border-indigo-500/40',
+    text: 'text-indigo-400',
+    iconBg: 'bg-indigo-500/15',
   },
 };
 

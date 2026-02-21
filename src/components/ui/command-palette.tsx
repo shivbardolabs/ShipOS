@@ -314,7 +314,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         style={{
           background: 'rgba(18, 19, 48, 0.95)',
           borderColor: 'rgba(192, 198, 212, 0.1)',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.08)',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.08)',
         }}
       >
         {/* Search input */}

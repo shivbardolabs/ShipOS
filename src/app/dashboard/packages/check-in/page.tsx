@@ -41,7 +41,7 @@ const STEPS = [
 const carrierOptions = [
   { id: 'amazon', label: 'Amazon', color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20', active: 'border-orange-500 bg-orange-500/20' },
   { id: 'ups', label: 'UPS', color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30', active: 'border-amber-600 bg-amber-900/30' },
-  { id: 'fedex', label: 'FedEx', color: 'border-purple-500/40 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20', active: 'border-purple-500 bg-purple-500/20' },
+  { id: 'fedex', label: 'FedEx', color: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20', active: 'border-indigo-500 bg-indigo-500/20' },
   { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20', active: 'border-blue-500 bg-blue-500/20' },
   { id: 'dhl', label: 'DHL', color: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', active: 'border-yellow-500 bg-yellow-500/20' },
   { id: 'walmart', label: 'Walmart', color: 'border-blue-600/40 bg-blue-600/10 text-blue-300 hover:bg-blue-600/20', active: 'border-blue-600 bg-blue-600/20' },

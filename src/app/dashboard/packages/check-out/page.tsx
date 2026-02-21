@@ -35,7 +35,7 @@ import type { Customer, Package as PackageType } from '@/lib/types';
 /* -------------------------------------------------------------------------- */
 const carrierColors: Record<string, { bg: string; text: string; dot: string }> = {
   ups: { bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { bg: 'bg-purple-900/30', text: 'text-purple-400', dot: 'bg-purple-400' },
+  fedex: { bg: 'bg-indigo-900/30', text: 'text-indigo-400', dot: 'bg-indigo-400' },
   usps: { bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
   amazon: { bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
   dhl: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },

@@ -39,7 +39,7 @@ import { DropdownMenu } from '@/components/ui/dropdown-menu';
 const notifTypeIcon: Record<string, React.ReactNode> = {
   package_arrival: <Package className="h-4 w-4 text-blue-400" />,
   package_reminder: <CalendarClock className="h-4 w-4 text-amber-400" />,
-  mail_received: <MailOpen className="h-4 w-4 text-violet-400" />,
+  mail_received: <MailOpen className="h-4 w-4 text-indigo-400" />,
   id_expiring: <AlertTriangle className="h-4 w-4 text-red-400" />,
   renewal_reminder: <Clock className="h-4 w-4 text-yellow-400" />,
   shipment_update: <Truck className="h-4 w-4 text-emerald-400" />,

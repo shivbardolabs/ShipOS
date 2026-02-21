@@ -38,7 +38,7 @@ interface CarrierPickup {
 function buildCarrierPickups(): CarrierPickup[] {
   const carrierConfig: { id: string; name: string; color: string; bgColor: string; borderColor: string; iconBg: string }[] = [
     { id: 'ups', name: 'UPS', color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', iconBg: 'bg-amber-500/20' },
-    { id: 'fedex', name: 'FedEx', color: 'text-purple-400', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30', iconBg: 'bg-purple-500/20' },
+    { id: 'fedex', name: 'FedEx', color: 'text-indigo-400', bgColor: 'bg-indigo-500/10', borderColor: 'border-indigo-500/30', iconBg: 'bg-indigo-500/20' },
     { id: 'usps', name: 'USPS', color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30', iconBg: 'bg-blue-500/20' },
     { id: 'dhl', name: 'DHL', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', iconBg: 'bg-yellow-500/20' },
     { id: 'amazon', name: 'Amazon', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30', iconBg: 'bg-orange-500/20' },

@@ -39,7 +39,7 @@ function getInitials(first: string, last: string) {
 function hashColor(name: string): string {
   const colors = [
     'from-blue-500 to-blue-700',
-    'from-violet-500 to-violet-700',
+    'from-indigo-500 to-indigo-700',
     'from-emerald-500 to-emerald-700',
     'from-amber-500 to-amber-700',
     'from-rose-500 to-rose-700',
@@ -60,7 +60,7 @@ const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  postscan: { label: 'PostScan', classes: 'bg-violet-500/20 text-violet-400 border-violet-500/30' } };
+  postscan: { label: 'PostScan', classes: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' } };
 
 function getDaysUntil(dateStr?: string): number | null {
   if (!dateStr) return null;

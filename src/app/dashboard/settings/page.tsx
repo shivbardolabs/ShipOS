@@ -766,7 +766,7 @@ export default function SettingsPage() {
                   <Card key={user.id} hover>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-accent-violet text-xs font-bold text-white">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-accent-indigo text-xs font-bold text-white">
                           {initials}
                         </div>
                         <div>

@@ -48,7 +48,7 @@ const activityIconMap: Record<string, { icon: React.ElementType; color: string }
   package_checkin: { icon: PackagePlus, color: 'text-blue-400 bg-blue-500/15' },
   package_release: { icon: CheckCircle2, color: 'text-emerald-400 bg-emerald-500/15' },
   notification: { icon: Bell, color: 'text-amber-400 bg-amber-500/15' },
-  shipment: { icon: Truck, color: 'text-violet-400 bg-violet-500/15' },
+  shipment: { icon: Truck, color: 'text-indigo-400 bg-indigo-500/15' },
   mail: { icon: Mail, color: 'text-cyan-400 bg-cyan-500/15' },
   customer: { icon: UserPlus, color: 'text-teal-400 bg-teal-500/15' },
   alert: { icon: ShieldAlert, color: 'text-rose-400 bg-rose-500/15' },
@@ -102,8 +102,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'New Shipment',
     icon: Truck,
     href: '/dashboard/shipping',
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/15 hover:bg-violet-500/25',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/15 hover:bg-indigo-500/25',
   },
   {
     label: 'Mail Scan',
@@ -246,7 +246,7 @@ export default function DashboardPage() {
   const secondaryStats = [
     { label: 'Active Customers', value: s.activeCustomers, icon: Users, color: 'text-primary-400', bgColor: 'bg-primary-600/15' },
     { label: 'ID Expiring Soon', value: s.idExpiringSoon, icon: AlertTriangle, color: 'text-rose-400', bgColor: 'bg-rose-500/15' },
-    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-violet-400', bgColor: 'bg-violet-500/15' },
+    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/15' },
     { label: 'Notifications Sent', value: s.notificationsSent, icon: Bell, color: 'text-primary-400', bgColor: 'bg-primary-600/15' },
   ];
 
@@ -402,11 +402,11 @@ export default function DashboardPage() {
                 className="[&>div>div]:bg-rose-500/15 [&>div>div]:text-rose-400"
               />
               <StatCard
-                icon={<Truck className="h-5 w-5 text-violet-400" />}
+                icon={<Truck className="h-5 w-5 text-indigo-400" />}
                 title="Shipments Today"
                 value={s.shipmentsToday}
                 change={15}
-                className="[&>div>div]:bg-violet-500/15 [&>div>div]:text-violet-400"
+                className="[&>div>div]:bg-indigo-500/15 [&>div>div]:text-indigo-400"
               />
               <StatCard
                 icon={<Bell className="h-5 w-5 text-primary-400" />}

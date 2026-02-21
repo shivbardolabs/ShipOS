@@ -52,7 +52,7 @@ const last14Days = Array.from({ length: 14 }, (_, i) => {
 /* -------------------------------------------------------------------------- */
 const revenueBreakdown = [
   { category: 'Shipping', amount: 12847.50, color: 'bg-primary-500', textColor: 'text-primary-400' },
-  { category: 'Storage Fees', amount: 2340.00, color: 'bg-accent-violet', textColor: 'text-violet-400' },
+  { category: 'Storage Fees', amount: 2340.00, color: 'bg-accent-indigo', textColor: 'text-indigo-400' },
   { category: 'Receiving Fees', amount: 4560.00, color: 'bg-emerald-500', textColor: 'text-emerald-400' },
 ];
 const totalBreakdown = revenueBreakdown.reduce((s, r) => s + r.amount, 0);
@@ -205,7 +205,7 @@ export default function ReportsPage() {
                         style={{ height: `${(day.ups / total) * 100}%` }}
                       />
                       <div
-                        className="bg-purple-500/80"
+                        className="bg-indigo-500/80"
                         style={{ height: `${(day.fedex / total) * 100}%` }}
                       />
                       <div
@@ -229,7 +229,7 @@ export default function ReportsPage() {
               {[
                 { label: 'Amazon', color: 'bg-primary-500' },
                 { label: 'USPS', color: 'bg-blue-500' },
-                { label: 'FedEx', color: 'bg-purple-500' },
+                { label: 'FedEx', color: 'bg-indigo-500' },
                 { label: 'UPS', color: 'bg-amber-500' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-1.5">
@@ -256,7 +256,7 @@ export default function ReportsPage() {
                 <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
                   {(() => {
                     let offset = 0;
-                    const colors = ['#6366f1', '#8b5cf6', '#10b981'];
+                    const colors = ['#4f46e5', '#818cf8', '#10b981'];
                     return revenueBreakdown.map((item, i) => {
                       const pct = (item.amount / totalBreakdown) * 100;
                       const dashArray = `${pct} ${100 - pct}`;
