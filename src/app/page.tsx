@@ -11,8 +11,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col relative overflow-hidden">
       {/* Ambient background orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-30" style={{ background: 'rgba(139, 92, 246, 0.05)', filter: 'blur(100px)' }} />
-      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'rgba(139, 92, 246, 0.08)', filter: 'blur(80px)' }} />
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-30" style={{ background: 'rgba(99, 102, 241, 0.05)', filter: 'blur(100px)' }} />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'rgba(99, 102, 241, 0.08)', filter: 'blur(80px)' }} />
 
       {/* Header */}
       <header className="relative z-10 px-6 py-4" style={{ borderBottom: '1px solid rgba(192, 198, 212, 0.07)' }}>
@@ -45,7 +45,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-5xl font-extrabold text-surface-100 mb-4">
             Your postal store,{" "}
-            <em className="brand-italic text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#A78BFA" }}>
+            <em className="brand-italic text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#818CF8" }}>
               fully managed
             </em>
           </h2>
