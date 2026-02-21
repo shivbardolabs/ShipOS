@@ -151,6 +151,7 @@ export default function SettingsPage() {
     { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
     { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" /> },
+    { id: 'migration', label: 'Migration', icon: <Upload className="h-4 w-4" /> },
   ];
 
   const carrierTabs = [
@@ -820,6 +821,45 @@ export default function SettingsPage() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabPanel>
+
+          {/* ── Migration Tab ────────────────────────────── */}
+          <TabPanel active={activeTab === 'migration'}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-primary-400" />
+                  PostalMate Migration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-surface-400 text-sm">
+                  Import your existing PostalMate data into ShipOS. Upload a PostalMate backup file (.7z)
+                  and we&apos;ll migrate your customers, shipments, packages, transactions, and address book.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Customers', desc: 'Customer profiles and mailbox assignments' },
+                    { label: 'Shipments', desc: 'Shipping history, tracking, and costs' },
+                    { label: 'Packages', desc: 'Package check-in and release records' },
+                    { label: 'Transactions', desc: 'Invoice and payment history' },
+                    { label: 'Addresses', desc: 'Ship-to address book entries' },
+                    { label: 'Products', desc: 'Products, SKUs, and inventory' },
+                  ].map(item => (
+                    <div key={item.label} className="bg-surface-800/30 rounded-lg p-3 border border-surface-700/30">
+                      <p className="text-sm text-surface-200 font-medium">{item.label}</p>
+                      <p className="text-xs text-surface-500">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <a href="/dashboard/settings/migration">
+                  <Button>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Start Migration
+                  </Button>
+                </a>
               </CardContent>
             </Card>
           </TabPanel>

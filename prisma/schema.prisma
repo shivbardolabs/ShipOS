@@ -54,10 +54,15 @@ model Customer {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // soft delete
 
-  packages      Package[]
-  mailPieces    MailPiece[]
-  shipments     Shipment[]
-  notifications Notification[]
+  packages        Package[]
+  mailPieces      MailPiece[]
+  shipments       Shipment[]
+  notifications   Notification[]
+  shipToAddresses ShipToAddress[]
+
+  // Migration reference
+  sourceId    String? // Original PostalMate CUSTOMERID
+  migrationId String? // Links to MigrationRun
 }
 
 model Package {
@@ -92,6 +97,10 @@ model Package {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Migration reference
+  sourceId    String? // Original PostalMate PKGRECVXNID
+  migrationId String? // Links to MigrationRun
 }
 
 model MailPiece {
@@ -136,6 +145,10 @@ model Shipment {
   deliveredAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  // Migration reference
+  sourceId    String? // Original PostalMate SHIPMENTXNID
+  migrationId String? // Links to MigrationRun
 }
 
 model Notification {
@@ -207,6 +220,10 @@ model Invoice {
   items         String? // JSON string of line items
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  // Migration reference
+  sourceId    String? // Original PostalMate CRTOTALXNID
+  migrationId String? // Links to MigrationRun
 }
 
 model EndOfDayRecord {
@@ -218,6 +235,69 @@ model EndOfDayRecord {
   status       String   @default("open") // open, picked_up, closed
   pickupTime   DateTime?
   notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ── PostalMate Migration ─────────────────────────────────────────────────────
+
+model MigrationRun {
+  id            String   @id @default(cuid())
+  sourceFile    String   // Original backup filename
+  sourceSystem  String   @default("postalmate") // postalmate, other
+  status        String   @default("pending") // pending, analyzing, migrating, completed, failed, rolled_back
+  startedAt     DateTime?
+  completedAt   DateTime?
+  errorMessage  String?
+
+  // Record counts from source
+  sourceCustomers  Int @default(0)
+  sourceShipments  Int @default(0)
+  sourcePackages   Int @default(0)
+  sourceProducts   Int @default(0)
+  sourceInvoices   Int @default(0)
+  sourceAddresses  Int @default(0)
+
+  // Migrated counts
+  migratedCustomers  Int @default(0)
+  migratedShipments  Int @default(0)
+  migratedPackages   Int @default(0)
+  migratedProducts   Int @default(0)
+  migratedInvoices   Int @default(0)
+  migratedAddresses  Int @default(0)
+
+  // Errors/skips
+  errorLog      String? // JSON array of errors
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ShipToAddress {
+  id           String  @id @default(cuid())
+  firstName    String?
+  lastName     String?
+  companyName  String?
+  contact      String?
+  address1     String
+  address2     String?
+  address3     String?
+  city         String?
+  state        String?
+  zipCode      String?
+  zipPlus4     String?
+  country      String  @default("US")
+  email        String?
+  phone        String?
+  isCommercial Boolean @default(false)
+
+  // Migration reference
+  sourceId     String? // Original PostalMate SHIPTOID
+  migrationId  String? // Links to MigrationRun
+
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
