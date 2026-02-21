@@ -13,7 +13,7 @@
     "db:studio": "bunx prisma studio"
   },
   "dependencies": {
-    "next": "15.1.7",
+    "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@prisma/client": "^6.4.1",
