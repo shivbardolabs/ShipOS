@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select';
 import { Stepper, type Step } from '@/components/ui/stepper';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import { customers as mockCustomers } from '@/lib/mock-data';
-import { cn, formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   DEFAULT_MAILBOX_RANGES,
   getAvailableBoxNumbers,
@@ -262,7 +262,7 @@ export default function NewCustomerPage() {
           </div>
           <div className="flex items-center justify-center gap-3 pt-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/customers')}>Back to Customers</Button>
-            <Button variant="primary" onClick={() => {
+            <Button variant="default" onClick={() => {
               setCreated(false); setStep(0);
               setCustomerForm({ firstName: '', lastName: '', email: '', phone: '', businessName: '', platform: '', pmbNumber: '', billingTerms: 'Monthly', homeAddress: '', homeCity: '', homeState: '', homeZip: '', notifyEmail: true, notifySms: true, notes: '' });
               setPrimaryIdType(''); setSecondaryIdType('');
@@ -485,7 +485,7 @@ export default function NewCustomerPage() {
                     <div className="h-10 w-10 rounded-lg bg-primary-500/20 flex items-center justify-center"><Scan className="h-5 w-5 text-primary-400" /></div>
                     <div><p className="text-sm font-medium text-surface-200">ID Data Extraction</p><p className="text-xs text-surface-400">Extract name, address, and ID details to auto-fill PS Form 1583</p></div>
                   </div>
-                  <Button variant={extractedData ? 'ghost' : 'primary'} size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : extractedData ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Scan className="h-4 w-4" />}>
+                  <Button variant={extractedData ? 'ghost' : 'default'} size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : extractedData ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Scan className="h-4 w-4" />}>
                     {extracting ? 'Extracting...' : extractedData ? 'Data Extracted' : 'Extract Data'}
                   </Button>
                 </div>
@@ -677,9 +677,9 @@ export default function NewCustomerPage() {
           <Button variant="ghost" onClick={handleBack} disabled={step === 0} leftIcon={<ArrowLeft className="h-4 w-4" />}>Back</Button>
           <div className="flex items-center gap-2 text-xs text-surface-500">Step {step + 1} of {WIZARD_STEPS.length}</div>
           {step < WIZARD_STEPS.length - 1 ? (
-            <Button variant="primary" onClick={handleNext} rightIcon={<ArrowRight className="h-4 w-4" />}>Continue</Button>
+            <Button variant="default" onClick={handleNext} rightIcon={<ArrowRight className="h-4 w-4" />}>Continue</Button>
           ) : (
-            <Button variant="primary" onClick={handleCreate} leftIcon={<CheckCircle2 className="h-4 w-4" />}>Create Customer</Button>
+            <Button variant="default" onClick={handleCreate} leftIcon={<CheckCircle2 className="h-4 w-4" />}>Create Customer</Button>
           )}
         </div>
       </Card>

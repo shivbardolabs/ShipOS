@@ -146,7 +146,7 @@ export function SignaturePad({
           Clear
         </Button>
         <Button
-          variant="primary"
+          variant="default"
           size="sm"
           onClick={confirm}
           leftIcon={<Check className="h-3.5 w-3.5" />}
