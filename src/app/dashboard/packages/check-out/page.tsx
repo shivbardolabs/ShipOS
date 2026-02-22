@@ -25,6 +25,8 @@ import {
   CreditCard,
   FileSignature,
   ChevronRight,
+  User,
+  X,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
@@ -123,7 +125,11 @@ type ReceiptMethod = 'sms' | 'email' | 'print' | 'sms+print';
 /* -------------------------------------------------------------------------- */
 export default function CheckOutPage() {
   /* ---- Core state ---- */
+  const [searchMode, setSearchMode] = useState<'pmb' | 'name'>('pmb');
   const [pmbInput, setPmbInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [nameResults, setNameResults] = useState<Customer[]>([]);
+  const [showNameResults, setShowNameResults] = useState(false);
   const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
   const [customerPackages, setCustomerPackages] = useState<PackageType[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -141,8 +147,22 @@ export default function CheckOutPage() {
   /* ---- Success overlay ---- */
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* ---- Lookup handler ---- */
-  const handleLookup = () => {
+  /* ---- Select customer (shared) ---- */
+  const selectCustomer = (customer: Customer) => {
+    const pkgs = packages.filter(
+      (p) => p.customerId === customer.id && p.status !== 'released' && p.status !== 'returned'
+    );
+    setFoundCustomer(customer);
+    setCustomerPackages(pkgs);
+    setShowNameResults(false);
+    setNameResults([]);
+    if (pkgs.length > 0) {
+      setSelectedIds(new Set(pkgs.map((p) => p.id)));
+    }
+  };
+
+  /* ---- PMB Lookup handler ---- */
+  const handlePmbLookup = () => {
     setLookupError('');
     setFoundCustomer(null);
     setCustomerPackages([]);
@@ -167,14 +187,59 @@ export default function CheckOutPage() {
       return;
     }
 
-    const pkgs = packages.filter(
-      (p) => p.customerId === customer.id && p.status !== 'released' && p.status !== 'returned'
-    );
+    selectCustomer(customer);
+  };
 
-    setFoundCustomer(customer);
-    setCustomerPackages(pkgs);
-    if (pkgs.length > 0) {
-      setSelectedIds(new Set(pkgs.map((p) => p.id)));
+  /* ---- Name search handler ---- */
+  const handleNameSearch = (query: string) => {
+    setNameInput(query);
+    setLookupError('');
+
+    if (query.trim().length < 2) {
+      setNameResults([]);
+      setShowNameResults(false);
+      return;
+    }
+
+    const q = query.trim().toLowerCase();
+    const matches = customers.filter((c) => {
+      if (c.status === 'closed') return false;
+      const full = `${c.firstName} ${c.lastName}`.toLowerCase();
+      const biz = (c.businessName || '').toLowerCase();
+      const pmb = c.pmbNumber.toLowerCase();
+      return full.includes(q) || biz.includes(q) || c.firstName.toLowerCase().startsWith(q) || c.lastName.toLowerCase().startsWith(q) || pmb.includes(q);
+    });
+
+    setNameResults(matches.slice(0, 8));
+    setShowNameResults(matches.length > 0);
+  };
+
+  /* ---- Pick customer from name results ---- */
+  const handleSelectFromResults = (customer: Customer) => {
+    setFoundCustomer(null);
+    setCustomerPackages([]);
+    setSelectedIds(new Set());
+    setActiveTab('packages');
+    setEnabledAddOns(new Set());
+    setReceiptMethod('sms');
+    setNameInput(`${customer.firstName} ${customer.lastName}`);
+    selectCustomer(customer);
+  };
+
+  /* ---- Legacy wrapper ---- */
+  const handleLookup = () => {
+    if (searchMode === 'pmb') {
+      handlePmbLookup();
+    } else {
+      if (nameInput.trim().length < 2) {
+        setLookupError('Enter at least 2 characters');
+        return;
+      }
+      if (nameResults.length === 1) {
+        handleSelectFromResults(nameResults[0]);
+      } else if (nameResults.length === 0) {
+        setLookupError(`No customer found for "${nameInput}"`);
+      }
     }
   };
 
@@ -230,6 +295,9 @@ export default function CheckOutPage() {
   /* ---- Reset ---- */
   const handleReset = () => {
     setPmbInput('');
+    setNameInput('');
+    setNameResults([]);
+    setShowNameResults(false);
     setFoundCustomer(null);
     setCustomerPackages([]);
     setSelectedIds(new Set());
@@ -316,40 +384,163 @@ export default function CheckOutPage() {
       />
 
       {/* ================================================================== */}
-      {/*  PMB Lookup — large touch-friendly input                           */}
+      {/*  Customer Lookup — PMB or Name                                     */}
       {/* ================================================================== */}
       <Card padding="lg">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50">
               <ScanLine className="h-6 w-6 text-primary-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-surface-100">Enter or Scan PMB Number</h2>
-              <p className="text-sm text-surface-400">Look up a customer to release their packages</p>
+              <h2 className="text-lg font-semibold text-surface-100">Customer Lookup</h2>
+              <p className="text-sm text-surface-400">Find a customer by PMB number or name to release their packages</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <Input
-                placeholder="e.g. PMB-0003 or 0003"
-                value={pmbInput}
-                onChange={(e) => {
-                  setPmbInput(e.target.value);
-                  setLookupError('');
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-                error={lookupError || undefined}
-                leftIcon={<Hash className="h-5 w-5" />}
-                className="!py-3.5 !text-lg !rounded-xl"
-              />
-            </div>
-            <Button size="lg" onClick={handleLookup} className="shrink-0 !px-8 !py-3.5 !rounded-xl">
-              <Search className="h-5 w-5 mr-2" />
-              Look Up
-            </Button>
+          {/* Search mode toggle */}
+          <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl mb-4 max-w-xs">
+            <button
+              onClick={() => { setSearchMode('pmb'); setLookupError(''); setShowNameResults(false); }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                searchMode === 'pmb'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
+              )}
+            >
+              <Hash className="h-4 w-4" />
+              PMB Number
+            </button>
+            <button
+              onClick={() => { setSearchMode('name'); setLookupError(''); }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                searchMode === 'name'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
+              )}
+            >
+              <User className="h-4 w-4" />
+              Name
+            </button>
           </div>
+
+          {/* PMB input */}
+          {searchMode === 'pmb' && (
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="e.g. PMB-0003 or 0003"
+                  value={pmbInput}
+                  onChange={(e) => {
+                    setPmbInput(e.target.value);
+                    setLookupError('');
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePmbLookup()}
+                  error={lookupError || undefined}
+                  leftIcon={<Hash className="h-5 w-5" />}
+                  className="!py-3.5 !text-lg !rounded-xl"
+                />
+              </div>
+              <Button size="lg" onClick={handlePmbLookup} className="shrink-0 !px-8 !py-3.5 !rounded-xl">
+                <Search className="h-5 w-5 mr-2" />
+                Look Up
+              </Button>
+            </div>
+          )}
+
+          {/* Name input with live results */}
+          {searchMode === 'name' && (
+            <div className="relative">
+              <div className="flex items-start gap-3">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Search by first name, last name, or business..."
+                    value={nameInput}
+                    onChange={(e) => handleNameSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleLookup();
+                      if (e.key === 'Escape') setShowNameResults(false);
+                    }}
+                    onFocus={() => { if (nameResults.length > 0) setShowNameResults(true); }}
+                    error={lookupError || undefined}
+                    leftIcon={<User className="h-5 w-5" />}
+                    className="!py-3.5 !text-lg !rounded-xl"
+                  />
+                  {nameInput && (
+                    <button
+                      onClick={() => { setNameInput(''); setNameResults([]); setShowNameResults(false); setLookupError(''); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-surface-500 hover:text-surface-300 hover:bg-surface-700/50 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Results dropdown */}
+              {showNameResults && nameResults.length > 0 && !foundCustomer && (
+                <div className="absolute z-30 left-0 right-0 mt-2 bg-surface-850 border border-surface-700 rounded-xl shadow-2xl shadow-black/30 overflow-hidden max-h-[380px] overflow-y-auto">
+                  <div className="px-4 py-2.5 border-b border-surface-800">
+                    <p className="text-xs font-medium text-surface-500">
+                      {nameResults.length} customer{nameResults.length !== 1 ? 's' : ''} found
+                    </p>
+                  </div>
+                  {nameResults.map((c) => {
+                    const pendingPkgs = packages.filter(
+                      (p) => p.customerId === c.id && p.status !== 'released' && p.status !== 'returned'
+                    ).length;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => handleSelectFromResults(c)}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-800/60 transition-colors text-left border-b border-surface-800/50 last:border-b-0"
+                      >
+                        <CustomerAvatar
+                          firstName={c.firstName}
+                          lastName={c.lastName}
+                          photoUrl={c.photoUrl}
+                          size="md"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-surface-100">{c.firstName} {c.lastName}</span>
+                            <span className="font-mono text-xs text-primary-500 font-medium">{c.pmbNumber}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {c.businessName && (
+                              <span className="text-xs text-surface-500">{c.businessName}</span>
+                            )}
+                            {!c.businessName && c.email && (
+                              <span className="text-xs text-surface-500">{c.email}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          {pendingPkgs > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-900/30 text-amber-400 text-xs font-semibold">
+                              <Package className="h-3 w-3" />
+                              {pendingPkgs}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-surface-600">No packages</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Hint */}
+              {!showNameResults && !foundCustomer && nameInput.length === 0 && (
+                <p className="text-xs text-surface-500 mt-2">
+                  Start typing a name to search. Use PMB number for fastest lookup.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 
