@@ -7,6 +7,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import { useTenant } from '@/components/tenant-provider';
 import { cn } from '@/lib/utils';
 import {
   Package,
@@ -88,6 +89,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, isLoading } = useUser();
+  const { tenant, localUser } = useTenant();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -120,7 +122,9 @@ export function Sidebar() {
             <span className="text-base font-bold text-surface-100 leading-none">Ship</span>
             <span className="text-base font-bold text-primary-500 leading-none">OS</span>
           </div>
-          <p className="text-[10px] text-surface-500 mt-0.5">Postal Management</p>
+          <p className="text-[10px] text-surface-500 mt-0.5 truncate">
+            {tenant?.name || 'Postal Management'}
+          </p>
         </div>
         {/* Mobile close */}
         <button
@@ -192,9 +196,22 @@ export function Sidebar() {
               <p className="text-sm font-medium text-surface-200 truncate">
                 {displayName}
               </p>
-              <p className="text-[11px] text-surface-500 truncate">
-                {user.email}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] text-surface-500 truncate">
+                  {user.email}
+                </p>
+                {localUser?.role && (
+                  <span className={`inline-flex items-center rounded-full px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider ${
+                    localUser.role === 'admin'
+                      ? 'bg-primary-500/15 text-primary-400'
+                      : localUser.role === 'manager'
+                      ? 'bg-amber-500/15 text-amber-400'
+                      : 'bg-surface-500/15 text-surface-400'
+                  }`}>
+                    {localUser.role}
+                  </span>
+                )}
+              </div>
             </div>
             <a
               href="/api/auth/logout"

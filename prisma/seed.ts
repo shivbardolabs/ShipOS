@@ -32,7 +32,7 @@ function generateTrackingNumber(carrier: string): string {
 async function main() {
   console.log("🌱 Seeding ShipOS database...\n");
 
-  // Clean existing data
+  // Clean existing data (order matters for FK constraints)
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.mailPiece.deleteMany();
@@ -40,10 +40,30 @@ async function main() {
   await prisma.package.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.tenant.deleteMany();
   await prisma.carrierRate.deleteMany();
   await prisma.dropoffSetting.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.endOfDayRecord.deleteMany();
+
+  // ── Tenant ────────────────────────────────────────────────────────────
+  console.log("🏢 Creating default tenant...");
+  const tenant = await prisma.tenant.create({
+    data: {
+      name: "ShipStation Express — Downtown",
+      slug: "shipstation-downtown",
+      address: "123 Main Street, Suite 100",
+      city: "New York",
+      state: "NY",
+      zipCode: "10001",
+      phone: "(555) 123-4567",
+      email: "downtown@shipstation.com",
+      timezone: "America/New_York",
+      businessHours: JSON.stringify({ open: "08:00", close: "18:00" }),
+      taxRate: 8.875,
+    },
+  });
+  console.log(`   ✅ Created tenant: ${tenant.name}`);
 
   // ── Users ─────────────────────────────────────────────────────────────
   console.log("👤 Creating users...");
@@ -52,31 +72,34 @@ async function main() {
       data: {
         name: "Marcus Rivera",
         email: "marcus@shipos.com",
-        password: "hashed_admin_password_placeholder",
+        password: "",
         role: "admin",
         avatar: null,
+        tenantId: tenant.id,
       },
     }),
     prisma.user.create({
       data: {
         name: "Sarah Chen",
         email: "sarah@shipos.com",
-        password: "hashed_manager_password_placeholder",
-        role: "manager",
+        password: "",
+        role: "admin",
         avatar: null,
+        tenantId: tenant.id,
       },
     }),
     prisma.user.create({
       data: {
         name: "David Park",
         email: "david@shipos.com",
-        password: "hashed_employee_password_placeholder",
-        role: "employee",
+        password: "",
+        role: "admin",
         avatar: null,
+        tenantId: tenant.id,
       },
     }),
   ]);
-  console.log(`   ✅ Created ${users.length} users`);
+  console.log(`   ✅ Created ${users.length} users (all Admin for testing)`);
 
   // ── Customers ─────────────────────────────────────────────────────────
   console.log("👥 Creating customers...");
@@ -547,7 +570,7 @@ async function main() {
   ];
 
   const customers = await Promise.all(
-    customerData.map((data) => prisma.customer.create({ data }))
+    customerData.map((data) => prisma.customer.create({ data: { ...data, tenantId: tenant.id } }))
   );
   console.log(`   ✅ Created ${customers.length} customers`);
 

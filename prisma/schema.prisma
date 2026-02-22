@@ -7,15 +7,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ── Tenancy ──────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id            String   @id @default(cuid())
+  name          String   // Store / business name
+  slug          String   @unique // URL-friendly identifier
+  address       String?
+  city          String?
+  state         String?
+  zipCode       String?
+  country       String   @default("US")
+  phone         String?
+  email         String?
+  timezone      String   @default("America/New_York")
+  businessHours String?  // JSON: { mon: { open, close }, tue: … }
+  taxRate       Float    @default(0)
+  logoUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users     User[]
+  customers Customer[]
+}
+
+// ── Users & Roles ────────────────────────────────────────────────────────────
+
 model User {
   id        String   @id @default(cuid())
+  auth0Id   String?  @unique // Auth0 `sub` claim — links login to local user
   name      String
   email     String   @unique
-  password  String
-  role      String   @default("employee") // employee, manager, admin
+  password  String   @default("")
+  role      String   @default("admin") // admin, manager, employee — default admin for testing
   avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   auditLogs AuditLog[]
   checkins  Package[]  @relation("CheckedInBy")
@@ -53,6 +83,9 @@ model Customer {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // soft delete
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   packages        Package[]
   mailPieces      MailPiece[]
