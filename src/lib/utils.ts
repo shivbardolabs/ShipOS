@@ -47,6 +47,67 @@ export function generateTrackingNumber(carrier: string): string {
   return `${pfx}${rand}`;
 }
 
+/**
+ * Build a carrier tracking URL from carrier name + tracking number.
+ * Returns null for unknown carriers.
+ */
+export function getCarrierTrackingUrl(
+  carrier: string,
+  trackingNumber: string
+): string | null {
+  const c = carrier.toLowerCase();
+  const urls: Record<string, string> = {
+    ups: `https://www.ups.com/track?tracknum=${encodeURIComponent(trackingNumber)}`,
+    fedex: `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(trackingNumber)}`,
+    usps: `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(trackingNumber)}`,
+    dhl: `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${encodeURIComponent(trackingNumber)}`,
+    amazon: `https://track.amazon.com/tracking/${encodeURIComponent(trackingNumber)}`,
+  };
+  return urls[c] ?? null;
+}
+
+/**
+ * Map a notification type to the in-app route the user should land on.
+ * Optionally takes the linked entity IDs to build deeper links.
+ */
+export function getNotificationTargetUrl(
+  type: string,
+  opts?: { customerId?: string; linkedEntityId?: string }
+): string {
+  const routes: Record<string, string> = {
+    package_arrival: '/dashboard/packages',
+    package_reminder: '/dashboard/packages',
+    mail_received: '/dashboard/mail',
+    id_expiring: opts?.customerId
+      ? `/dashboard/customers/${opts.customerId}`
+      : '/dashboard/customers',
+    renewal_reminder: opts?.customerId
+      ? `/dashboard/customers/${opts.customerId}`
+      : '/dashboard/customers',
+    shipment_update: '/dashboard/shipping',
+    welcome: opts?.customerId
+      ? `/dashboard/customers/${opts.customerId}`
+      : '/dashboard',
+  };
+  return routes[type] || '/dashboard/notifications';
+}
+
+/**
+ * Human-friendly label for the notification delivery status.
+ * "bounced" specifically means the notification email bounced,
+ * NOT that the shipment or package bounced.
+ */
+export function getNotificationStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending: 'Pending',
+    sent: 'Sent',
+    delivered: 'Delivered',
+    failed: 'Failed',
+    bounced: 'Email Bounced',
+  };
+  return labels[status] || status;
+}
+
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     // Package statuses

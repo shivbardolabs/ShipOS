@@ -206,6 +206,7 @@ export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) =
   const type = notifTypes[i % notifTypes.length];
   const status = notifStatuses[i % notifStatuses.length];
   const custIdx = i % 28;
+  const cust = customers[custIdx];
   const subjectMap: Record<string, string> = {
     package_arrival: 'You have a new package!',
     package_reminder: 'Package pickup reminder',
@@ -216,15 +217,57 @@ export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) =
     welcome: 'Welcome to ShipOS!',
   };
 
+  // Link each notification to a related entity so it can navigate on click
+  let linkedEntityId: string | undefined;
+  let linkedEntityType: Notification['linkedEntityType'];
+  let carrier: string | undefined;
+  let trackingNumber: string | undefined;
+
+  switch (type) {
+    case 'package_arrival':
+    case 'package_reminder': {
+      const pkg = packages[i % packages.length];
+      linkedEntityId = pkg.id;
+      linkedEntityType = 'package';
+      carrier = pkg.carrier;
+      trackingNumber = pkg.trackingNumber;
+      break;
+    }
+    case 'shipment_update': {
+      const ship = shipments[i % shipments.length];
+      linkedEntityId = ship.id;
+      linkedEntityType = 'shipment';
+      carrier = ship.carrier;
+      trackingNumber = ship.trackingNumber;
+      break;
+    }
+    case 'mail_received': {
+      const mail = mailPieces[i % mailPieces.length];
+      linkedEntityId = mail.id;
+      linkedEntityType = 'mail';
+      break;
+    }
+    case 'id_expiring':
+    case 'renewal_reminder':
+    case 'welcome':
+      linkedEntityId = cust.id;
+      linkedEntityType = 'customer';
+      break;
+  }
+
   return {
     id: `notif_${String(i + 1).padStart(3, '0')}`,
     type,
     channel: notifChannels[i % notifChannels.length],
     status,
     subject: subjectMap[type] || 'Notification',
-    body: `Notification body for ${type} sent to ${customers[custIdx].firstName} ${customers[custIdx].lastName}`,
-    customerId: customers[custIdx].id,
-    customer: customers[custIdx],
+    body: `Notification body for ${type} sent to ${cust.firstName} ${cust.lastName}`,
+    customerId: cust.id,
+    customer: cust,
+    linkedEntityId,
+    linkedEntityType,
+    carrier,
+    trackingNumber,
     sentAt: status !== 'pending' ? hoursAgo(i * 3 + 1) : undefined,
     createdAt: hoursAgo(i * 3),
   };
