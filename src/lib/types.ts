@@ -18,14 +18,16 @@ export interface Customer {
   phone?: string;
   businessName?: string;
   pmbNumber: string;
-  platform: 'physical' | 'iPostal' | 'anytime' | 'postscan';
+  platform: 'iPostal' | 'anytime' | 'postscan' | 'other';
   status: 'active' | 'closed' | 'suspended';
   dateOpened: string;
   dateClosed?: string;
   renewalDate?: string;
   billingTerms?: string;
   notes?: string;
-  idType?: 'drivers_license' | 'passport' | 'both';
+  idType?: 'drivers_license' | 'passport' | 'both' | 'military_id' | 'other';
+  proofOfAddress?: string;
+  proofOfAddressStatus?: 'pending' | 'submitted' | 'approved' | 'expired';
   idExpiration?: string;
   passportExpiration?: string;
   form1583Status?: 'pending' | 'submitted' | 'approved' | 'expired';

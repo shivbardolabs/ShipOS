@@ -45,10 +45,10 @@ import { CustomerAvatar } from '@/components/ui/customer-avatar';
 /* -------------------------------------------------------------------------- */
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
-  physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' } };
+  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  other: { label: 'Other', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' } };
 
 function getDaysUntil(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -577,6 +577,8 @@ export default function CustomerDetailPage() {
                     <span className="text-xs text-surface-400">
                       {customer.idType === 'drivers_license' ? "Driver's License" :
                        customer.idType === 'passport' ? 'Passport' :
+                       customer.idType === 'military_id' ? 'Military ID' :
+                       customer.idType === 'other' ? 'Other ID' :
                        "Driver's License + Passport"}
                     </span>
                     {idBadge && (
@@ -620,6 +622,17 @@ export default function CustomerDetailPage() {
                   <p className="text-sm text-surface-200 mt-0.5">{formatDate(customer.form1583Date)}</p>
                 </div>
               )}
+
+              {/* Proof of Address */}
+              <div className="pt-3 border-t border-surface-800">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-surface-400">Proof of Address</span>
+                  <Badge variant={customer.proofOfAddressStatus === 'approved' ? 'success' : customer.proofOfAddressStatus === 'submitted' ? 'info' : customer.proofOfAddressStatus === 'expired' ? 'danger' : 'warning'} className="text-[10px]">
+                    {customer.proofOfAddressStatus ? customer.proofOfAddressStatus.charAt(0).toUpperCase() + customer.proofOfAddressStatus.slice(1) : 'Not Submitted'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-surface-500">Required for CMRA compliance</p>
+              </div>
             </CardContent>
           </Card>
 
