@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@auth0/nextjs-auth0/client';
 import { cn } from '@/lib/utils';
-import { currentUser, dashboardStats } from '@/lib/mock-data';
+import { dashboardStats } from '@/lib/mock-data';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { OnlineStatus } from '@/components/ui/online-status';
@@ -34,6 +35,8 @@ const labelMap: Record<string, string> = {
   reports: 'Reports',
   invoicing: 'Invoicing',
   settings: 'Settings',
+  profile: 'Profile',
+  reconciliation: 'Reconciliation',
 };
 
 function useBreadcrumbs() {
@@ -53,8 +56,18 @@ function useBreadcrumbs() {
 export function Header() {
   const crumbs = useBreadcrumbs();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { user, isLoading } = useUser();
 
   const notifCount = dashboardStats.notificationsSent;
+
+  // Derive initials from Auth0 user
+  const displayName = user?.name || user?.email?.split('@')[0] || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   // Global Cmd+K / Ctrl+K shortcut
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
@@ -125,40 +138,53 @@ export function Header() {
           </button>
 
           {/* User avatar + dropdown */}
-          <DropdownMenu
-            trigger={
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all">
-                {currentUser.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')}
-              </div>
-            }
-            items={[
-              {
-                id: 'profile',
-                label: 'Profile',
-                icon: <User className="h-4 w-4" />,
-              },
-              {
-                id: 'settings',
-                label: 'Settings',
-                icon: <Settings className="h-4 w-4" />,
-              },
-              {
-                id: 'help',
-                label: 'Help & Support',
-                icon: <HelpCircle className="h-4 w-4" />,
-              },
-              'separator',
-              {
-                id: 'logout',
-                label: 'Sign Out',
-                icon: <LogOut className="h-4 w-4" />,
-                danger: true,
-              },
-            ]}
-          />
+          {isLoading ? (
+            <div className="h-9 w-9 rounded-full bg-surface-800 animate-pulse" />
+          ) : (
+            <DropdownMenu
+              trigger={
+                user?.picture ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.picture}
+                    alt={displayName}
+                    className="h-9 w-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all">
+                    {initials}
+                  </div>
+                )
+              }
+              items={[
+                {
+                  id: 'profile',
+                  label: 'Profile',
+                  icon: <User className="h-4 w-4" />,
+                  onClick: () => { window.location.href = '/dashboard/profile'; },
+                },
+                {
+                  id: 'settings',
+                  label: 'Settings',
+                  icon: <Settings className="h-4 w-4" />,
+                  onClick: () => { window.location.href = '/dashboard/settings'; },
+                },
+                {
+                  id: 'help',
+                  label: 'Help & Support',
+                  icon: <HelpCircle className="h-4 w-4" />,
+                },
+                'separator',
+                {
+                  id: 'logout',
+                  label: 'Sign Out',
+                  icon: <LogOut className="h-4 w-4" />,
+                  danger: true,
+                  onClick: () => { window.location.href = '/api/auth/logout'; },
+                },
+              ]}
+            />
+          )}
         </div>
       </header>
 

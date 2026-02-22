@@ -1,10 +1,13 @@
 'use client';
 
+/* Auth0 routes require full-page redirects — <a> is intentional */
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@auth0/nextjs-auth0/client';
 import { cn } from '@/lib/utils';
-import { currentUser } from '@/lib/mock-data';
 import {
   Package,
   PackagePlus,
@@ -22,6 +25,7 @@ import {
   Menu,
   X,
   Scale,
+  LogOut,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -81,18 +85,21 @@ const navSections: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, isLoading } = useUser();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
     return pathname.startsWith(href);
   };
 
-  const roleColor =
-    currentUser.role === 'admin'
-      ? 'bg-primary-50 text-primary-600 border-primary-200'
-      : currentUser.role === 'manager'
-      ? 'bg-accent-amber/15 text-accent-amber border-accent-amber/30'
-      : 'bg-surface-600/20 text-surface-400 border-surface-600/40';
+  // Derive initials from Auth0 user
+  const displayName = user?.name || user?.email?.split('@')[0] || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   const navContent = (
     <>
@@ -157,27 +164,45 @@ export function Sidebar() {
 
       {/* User info at bottom */}
       <div className="px-4 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white">
-            {currentUser.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')}
+        {isLoading ? (
+          <div className="flex items-center gap-3 animate-pulse">
+            <div className="h-9 w-9 rounded-full bg-surface-800" />
+            <div className="flex-1">
+              <div className="h-3.5 w-24 bg-surface-800 rounded" />
+              <div className="h-3 w-16 bg-surface-800 rounded mt-1.5" />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-surface-200 truncate">
-              {currentUser.name}
-            </p>
-            <span
-              className={cn(
-                'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase border',
-                roleColor
-              )}
+        ) : user ? (
+          <div className="flex items-center gap-3">
+            {user.picture ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.picture}
+                alt={displayName}
+                className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white">
+                {initials}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-surface-200 truncate">
+                {displayName}
+              </p>
+              <p className="text-[11px] text-surface-500 truncate">
+                {user.email}
+              </p>
+            </div>
+            <a
+              href="/api/auth/logout"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-accent-rose hover:bg-red-50 transition-colors"
+              title="Sign out"
             >
-              {currentUser.role}
-            </span>
+              <LogOut className="h-4 w-4" />
+            </a>
           </div>
-        </div>
+        ) : null}
       </div>
     </>
   );
