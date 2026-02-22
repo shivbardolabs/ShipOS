@@ -21,6 +21,124 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.9.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.9.0',
+    date: '2026-02-22',
+    title: 'Features Page & Consistent Navigation',
+    summary:
+      'Added a comprehensive product features page showcasing every capability across five categories — Core Operations, Customer Management, Shipping & Carriers, Compliance & Reporting, and Platform & Experience. All public pages (Home, Features, Pricing, Support) now share a unified navigation header so visitors never lose their place.',
+    highlights: ['Features Page', 'Shared Nav', '5 Categories'],
+    changes: [
+      {
+        text: 'New /features page with 20+ feature cards organized into 5 product categories',
+        type: 'feature',
+      },
+      {
+        text: 'Shared PublicHeader component ensures Features, Pricing, and Support nav links appear on every public page',
+        type: 'improvement',
+      },
+      {
+        text: 'Shared PublicFooter component for consistent branding across all public pages',
+        type: 'improvement',
+      },
+      {
+        text: 'Hero stats row on features page (18+ pages, 10+ carriers, 30-day trial, 99.9% SLA)',
+        type: 'design',
+      },
+      {
+        text: 'Alternating section alignment for visual rhythm on the features page',
+        type: 'design',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.8.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.8.0',
+    date: '2026-02-22',
+    title: 'Public Site & Support',
+    summary:
+      'ShipOS now has a complete public-facing site with dedicated Pricing and Support pages. The pricing page offers three tiers (Starter, Pro, Enterprise) with an annual billing toggle and full feature comparison table. The support page provides email, live chat, and phone contact channels plus an FAQ section.',
+    highlights: ['Pricing Page', 'Support Page', '3 Tiers'],
+    changes: [
+      {
+        text: 'Pricing page with Starter ($99), Pro ($179), and Enterprise ($299) tiers and monthly/annual toggle',
+        type: 'feature',
+      },
+      {
+        text: 'Full feature comparison table across all three plans',
+        type: 'feature',
+      },
+      {
+        text: 'Accordion FAQ section on pricing page with 6 common questions',
+        type: 'feature',
+      },
+      {
+        text: 'Dedicated /support page with Email, Live Chat, and Phone support channels',
+        type: 'feature',
+      },
+      {
+        text: 'Support FAQ section covering import, carriers, tablet usage, and free trial',
+        type: 'feature',
+      },
+      {
+        text: 'Free trial updated from 14 days to 30 days across all pages',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.7.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.7.0',
+    date: '2026-02-22',
+    title: 'Multi-Tenancy & Team Management',
+    summary:
+      'ShipOS is now fully multi-tenant. Each customer organization gets an isolated tenant with its own branding, timezone, tax rates, and business hours. A new Users & Roles system lets store owners invite team members and control access with Admin, Manager, and Staff roles.',
+    highlights: ['Multi-Tenant', 'Users & Roles', 'Org Isolation'],
+    changes: [
+      {
+        text: 'Multi-tenant architecture — each store gets an isolated tenant with custom settings',
+        type: 'feature',
+      },
+      {
+        text: 'Tenant settings: store name, address, timezone, business hours, tax rate, and branding',
+        type: 'feature',
+      },
+      {
+        text: 'Automatic tenant provisioning on first login via Auth0',
+        type: 'feature',
+      },
+      {
+        text: 'Users & Roles management page — invite team members by email',
+        type: 'feature',
+      },
+      {
+        text: 'Three roles: Admin (full access), Manager (day-to-day ops), Staff (check-in/out only)',
+        type: 'feature',
+      },
+      {
+        text: 'Role-based access control enforced across the dashboard',
+        type: 'security',
+      },
+      {
+        text: 'Product changelog page with timeline UI, filters, and expandable release cards',
+        type: 'feature',
+      },
+      {
+        text: '"What\'s New" button in the dashboard header links to changelog',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   /*  v0.6.0                                                             */
   /* ------------------------------------------------------------------ */
   {
