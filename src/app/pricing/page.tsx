@@ -144,7 +144,7 @@ const compareCategories = [
 const faqs = [
   {
     q: "Is there a free trial?",
-    a: "Yes! Every plan includes a 14-day free trial with full access. No credit card required to start.",
+    a: "Yes! Every plan includes a 30-day free trial with full access. No credit card required to start.",
   },
   {
     q: "Can I switch plans anytime?",
@@ -415,7 +415,7 @@ export default function PricingPage() {
               feature
             </h2>
             <p className="text-center text-surface-500 mb-10">
-              All plans include a 14-day free trial. No credit card required.
+              All plans include a 30-day free trial. No credit card required.
             </p>
 
             <div className="glass-card overflow-hidden overflow-x-auto">
