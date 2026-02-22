@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TenantProvider } from '@/components/tenant-provider';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ export default function RootLayout({
           <ThemeProvider>
             <body className="min-h-screen bg-surface-950 font-sans antialiased">
               {children}
+              <SpeedInsights />
             </body>
           </ThemeProvider>
         </TenantProvider>
