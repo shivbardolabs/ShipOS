@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';

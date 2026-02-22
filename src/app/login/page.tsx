@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 import { useEffect } from 'react';
 
 /* Auth0 routes require full-page redirects — <a> is intentional */
