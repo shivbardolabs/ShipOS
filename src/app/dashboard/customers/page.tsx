@@ -19,10 +19,10 @@ import {
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
-  physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
   postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  other: { label: 'Other', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
 };
 
 const statusDot: Record<string, string> = { active: 'bg-emerald-400', suspended: 'bg-yellow-400', closed: 'bg-surface-500' };
@@ -44,16 +44,16 @@ const STATUS_FILTERS = [
 ] as const;
 
 const PLATFORM_FILTERS = [
-  { id: 'all', label: 'All Platforms' }, { id: 'physical', label: 'Physical' },
+  { id: 'all', label: 'All Stores' },
   { id: 'iPostal', label: 'iPostal' }, { id: 'anytime', label: 'Anytime' },
-  { id: 'postscan', label: 'PostScan' },
+  { id: 'postscan', label: 'PostScan' }, { id: 'other', label: 'Other' },
 ] as const;
 
 const PAGE_SIZE = 12;
 
 const EMPTY_FORM = {
   firstName: '', lastName: '', email: '', phone: '', businessName: '',
-  pmbNumber: '', platform: 'physical' as Customer['platform'],
+  pmbNumber: '', platform: 'iPostal' as Customer['platform'],
   billingTerms: 'Monthly', idType: '' as string,
   notifyEmail: true, notifySms: true, notes: '',
 };
@@ -71,7 +71,7 @@ const IMPORTABLE_FIELDS = [
   { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' },
   { key: 'businessName', label: 'Business Name' },
   { key: 'pmbNumber', label: 'PMB Number', required: true },
-  { key: 'platform', label: 'Platform' },
+  { key: 'platform', label: 'Store' },
   { key: 'billingTerms', label: 'Billing Terms' },
   { key: 'notes', label: 'Notes' },
 ];
@@ -108,7 +108,7 @@ function autoMapColumns(headers: string[]): Record<string, string> {
     firstName: /first.?name|fname|first/i, lastName: /last.?name|lname|last|surname/i,
     email: /email|e.?mail/i, phone: /phone|mobile|cell|telephone/i,
     businessName: /business|company|org/i, pmbNumber: /pmb|mailbox|box.?num/i,
-    platform: /platform|source|channel/i, billingTerms: /billing|term|plan/i,
+    platform: /platform|store|source|channel/i, billingTerms: /billing|term|plan/i,
     notes: /note|comment|memo/i,
   };
   for (const header of headers) {
@@ -231,7 +231,7 @@ export default function CustomersPage() {
   }, []);
 
   const downloadTemplate = useCallback(() => {
-    const csv = 'First Name,Last Name,Email,Phone,Business Name,PMB Number,Platform,Billing Terms,Notes\nJohn,Smith,john@example.com,(555) 555-0100,Smith LLC,PMB-0100,physical,Monthly,VIP customer';
+    const csv = 'First Name,Last Name,Email,Phone,Business Name,PMB Number,Store,Billing Terms,Notes\nJohn,Smith,john@example.com,(555) 555-0100,Smith LLC,PMB-0100,iPostal,Monthly,VIP customer';
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'customer_import_template.csv'; a.click();
@@ -408,14 +408,20 @@ export default function CustomersPage() {
               <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-4">Mailbox Setup</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input label="PMB Number *" placeholder="PMB-0100" value={form.pmbNumber} onChange={(e) => handleFormChange('pmbNumber', e.target.value)} error={formErrors.pmbNumber} />
-                <Select label="Platform" options={[{ value: 'physical', label: 'Physical' },{ value: 'iPostal', label: 'iPostal' },{ value: 'anytime', label: 'Anytime Mailbox' },{ value: 'postscan', label: 'PostScan Mail' }]} value={form.platform} onChange={(e) => handleFormChange('platform', e.target.value)} />
-                <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' },{ value: 'Quarterly', label: 'Quarterly' },{ value: 'Annual', label: 'Annual' }]} value={form.billingTerms} onChange={(e) => handleFormChange('billingTerms', e.target.value)} />
+                <Select label="Store" options={[{ value: 'iPostal', label: 'iPostal' },{ value: 'anytime', label: 'Anytime Mailbox' },{ value: 'postscan', label: 'PostScan Mail' },{ value: 'other', label: 'Other' }]} value={form.platform} onChange={(e) => handleFormChange('platform', e.target.value)} />
+                <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' },{ value: 'Quarterly', label: 'Quarterly' },{ value: 'Semiannual', label: 'Semiannual (6 months)' },{ value: 'Annual', label: 'Annual' },{ value: 'Custom', label: 'Custom' }]} value={form.billingTerms} onChange={(e) => handleFormChange('billingTerms', e.target.value)} />
               </div>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-4">ID & Compliance</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select label="ID Type" placeholder="Select..." options={[{ value: 'drivers_license', label: "Driver's License" },{ value: 'passport', label: 'Passport' },{ value: 'both', label: 'Both (DL + Passport)' }]} value={form.idType} onChange={(e) => handleFormChange('idType', e.target.value)} />
+                <Select label="ID Type" placeholder="Select..." options={[{ value: 'drivers_license', label: "Driver's License" },{ value: 'passport', label: 'Passport' },{ value: 'both', label: "Both Driver's License and Passport" },{ value: 'military_id', label: 'Military ID' },{ value: 'other', label: 'Other' }]} value={form.idType} onChange={(e) => handleFormChange('idType', e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-4">Proof of Address (CMRA)</h3>
+              <div className="rounded-lg border border-surface-700/50 bg-surface-800/20 p-4">
+                <p className="text-sm text-surface-400">Proof of address documents will be configurable here. <span className="text-surface-500 italic">— details coming soon from Charlie.</span></p>
               </div>
             </div>
             <div>
@@ -478,12 +484,12 @@ export default function CustomersPage() {
                     <th className="px-3 py-1.5 text-left font-medium text-surface-300">Email</th>
                     <th className="px-3 py-1.5 text-left font-medium text-surface-300">Phone</th>
                     <th className="px-3 py-1.5 text-left font-medium text-surface-300">PMB Number</th>
-                    <th className="px-3 py-1.5 text-left font-medium text-surface-300">Platform</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-surface-300">Store</th>
                   </tr></thead>
                   <tbody><tr>
                     <td className="px-3 py-1.5">John</td><td className="px-3 py-1.5">Smith</td>
                     <td className="px-3 py-1.5">john@example.com</td><td className="px-3 py-1.5">(555) 555-0100</td>
-                    <td className="px-3 py-1.5">PMB-0100</td><td className="px-3 py-1.5">physical</td>
+                    <td className="px-3 py-1.5">PMB-0100</td><td className="px-3 py-1.5">iPostal</td>
                   </tr></tbody>
                 </table>
               </div>

@@ -176,13 +176,13 @@ export default function CheckInPage() {
   };
 
   /* ======================================================================== */
-  /*  Platform badge                                                          */
+  /*  Store badge                                                             */
   /* ======================================================================== */
   const platformColors: Record<string, string> = {
-    physical: 'default',
     iPostal: 'info',
     anytime: 'success',
-    postscan: 'warning' };
+    postscan: 'warning',
+    other: 'default' };
 
   return (
     <div className="space-y-6">
@@ -531,7 +531,7 @@ export default function CheckInPage() {
                   mono
                 />
                 <SummaryField
-                  label="Platform"
+                  label="Store"
                   value={selectedCustomer?.platform || '—'}
                 />
                 <SummaryField
