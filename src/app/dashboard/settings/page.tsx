@@ -311,10 +311,7 @@ export default function SettingsPage() {
     amazon: { enabled: true, compensation: '0.75', retailCharge: '2.99', department: 'Returns' } });
 
   // Notification settings
-  const [smtpServer, setSmtpServer] = useState('smtp.sendgrid.net');
-  const [smtpPort, setSmtpPort] = useState('587');
-  const [smtpFrom, setSmtpFrom] = useState('notifications@shipstation.com');
-  const [smsProvider, setSmsProvider] = useState('twilio');
+  const [smtpFrom, setSmtpFrom] = useState('notifications@shipospro.com');
   const [smsDefaultArrival, setSmsDefaultArrival] = useState(true);
 
   // Receipt preferences
@@ -834,20 +831,20 @@ export default function SettingsPage() {
                       description="New check-ins will automatically trigger an SMS notification"
                     />
 
-                    <Select
-                      label="SMS Provider"
-                      options={[
-                        { value: 'twilio', label: 'Twilio' },
-                        { value: 'vonage', label: 'Vonage' },
-                        { value: 'sns', label: 'Amazon SNS' },
-                      ]}
-                      value={smsProvider}
-                      onChange={(e) => setSmsProvider(e.target.value)}
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="Account SID" value="••••••••••••••••" type="password" readOnly />
-                      <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly />
+                    <p className="text-xs text-surface-500 mt-2">
+                      SMS notifications are sent via <a href="https://twilio.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Twilio</a>. Configure credentials in your environment variables.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <Input label="Account SID" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_ACCOUNT_SID" />
+                      <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_AUTH_TOKEN" />
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <Input label="Phone Number" value={process.env.NEXT_PUBLIC_TWILIO_PHONE || '+1 (XXX) XXX-XXXX'} readOnly placeholder="TWILIO_PHONE_NUMBER" />
+                      <Input label="Messaging Service SID (optional)" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_MESSAGING_SERVICE_SID" />
+                    </div>
+                    <p className="text-[11px] text-surface-600 mt-2">
+                      Set via environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -856,31 +853,34 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-primary-600" />
-                    Email (SMTP) Settings
+                    Email — Resend
+                    {process.env.NEXT_PUBLIC_RESEND_CONFIGURED === 'true' ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 border border-emerald-500/20">
+                        <Wifi className="h-3 w-3" /> Connected
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
+                        <WifiOff className="h-3 w-3" /> Not Configured
+                      </span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input
-                      label="SMTP Server"
-                      value={smtpServer}
-                      onChange={(e) => setSmtpServer(e.target.value)}
-                    />
-                    <Input
-                      label="Port"
-                      value={smtpPort}
-                      onChange={(e) => setSmtpPort(e.target.value)}
-                    />
+                  <p className="text-xs text-surface-500 mb-4">
+                    Email notifications are sent via <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Resend</a> with React Email templates. Configure your API key and sending domain in your environment variables.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input label="API Key" value="••••••••••••••••" type="password" readOnly placeholder="RESEND_API_KEY" />
                     <Input
                       label="From Address"
                       value={smtpFrom}
                       onChange={(e) => setSmtpFrom(e.target.value)}
+                      placeholder="notifications@shipospro.com"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <Input label="SMTP Username" value="apikey" readOnly />
-                    <Input label="SMTP Password" value="••••••••••••••••" type="password" readOnly />
-                  </div>
+                  <p className="text-[11px] text-surface-600 mt-2">
+                    Set via environment variables: RESEND_API_KEY, RESEND_FROM_EMAIL
+                  </p>
                 </CardContent>
               </Card>
 
