@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { notifications } from '@/lib/mock-data';
-import { formatDateTime } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   Bell,
