@@ -24,6 +24,7 @@ import {
   Eye,
   Printer,
   Copy } from 'lucide-react';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 
 /* -------------------------------------------------------------------------- */
 /*  Computed stats                                                            */
@@ -100,7 +101,9 @@ export default function ShippingPage() {
     ups: ['Ground', '2-Day Air', 'Next Day Air', '3-Day Select'],
     fedex: ['Ground', 'Express', 'Overnight', '2Day', 'Home Delivery'],
     usps: ['First Class', 'Priority Mail', 'Priority Mail Express', 'Ground Advantage'],
-    dhl: ['International Economy', 'International Express'] };
+    dhl: ['International Economy', 'International Express'],
+    lasership: ['Standard', 'Economy'],
+    ontrac: ['Ground', 'Sunrise'] };
 
   const columns: Column<Shipment & Record<string, unknown>>[] = [
     {
@@ -108,9 +111,12 @@ export default function ShippingPage() {
       label: 'Carrier / Service',
       sortable: true,
       render: (row) => (
-        <div>
-          <span className="font-medium text-surface-100 uppercase text-xs">{row.carrier}</span>
-          <p className="text-xs text-surface-500">{row.service}</p>
+        <div className="flex items-center gap-2">
+          <CarrierLogo carrier={row.carrier} size={18} />
+          <div>
+            <span className="font-medium text-surface-100 uppercase text-xs">{row.carrier}</span>
+            <p className="text-xs text-surface-500">{row.service}</p>
+          </div>
         </div>
       ) },
     {
@@ -347,6 +353,8 @@ export default function ShippingPage() {
                 { value: 'fedex', label: 'FedEx' },
                 { value: 'usps', label: 'USPS' },
                 { value: 'dhl', label: 'DHL' },
+                { value: 'lasership', label: 'LaserShip' },
+                { value: 'ontrac', label: 'OnTrac' },
               ]}
               value={formData.carrier}
               onChange={(e) => handleFormChange('carrier', e.target.value)}

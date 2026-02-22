@@ -10,6 +10,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { Modal } from '@/components/ui/modal';
 import { reconciliationRuns, reconciliationStats } from '@/lib/mock-data';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import type { ReconciliationItem, ReconciliationRun } from '@/lib/types';
 import {
   Upload,
@@ -181,11 +182,14 @@ export default function ReconciliationPage() {
       label: 'Carrier / Service',
       sortable: true,
       render: (row) => (
-        <div>
-          <span className="font-medium text-surface-100 uppercase text-xs">
-            {row.carrier}
-          </span>
-          <p className="text-xs text-surface-500">{row.service}</p>
+        <div className="flex items-center gap-2">
+          <CarrierLogo carrier={row.carrier} size={18} />
+          <div>
+            <span className="font-medium text-surface-100 uppercase text-xs">
+              {row.carrier}
+            </span>
+            <p className="text-xs text-surface-500">{row.service}</p>
+          </div>
         </div>
       ),
     },
@@ -365,6 +369,7 @@ export default function ReconciliationPage() {
                       {run.fileName}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
+                      <CarrierLogo carrier={run.carrier} size={12} />
                       <span className="text-[10px] text-surface-500 uppercase font-semibold">{run.carrier}</span>
                       <span className="text-[10px] text-surface-600">{'\u2022'}</span>
                       <span className="text-[10px] text-surface-500">{run.recordsProcessed} records</span>

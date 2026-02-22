@@ -40,7 +40,7 @@ export interface Package {
   trackingNumber?: string;
   carrier: string;
   senderName?: string;
-  packageType: 'letter' | 'small' | 'medium' | 'large' | 'oversized';
+  packageType: 'letter' | 'pack' | 'small' | 'medium' | 'large' | 'xlarge';
   status: 'checked_in' | 'notified' | 'ready' | 'released' | 'returned';
   hazardous: boolean;
   perishable: boolean;
@@ -140,7 +140,7 @@ export interface DashboardStats {
   notificationsSent: number;
 }
 
-export type CarrierType = 'amazon' | 'ups' | 'fedex' | 'usps' | 'dhl' | 'walmart' | 'target' | 'other';
+export type CarrierType = 'amazon' | 'ups' | 'fedex' | 'usps' | 'dhl' | 'walmart' | 'target' | 'lasership' | 'temu' | 'ontrac' | 'other';
 
 /* -------------------------------------------------------------------------- */
 /*  Shipping Reconciliation                                                   */

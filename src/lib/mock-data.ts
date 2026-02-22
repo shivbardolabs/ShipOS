@@ -78,7 +78,7 @@ export const customers: Customer[] = [
 // Packages (60)
 // ---------------------------------------------------------------------------
 const carriers = ['amazon', 'ups', 'fedex', 'usps', 'dhl', 'ups', 'fedex', 'amazon', 'usps', 'ups'];
-const packageTypes: Package['packageType'][] = ['letter', 'small', 'medium', 'large', 'oversized'];
+const packageTypes: Package['packageType'][] = ['letter', 'pack', 'small', 'medium', 'large', 'xlarge'];
 const packageStatuses: Package['status'][] = ['checked_in', 'checked_in', 'notified', 'ready', 'released', 'released'];
 const senders = ['Amazon.com', 'Best Buy', 'Apple Inc', 'Walmart', 'Target', 'Etsy Seller', 'Chewy', 'Wayfair', 'Home Depot', 'Nike', 'Nordstrom', 'Costco', 'Office Depot', 'Dell Technologies', 'Samsung Electronics', 'B&H Photo', 'Zappos', 'Adidas', 'REI Co-op', 'Staples'];
 
@@ -115,7 +115,7 @@ export const packages: Package[] = Array.from({ length: 60 }, (_, i) => {
     notes: idx % 12 === 0 ? 'Fragile - handle with care' : idx % 17 === 0 ? 'Customer requested hold' : undefined,
     condition: idx === 3 ? 'Slight dent on corner' : idx === 28 ? 'Wet packaging' : undefined,
     storageFee: status === 'released' && checkedInDaysAgo > 5 ? 5.0 : 0,
-    receivingFee: pType === 'oversized' ? 7.5 : pType === 'large' ? 5.0 : 3.0,
+    receivingFee: pType === 'xlarge' ? 7.5 : pType === 'large' ? 5.0 : 3.0,
     quotaFee: 0,
     checkedInAt: hoursAgo(checkedInDaysAgo * 24 + (idx % 8)),
     notifiedAt: status !== 'checked_in' ? hoursAgo(checkedInDaysAgo * 24 - 1) : undefined,
@@ -241,7 +241,7 @@ const auditActions = [
   { action: 'package.release', entityType: 'package', detail: 'Released 3 packages to customer' },
   { action: 'notification.send', entityType: 'notification', detail: 'Sent ID expiration warning' },
   { action: 'customer.create', entityType: 'customer', detail: 'New iPostal customer registered' },
-  { action: 'package.check_in', entityType: 'package', detail: 'Checked in UPS oversized package' },
+  { action: 'package.check_in', entityType: 'package', detail: 'Checked in UPS extra large package' },
   { action: 'mail.forward', entityType: 'mail', detail: 'Forwarded mail to customer address' },
 ];
 

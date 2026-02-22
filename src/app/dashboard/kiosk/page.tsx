@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { customers, packages } from '@/lib/mock-data';
 import type { Customer, Package as PackageType } from '@/lib/types';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import {
   Package,
   PackageCheck,
@@ -36,12 +37,15 @@ type KioskScreen =
 /*  Carrier options for drop-off                                              */
 /* -------------------------------------------------------------------------- */
 const carriers = [
-  { id: 'amazon', label: 'Amazon', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', emoji: '📦' },
-  { id: 'ups', label: 'UPS', color: 'bg-amber-100 text-amber-600 border-amber-200', emoji: '🟤' },
-  { id: 'fedex', label: 'FedEx', color: 'bg-indigo-100 text-indigo-600 border-indigo-200', emoji: '📮' },
-  { id: 'usps', label: 'USPS', color: 'bg-blue-100 text-blue-600 border-blue-500/30', emoji: '🏤' },
-  { id: 'dhl', label: 'DHL', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', emoji: '✈️' },
-  { id: 'other', label: 'Other', color: 'bg-surface-600/30 text-surface-400 border-surface-600/40', emoji: '📋' },
+  { id: 'amazon', label: 'Amazon', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  { id: 'ups', label: 'UPS', color: 'bg-amber-100 text-amber-600 border-amber-200' },
+  { id: 'fedex', label: 'FedEx', color: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  { id: 'usps', label: 'USPS', color: 'bg-blue-100 text-blue-600 border-blue-500/30' },
+  { id: 'dhl', label: 'DHL', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  { id: 'lasership', label: 'LaserShip', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+  { id: 'temu', label: 'Temu', color: 'bg-orange-600/20 text-orange-500 border-orange-600/30' },
+  { id: 'ontrac', label: 'OnTrac', color: 'bg-blue-600/20 text-blue-300 border-blue-600/30' },
+  { id: 'other', label: 'Other', color: 'bg-surface-600/30 text-surface-400 border-surface-600/40' },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -55,7 +59,7 @@ const carrierLabels: Record<string, string> = {
 /*  Package type labels                                                       */
 /* -------------------------------------------------------------------------- */
 const pkgTypeLabels: Record<string, string> = {
-  letter: 'Letter', small: 'Small', medium: 'Medium', large: 'Large', oversized: 'Oversized',
+  letter: 'Letter', pack: 'Pack', small: 'Small', medium: 'Medium', large: 'Large', xlarge: 'Extra Large',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -467,7 +471,7 @@ export default function KioskPage() {
                     'border-surface-700 bg-surface-800/30 hover:border-primary-300 hover:bg-primary-50/60 active:scale-95'
                   )}
                 >
-                  <span className="text-3xl">{c.emoji}</span>
+                  <CarrierLogo carrier={c.id} size={36} />
                   <span className="text-sm font-semibold text-surface-100">{c.label}</span>
                 </button>
               ))}
