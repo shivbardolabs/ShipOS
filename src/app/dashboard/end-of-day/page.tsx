@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { shipments } from '@/lib/mock-data';
 import {
   RotateCcw,
@@ -42,6 +43,9 @@ function buildCarrierPickups(): CarrierPickup[] {
     { id: 'usps', name: 'USPS', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-500/30', iconBg: 'bg-blue-100' },
     { id: 'dhl', name: 'DHL', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', iconBg: 'bg-yellow-500/20' },
     { id: 'amazon', name: 'Amazon', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30', iconBg: 'bg-orange-500/20' },
+    { id: 'lasership', name: 'LaserShip', color: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', iconBg: 'bg-green-500/20' },
+    { id: 'temu', name: 'Temu', color: 'text-orange-500', bgColor: 'bg-orange-600/10', borderColor: 'border-orange-600/30', iconBg: 'bg-orange-600/20' },
+    { id: 'ontrac', name: 'OnTrac', color: 'text-blue-400', bgColor: 'bg-blue-600/10', borderColor: 'border-blue-600/30', iconBg: 'bg-blue-600/20' },
   ];
 
   return carrierConfig.map((cfg) => {
@@ -185,7 +189,7 @@ export default function EndOfDayPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${carrier.iconBg}`}>
-                    <Truck className={`h-5 w-5 ${carrier.color}`} />
+                    <CarrierLogo carrier={carrier.id} size={24} />
                   </div>
                   <div>
                     <h3 className={`text-sm font-bold ${carrier.color}`}>{carrier.name}</h3>

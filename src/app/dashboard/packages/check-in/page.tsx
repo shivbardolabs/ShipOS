@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Snowflake } from 'lucide-react';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
@@ -39,14 +40,17 @@ const STEPS = [
 /*  Carrier Config                                                            */
 /* -------------------------------------------------------------------------- */
 const carrierOptions = [
-  { id: 'amazon', label: 'Amazon', color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20', active: 'border-orange-500 bg-orange-500/20' },
-  { id: 'ups', label: 'UPS', color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30', active: 'border-amber-600 bg-amber-900/30' },
-  { id: 'fedex', label: 'FedEx', color: 'border-indigo-300 bg-indigo-50 text-indigo-600 hover:bg-indigo-100', active: 'border-indigo-500 bg-indigo-100' },
-  { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-50 text-blue-600 hover:bg-blue-100', active: 'border-blue-500 bg-blue-100' },
-  { id: 'dhl', label: 'DHL', color: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', active: 'border-yellow-500 bg-yellow-500/20' },
-  { id: 'walmart', label: 'Walmart', color: 'border-blue-600/40 bg-blue-600/10 text-blue-300 hover:bg-blue-600/20', active: 'border-blue-600 bg-blue-600/20' },
-  { id: 'target', label: 'Target', color: 'border-red-500/40 bg-red-50 text-red-600 hover:bg-red-100', active: 'border-red-500 bg-red-100' },
-  { id: 'other', label: 'Other', color: 'border-surface-600/40 bg-surface-700/20 text-surface-400 hover:bg-surface-700/30', active: 'border-surface-500 bg-surface-700/30' },
+  { id: 'amazon', label: 'Amazon', color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20', active: 'border-orange-500 bg-orange-500/20 ring-1 ring-orange-500/30' },
+  { id: 'ups', label: 'UPS', color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30', active: 'border-amber-600 bg-amber-900/30 ring-1 ring-amber-500/30' },
+  { id: 'fedex', label: 'FedEx', color: 'border-indigo-300/40 bg-indigo-50 text-indigo-600 hover:bg-indigo-100', active: 'border-indigo-500 bg-indigo-100 ring-1 ring-indigo-500/30' },
+  { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-50 text-blue-600 hover:bg-blue-100', active: 'border-blue-500 bg-blue-100 ring-1 ring-blue-500/30' },
+  { id: 'dhl', label: 'DHL', color: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', active: 'border-yellow-500 bg-yellow-500/20 ring-1 ring-yellow-500/30' },
+  { id: 'lasership', label: 'LaserShip', color: 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20', active: 'border-green-500 bg-green-500/20 ring-1 ring-green-500/30' },
+  { id: 'temu', label: 'Temu', color: 'border-orange-600/40 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20', active: 'border-orange-600 bg-orange-600/20 ring-1 ring-orange-600/30' },
+  { id: 'ontrac', label: 'OnTrac', color: 'border-blue-600/40 bg-blue-600/10 text-blue-300 hover:bg-blue-600/20', active: 'border-blue-600 bg-blue-600/20 ring-1 ring-blue-600/30' },
+  { id: 'walmart', label: 'Walmart', color: 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20', active: 'border-blue-500 bg-blue-500/20 ring-1 ring-blue-500/30' },
+  { id: 'target', label: 'Target', color: 'border-red-500/40 bg-red-50 text-red-600 hover:bg-red-100', active: 'border-red-500 bg-red-100 ring-1 ring-red-500/30' },
+  { id: 'other', label: 'Other', color: 'border-surface-600/40 bg-surface-700/20 text-surface-400 hover:bg-surface-700/30', active: 'border-surface-500 bg-surface-700/30 ring-1 ring-surface-500/30' },
 ];
 
 const carrierSenderMap: Record<string, string> = {
@@ -55,6 +59,9 @@ const carrierSenderMap: Record<string, string> = {
   fedex: '',
   usps: '',
   dhl: '',
+  lasership: '',
+  temu: 'Temu.com',
+  ontrac: '',
   walmart: 'Walmart Inc',
   target: 'Target Corporation',
   other: '' };
@@ -63,11 +70,12 @@ const carrierSenderMap: Record<string, string> = {
 /*  Package type config                                                       */
 /* -------------------------------------------------------------------------- */
 const packageTypeOptions = [
-  { id: 'letter', label: 'Letter', icon: '✉️', desc: 'Envelope / flat' },
-  { id: 'small', label: 'Small', icon: '📦', desc: 'Up to 1 lb' },
-  { id: 'medium', label: 'Medium', icon: '📦', desc: '1–10 lbs' },
-  { id: 'large', label: 'Large', icon: '📦', desc: '10–50 lbs' },
-  { id: 'oversized', label: 'Oversized', icon: '🏗️', desc: '50+ lbs / bulky' },
+  { id: 'letter', label: 'Letter', icon: '✉️', desc: 'Envelope / Flat' },
+  { id: 'pack', label: 'Pack', icon: '📨', desc: 'Bubble mailer / Soft pack' },
+  { id: 'small', label: 'Small', icon: '📦', desc: 'Up to 2 lbs' },
+  { id: 'medium', label: 'Medium', icon: '📦', desc: 'Up to 8 lbs' },
+  { id: 'large', label: 'Large', icon: '📦', desc: 'Up to 15 lbs' },
+  { id: 'xlarge', label: 'Extra Large', icon: '🏗️', desc: '20+ lbs / Bulky' },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -345,7 +353,7 @@ export default function CheckInPage() {
               <label className="text-sm font-medium text-surface-300 mb-3 block">
                 Carrier
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {carrierOptions.map((carrier) => {
                   const isActive = selectedCarrier === carrier.id;
                   return (
@@ -353,13 +361,14 @@ export default function CheckInPage() {
                       key={carrier.id}
                       onClick={() => handleCarrierSelect(carrier.id)}
                       className={cn(
-                        'flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition-all',
+                        'flex flex-col items-center justify-center gap-2 rounded-xl border px-4 py-4 transition-all',
                         isActive
                           ? carrier.active
                           : carrier.color
                       )}
                     >
-                      {carrier.label}
+                      <CarrierLogo carrier={carrier.id} size={28} />
+                      <span className="text-xs font-medium opacity-80">{carrier.label}</span>
                     </button>
                   );
                 })}
@@ -397,7 +406,7 @@ export default function CheckInPage() {
               <label className="text-sm font-medium text-surface-300 mb-3 block">
                 Package Type
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 {packageTypeOptions.map((pt) => {
                   const isActive = packageType === pt.id;
                   return (

@@ -26,6 +26,7 @@ import {
   FileSignature,
   ChevronRight,
 } from 'lucide-react';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { customers, packages } from '@/lib/mock-data';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Customer, Package as PackageType } from '@/lib/types';
@@ -39,6 +40,11 @@ const carrierColors: Record<string, { bg: string; text: string; dot: string }> =
   usps: { bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
   amazon: { bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
   dhl: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+  lasership: { bg: 'bg-green-900/30', text: 'text-green-400', dot: 'bg-green-400' },
+  temu: { bg: 'bg-orange-900/30', text: 'text-orange-500', dot: 'bg-orange-500' },
+  ontrac: { bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
+  walmart: { bg: 'bg-blue-900/30', text: 'text-blue-300', dot: 'bg-blue-400' },
+  target: { bg: 'bg-red-900/30', text: 'text-red-400', dot: 'bg-red-400' },
 };
 
 const carrierLabels: Record<string, string> = {
@@ -47,6 +53,11 @@ const carrierLabels: Record<string, string> = {
   usps: 'USPS',
   amazon: 'Amazon',
   dhl: 'DHL',
+  lasership: 'LaserShip',
+  temu: 'Temu',
+  ontrac: 'OnTrac',
+  walmart: 'Walmart',
+  target: 'Target',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -54,10 +65,12 @@ const carrierLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 const pkgTypeLabels: Record<string, string> = {
   letter: 'Letter',
+  pack: 'Pack',
   small: 'Small',
   medium: 'Medium',
   large: 'Large',
-  oversized: 'Oversized',
+  xlarge: 'Extra Large',
+  oversized: 'Extra Large', // legacy fallback
 };
 
 /* -------------------------------------------------------------------------- */
@@ -449,7 +462,7 @@ export default function CheckOutPage() {
                         <div className="shrink-0">
                           {cc ? (
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${cc.bg} ${cc.text}`}>
-                              <span className={`h-2 w-2 rounded-full ${cc.dot}`} />
+                              <CarrierLogo carrier={pkg.carrier} size={16} />
                               {carrierLabels[pkg.carrier.toLowerCase()] || pkg.carrier}
                             </span>
                           ) : (

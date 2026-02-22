@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Download,
   Plus } from 'lucide-react';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { packages } from '@/lib/mock-data';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Package as PackageType } from '@/lib/types';
@@ -29,7 +30,12 @@ const carrierConfig: Record<string, { label: string; bg: string; text: string; d
   fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
   usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
   amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
-  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' } };
+  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+  lasership: { label: 'LaserShip', bg: 'bg-green-900/30', text: 'text-green-400', dot: 'bg-green-400' },
+  temu: { label: 'Temu', bg: 'bg-orange-900/30', text: 'text-orange-500', dot: 'bg-orange-500' },
+  ontrac: { label: 'OnTrac', bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
+  walmart: { label: 'Walmart', bg: 'bg-blue-900/30', text: 'text-blue-300', dot: 'bg-blue-400' },
+  target: { label: 'Target', bg: 'bg-red-900/30', text: 'text-red-400', dot: 'bg-red-400' } };
 
 function CarrierBadge({ carrier }: { carrier: string }) {
   const cfg = carrierConfig[carrier.toLowerCase()] || {
@@ -41,7 +47,7 @@ function CarrierBadge({ carrier }: { carrier: string }) {
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${cfg.bg} ${cfg.text}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+      <CarrierLogo carrier={carrier} size={14} />
       {cfg.label}
     </span>
   );
@@ -62,10 +68,12 @@ const statusLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 const packageTypeLabels: Record<string, string> = {
   letter: 'Letter',
+  pack: 'Pack',
   small: 'Small',
   medium: 'Medium',
   large: 'Large',
-  oversized: 'Oversized' };
+  xlarge: 'Extra Large',
+  oversized: 'Extra Large' };
 
 /* -------------------------------------------------------------------------- */
 /*  Days held calculator                                                      */
