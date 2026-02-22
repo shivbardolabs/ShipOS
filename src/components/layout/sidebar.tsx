@@ -26,6 +26,7 @@ import {
   X,
   Scale,
   LogOut,
+  Award,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -72,6 +73,7 @@ const navSections: NavSection[] = [
   {
     title: 'BUSINESS',
     items: [
+      { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },

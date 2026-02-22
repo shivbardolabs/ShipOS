@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { customers, packages, mailPieces, shipments, notifications, auditLog } from '@/lib/mock-data';
+import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
 import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
 import {
@@ -28,7 +28,16 @@ import {
   Truck,
   Send,
   Camera,
-  Upload } from 'lucide-react';
+  Upload,
+  Award,
+  Crown,
+  Gem,
+  Star,
+  Gift,
+  ArrowUpRight,
+  ArrowDownRight,
+  Copy,
+} from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 /* -------------------------------------------------------------------------- */
@@ -195,7 +204,17 @@ export default function CustomerDetailPage() {
     { id: 'shipments', label: 'Shipments', icon: <Truck className="h-3.5 w-3.5" />, count: customerShipments.length },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
     { id: 'activity', label: 'Activity', icon: <Clock className="h-3.5 w-3.5" /> },
+    { id: 'loyalty', label: 'Loyalty', icon: <Award className="h-3.5 w-3.5" /> },
   ];
+
+  // Loyalty data for this customer
+  const loyaltyAccount = loyaltyAccounts.find(a => a.customerId === customer?.id);
+  const nextTier = loyaltyAccount?.currentTier
+    ? loyaltyTiers.find(t => t.sortOrder === (loyaltyAccount.currentTier!.sortOrder + 1))
+    : null;
+  const tierProgressPct = loyaltyAccount && nextTier
+    ? Math.min(100, ((loyaltyAccount.lifetimePoints - loyaltyAccount.currentTier!.minPoints) / (nextTier.minPoints - loyaltyAccount.currentTier!.minPoints)) * 100)
+    : loyaltyAccount ? 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -338,6 +357,163 @@ export default function CustomerDetailPage() {
                 </div>
               ))}
             </div>
+          </TabPanel>
+
+          {/* Loyalty tab */}
+          <TabPanel active={activeTab === 'loyalty'}>
+            {loyaltyAccount ? (
+              <div className="space-y-6">
+                {/* Loyalty Overview Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-xl border border-surface-700 p-4">
+                    <p className="text-xs text-surface-500 mb-1">Current Points</p>
+                    <p className="text-2xl font-bold text-surface-100">{loyaltyAccount.currentPoints.toLocaleString()}</p>
+                    <p className="text-xs text-surface-500 mt-1">≈ ${(loyaltyAccount.currentPoints * 0.05).toFixed(2)} value</p>
+                  </div>
+                  <div className="rounded-xl border border-surface-700 p-4">
+                    <p className="text-xs text-surface-500 mb-1">Lifetime Points</p>
+                    <p className="text-2xl font-bold text-surface-100">{loyaltyAccount.lifetimePoints.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-xl border border-surface-700 p-4">
+                    <p className="text-xs text-surface-500 mb-1">Current Tier</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold"
+                        style={{
+                          backgroundColor: `${loyaltyAccount.currentTier?.color || '#CD7F32'}20`,
+                          color: loyaltyAccount.currentTier?.color || '#CD7F32',
+                        }}
+                      >
+                        {loyaltyAccount.currentTier?.name === 'Gold' && <Crown className="h-4 w-4" />}
+                        {loyaltyAccount.currentTier?.name === 'Silver' && <Gem className="h-4 w-4" />}
+                        {loyaltyAccount.currentTier?.name === 'Bronze' && <Award className="h-4 w-4" />}
+                        {loyaltyAccount.currentTier?.name}
+                      </span>
+                    </div>
+                    {nextTier && (
+                      <div className="mt-2">
+                        <div className="flex justify-between text-[10px] text-surface-500 mb-1">
+                          <span>{loyaltyAccount.lifetimePoints} pts</span>
+                          <span>{nextTier.minPoints} pts to {nextTier.name}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-surface-800 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${tierProgressPct}%`,
+                              backgroundColor: loyaltyAccount.currentTier?.color || '#CD7F32',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Referral Code */}
+                <div className="rounded-lg border border-surface-700 p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-surface-500 mb-0.5">Referral Code</p>
+                    <code className="text-lg font-mono font-bold text-primary-400">{loyaltyAccount.referralCode}</code>
+                  </div>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(loyaltyAccount.referralCode)}
+                    className="flex items-center gap-1.5 rounded-lg bg-surface-800 px-3 py-1.5 text-xs font-medium text-surface-300 hover:text-surface-100 transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy
+                  </button>
+                </div>
+
+                {/* Tier Benefits */}
+                {loyaltyAccount.currentTier && (
+                  <div className="rounded-lg border border-surface-700 p-4">
+                    <h4 className="text-sm font-semibold text-surface-200 mb-3">
+                      {loyaltyAccount.currentTier.name} Tier Benefits
+                    </h4>
+                    <ul className="space-y-2">
+                      {loyaltyAccount.currentTier.benefits.map((b, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-surface-300">
+                          <Star className="h-3.5 w-3.5 flex-shrink-0" style={{ color: loyaltyAccount.currentTier!.color }} />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Available Rewards */}
+                <div>
+                  <h4 className="text-sm font-semibold text-surface-200 mb-3">Available Rewards</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {loyaltyRewards.filter(r => r.isActive).map((reward) => {
+                      const canRedeem = loyaltyAccount.currentPoints >= reward.pointsCost;
+                      return (
+                        <div key={reward.id} className="rounded-lg border border-surface-700 p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-4 w-4 text-accent-amber" />
+                              <span className="text-sm font-medium text-surface-200">{reward.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-primary-400">{reward.pointsCost} pts</span>
+                          </div>
+                          <p className="text-xs text-surface-500 mb-2">{reward.description}</p>
+                          <button
+                            disabled={!canRedeem}
+                            className={cn(
+                              'w-full rounded-lg py-1.5 text-xs font-medium transition-colors',
+                              canRedeem
+                                ? 'bg-primary-600 text-white hover:bg-primary-500'
+                                : 'bg-surface-800 text-surface-500 cursor-not-allowed'
+                            )}
+                          >
+                            {canRedeem ? 'Redeem' : `Need ${(reward.pointsCost - loyaltyAccount.currentPoints).toLocaleString()} more pts`}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Recent Transactions */}
+                <div>
+                  <h4 className="text-sm font-semibold text-surface-200 mb-3">Recent Transactions</h4>
+                  <div className="space-y-2">
+                    {(loyaltyAccount.transactions || []).slice(0, 10).map((txn) => {
+                      const isEarn = txn.points > 0;
+                      return (
+                        <div key={txn.id} className="flex items-center justify-between rounded-lg bg-surface-900/50 px-3 py-2.5">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-7 w-7 items-center justify-center rounded-full ${isEarn ? 'bg-accent-emerald/10' : 'bg-accent-rose/10'}`}>
+                              {isEarn ? (
+                                <ArrowUpRight className="h-3.5 w-3.5 text-accent-emerald" />
+                              ) : (
+                                <ArrowDownRight className="h-3.5 w-3.5 text-accent-rose" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm text-surface-200">{txn.description || txn.type}</p>
+                              <p className="text-xs text-surface-500">{formatDate(txn.createdAt)}</p>
+                            </div>
+                          </div>
+                          <span className={`text-sm font-semibold ${isEarn ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                            {isEarn ? '+' : ''}{txn.points} pts
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Award className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+                <p className="text-sm text-surface-400">Customer is not enrolled in the loyalty program</p>
+                <button className="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors">
+                  Enroll Customer
+                </button>
+              </div>
+            )}
           </TabPanel>
         </div>
 

@@ -59,6 +59,7 @@ model Customer {
   shipments       Shipment[]
   notifications   Notification[]
   shipToAddresses ShipToAddress[]
+  loyaltyAccount  LoyaltyAccount?
 
   // Migration reference
   sourceId    String? // Original PostalMate CUSTOMERID
@@ -300,4 +301,99 @@ model ShipToAddress {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// ── Loyalty Program ──────────────────────────────────────────────────────────
+
+model LoyaltyProgram {
+  id              String   @id @default(cuid())
+  name            String   @default("ShipOS Rewards")
+  isActive        Boolean  @default(true)
+  pointsPerDollar Float    @default(1)
+  currencyName    String   @default("points")
+  redemptionRate  Float    @default(0.05) // dollars per point (100 pts = $5 → 0.05)
+
+  // Referral config
+  referralEnabled       Boolean @default(true)
+  referrerBonusPoints   Int     @default(200)
+  refereeBonusPoints    Int     @default(100)
+
+  tiers    LoyaltyTier[]
+  rewards  LoyaltyReward[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoyaltyTier {
+  id                String  @id @default(cuid())
+  name              String  // Bronze, Silver, Gold
+  minPoints         Int     @default(0)
+  maxPoints         Int?    // null = unlimited (top tier)
+  earningMultiplier Float   @default(1.0)
+  shippingDiscount  Float   @default(0) // percentage (e.g. 5 = 5%)
+  freeHoldDays      Int     @default(0)
+  benefits          String? // JSON array of benefit strings
+  color             String  @default("#CD7F32")
+  icon              String  @default("award")
+  sortOrder         Int     @default(0)
+
+  programId String
+  program   LoyaltyProgram @relation(fields: [programId], references: [id])
+
+  accounts LoyaltyAccount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoyaltyAccount {
+  id             String   @id @default(cuid())
+  currentPoints  Int      @default(0)
+  lifetimePoints Int      @default(0)
+  referralCode   String   @unique
+  referredById   String?  // FK to another LoyaltyAccount
+
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  currentTierId String?
+  currentTier   LoyaltyTier? @relation(fields: [currentTierId], references: [id])
+
+  transactions LoyaltyTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoyaltyTransaction {
+  id           String @id @default(cuid())
+  type         String // earn, redeem, expire, bonus, referral, adjustment
+  points       Int    // positive for earn, negative for redeem
+  balanceAfter Int
+  description  String?
+  referenceType String? // shipment, package, mailbox, invoice, referral, manual, reward
+  referenceId   String?
+
+  loyaltyAccountId String
+  loyaltyAccount   LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model LoyaltyReward {
+  id           String  @id @default(cuid())
+  name         String
+  description  String?
+  pointsCost   Int
+  rewardType   String  // discount, free_service, upgrade, credit, custom
+  value        Float   @default(0) // dollar value of reward
+  isActive     Boolean @default(true)
+  maxRedemptions Int?  // null = unlimited
+
+  programId String
+  program   LoyaltyProgram @relation(fields: [programId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

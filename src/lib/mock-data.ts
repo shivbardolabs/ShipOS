@@ -13,6 +13,12 @@ import type {
   ReconciliationStats,
   DiscrepancyType,
   ReconciliationItemStatus,
+  LoyaltyProgram,
+  LoyaltyTier,
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  LoyaltyReward,
+  LoyaltyDashboardStats,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -437,4 +443,168 @@ export const reconciliationStats: ReconciliationStats = {
   successRate: parseFloat((allReconItems.filter(i => i.status === 'matched').length / allReconItems.length * 100).toFixed(1)),
   runsThisMonth: reconciliationRuns.length,
   avgRefundPerRun: parseFloat((reconciliationRuns.reduce((s, r) => s + r.potentialRefund, 0) / reconciliationRuns.length).toFixed(2)),
+};
+
+// ---------------------------------------------------------------------------
+// Loyalty Program
+// ---------------------------------------------------------------------------
+
+export const loyaltyTiers: LoyaltyTier[] = [
+  {
+    id: 'tier_bronze',
+    name: 'Bronze',
+    minPoints: 0,
+    maxPoints: 499,
+    earningMultiplier: 1.0,
+    shippingDiscount: 0,
+    freeHoldDays: 0,
+    benefits: ['Earn 1 pt / $1 spent', 'Welcome bonus (50 pts)', 'Monthly rewards digest'],
+    color: '#CD7F32',
+    icon: 'award',
+    sortOrder: 0,
+  },
+  {
+    id: 'tier_silver',
+    name: 'Silver',
+    minPoints: 500,
+    maxPoints: 1499,
+    earningMultiplier: 1.25,
+    shippingDiscount: 5,
+    freeHoldDays: 30,
+    benefits: ['1.25× earning rate', '5% shipping discount', '30-day free package hold', 'Priority notifications'],
+    color: '#C0C0C0',
+    icon: 'gem',
+    sortOrder: 1,
+  },
+  {
+    id: 'tier_gold',
+    name: 'Gold',
+    minPoints: 1500,
+    maxPoints: null,
+    earningMultiplier: 1.5,
+    shippingDiscount: 10,
+    freeHoldDays: 60,
+    benefits: ['1.5× earning rate', '10% shipping discount', '60-day free package hold', 'Priority service', 'Free mail scanning', 'Exclusive member events'],
+    color: '#FFD700',
+    icon: 'crown',
+    sortOrder: 2,
+  },
+];
+
+export const loyaltyRewards: LoyaltyReward[] = [
+  { id: 'rwd_001', name: '$5 Service Credit', description: 'Apply $5 credit toward any ShipOS service', pointsCost: 100, rewardType: 'credit', value: 5, isActive: true, maxRedemptions: null },
+  { id: 'rwd_002', name: '$10 Shipping Discount', description: 'Get $10 off your next shipment', pointsCost: 180, rewardType: 'discount', value: 10, isActive: true, maxRedemptions: null },
+  { id: 'rwd_003', name: 'Free Package Hold (30 days)', description: 'Waive storage fees for 30 days on one package', pointsCost: 150, rewardType: 'free_service', value: 15, isActive: true, maxRedemptions: null },
+  { id: 'rwd_004', name: 'Free Mail Scan (10 pieces)', description: 'Complimentary scanning of up to 10 mail pieces', pointsCost: 80, rewardType: 'free_service', value: 8, isActive: true, maxRedemptions: null },
+  { id: 'rwd_005', name: '$25 Shipping Credit', description: 'Major discount on a large shipment', pointsCost: 400, rewardType: 'credit', value: 25, isActive: true, maxRedemptions: null },
+  { id: 'rwd_006', name: 'Free Notary Service', description: 'One complimentary notary session', pointsCost: 120, rewardType: 'free_service', value: 12, isActive: true, maxRedemptions: null },
+];
+
+export const loyaltyProgram: LoyaltyProgram = {
+  id: 'prog_001',
+  name: 'ShipOS Rewards',
+  isActive: true,
+  pointsPerDollar: 1,
+  currencyName: 'points',
+  redemptionRate: 0.05,
+  referralEnabled: true,
+  referrerBonusPoints: 200,
+  refereeBonusPoints: 100,
+  tiers: loyaltyTiers,
+  rewards: loyaltyRewards,
+};
+
+// Generate loyalty accounts for active customers
+const activeCustomers = customers.filter(c => c.status === 'active');
+
+function generateReferralCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function getTierForPoints(pts: number): LoyaltyTier {
+  for (let i = loyaltyTiers.length - 1; i >= 0; i--) {
+    if (pts >= loyaltyTiers[i].minPoints) return loyaltyTiers[i];
+  }
+  return loyaltyTiers[0];
+}
+
+const txnTypes: LoyaltyTransaction['type'][] = ['earn', 'earn', 'earn', 'earn', 'earn', 'redeem', 'bonus', 'referral'];
+const txnRefTypes = ['shipment', 'package', 'mailbox', 'invoice', 'shipment', 'reward', 'manual', 'referral'];
+const txnDescs = [
+  'Shipping — FedEx Express',
+  'Package receiving fee',
+  'Mailbox monthly renewal',
+  'Invoice payment',
+  'Shipping — USPS Priority',
+  'Redeemed: $5 Service Credit',
+  'Tier upgrade bonus',
+  'Referral bonus — new customer',
+];
+
+export const loyaltyAccounts: LoyaltyAccount[] = activeCustomers.map((cust, i) => {
+  // Vary points across customers
+  const basePoints = [1820, 980, 2450, 340, 1200, 560, 420, 1650, 750, 2100, 280, 1380, 190, 890, 1050, 470, 2300, 620, 1500, 830, 350, 1120, 710, 1900, 260, 1700][i % 26];
+  const redeemed = Math.floor(basePoints * 0.2);
+  const currentPts = basePoints - redeemed;
+  const tier = getTierForPoints(basePoints);
+
+  const txnCount = 5 + (i % 8);
+  let runningBalance = 0;
+  const transactions: LoyaltyTransaction[] = Array.from({ length: txnCount }, (_, j) => {
+    const type = txnTypes[j % txnTypes.length] as LoyaltyTransaction['type'];
+    const pts = type === 'redeem' ? -(50 + (j * 10)) : (20 + (j * 15) + (i * 3));
+    runningBalance += pts;
+    if (runningBalance < 0) runningBalance = 0;
+    return {
+      id: `txn_${cust.id}_${j}`,
+      type,
+      points: pts,
+      balanceAfter: Math.max(0, runningBalance),
+      description: txnDescs[j % txnDescs.length],
+      referenceType: txnRefTypes[j % txnRefTypes.length],
+      referenceId: `ref_${j}`,
+      loyaltyAccountId: `la_${cust.id}`,
+      createdAt: daysAgo(txnCount - j + Math.floor(Math.random() * 3)),
+    };
+  });
+
+  return {
+    id: `la_${cust.id}`,
+    currentPoints: currentPts,
+    lifetimePoints: basePoints,
+    referralCode: generateReferralCode(),
+    referredById: i > 5 && i % 3 === 0 ? `la_${activeCustomers[i - 1].id}` : null,
+    customerId: cust.id,
+    customer: cust,
+    currentTierId: tier.id,
+    currentTier: tier,
+    transactions,
+    createdAt: cust.dateOpened,
+  };
+});
+
+export const loyaltyDashboardStats: LoyaltyDashboardStats = {
+  totalMembers: loyaltyAccounts.length,
+  pointsIssuedThisMonth: loyaltyAccounts.reduce((s, a) =>
+    s + a.transactions!.filter(t => t.type === 'earn' || t.type === 'bonus' || t.type === 'referral').reduce((ss, t) => ss + t.points, 0), 0),
+  redemptionsThisMonth: loyaltyAccounts.reduce((s, a) =>
+    s + a.transactions!.filter(t => t.type === 'redeem').length, 0),
+  tierBreakdown: loyaltyTiers.map(tier => ({
+    tier: tier.name,
+    count: loyaltyAccounts.filter(a => a.currentTierId === tier.id).length,
+    color: tier.color,
+  })),
+  recentActivity: loyaltyAccounts
+    .flatMap(a => a.transactions!.map(t => ({ ...t, _custName: `${a.customer!.firstName} ${a.customer!.lastName}` })))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 15),
+  topCustomers: loyaltyAccounts
+    .sort((a, b) => b.lifetimePoints - a.lifetimePoints)
+    .slice(0, 10)
+    .map(a => ({
+      name: `${a.customer!.firstName} ${a.customer!.lastName}`,
+      points: a.lifetimePoints,
+      tier: a.currentTier!.name,
+    })),
 };
