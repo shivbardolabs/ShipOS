@@ -5,7 +5,11 @@ import {
   Mail,
   TrendingUp,
   ArrowRight,
+  LogIn,
 } from "lucide-react";
+
+/* Auth0 routes (/api/auth/*) require full-page redirects — <a> is intentional */
+/* eslint-disable @next/next/no-html-link-for-pages */
 
 export default function Home() {
   return (
@@ -30,13 +34,22 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <a
-            href="/dashboard"
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
-          >
-            Go to Dashboard
-            <ArrowRight className="w-4 h-4" />
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/api/auth/login"
+              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Log In
+            </a>
+            <a
+              href="/api/auth/signup"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
+            >
+              Sign Up Free
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
         </div>
       </header>
 
@@ -49,10 +62,29 @@ export default function Home() {
               fully managed
             </em>
           </h2>
-          <p className="text-lg text-surface-400 mb-12 max-w-2xl mx-auto">
+          <p className="text-lg text-surface-400 mb-8 max-w-2xl mx-auto">
             Package tracking, customer management, shipping, and compliance —
             all in one modern platform designed for postal retail.
           </p>
+
+          {/* CTA buttons */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            <a
+              href="/api/auth/signup"
+              className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-base font-semibold transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
+            >
+              Get Started
+              <ArrowRight className="w-5 h-5" />
+            </a>
+            <a
+              href="/api/auth/login"
+              className="px-6 py-3 text-surface-300 hover:text-surface-100 rounded-lg text-base font-medium transition-colors flex items-center gap-2"
+              style={{ border: '1px solid #e2e8f0' }}
+            >
+              <LogIn className="w-5 h-5" />
+              Log In
+            </a>
+          </div>
 
           {/* Feature cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
