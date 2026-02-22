@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ import {
   LogOut,
   HelpCircle,
   Search,
+  Sparkles,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -36,6 +38,7 @@ const labelMap: Record<string, string> = {
   settings: 'Settings',
   profile: 'Profile',
   reconciliation: 'Reconciliation',
+  changelog: 'Changelog',
 };
 
 function useBreadcrumbs() {
@@ -119,6 +122,15 @@ export function Header() {
               ⌘K
             </span>
           </button>
+
+          {/* What's New — Changelog link */}
+          <Link
+            href="/dashboard/changelog"
+            className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 border border-primary-200 hover:bg-primary-100 hover:border-primary-300 transition-all duration-150"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            What&apos;s New
+          </Link>
 
           {/* Online status */}
           <OnlineStatus />

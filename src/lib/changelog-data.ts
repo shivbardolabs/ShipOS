@@ -1,0 +1,294 @@
+/* -------------------------------------------------------------------------- */
+/*  ShipOS Product Changelog                                                  */
+/*  Maintained by product team — ordered newest → oldest                      */
+/* -------------------------------------------------------------------------- */
+
+export type ChangeType = 'feature' | 'improvement' | 'fix' | 'design' | 'security';
+
+export interface ChangeItem {
+  text: string;
+  type: ChangeType;
+}
+
+export interface ChangelogEntry {
+  version: string;
+  date: string;            // ISO date string (YYYY-MM-DD)
+  title: string;
+  summary: string;
+  changes: ChangeItem[];
+  highlights?: string[];   // Key callouts shown as badges
+}
+
+export const changelog: ChangelogEntry[] = [
+  /* ------------------------------------------------------------------ */
+  /*  v0.6.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.6.0',
+    date: '2026-02-22',
+    title: 'Notification Center',
+    summary:
+      'The notification bell in the header is now fully interactive. Clicking it opens a real-time dropdown showing recent package alerts, SMS delivery confirmations, and compliance reminders — so staff never miss an update without leaving their current screen.',
+    highlights: ['Real-Time Alerts', 'Unread Badge'],
+    changes: [
+      {
+        text: 'Notification bell now opens a dropdown panel with the 8 most recent alerts',
+        type: 'feature',
+      },
+      {
+        text: 'Unread badge count updates automatically as new notifications arrive',
+        type: 'feature',
+      },
+      {
+        text: 'Mark individual notifications as read with a single click',
+        type: 'improvement',
+      },
+      {
+        text: '"Mark all as read" action clears the entire queue instantly',
+        type: 'improvement',
+      },
+      {
+        text: 'Notification types include package check-in, SMS delivery, compliance alerts, and customer updates',
+        type: 'feature',
+      },
+      {
+        text: 'Panel closes on click-outside and Escape key for smooth workflow',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.5.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.5.0',
+    date: '2026-02-21',
+    title: 'Loyalty Program',
+    summary:
+      'Introducing a built-in loyalty engine to help stores reward their best customers. Configurable tiers (Bronze → Platinum), point accumulation on every transaction, redeemable rewards, and a referral program — all manageable from a dedicated settings page and visible on each customer\'s profile.',
+    highlights: ['4 Tiers', 'Points & Rewards', 'Referral Program'],
+    changes: [
+      {
+        text: 'New Loyalty Program dashboard with KPIs, tier distribution chart, and member leaderboard',
+        type: 'feature',
+      },
+      {
+        text: 'Four configurable tiers — Bronze, Silver, Gold, and Platinum — with automatic upgrades based on points',
+        type: 'feature',
+      },
+      {
+        text: 'Points accumulate on package check-in, shipping, and mailbox renewals',
+        type: 'feature',
+      },
+      {
+        text: 'Rewards catalog — create and manage redeemable rewards (discounts, free shipping, etc.)',
+        type: 'feature',
+      },
+      {
+        text: 'Referral program settings with configurable bonus points for referrer and referee',
+        type: 'feature',
+      },
+      {
+        text: 'Customer detail now shows a Loyalty tab with tier progress, point history, and reward redemption',
+        type: 'feature',
+      },
+      {
+        text: 'Loyalty settings page for program configuration, tier thresholds, and rewards CRUD',
+        type: 'feature',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.4.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.4.0',
+    date: '2026-02-21',
+    title: 'Customer Management Upgrade',
+    summary:
+      'A major upgrade to how stores manage their customers. You can now add customers via a detailed form or bulk-import hundreds at once with a CSV wizard. Customer profiles also feature photo avatars with upload support for faster visual identification at the counter.',
+    highlights: ['Bulk CSV Import', 'Photo Avatars', 'Form Validation'],
+    changes: [
+      {
+        text: 'Add Customer form with personal info, mailbox setup, ID & compliance fields, and notification preferences',
+        type: 'feature',
+      },
+      {
+        text: 'Bulk CSV Import wizard — 4-step flow: upload → column mapping → preview → confirmation',
+        type: 'feature',
+      },
+      {
+        text: 'Smart delimiter detection supports comma, tab, and semicolon-separated files',
+        type: 'improvement',
+      },
+      {
+        text: 'Downloadable CSV template so new stores can format their data correctly on the first try',
+        type: 'improvement',
+      },
+      {
+        text: 'Customer photo avatars with camera-overlay upload on hover',
+        type: 'feature',
+      },
+      {
+        text: 'Six avatar size presets (xs → 2xl) with gradient-colored initials fallback',
+        type: 'design',
+      },
+      {
+        text: 'Updated customer list, detail, check-in, check-out, and kiosk pages to show photo avatars',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.3.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.3.0',
+    date: '2026-02-21',
+    title: 'Carrier Support & Reconciliation',
+    summary:
+      'Expanded carrier support with official logos for all major providers and introduced a shipping reconciliation tool so stores can audit invoices, catch overcharges, and file disputes — directly inside ShipOS.',
+    highlights: ['10+ Carriers', 'Reconciliation Tool'],
+    changes: [
+      {
+        text: 'Official-style carrier logos for UPS, FedEx, USPS, DHL, Amazon, LaserShip, Temu, and OnTrac',
+        type: 'feature',
+      },
+      {
+        text: 'Added LaserShip, Temu, and OnTrac as new carrier options across all package workflows',
+        type: 'feature',
+      },
+      {
+        text: 'New Shipping Reconciliation page — compare carrier invoices against shipment records to identify discrepancies',
+        type: 'feature',
+      },
+      {
+        text: 'Dispute management workflow: flag overcharges, track disputes, and record credits received',
+        type: 'feature',
+      },
+      {
+        text: 'Carrier logo buttons updated on check-in, kiosk, shipping, and end-of-day pages',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.2.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.2.0',
+    date: '2026-02-21',
+    title: 'Authentication & Theming',
+    summary:
+      'Added secure authentication with Auth0, a personalized dashboard greeting, and a light/dark theme switcher. The entire UI was also refined with the Indigo Premium design system for a polished, enterprise-grade experience.',
+    highlights: ['Auth0 SSO', 'Light & Dark Mode', 'Indigo Theme'],
+    changes: [
+      {
+        text: 'Auth0 integration — secure sign-up and login with email/password and social providers',
+        type: 'feature',
+      },
+      {
+        text: 'Personalized dashboard greeting shows the logged-in user\'s name and live date/time',
+        type: 'feature',
+      },
+      {
+        text: 'Theme switcher — toggle between light and dark mode; preference persists across sessions',
+        type: 'feature',
+      },
+      {
+        text: 'Indigo Premium design system applied across all surfaces, typography, and components',
+        type: 'design',
+      },
+      {
+        text: 'Updated color palette: Indigo primary spectrum, refined surface grays, and accent colors',
+        type: 'design',
+      },
+      {
+        text: 'DM Sans body font, Instrument Serif accents, and JetBrains Mono for code/data',
+        type: 'design',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
+  /*  v0.1.0                                                             */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.1.0',
+    date: '2026-02-21',
+    title: 'ShipOS Launch',
+    summary:
+      'The initial release of ShipOS — a complete postal store management platform built for modern CMRA and pack-and-ship businesses. Covers the full operational workflow from package intake to end-of-day closing, with customer management, compliance tools, and analytics built in.',
+    highlights: ['18 Pages', '12 Data Models', 'iOS App'],
+    changes: [
+      {
+        text: 'Package Check-In wizard with carrier selection, barcode entry, and customer lookup',
+        type: 'feature',
+      },
+      {
+        text: 'Package Check-Out flow with ID verification, signature capture, and release confirmation',
+        type: 'feature',
+      },
+      {
+        text: 'Customer management — profiles, mailbox (PMB) assignments, billing terms, and ID tracking',
+        type: 'feature',
+      },
+      {
+        text: 'CMRA Compliance dashboard — PS Form 1583 tracking, ID expiry alerts, and audit readiness',
+        type: 'feature',
+      },
+      {
+        text: 'Multi-carrier shipping center with rate comparison and label generation',
+        type: 'feature',
+      },
+      {
+        text: 'End-of-Day workflows — carrier scan counts, discrepancy flags, and day-close report',
+        type: 'feature',
+      },
+      {
+        text: 'Reports & Analytics page with revenue trends, package volume, and customer metrics',
+        type: 'feature',
+      },
+      {
+        text: 'Invoicing module for mailbox rental billing and service charges',
+        type: 'feature',
+      },
+      {
+        text: 'Kiosk Mode — full-screen self-service interface for customer package pickup',
+        type: 'feature',
+      },
+      {
+        text: 'Command Palette (⌘K) — fuzzy search across customers, packages, and actions',
+        type: 'feature',
+      },
+      {
+        text: 'SMS-first notification system with 98% open rate — email fallback included',
+        type: 'feature',
+      },
+      {
+        text: 'PostalMate → ShipOS migration tool — analyze existing data, map fields, and import with rollback support',
+        type: 'feature',
+      },
+      {
+        text: 'Bardo Labs brand guide applied — purple + silver theme with custom SVG logos',
+        type: 'design',
+      },
+      {
+        text: 'iOS companion app (React Native) with 9 screens, barcode scanning, and dark theme',
+        type: 'feature',
+      },
+      {
+        text: 'PWA support — install ShipOS as a standalone app on any device',
+        type: 'feature',
+      },
+      {
+        text: 'React Server Components CVE patches applied for production security',
+        type: 'security',
+      },
+    ],
+  },
+];
