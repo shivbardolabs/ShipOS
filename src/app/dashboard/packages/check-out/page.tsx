@@ -27,6 +27,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { customers, packages } from '@/lib/mock-data';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Customer, Package as PackageType } from '@/lib/types';
@@ -360,9 +361,12 @@ export default function CheckOutPage() {
           {/* ---- Customer Info Banner ---- */}
           <Card padding="md">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-300 text-base font-bold">
-                {foundCustomer.firstName[0]}{foundCustomer.lastName[0]}
-              </div>
+              <CustomerAvatar
+                firstName={foundCustomer.firstName}
+                lastName={foundCustomer.lastName}
+                photoUrl={foundCustomer.photoUrl}
+                size="lg"
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-lg font-semibold text-surface-100">

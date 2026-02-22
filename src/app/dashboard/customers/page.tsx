@@ -19,34 +19,7 @@ import {
   LayoutGrid,
   List,
   AlertTriangle } from 'lucide-react';
-
-/* -------------------------------------------------------------------------- */
-/*  Helpers                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function getInitials(first: string, last: string) {
-  return `${first[0]}${last[0]}`.toUpperCase();
-}
-
-function hashColor(name: string): string {
-  const colors = [
-    'from-blue-500 to-blue-700',
-    'from-indigo-500 to-indigo-700',
-    'from-emerald-500 to-emerald-700',
-    'from-amber-500 to-amber-700',
-    'from-rose-500 to-rose-700',
-    'from-cyan-500 to-cyan-700',
-    'from-pink-500 to-pink-700',
-    'from-teal-500 to-teal-700',
-    'from-indigo-500 to-indigo-700',
-    'from-orange-500 to-orange-700',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
+import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
@@ -242,14 +215,13 @@ export default function CustomersPage() {
               >
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <div
-                    className={cn(
-                      'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-surface-100 shadow-lg',
-                      hashColor(`${customer.firstName} ${customer.lastName}`)
-                    )}
-                  >
-                    {getInitials(customer.firstName, customer.lastName)}
-                  </div>
+                  <CustomerAvatar
+                    firstName={customer.firstName}
+                    lastName={customer.lastName}
+                    photoUrl={customer.photoUrl}
+                    size="lg"
+                    className="shadow-lg"
+                  />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -329,14 +301,12 @@ export default function CustomersPage() {
                 onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
                 className="glass-card p-4 card-hover cursor-pointer group flex items-center gap-4"
               >
-                <div
-                  className={cn(
-                    'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-surface-100',
-                    hashColor(`${customer.firstName} ${customer.lastName}`)
-                  )}
-                >
-                  {getInitials(customer.firstName, customer.lastName)}
-                </div>
+                <CustomerAvatar
+                  firstName={customer.firstName}
+                  lastName={customer.lastName}
+                  photoUrl={customer.photoUrl}
+                  size="sm"
+                />
 
                 <div className="flex-1 min-w-0 flex items-center gap-4 flex-wrap">
                   <div className="min-w-[180px]">

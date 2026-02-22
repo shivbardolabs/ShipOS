@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { customers, packages } from '@/lib/mock-data';
 import type { Customer, Package as PackageType } from '@/lib/types';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import {
   Package,
   PackageCheck,
@@ -53,6 +54,7 @@ const carriers = [
 /* -------------------------------------------------------------------------- */
 const carrierLabels: Record<string, string> = {
   ups: 'UPS', fedex: 'FedEx', usps: 'USPS', amazon: 'Amazon', dhl: 'DHL',
+  lasership: 'LaserShip', temu: 'Temu', ontrac: 'OnTrac',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -310,10 +312,13 @@ export default function KioskPage() {
           <div className="w-full max-w-lg mx-auto text-center">
             {/* Greeting */}
             <div className="mb-8">
-              <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-full bg-primary-50 mb-4">
-                <span className="text-2xl font-bold text-primary-300">
-                  {pickupCustomer?.firstName[0]}{pickupCustomer?.lastName[0]}
-                </span>
+              <div className="flex justify-center mb-4">
+                <CustomerAvatar
+                  firstName={pickupCustomer?.firstName || ''}
+                  lastName={pickupCustomer?.lastName || ''}
+                  photoUrl={pickupCustomer?.photoUrl}
+                  size="2xl"
+                />
               </div>
               <h2 className="text-3xl font-bold text-surface-100 mb-1">
                 Hi {pickupCustomer?.firstName}!

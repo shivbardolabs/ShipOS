@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Snowflake } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
@@ -281,17 +282,12 @@ export default function CheckInPage() {
                     )}
                   >
                     {/* Avatar */}
-                    <div
-                      className={cn(
-                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                        isSelected
-                          ? 'bg-primary-600/30 text-primary-300'
-                          : 'bg-surface-700/50 text-surface-400'
-                      )}
-                    >
-                      {cust.firstName[0]}
-                      {cust.lastName[0]}
-                    </div>
+                    <CustomerAvatar
+                      firstName={cust.firstName}
+                      lastName={cust.lastName}
+                      photoUrl={cust.photoUrl}
+                      size="md"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-surface-200 text-sm truncate">
