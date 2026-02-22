@@ -93,18 +93,12 @@ export function BottomNav() {
         )}
       >
         <div
-          className="mx-2 mb-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] rounded-2xl border overflow-hidden"
-          style={{
-            background: 'rgba(255, 255, 255, 0.97)',
-            borderColor: '#e2e8f0',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}
+          className="mx-2 mb-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] rounded-2xl overflow-hidden layout-drawer"
         >
           {/* Drawer header */}
           <div
             className="flex items-center justify-between px-5 py-3.5"
-            style={{ borderBottom: '1px solid #e2e8f0' }}
+            style={{ borderBottom: '1px solid var(--color-surface-700)' }}
           >
             <span className="text-sm font-semibold text-surface-200">
               More
@@ -152,15 +146,7 @@ export function BottomNav() {
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div
-          className="flex h-16 items-center justify-around border-t"
-          style={{
-            background: 'rgba(255, 255, 255, 0.92)',
-            borderColor: '#e2e8f0',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-          }}
-        >
+        <div className="flex h-16 items-center justify-around layout-bottomnav">
           {primaryNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);

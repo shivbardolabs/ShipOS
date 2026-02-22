@@ -19,7 +19,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'rgba(99, 102, 241, 0.05)', filter: 'blur(80px)' }} />
 
       {/* Header */}
-      <header className="relative z-10 px-6 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+      <header className="relative z-10 px-6 py-4" style={{ borderBottom: '1px solid var(--color-surface-700)' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,8 +78,7 @@ export default function Home() {
             </a>
             <a
               href="/api/auth/login"
-              className="px-6 py-3 text-surface-300 hover:text-surface-100 rounded-lg text-base font-medium transition-colors flex items-center gap-2"
-              style={{ border: '1px solid #e2e8f0' }}
+              className="px-6 py-3 text-surface-300 hover:text-surface-100 rounded-lg text-base font-medium transition-colors flex items-center gap-2 border border-surface-700"
             >
               <LogIn className="w-5 h-5" />
               Log In
@@ -151,7 +150,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+      <footer className="relative z-10 px-6 py-4" style={{ borderTop: '1px solid var(--color-surface-700)' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-surface-600">
           <span>ShipOS v0.1.0</span>
           <span>Built by <span className="text-surface-400">Bardo Labs</span></span>

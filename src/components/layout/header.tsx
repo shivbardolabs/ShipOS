@@ -85,8 +85,7 @@ export function Header() {
   return (
     <>
       <header
-        className="sticky top-0 z-20 flex h-16 items-center justify-between backdrop-blur-md px-6"
-        style={{ background: 'rgba(255, 255, 255, 0.85)', borderBottom: '1px solid #e2e8f0' }}
+        className="sticky top-0 z-20 flex h-16 items-center justify-between px-6 layout-header"
       >
         {/* Left – Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-sm">
@@ -112,13 +111,13 @@ export function Header() {
           <button
             onClick={() => setPaletteOpen(true)}
             className="hidden md:flex items-center gap-2 w-64 lg:w-80 rounded-lg border bg-surface-900 px-3.5 py-2 text-sm text-surface-500 transition-colors hover:border-surface-600 hover:text-surface-400 cursor-pointer"
-            style={{ borderColor: '#cbd5e1' }}
+            style={{ borderColor: 'var(--color-surface-700)' }}
           >
             <Search className="h-4 w-4 flex-shrink-0" />
             <span className="flex-1 text-left">Search packages, customers…</span>
             <span
               className="flex items-center rounded border px-1.5 py-0.5 text-[11px] font-medium text-surface-600"
-              style={{ borderColor: '#e2e8f0' }}
+              style={{ borderColor: 'var(--color-surface-700)' }}
             >
               ⌘K
             </span>
