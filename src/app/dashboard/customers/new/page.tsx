@@ -485,7 +485,7 @@ export default function NewCustomerPage() {
                     <div className="h-10 w-10 rounded-lg bg-primary-500/20 flex items-center justify-center"><Scan className="h-5 w-5 text-primary-400" /></div>
                     <div><p className="text-sm font-medium text-surface-200">ID Data Extraction</p><p className="text-xs text-surface-400">Extract name, address, and ID details to auto-fill PS Form 1583</p></div>
                   </div>
-                  <Button variant={extractedData ? 'ghost' : 'primary'} size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : extractedData ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Scan className="h-4 w-4" />}>
+                  <Button variant={extractedData ? 'ghost' : 'default'} size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : extractedData ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Scan className="h-4 w-4" />}>
                     {extracting ? 'Extracting...' : extractedData ? 'Data Extracted' : 'Extract Data'}
                   </Button>
                 </div>
