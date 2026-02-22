@@ -147,6 +147,135 @@ export interface DashboardStats {
 export type CarrierType = 'amazon' | 'ups' | 'fedex' | 'usps' | 'dhl' | 'walmart' | 'target' | 'lasership' | 'temu' | 'ontrac' | 'other';
 
 /* -------------------------------------------------------------------------- */
+/*  PMB / Mailbox Management                                                  */
+/* -------------------------------------------------------------------------- */
+
+export type MailboxPlatform = 'physical' | 'anytime' | 'iPostal' | 'postscan';
+
+export interface MailboxRange {
+  id: string;
+  platform: MailboxPlatform;
+  label: string;
+  rangeStart: number;
+  rangeEnd: number;
+  isActive: boolean;
+}
+
+export type BoxStatus = 'available' | 'rented' | 'held' | 'reserved';
+
+export interface MailboxSlot {
+  number: number;
+  platform: MailboxPlatform;
+  status: BoxStatus;
+  customerId?: string;
+  customerName?: string;
+  closedDate?: string; // If recently closed, track 90-day hold
+}
+
+/* -------------------------------------------------------------------------- */
+/*  USPS Acceptable ID Types                                                  */
+/* -------------------------------------------------------------------------- */
+
+export type IdCategory = 'primary' | 'secondary';
+
+export interface AcceptableIdType {
+  id: string;
+  name: string;
+  category: IdCategory;
+  description: string;
+  hasExpiration: boolean;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Customer Documents                                                        */
+/* -------------------------------------------------------------------------- */
+
+export interface CustomerDocument {
+  id: string;
+  customerId: string;
+  type: 'primary_id' | 'secondary_id';
+  idTypeName: string;
+  fileName: string;
+  fileUrl?: string;
+  extractedData?: ExtractedIdData;
+  uploadedAt: string;
+}
+
+export interface ExtractedIdData {
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  dateOfBirth?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  idNumber?: string;
+  issueDate?: string;
+  expirationDate?: string;
+  issuingAuthority?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  PS Form 1583 Data                                                         */
+/* -------------------------------------------------------------------------- */
+
+export interface PS1583FormData {
+  // Applicant Info
+  applicantName: string;
+  dateOfBirth: string;
+  // Address info
+  homeAddress: string;
+  homeCity: string;
+  homeState: string;
+  homeZip: string;
+  // Business info (optional)
+  businessName?: string;
+  businessAddress?: string;
+  // CMRA info
+  cmraName: string;
+  cmraAddress: string;
+  cmraCity: string;
+  cmraState: string;
+  cmraZip: string;
+  pmbNumber: string;
+  // IDs
+  primaryIdType: string;
+  primaryIdNumber: string;
+  primaryIdIssuer: string;
+  secondaryIdType: string;
+  secondaryIdNumber: string;
+  secondaryIdIssuer: string;
+  // Status
+  signatureDate?: string;
+  notarized: boolean;
+  crdUploaded: boolean;
+  crdUploadDate?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Mailbox Service Agreement                                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface MailboxAgreementTemplate {
+  id: string;
+  name: string;
+  content: string; // Rich text / template with placeholders
+  isDefault: boolean;
+  updatedAt: string;
+}
+
+export interface CustomerAgreement {
+  id: string;
+  customerId: string;
+  templateId: string;
+  signedAt?: string;
+  signatureDataUrl?: string;
+  status: 'draft' | 'sent' | 'signed' | 'expired';
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Loyalty Program                                                           */
 /* -------------------------------------------------------------------------- */
 

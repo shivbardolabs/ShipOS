@@ -76,6 +76,17 @@ model Customer {
   passportExpiration DateTime?
   form1583Status     String?   @default("pending") // pending, submitted, approved, expired
   form1583Date       DateTime?
+  crdUploaded        Boolean   @default(false) // USPS CRD upload status
+  crdUploadDate      DateTime?
+  form1583Notarized  Boolean   @default(false)
+  agreementSigned    Boolean   @default(false)
+  agreementSignedAt  DateTime?
+
+  // Home address (for Form 1583)
+  homeAddress        String?
+  homeCity           String?
+  homeState          String?
+  homeZip            String?
 
   // Notification preferences
   notifyEmail Boolean @default(true)
@@ -430,6 +441,57 @@ model LoyaltyReward {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── Mailbox Ranges ───────────────────────────────────────────────────────
+
+model MailboxRange {
+  id         String  @id @default(cuid())
+  platform   String  // physical, anytime, iPostal, postscan
+  label      String
+  rangeStart Int
+  rangeEnd   Int
+  isActive   Boolean @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ── Customer Documents (ID Scans) ────────────────────────────────────────
+
+model CustomerDocument {
+  id            String  @id @default(cuid())
+  customerId    String
+  type          String  // primary_id, secondary_id
+  idTypeName    String  // e.g. "drivers_license", "passport"
+  fileName      String
+  fileUrl       String?
+  extractedData String? // JSON: { fullName, address, idNumber, ... }
+  expirationDate DateTime?
+  uploadedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ── Mailbox Service Agreement ────────────────────────────────────────────
+
+model MailboxAgreementTemplate {
+  id        String  @id @default(cuid())
+  name      String
+  content   String  // Rich text / template with placeholders
+  isDefault Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CustomerAgreement {
+  id               String   @id @default(cuid())
+  customerId       String
+  templateId       String
+  signedAt         DateTime?
+  signatureDataUrl String?
+  status           String   @default("draft") // draft, sent, signed, expired
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // ── Invitations ──────────────────────────────────────────────────────────────

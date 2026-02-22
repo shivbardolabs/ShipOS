@@ -244,7 +244,7 @@ export default function CustomersPage() {
         actions={
           <div className="relative">
             <div className="flex items-center">
-              <Button leftIcon={<UserPlus className="h-4 w-4" />} onClick={() => setShowAddModal(true)} className="rounded-r-none">Add Customer</Button>
+              <Button leftIcon={<UserPlus className="h-4 w-4" />} onClick={() => router.push('/dashboard/customers/new')} className="rounded-r-none">New Customer Setup</Button>
               <Button variant="default" className="rounded-l-none border-l border-primary-700 px-2" onClick={() => setShowAddDropdown(!showAddDropdown)}>
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -253,8 +253,11 @@ export default function CustomersPage() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAddDropdown(false)} />
                 <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-surface-700 bg-surface-900 shadow-xl py-1">
+                  <button onClick={() => { setShowAddDropdown(false); router.push('/dashboard/customers/new'); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
+                    <User className="h-4 w-4 text-surface-400" /> Full Setup Wizard
+                  </button>
                   <button onClick={() => { setShowAddDropdown(false); setShowAddModal(true); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
-                    <User className="h-4 w-4 text-surface-400" /> Add Single Customer
+                    <User className="h-4 w-4 text-surface-400" /> Quick Add (Basic)
                   </button>
                   <button onClick={() => { setShowAddDropdown(false); setShowImportModal(true); resetImport(); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
                     <Upload className="h-4 w-4 text-surface-400" /> Bulk Import (CSV)

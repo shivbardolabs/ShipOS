@@ -323,6 +323,8 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" /> },
+    { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" /> },
+    { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" /> },
     { id: 'rates', label: 'Rates & Pricing', icon: <DollarSign className="h-4 w-4" /> },
     { id: 'dropoff', label: 'Drop-off Settings', icon: <Truck className="h-4 w-4" /> },
     { id: 'receipts', label: 'Receipts', icon: <Receipt className="h-4 w-4" /> },
@@ -414,6 +416,177 @@ export default function SettingsPage() {
                 {savingTenant ? 'Saving…' : 'Save Changes'}
               </Button>
             </div>
+          </TabPanel>
+
+
+          {/* ================================================================ */}
+          {/*  MAILBOX CONFIGURATION                                           */}
+          {/* ================================================================ */}
+          <TabPanel active={activeTab === 'mailbox'}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Mailbox Ranges</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-surface-400 mb-6">
+                  Define your PMB number ranges for each mailbox platform. These ranges determine which box numbers
+                  are available when setting up new customers.
+                </p>
+
+                <div className="space-y-4">
+                  {/* Physical / Store boxes */}
+                  <div className="glass-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-surface-600/30 flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-surface-300" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">Store (Physical) Mailboxes</p>
+                          <p className="text-xs text-surface-500">Traditional in-store mailboxes</p>
+                        </div>
+                      </div>
+                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
+                        <input type="number" defaultValue={1} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range End</label>
+                        <input type="number" defaultValue={550} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Anytime Mailbox */}
+                  <div className="glass-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">Anytime Mailbox</p>
+                          <p className="text-xs text-surface-500">Digital mailbox platform</p>
+                        </div>
+                      </div>
+                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
+                        <input type="number" defaultValue={700} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range End</label>
+                        <input type="number" defaultValue={999} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* iPostal1 */}
+                  <div className="glass-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">iPostal1</p>
+                          <p className="text-xs text-surface-500">Digital mailbox platform</p>
+                        </div>
+                      </div>
+                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
+                        <input type="number" defaultValue={1000} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range End</label>
+                        <input type="number" defaultValue={1200} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PostScan Mail */}
+                  <div className="glass-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">PostScan Mail</p>
+                          <p className="text-xs text-surface-500">Digital mailbox platform</p>
+                        </div>
+                      </div>
+                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
+                        <input type="number" defaultValue={2000} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-surface-500 mb-1 block">Range End</label>
+                        <input type="number" defaultValue={2999} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-between">
+                  <Button variant="ghost" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>Add Custom Range</Button>
+                  <Button variant="primary" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hold Period */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Box Hold Policy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-surface-300 mb-1.5 block">Hold Period After Closure</label>
+                    <div className="flex items-center gap-3">
+                      <input type="number" defaultValue={90} className="w-24 bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+                      <span className="text-sm text-surface-400">days</span>
+                    </div>
+                    <p className="text-xs text-surface-500 mt-1">
+                      Recently closed boxes will be unavailable for this period to prevent address conflicts.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Agreement Template */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Service Agreement Template</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-surface-400 mb-4">
+                  Customize the mailbox service agreement template used during customer setup.
+                  Use placeholders like <code className="text-primary-400 text-xs">{'{'}customerName{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}pmbNumber{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}storeName{'}'}</code> for auto-population.
+                </p>
+                <div className="rounded-lg border border-surface-700 bg-surface-950 p-4 max-h-48 overflow-y-auto">
+                  <p className="text-xs text-surface-300 font-mono">Contract for Mailbox Service — using default template</p>
+                  <p className="text-xs text-surface-500 mt-1">Based on your uploaded agreement document with all USPS CMRA-compliant terms.</p>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <Button variant="ghost" size="sm" leftIcon={<Edit3 className="h-3.5 w-3.5" />}>Edit Template</Button>
+                  <Button variant="ghost" size="sm" leftIcon={<Upload className="h-3.5 w-3.5" />}>Upload New Template</Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabPanel>
 
           {/* ================================================================ */}
