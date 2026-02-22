@@ -79,12 +79,28 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
       include: { tenant: true },
     });
 
-    // If user has no tenant, create one
+    // If user has no tenant, check for invitation first, then create one
     if (!user.tenantId) {
-      const tenant = await createDefaultTenant(name || email);
+      const invite = await prisma.invitation.findFirst({
+        where: { email: email as string, status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      let tenantId: string;
+      let role: string | undefined;
+
+      if (invite) {
+        tenantId = invite.tenantId;
+        role = invite.role;
+        await prisma.invitation.update({ where: { id: invite.id }, data: { status: 'accepted' } });
+      } else {
+        const tenant = await createDefaultTenant(name || email);
+        tenantId = tenant.id;
+      }
+
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { tenantId: tenant.id },
+        data: { tenantId, ...(role ? { role } : {}) },
         include: { tenant: true },
       });
     }
@@ -101,16 +117,42 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
     };
   }
 
-  // 3. Brand-new user — create User + Tenant together
-  const tenant = await createDefaultTenant(name || email);
+  // 3. Brand-new user — check for pending invitation first
+  const pendingInvite = await prisma.invitation.findFirst({
+    where: {
+      email: email as string,
+      status: 'pending',
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  let targetTenantId: string;
+  let assignedRole: string;
+
+  if (pendingInvite) {
+    // Accept the invitation — join the inviter's tenant with the specified role
+    targetTenantId = pendingInvite.tenantId;
+    assignedRole = pendingInvite.role;
+
+    await prisma.invitation.update({
+      where: { id: pendingInvite.id },
+      data: { status: 'accepted' },
+    });
+  } else {
+    // No invitation — create a new tenant (original flow)
+    const newTenant = await createDefaultTenant(name || email);
+    targetTenantId = newTenant.id;
+    assignedRole = 'admin';
+  }
+
   const newUser = await prisma.user.create({
     data: {
       auth0Id: sub,
       name: name || (email as string).split('@')[0],
       email: email as string,
-      role: 'admin', // Default admin for testing
+      role: assignedRole,
       avatar: picture || null,
-      tenantId: tenant.id,
+      tenantId: targetTenantId,
     },
     include: { tenant: true },
   });
