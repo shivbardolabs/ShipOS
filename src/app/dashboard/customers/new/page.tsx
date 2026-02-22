@@ -262,7 +262,7 @@ export default function NewCustomerPage() {
           </div>
           <div className="flex items-center justify-center gap-3 pt-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/customers')}>Back to Customers</Button>
-            <Button variant="primary" onClick={() => {
+            <Button variant="default" onClick={() => {
               setCreated(false); setStep(0);
               setCustomerForm({ firstName: '', lastName: '', email: '', phone: '', businessName: '', platform: '', pmbNumber: '', billingTerms: 'Monthly', homeAddress: '', homeCity: '', homeState: '', homeZip: '', notifyEmail: true, notifySms: true, notes: '' });
               setPrimaryIdType(''); setSecondaryIdType('');
@@ -677,9 +677,9 @@ export default function NewCustomerPage() {
           <Button variant="ghost" onClick={handleBack} disabled={step === 0} leftIcon={<ArrowLeft className="h-4 w-4" />}>Back</Button>
           <div className="flex items-center gap-2 text-xs text-surface-500">Step {step + 1} of {WIZARD_STEPS.length}</div>
           {step < WIZARD_STEPS.length - 1 ? (
-            <Button variant="primary" onClick={handleNext} rightIcon={<ArrowRight className="h-4 w-4" />}>Continue</Button>
+            <Button variant="default" onClick={handleNext} rightIcon={<ArrowRight className="h-4 w-4" />}>Continue</Button>
           ) : (
-            <Button variant="primary" onClick={handleCreate} leftIcon={<CheckCircle2 className="h-4 w-4" />}>Create Customer</Button>
+            <Button variant="default" onClick={handleCreate} leftIcon={<CheckCircle2 className="h-4 w-4" />}>Create Customer</Button>
           )}
         </div>
       </Card>

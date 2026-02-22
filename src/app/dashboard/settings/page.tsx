@@ -541,7 +541,7 @@ export default function SettingsPage() {
 
                 <div className="mt-6 flex items-center justify-between">
                   <Button variant="ghost" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>Add Custom Range</Button>
-                  <Button variant="primary" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
+                  <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
                 </div>
               </CardContent>
             </Card>
