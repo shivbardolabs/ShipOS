@@ -10,7 +10,6 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
-  Zap,
   Cloud,
   Monitor,
 } from "lucide-react";
@@ -539,7 +538,7 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* ── Competitor Comparison Tiles ── */}
+          {/* ── Competitor Comparison ── */}
           <div className="mb-24">
             <h2 className="text-3xl md:text-4xl font-bold text-surface-100 text-center mb-2">
               See how ShipOS{" "}
@@ -554,171 +553,77 @@ export default function PricingPage() {
                 compares
               </em>
             </h2>
-            <p className="text-center text-surface-500 mb-12 max-w-xl mx-auto">
+            <p className="text-center text-surface-500 mb-10 max-w-xl mx-auto">
               Still using legacy desktop software? See why modern shipping stores are switching to ShipOS.
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* ── ShipOS vs PostalMate ── */}
-              <div className="glass-card overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center gap-4 px-6 pt-6 pb-4" style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-9 h-9 rounded-lg bg-primary-600/10 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-primary-500" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-mono font-semibold tracking-wider uppercase text-primary-500">
-                        Comparison
-                      </p>
-                      <h3 className="text-lg font-bold text-surface-100">
-                        ShipOS vs PostalMate
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary callout */}
-                <div className="mx-6 mt-5 mb-4 rounded-lg bg-accent-emerald/[0.06] border border-accent-emerald/20 px-4 py-3">
-                  <p className="text-sm text-accent-emerald font-medium">
-                    ShipOS replaces PostalMate&apos;s legacy desktop app with a modern cloud platform — lower cost, zero setup fees, and powerful features PostalMate can&apos;t match.
-                  </p>
-                </div>
-
-                {/* Comparison rows */}
-                <div className="px-6 pb-6">
-                  <table className="w-full">
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
-                        <th className="text-left text-xs font-medium text-surface-500 py-3 w-[52%]" />
-                        <th className="text-center text-xs font-bold text-primary-500 py-3 w-[24%]">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Cloud className="w-3 h-3" />
-                            ShipOS
-                          </div>
-                        </th>
-                        <th className="text-center text-xs font-medium text-surface-500 py-3 w-[24%]">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Monitor className="w-3 h-3" />
-                            PostalMate
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {competitorRows.map((row) => (
-                        <tr
-                          key={`pm-${row.feature}`}
-                          style={{ borderBottom: "1px solid var(--color-surface-700)" }}
-                        >
-                          <td className="text-[13px] font-medium text-surface-300 py-2.5 pr-2">
-                            {row.feature}
-                          </td>
-                          <td className="text-center py-2.5">
-                            <CompetitorCell value={row.shipOS} winning />
-                          </td>
-                          <td className="text-center py-2.5">
-                            <CompetitorCell value={row.postalMate} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="mt-5 text-center">
-                    <a
-                      href="/api/auth/signup"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary-500 hover:text-primary-400 transition-colors"
+            <div className="glass-card overflow-hidden overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
+                    <th className="text-left text-sm font-medium text-surface-500 px-6 py-4 w-[40%]" />
+                    <th className="text-center px-4 py-4 bg-primary-600/[0.03] dark:bg-primary-600/[0.06]">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-600/10">
+                          <Cloud className="w-4 h-4 text-primary-500" />
+                        </span>
+                        <span className="text-sm font-bold text-primary-500">ShipOS</span>
+                      </div>
+                    </th>
+                    <th className="text-center px-4 py-4">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-800">
+                          <Monitor className="w-4 h-4 text-surface-500" />
+                        </span>
+                        <span className="text-sm font-bold text-surface-400">PostalMate</span>
+                      </div>
+                    </th>
+                    <th className="text-center px-4 py-4">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-800">
+                          <Monitor className="w-4 h-4 text-surface-500" />
+                        </span>
+                        <span className="text-sm font-bold text-surface-400">ShipRite</span>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitorRows.map((row) => (
+                    <tr
+                      key={row.feature}
+                      className="table-row-hover"
+                      style={{ borderBottom: "1px solid var(--color-surface-700)" }}
                     >
-                      Switch from PostalMate
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                    <p className="text-xs text-surface-600 mt-1">
-                      Free migration tool included — import your PostalMate data automatically
-                    </p>
-                  </div>
-                </div>
-              </div>
+                      <td className="text-sm font-medium text-surface-300 px-6 py-3">
+                        {row.feature}
+                      </td>
+                      <td className="text-center px-4 py-3 bg-primary-600/[0.02] dark:bg-primary-600/[0.04]">
+                        <CompetitorCell value={row.shipOS} winning />
+                      </td>
+                      <td className="text-center px-4 py-3">
+                        <CompetitorCell value={row.postalMate} />
+                      </td>
+                      <td className="text-center px-4 py-3">
+                        <CompetitorCell value={row.shipRite} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-              {/* ── ShipOS vs ShipRite ── */}
-              <div className="glass-card overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center gap-4 px-6 pt-6 pb-4" style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-9 h-9 rounded-lg bg-primary-600/10 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-primary-500" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-mono font-semibold tracking-wider uppercase text-primary-500">
-                        Comparison
-                      </p>
-                      <h3 className="text-lg font-bold text-surface-100">
-                        ShipOS vs ShipRite
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary callout */}
-                <div className="mx-6 mt-5 mb-4 rounded-lg bg-accent-emerald/[0.06] border border-accent-emerald/20 px-4 py-3">
-                  <p className="text-sm text-accent-emerald font-medium">
-                    ShipRite charges $1,000+ upfront for dated Windows software. ShipOS gives you more features from day one — no installation, no upfront cost.
-                  </p>
-                </div>
-
-                {/* Comparison rows */}
-                <div className="px-6 pb-6">
-                  <table className="w-full">
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
-                        <th className="text-left text-xs font-medium text-surface-500 py-3 w-[52%]" />
-                        <th className="text-center text-xs font-bold text-primary-500 py-3 w-[24%]">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Cloud className="w-3 h-3" />
-                            ShipOS
-                          </div>
-                        </th>
-                        <th className="text-center text-xs font-medium text-surface-500 py-3 w-[24%]">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Monitor className="w-3 h-3" />
-                            ShipRite
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {competitorRows.map((row) => (
-                        <tr
-                          key={`sr-${row.feature}`}
-                          style={{ borderBottom: "1px solid var(--color-surface-700)" }}
-                        >
-                          <td className="text-[13px] font-medium text-surface-300 py-2.5 pr-2">
-                            {row.feature}
-                          </td>
-                          <td className="text-center py-2.5">
-                            <CompetitorCell value={row.shipOS} winning />
-                          </td>
-                          <td className="text-center py-2.5">
-                            <CompetitorCell value={row.shipRite} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="mt-5 text-center">
-                    <a
-                      href="/api/auth/signup"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary-500 hover:text-primary-400 transition-colors"
-                    >
-                      Switch from ShipRite
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                    <p className="text-xs text-surface-600 mt-1">
-                      Start your free 30-day trial — no credit card required
-                    </p>
-                  </div>
-                </div>
+              {/* Bottom CTA inside card */}
+              <div className="px-6 py-5 flex flex-col sm:flex-row items-center justify-center gap-4" style={{ borderTop: "1px solid var(--color-surface-700)" }}>
+                <a
+                  href="/api/auth/signup"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary-900/20 hover:-translate-y-0.5"
+                >
+                  Switch to ShipOS
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <p className="text-xs text-surface-500">
+                  Free migration tool for PostalMate users · 30-day free trial · No credit card required
+                </p>
               </div>
             </div>
           </div>
