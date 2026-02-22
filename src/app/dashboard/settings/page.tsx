@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTheme } from '@/components/theme-provider';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -33,7 +34,10 @@ import {
   Smartphone,
   Sparkles,
   TrendingUp,
-  FileText } from 'lucide-react';
+  FileText,
+  Palette,
+  Sun,
+  Moon } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -98,6 +102,7 @@ const mockPrinters = [
 /* -------------------------------------------------------------------------- */
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
+  const { theme, setTheme } = useTheme();
 
   // General settings state
   const [storeName, setStoreName] = useState('ShipStation Express - Downtown');
@@ -151,6 +156,7 @@ export default function SettingsPage() {
     { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
     { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" /> },
+    { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" /> },
     { id: 'migration', label: 'Migration', icon: <Upload className="h-4 w-4" /> },
   ];
 
@@ -825,6 +831,122 @@ export default function SettingsPage() {
             </Card>
           </TabPanel>
 
+
+          {/* ── Appearance Tab ──────────────────────────── */}
+          <TabPanel active={activeTab === 'appearance'}>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Theme</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-surface-500 mb-5">
+                    Choose how ShipOS looks. Your preference is saved to this browser.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+                    {/* Light theme card */}
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`group relative rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+                        theme === 'light'
+                          ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-600/20'
+                          : 'border-surface-700 hover:border-surface-600 bg-surface-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                          theme === 'light' ? 'bg-primary-100 text-primary-600' : 'bg-surface-800 text-surface-500'
+                        }`}>
+                          <Sun className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-semibold ${
+                            theme === 'light' ? 'text-primary-600' : 'text-surface-200'
+                          }`}>Light</p>
+                          <p className="text-xs text-surface-500">Clean and bright</p>
+                        </div>
+                        {theme === 'light' && (
+                          <div className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary-600">
+                            <Check className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Mini preview */}
+                      <div className="rounded-lg border border-slate-200 bg-white p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                          <div className="h-1.5 w-16 rounded bg-slate-200" />
+                        </div>
+                        <div className="h-1.5 w-full rounded bg-slate-100" />
+                        <div className="h-1.5 w-3/4 rounded bg-slate-100" />
+                        <div className="flex gap-1.5 mt-1">
+                          <div className="h-4 w-12 rounded bg-indigo-500" />
+                          <div className="h-4 w-12 rounded bg-slate-200" />
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Dark theme card */}
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`group relative rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+                        theme === 'dark'
+                          ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-600/20'
+                          : 'border-surface-700 hover:border-surface-600 bg-surface-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                          theme === 'dark' ? 'bg-primary-100 text-primary-600' : 'bg-surface-800 text-surface-500'
+                        }`}>
+                          <Moon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-semibold ${
+                            theme === 'dark' ? 'text-primary-600' : 'text-surface-200'
+                          }`}>Dark</p>
+                          <p className="text-xs text-surface-500">Easy on the eyes</p>
+                        </div>
+                        {theme === 'dark' && (
+                          <div className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary-600">
+                            <Check className="h-3.5 w-3.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Mini preview */}
+                      <div className="rounded-lg border border-slate-700 bg-slate-900 p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-indigo-400" />
+                          <div className="h-1.5 w-16 rounded bg-slate-700" />
+                        </div>
+                        <div className="h-1.5 w-full rounded bg-slate-800" />
+                        <div className="h-1.5 w-3/4 rounded bg-slate-800" />
+                        <div className="flex gap-1.5 mt-1">
+                          <div className="h-4 w-12 rounded bg-indigo-500" />
+                          <div className="h-4 w-12 rounded bg-slate-700" />
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interface Density</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-surface-500 mb-4">
+                    Controls spacing and sizing across the interface.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="info">Default</Badge>
+                    <span className="text-sm text-surface-400">Comfortable — optimized for desktop and tablet</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabPanel>
           {/* ── Migration Tab ────────────────────────────── */}
           <TabPanel active={activeTab === 'migration'}>
             <Card>

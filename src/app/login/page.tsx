@@ -36,7 +36,7 @@ export default function LoginPage() {
         </div>
 
         {/* Loading state while redirecting */}
-        <div className="rounded-2xl p-8 shadow-2xl shadow-slate-200/30" style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
+        <div className="rounded-2xl p-8 shadow-2xl shadow-slate-200/30 dark:shadow-slate-900/40 layout-card-surface">
           <div className="flex flex-col items-center gap-4">
             <svg className="h-6 w-6 animate-spin text-primary-600" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

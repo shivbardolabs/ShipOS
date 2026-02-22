@@ -104,7 +104,7 @@ export function Sidebar() {
   const navContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid #e2e8f0' }}>
+      <div className="flex items-center gap-3 px-5 py-5 border-b layout-border">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/shipos-logo-mark.svg"
@@ -163,7 +163,7 @@ export function Sidebar() {
       </nav>
 
       {/* User info at bottom */}
-      <div className="px-4 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+      <div className="px-4 py-4 border-t layout-border">
         {isLoading ? (
           <div className="flex items-center gap-3 animate-pulse">
             <div className="h-9 w-9 rounded-full bg-surface-800" />
@@ -211,8 +211,7 @@ export function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="fixed top-4 left-4 z-50 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border text-surface-300 hover:text-surface-100"
-        style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
+        className="fixed top-4 left-4 z-50 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-surface-700 bg-surface-950 text-surface-300 hover:text-surface-100"
         onClick={() => setMobileOpen(true)}
       >
         <Menu className="h-5 w-5" />
@@ -229,18 +228,16 @@ export function Sidebar() {
       {/* Sidebar – mobile */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col transition-transform duration-300 lg:hidden',
+          'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col transition-transform duration-300 lg:hidden layout-sidebar',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}
       >
         {navContent}
       </aside>
 
       {/* Sidebar – desktop */}
       <aside
-        className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[260px] flex-col"
-        style={{ background: '#ffffff', borderRight: '1px solid #e2e8f0' }}
+        className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[260px] flex-col layout-sidebar"
       >
         {navContent}
       </aside>
