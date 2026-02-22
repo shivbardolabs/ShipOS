@@ -36,6 +36,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <a
+              href="/pricing"
+              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
+            >
+              Pricing
+            </a>
+            <a
               href="/api/auth/login"
               className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
