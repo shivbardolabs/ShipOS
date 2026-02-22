@@ -208,6 +208,88 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // ─── Invite user state ──────────────────────────────────────────────────
+  interface PendingInvitation {
+    id: string;
+    email: string;
+    role: string;
+    status: string;
+    createdAt: string;
+  }
+
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('employee');
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(true);
+  const [revokingInvite, setRevokingInvite] = useState<string | null>(null);
+
+  const fetchInvitations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/users/invite');
+      if (res.ok) setPendingInvitations(await res.json());
+    } catch (e) {
+      console.error('Failed to fetch invitations', e);
+    } finally {
+      setInvitationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchInvitations(); }, [fetchInvitations]);
+
+  const handleInviteUser = useCallback(async () => {
+    setInviteSending(true);
+    setInviteError('');
+    setInviteSuccess(false);
+    try {
+      const res = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      if (res.ok) {
+        setInviteSuccess(true);
+        setInviteEmail('');
+        setInviteRole('employee');
+        fetchInvitations();
+        // Auto-close modal after brief success display
+        setTimeout(() => {
+          setShowInviteModal(false);
+          setInviteSuccess(false);
+        }, 1500);
+      } else {
+        const data = await res.json();
+        setInviteError(data.error || 'Failed to send invitation');
+      }
+    } catch (e) {
+      console.error('Invite failed', e);
+      setInviteError('Network error — please try again');
+    } finally {
+      setInviteSending(false);
+    }
+  }, [inviteEmail, inviteRole, fetchInvitations]);
+
+  const handleRevokeInvite = useCallback(async (invitationId: string) => {
+    setRevokingInvite(invitationId);
+    try {
+      const res = await fetch('/api/users/invite', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invitationId }),
+      });
+      if (res.ok) fetchInvitations();
+    } catch (e) {
+      console.error('Revoke failed', e);
+    } finally {
+      setRevokingInvite(null);
+    }
+  }, [fetchInvitations]);
+
+  const activePendingInvitations = pendingInvitations.filter(i => i.status === 'pending');
+
   // Rates tab
   const [carrierTab, setCarrierTab] = useState('ups');
 
@@ -857,7 +939,7 @@ export default function SettingsPage() {
           <TabPanel active={activeTab === 'users'}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-surface-200">Team Members</h2>
-              <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
+              <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => { setShowInviteModal(true); setInviteError(''); setInviteSuccess(false); }}>
                 Invite User
               </Button>
             </div>
@@ -949,6 +1031,151 @@ export default function SettingsPage() {
                   );
                 })}
               </div>
+            )}
+
+            {/* ── Invite User Modal ──────────────────────────── */}
+            {showInviteModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-surface-900 border border-surface-700 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-surface-700">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600/20">
+                        <Mail className="h-4.5 w-4.5 text-primary-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-surface-100">Invite Team Member</h3>
+                        <p className="text-xs text-surface-500">They&apos;ll join your team when they sign in</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowInviteModal(false)}
+                      className="rounded-lg p-1.5 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="px-6 py-5 space-y-4">
+                    {inviteSuccess ? (
+                      <div className="flex flex-col items-center py-6">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600/20 mb-3">
+                          <Check className="h-6 w-6 text-emerald-400" />
+                        </div>
+                        <p className="text-sm font-medium text-surface-200">Invitation created!</p>
+                        <p className="text-xs text-surface-500 mt-1">They&apos;ll be added to your team on sign-in.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-surface-400 mb-1.5">Email Address</label>
+                          <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="colleague@example.com"
+                            className="w-full rounded-lg border border-surface-700 bg-surface-800 px-3.5 py-2.5 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-colors"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && inviteEmail.trim()) handleInviteUser();
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-surface-400 mb-1.5">Role</label>
+                          <select
+                            value={inviteRole}
+                            onChange={(e) => setInviteRole(e.target.value)}
+                            className="w-full rounded-lg border border-surface-700 bg-surface-800 px-3.5 py-2.5 text-sm text-surface-200 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-colors"
+                          >
+                            <option value="admin">Admin — Full access to all features</option>
+                            <option value="manager">Manager — Operations & team oversight</option>
+                            <option value="employee">Employee — Day-to-day operations</option>
+                          </select>
+                        </div>
+
+                        {inviteError && (
+                          <div className="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2.5">
+                            <X className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                            <p className="text-xs text-red-400">{inviteError}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-2 rounded-lg bg-surface-800/50 border border-surface-700/50 px-3 py-2.5">
+                          <Shield className="h-3.5 w-3.5 text-surface-500 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-surface-500">
+                            The invited user will be automatically added to your team with the selected role when they sign in via Auth0 using this email.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  {!inviteSuccess && (
+                    <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-700 bg-surface-800/30">
+                      <Button variant="ghost" size="sm" onClick={() => setShowInviteModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        leftIcon={inviteSending ? undefined : <Mail className="h-3.5 w-3.5" />}
+                        onClick={handleInviteUser}
+                        disabled={!inviteEmail.trim() || inviteSending}
+                      >
+                        {inviteSending ? 'Sending…' : 'Send Invitation'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Pending Invitations ──────────────────────── */}
+            {!invitationsLoading && activePendingInvitations.length > 0 && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Pending Invitations</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {activePendingInvitations.map((invite) => (
+                      <div
+                        key={invite.id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-surface-700/30 hover:bg-surface-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
+                            <Mail className="h-3.5 w-3.5 text-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-surface-200">{invite.email}</p>
+                            <p className="text-xs text-surface-500">
+                              Invited as <span className="capitalize font-medium text-surface-400">{invite.role}</span>
+                              {' · '}
+                              {new Date(invite.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRevokeInvite(invite.id)}
+                          disabled={revokingInvite === invite.id}
+                        >
+                          {revokingInvite === invite.id ? (
+                            <span className="text-xs">Revoking…</span>
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Role Descriptions */}

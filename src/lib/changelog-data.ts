@@ -21,6 +21,44 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.10.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.10.0',
+    date: '2026-02-22',
+    title: 'Invite Users & Team Onboarding',
+    summary:
+      'The +Invite User button in Settings → Users & Roles is now fully functional. Admins can invite team members by email with a specific role. When the invited person signs in via Auth0, they automatically join the correct team with their assigned role — no manual setup needed.',
+    highlights: ['Invite by Email', 'Auto-Join on Sign-In', 'Role Assignment'],
+    changes: [
+      {
+        text: 'Working +Invite User flow — enter an email and role, invitation is recorded and honored on sign-in',
+        type: 'feature',
+      },
+      {
+        text: 'Invitation model with pending/accepted/revoked status tracking',
+        type: 'feature',
+      },
+      {
+        text: 'Pending Invitations list in Users & Roles tab with revoke capability',
+        type: 'feature',
+      },
+      {
+        text: 'Auth0 sign-in now checks for pending invitations — invited users auto-join the correct tenant and role',
+        type: 'feature',
+      },
+      {
+        text: 'Admin-only access control on invite creation and revocation',
+        type: 'security',
+      },
+      {
+        text: 'Polished invite modal with email validation, role selector, and success/error feedback',
+        type: 'design',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   /*  v0.9.0                                                             */
   /* ------------------------------------------------------------------ */
   {
