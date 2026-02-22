@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,12 @@ import { Modal } from '@/components/ui/modal';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { notifications, customers } from '@/lib/mock-data';
-import { formatDateTime } from '@/lib/utils';
+import {
+  formatDateTime,
+  getCarrierTrackingUrl,
+  getNotificationTargetUrl,
+  getNotificationStatusLabel,
+} from '@/lib/utils';
 import type { Notification } from '@/lib/types';
 import {
   Bell,
@@ -29,7 +35,10 @@ import {
   UserPlus,
   MoreVertical,
   MailOpen,
-  Smartphone } from 'lucide-react';
+  Smartphone,
+  ExternalLink,
+  ArrowRight,
+} from 'lucide-react';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 
 /* -------------------------------------------------------------------------- */
@@ -43,7 +52,8 @@ const notifTypeIcon: Record<string, React.ReactNode> = {
   id_expiring: <AlertTriangle className="h-4 w-4 text-red-600" />,
   renewal_reminder: <Clock className="h-4 w-4 text-yellow-400" />,
   shipment_update: <Truck className="h-4 w-4 text-emerald-600" />,
-  welcome: <UserPlus className="h-4 w-4 text-primary-600" /> };
+  welcome: <UserPlus className="h-4 w-4 text-primary-600" />,
+};
 
 type NotifRow = Notification & Record<string, unknown>;
 
@@ -52,6 +62,7 @@ type NotifRow = Notification & Record<string, unknown>;
 /* -------------------------------------------------------------------------- */
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('all');
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<Notification | null>(null);
@@ -84,6 +95,24 @@ export default function NotificationsPage() {
     { id: 'failed', label: 'Failed', count: stats.failed },
   ];
 
+  /** Navigate to the relevant page for the notification. */
+  const navigateToNotif = (row: Notification) => {
+    // For shipment tracking, open carrier tracking in new tab
+    if (row.type === 'shipment_update' && row.carrier && row.trackingNumber) {
+      const url = getCarrierTrackingUrl(row.carrier, row.trackingNumber);
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
+    // Otherwise navigate in-app
+    const target = getNotificationTargetUrl(row.type, {
+      customerId: row.customerId,
+      linkedEntityId: row.linkedEntityId,
+    });
+    router.push(target);
+  };
+
   // Table columns
   const columns: Column<NotifRow>[] = [
     {
@@ -94,7 +123,8 @@ export default function NotificationsPage() {
           {notifTypeIcon[row.type] || <Bell className="h-4 w-4 text-surface-400" />}
           <span className="text-xs font-medium capitalize">{row.type.replace(/_/g, ' ')}</span>
         </div>
-      ) },
+      ),
+    },
     {
       key: 'customer',
       label: 'Customer',
@@ -102,16 +132,19 @@ export default function NotificationsPage() {
       render: (row) => {
         const c = row.customer;
         return c ? (
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-sm text-surface-200 font-medium">
               {c.firstName} {c.lastName}
             </span>
-            <span className="ml-2 text-[10px] text-surface-500">{c.pmbNumber}</span>
+            <span className="text-[11px] text-surface-500 font-mono bg-surface-800 px-1.5 py-0.5 rounded">
+              {c.pmbNumber}
+            </span>
           </div>
         ) : (
           <span className="text-surface-500">—</span>
         );
-      } },
+      },
+    },
     {
       key: 'channel',
       label: 'Channel',
@@ -130,11 +163,28 @@ export default function NotificationsPage() {
             </span>
           )}
         </div>
-      ) },
+      ),
+    },
     {
       key: 'status',
       label: 'Status',
-      render: (row) => <Badge status={row.status} className="text-xs">{row.status}</Badge> },
+      render: (row) => {
+        const label = getNotificationStatusLabel(row.status);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Badge status={row.status} className="text-xs">{label}</Badge>
+            {row.status === 'bounced' && (
+              <span
+                className="text-[10px] text-surface-500 cursor-help"
+                title="The notification email could not be delivered to the recipient's inbox"
+              >
+                ⓘ
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
     {
       key: 'subject',
       label: 'Subject',
@@ -142,7 +192,8 @@ export default function NotificationsPage() {
         <span className="text-xs text-surface-300 max-w-[200px] truncate block">
           {row.subject || '—'}
         </span>
-      ) },
+      ),
+    },
     {
       key: 'sentAt',
       label: 'Sent',
@@ -151,25 +202,59 @@ export default function NotificationsPage() {
         <span className="text-xs text-surface-400">
           {row.sentAt ? formatDateTime(row.sentAt) : '—'}
         </span>
-      ) },
+      ),
+    },
     {
       key: 'actions',
       label: '',
       align: 'right',
       width: 'w-12',
-      render: (row) => (
-        <DropdownMenu
-          trigger={
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
-              <MoreVertical className="h-4 w-4" />
-            </div>
+      render: (row) => {
+        const items = [
+          {
+            id: 'view',
+            label: 'View Details',
+            icon: <Eye className="h-4 w-4" />,
+            onClick: () => setDetailModal(row),
+          },
+          {
+            id: 'goto',
+            label: 'Go to Related',
+            icon: <ArrowRight className="h-4 w-4" />,
+            onClick: () => navigateToNotif(row),
+          },
+          {
+            id: 'resend',
+            label: 'Resend',
+            icon: <RefreshCw className="h-4 w-4" />,
+          },
+        ];
+
+        // Add "Track Package" for shipment notifications with tracking info
+        if (row.type === 'shipment_update' && row.carrier && row.trackingNumber) {
+          const trackUrl = getCarrierTrackingUrl(row.carrier, row.trackingNumber);
+          if (trackUrl) {
+            items.splice(2, 0, {
+              id: 'track',
+              label: `Track on ${row.carrier.toUpperCase()}`,
+              icon: <ExternalLink className="h-4 w-4" />,
+              onClick: () => window.open(trackUrl, '_blank', 'noopener,noreferrer'),
+            });
           }
-          items={[
-            { id: 'view', label: 'View Details', icon: <Eye className="h-4 w-4" />, onClick: () => setDetailModal(row) },
-            { id: 'resend', label: 'Resend', icon: <RefreshCw className="h-4 w-4" /> },
-          ]}
-        />
-      ) },
+        }
+
+        return (
+          <DropdownMenu
+            trigger={
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
+                <MoreVertical className="h-4 w-4" />
+              </div>
+            }
+            items={items}
+          />
+        );
+      },
+    },
   ];
 
   return (
@@ -233,6 +318,32 @@ export default function NotificationsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setDetailModal(null)}>Close</Button>
+            {detailModal?.type === 'shipment_update' &&
+              detailModal.carrier &&
+              detailModal.trackingNumber && (
+                <Button
+                  variant="outline"
+                  leftIcon={<ExternalLink className="h-4 w-4" />}
+                  onClick={() => {
+                    const url = getCarrierTrackingUrl(detailModal.carrier!, detailModal.trackingNumber!);
+                    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  Track on {detailModal.carrier.toUpperCase()}
+                </Button>
+              )}
+            <Button
+              variant="outline"
+              leftIcon={<ArrowRight className="h-4 w-4" />}
+              onClick={() => {
+                if (detailModal) {
+                  setDetailModal(null);
+                  navigateToNotif(detailModal);
+                }
+              }}
+            >
+              Go to Related
+            </Button>
             <Button variant="outline" leftIcon={<RefreshCw className="h-4 w-4" />}>Resend</Button>
           </>
         }
@@ -250,16 +361,30 @@ export default function NotificationsPage() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-surface-500">Status</p>
-                <div className="mt-1">
-                  <Badge status={detailModal.status}>{detailModal.status}</Badge>
+                <p className="text-xs text-surface-500">Delivery Status</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <Badge status={detailModal.status}>
+                    {getNotificationStatusLabel(detailModal.status)}
+                  </Badge>
+                  {detailModal.status === 'bounced' && (
+                    <span className="text-[10px] text-surface-500">
+                      (email undeliverable)
+                    </span>
+                  )}
                 </div>
               </div>
               <div>
                 <p className="text-xs text-surface-500">Customer</p>
                 <p className="text-sm text-surface-200 mt-1">
                   {detailModal.customer
-                    ? `${detailModal.customer.firstName} ${detailModal.customer.lastName} (${detailModal.customer.pmbNumber})`
+                    ? (
+                      <span className="flex items-center gap-2">
+                        <span>{detailModal.customer.firstName} {detailModal.customer.lastName}</span>
+                        <span className="text-[11px] text-surface-500 font-mono bg-surface-800 px-1.5 py-0.5 rounded">
+                          {detailModal.customer.pmbNumber}
+                        </span>
+                      </span>
+                    )
                     : '—'}
                 </p>
               </div>
@@ -289,6 +414,64 @@ export default function NotificationsPage() {
                 </div>
               )}
             </div>
+
+            {/* Tracking info for shipment notifications */}
+            {detailModal.type === 'shipment_update' && detailModal.carrier && detailModal.trackingNumber && (
+              <div className="pt-3 border-t border-surface-800">
+                <p className="text-xs text-surface-500 mb-2">Shipment Tracking</p>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                  <Truck className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-surface-200 font-medium uppercase">{detailModal.carrier}</p>
+                    <p className="text-xs text-surface-400 font-mono truncate">{detailModal.trackingNumber}</p>
+                  </div>
+                  {(() => {
+                    const url = getCarrierTrackingUrl(detailModal.carrier!, detailModal.trackingNumber!);
+                    return url ? (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors flex-shrink-0"
+                      >
+                        Track Package
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Tracking info for package notifications */}
+            {(detailModal.type === 'package_arrival' || detailModal.type === 'package_reminder') &&
+              detailModal.carrier &&
+              detailModal.trackingNumber && (
+                <div className="pt-3 border-t border-surface-800">
+                  <p className="text-xs text-surface-500 mb-2">Package Info</p>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                    <Package className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-surface-200 font-medium uppercase">{detailModal.carrier}</p>
+                      <p className="text-xs text-surface-400 font-mono truncate">{detailModal.trackingNumber}</p>
+                    </div>
+                    {(() => {
+                      const url = getCarrierTrackingUrl(detailModal.carrier!, detailModal.trackingNumber!);
+                      return url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors flex-shrink-0"
+                        >
+                          Track Package
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+              )}
 
             {detailModal.subject && (
               <div className="pt-3 border-t border-surface-800">
@@ -328,7 +511,8 @@ export default function NotificationsPage() {
               placeholder="Select customer..."
               options={customers.filter((c) => c.status === 'active').map((c) => ({
                 value: c.id,
-                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})` }))}
+                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
+              }))}
             />
             <Select
               label="Notification Type"

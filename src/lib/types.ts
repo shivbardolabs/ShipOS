@@ -107,6 +107,13 @@ export interface Notification {
   body?: string;
   customerId: string;
   customer?: Customer;
+  /** Related entity (package, shipment, mail piece, etc.) */
+  linkedEntityId?: string;
+  linkedEntityType?: 'package' | 'shipment' | 'mail' | 'customer';
+  /** Carrier name for shipment-related notifications */
+  carrier?: string;
+  /** Tracking number for shipment / package notifications */
+  trackingNumber?: string;
   sentAt?: string;
   createdAt: string;
 }
