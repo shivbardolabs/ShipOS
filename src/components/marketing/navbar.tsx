@@ -1,5 +1,8 @@
 'use client';
 
+/* Auth0 routes (/api/auth/*) require full-page redirects — <a> is intentional */
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
