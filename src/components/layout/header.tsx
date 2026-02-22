@@ -4,12 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { cn } from '@/lib/utils';
-import { dashboardStats } from '@/lib/mock-data';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { OnlineStatus } from '@/components/ui/online-status';
+import { NotificationPanel } from '@/components/layout/notification-panel';
 import {
-  Bell,
   ChevronRight,
   User,
   Settings,
@@ -57,8 +56,6 @@ export function Header() {
   const crumbs = useBreadcrumbs();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { user, isLoading } = useUser();
-
-  const notifCount = dashboardStats.notificationsSent;
 
   // Derive initials from Auth0 user
   const displayName = user?.name || user?.email?.split('@')[0] || 'User';
@@ -126,15 +123,8 @@ export function Header() {
           {/* Online status */}
           <OnlineStatus />
 
-          {/* Notification bell */}
-          <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-surface-400 hover:text-surface-200 transition-colors">
-            <Bell className="h-[18px] w-[18px]" />
-            {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-500 px-1 text-[10px] font-bold text-white">
-                {notifCount > 99 ? '99+' : notifCount}
-              </span>
-            )}
-          </button>
+          {/* Notification bell + dropdown panel */}
+          <NotificationPanel />
 
           {/* User avatar + dropdown */}
           {isLoading ? (
