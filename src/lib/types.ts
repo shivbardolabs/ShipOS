@@ -30,6 +30,8 @@ export interface Customer {
   form1583Date?: string;
   notifyEmail: boolean;
   notifySms: boolean;
+  /** URL to customer photo (ID photo, headshot, etc.) */
+  photoUrl?: string;
   // Computed/joined
   packageCount?: number;
   mailCount?: number;

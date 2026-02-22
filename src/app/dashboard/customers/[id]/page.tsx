@@ -26,35 +26,14 @@ import {
   Clock,
   Package,
   Truck,
-  Send } from 'lucide-react';
+  Send,
+  Camera,
+  Upload } from 'lucide-react';
+import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
-
-function getInitials(first: string, last: string) {
-  return `${first[0]}${last[0]}`.toUpperCase();
-}
-
-function hashColor(name: string): string {
-  const colors = [
-    'from-blue-500 to-blue-700',
-    'from-indigo-500 to-indigo-700',
-    'from-emerald-500 to-emerald-700',
-    'from-amber-500 to-amber-700',
-    'from-rose-500 to-rose-700',
-    'from-cyan-500 to-cyan-700',
-    'from-pink-500 to-pink-700',
-    'from-teal-500 to-teal-700',
-    'from-indigo-500 to-indigo-700',
-    'from-orange-500 to-orange-700',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
@@ -228,15 +207,27 @@ export default function CustomerDetailPage() {
       {/* Customer Header */}
       <div className="glass-card p-6">
         <div className="flex items-start gap-5 flex-wrap">
-          {/* Avatar */}
-          <div
-            className={cn(
-              'flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-surface-100 shadow-lg',
-              hashColor(fullName)
-            )}
-          >
-            {getInitials(customer.firstName, customer.lastName)}
-          </div>
+          {/* Avatar with photo upload */}
+          <CustomerAvatar
+            firstName={customer.firstName}
+            lastName={customer.lastName}
+            photoUrl={customer.photoUrl}
+            size="xl"
+            className="shadow-lg"
+            editable
+            onClick={() => {
+              // In production, this would open a file picker to upload/capture a photo
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.capture = 'environment';
+              input.onchange = () => {
+                // Photo upload would be handled here
+                // For now this is a UI-ready placeholder
+              };
+              input.click();
+            }}
+          />
 
           {/* Info */}
           <div className="flex-1 min-w-0">
@@ -453,6 +444,52 @@ export default function CustomerDetailPage() {
                   <p className="text-sm text-surface-200 mt-0.5">{formatDate(customer.form1583Date)}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Customer Photo */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Camera className="h-4 w-4 text-surface-400" />
+                <CardTitle>Customer Photo</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center gap-3">
+                <CustomerAvatar
+                  firstName={customer.firstName}
+                  lastName={customer.lastName}
+                  photoUrl={customer.photoUrl}
+                  size="2xl"
+                  editable
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    input.onchange = () => {};
+                    input.click();
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    input.onchange = () => {};
+                    input.click();
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-primary-500 hover:text-primary-400 transition-colors"
+                >
+                  <Upload className="h-3 w-3" />
+                  {customer.photoUrl ? 'Change photo' : 'Upload photo'}
+                </button>
+                <p className="text-[10px] text-surface-500 text-center">
+                  Use ID photo or webcam capture for easy identification
+                </p>
+              </div>
             </CardContent>
           </Card>
 
