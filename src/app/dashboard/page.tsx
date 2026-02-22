@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useUser } from '@auth0/nextjs-auth0/client';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatCard } from '@/components/ui/card';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +38,6 @@ import {
 import {
   dashboardStats,
   recentActivity,
-  currentUser,
 } from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
 
@@ -234,13 +234,27 @@ export default function DashboardPage() {
 
   const [showAllStats, setShowAllStats] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [now, setNow] = useState<Date | null>(null);
+  const { user } = useUser();
+
+  // Hydrate time on client only (avoids SSR/client mismatch)
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
 
   const greeting = (() => {
-    const h = 10;
+    if (!now) return 'Welcome';
+    const h = now.getHours();
     if (h < 12) return 'Good morning';
     if (h < 18) return 'Good afternoon';
     return 'Good evening';
   })();
+
+  const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+
+  const dateString = now
+    ? now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
 
   /* Secondary stats for the "Quick Stats" sidebar */
   const secondaryStats = [
@@ -255,7 +269,7 @@ export default function DashboardPage() {
       {/* Header */}
       <PageHeader
         title="Dashboard"
-        description={`${greeting}, ${currentUser.name.split(' ')[0]} — Saturday, February 21, 2026`}
+        description={`${greeting}, ${firstName}${dateString ? ` — ${dateString}` : ''}`}
       />
 
       {/* ------------------------------------------------------------------ */}
