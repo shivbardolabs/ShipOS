@@ -2,10 +2,12 @@
 
 export interface User {
   id: string;
+  auth0Id?: string;
   name: string;
   email: string;
   role: 'employee' | 'manager' | 'admin';
   avatar?: string;
+  tenantId?: string;
 }
 
 export interface Customer {

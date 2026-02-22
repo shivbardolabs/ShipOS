@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/components/theme-provider';
+import { useTenant } from '@/components/tenant-provider';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -78,15 +79,17 @@ function ToggleSwitch({ checked, onChange, label, description }: ToggleSwitchPro
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mock users                                                                */
+/*  User type (from API)                                                      */
 /* -------------------------------------------------------------------------- */
-const mockUsers = [
-  { id: 'usr_001', name: 'Sarah Chen', email: 'sarah.chen@shipstation.com', role: 'admin', lastActive: '2 minutes ago' },
-  { id: 'usr_002', name: 'Mike Johnson', email: 'mike.j@shipstation.com', role: 'manager', lastActive: '1 hour ago' },
-  { id: 'usr_003', name: 'Emily Ross', email: 'emily.r@shipstation.com', role: 'employee', lastActive: '30 minutes ago' },
-  { id: 'usr_004', name: 'James Park', email: 'james.p@shipstation.com', role: 'employee', lastActive: '3 hours ago' },
-  { id: 'usr_005', name: 'Lisa Wang', email: 'lisa.w@shipstation.com', role: 'manager', lastActive: 'Yesterday' },
-];
+interface TenantUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Mock printers                                                             */
@@ -103,16 +106,107 @@ const mockPrinters = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const { theme, setTheme } = useTheme();
+  const { tenant, localUser, refresh: refreshTenant } = useTenant();
 
-  // General settings state
-  const [storeName, setStoreName] = useState('ShipStation Express - Downtown');
-  const [storeAddress, setStoreAddress] = useState('123 Main Street, Suite 100');
-  const [storeCity, setStoreCity] = useState('New York, NY 10001');
-  const [storePhone, setStorePhone] = useState('(555) 123-4567');
-  const [storeEmail, setStoreEmail] = useState('downtown@shipstation.com');
-  const [taxRate, setTaxRate] = useState('8.875');
+  // ─── Live tenant state (synced from API) ────────────────────────────────
+  const [storeName, setStoreName] = useState('');
+  const [storeAddress, setStoreAddress] = useState('');
+  const [storeCity, setStoreCity] = useState('');
+  const [storeState, setStoreState] = useState('');
+  const [storeZip, setStoreZip] = useState('');
+  const [storePhone, setStorePhone] = useState('');
+  const [storeEmail, setStoreEmail] = useState('');
+  const [taxRate, setTaxRate] = useState('0');
   const [openTime, setOpenTime] = useState('08:00');
   const [closeTime, setCloseTime] = useState('18:00');
+  const [savingTenant, setSavingTenant] = useState(false);
+  const [tenantSaved, setTenantSaved] = useState(false);
+
+  // Hydrate from tenant context
+  useEffect(() => {
+    if (tenant) {
+      setStoreName(tenant.name || '');
+      setStoreAddress(tenant.address || '');
+      setStoreCity(tenant.city || '');
+      setStoreState(tenant.state || '');
+      setStoreZip(tenant.zipCode || '');
+      setStorePhone(tenant.phone || '');
+      setStoreEmail(tenant.email || '');
+      setTaxRate(String(tenant.taxRate || 0));
+      // Parse business hours JSON
+      try {
+        const hours = tenant.businessHours ? JSON.parse(tenant.businessHours) : null;
+        if (hours?.open) setOpenTime(hours.open);
+        if (hours?.close) setCloseTime(hours.close);
+      } catch { /* ignore */ }
+    }
+  }, [tenant]);
+
+  const handleSaveTenant = useCallback(async () => {
+    setSavingTenant(true);
+    setTenantSaved(false);
+    try {
+      await fetch('/api/tenant', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: storeName,
+          address: storeAddress,
+          city: storeCity,
+          state: storeState,
+          zipCode: storeZip,
+          phone: storePhone,
+          email: storeEmail,
+          taxRate: parseFloat(taxRate) || 0,
+          businessHours: JSON.stringify({ open: openTime, close: closeTime }),
+        }),
+      });
+      await refreshTenant();
+      setTenantSaved(true);
+      setTimeout(() => setTenantSaved(false), 3000);
+    } catch (e) {
+      console.error('Save tenant failed', e);
+    } finally {
+      setSavingTenant(false);
+    }
+  }, [storeName, storeAddress, storeCity, storeState, storeZip, storePhone, storeEmail, taxRate, openTime, closeTime, refreshTenant]);
+
+  // ─── Live users state (from API) ────────────────────────────────────────
+  const [teamUsers, setTeamUsers] = useState<TenantUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) setTeamUsers(await res.json());
+    } catch (e) {
+      console.error('Failed to fetch users', e);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  const handleRoleChange = useCallback(async (userId: string, newRole: string) => {
+    setRoleUpdating(userId);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTeamUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+      }
+    } catch (e) {
+      console.error('Role change failed', e);
+    } finally {
+      setRoleUpdating(null);
+    }
+  }, []);
 
   // Rates tab
   const [carrierTab, setCarrierTab] = useState('ups');
@@ -191,14 +285,16 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-5">
-                  <Input label="Store Name" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Address" value={storeAddress} onChange={(e) => setStoreAddress(e.target.value)} />
-                    <Input label="City, State, ZIP" value={storeCity} onChange={(e) => setStoreCity(e.target.value)} />
+                  <Input label="Store Name" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="My Postal Store" />
+                  <Input label="Street Address" value={storeAddress} onChange={(e) => setStoreAddress(e.target.value)} placeholder="123 Main Street, Suite 100" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input label="City" value={storeCity} onChange={(e) => setStoreCity(e.target.value)} placeholder="New York" />
+                    <Input label="State" value={storeState} onChange={(e) => setStoreState(e.target.value)} placeholder="NY" />
+                    <Input label="ZIP Code" value={storeZip} onChange={(e) => setStoreZip(e.target.value)} placeholder="10001" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Phone" value={storePhone} onChange={(e) => setStorePhone(e.target.value)} />
-                    <Input label="Email" value={storeEmail} onChange={(e) => setStoreEmail(e.target.value)} type="email" />
+                    <Input label="Phone" value={storePhone} onChange={(e) => setStorePhone(e.target.value)} placeholder="(555) 123-4567" />
+                    <Input label="Email" value={storeEmail} onChange={(e) => setStoreEmail(e.target.value)} type="email" placeholder="info@mystore.com" />
                   </div>
                 </div>
               </CardContent>
@@ -225,8 +321,19 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end mt-6">
-              <Button leftIcon={<Save className="h-4 w-4" />}>Save Changes</Button>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              {tenantSaved && (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-500">
+                  <Check className="h-4 w-4" /> Saved
+                </span>
+              )}
+              <Button
+                leftIcon={<Save className="h-4 w-4" />}
+                onClick={handleSaveTenant}
+                disabled={savingTenant}
+              >
+                {savingTenant ? 'Saving…' : 'Save Changes'}
+              </Button>
             </div>
           </TabPanel>
 
@@ -751,49 +858,98 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-surface-200">Team Members</h2>
               <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
-                Add User
+                Invite User
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {mockUsers.map((user) => {
-                const roleColor =
-                  user.role === 'admin'
-                    ? 'default'
-                    : user.role === 'manager'
-                    ? 'warning'
-                    : 'muted';
-                const initials = user.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('');
-
-                return (
-                  <Card key={user.id} hover>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-accent-indigo text-xs font-bold text-white">
-                          {initials}
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-surface-200">{user.name}</h3>
-                          <p className="text-xs text-surface-500">{user.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant={roleColor as 'default' | 'warning' | 'muted'} dot>
-                          {user.role}
-                        </Badge>
-                        <span className="text-xs text-surface-500">Active {user.lastActive}</span>
-                        <Button variant="ghost" size="sm" iconOnly>
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </Button>
+            {usersLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <div className="flex items-center gap-4 animate-pulse">
+                      <div className="h-10 w-10 rounded-full bg-surface-800" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-32 bg-surface-800 rounded" />
+                        <div className="h-3 w-48 bg-surface-800 rounded" />
                       </div>
                     </div>
                   </Card>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : teamUsers.length === 0 ? (
+              <Card>
+                <div className="py-12 text-center">
+                  <Users className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+                  <p className="text-surface-400 text-sm">No team members yet.</p>
+                  <p className="text-surface-500 text-xs mt-1">Users are automatically added when they sign in via Auth0.</p>
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {teamUsers.map((member) => {
+                  const roleColor =
+                    member.role === 'admin'
+                      ? 'default'
+                      : member.role === 'manager'
+                      ? 'warning'
+                      : 'muted';
+                  const initials = member.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2);
+                  const isMe = member.id === localUser?.id;
+
+                  return (
+                    <Card key={member.id} hover>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {member.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={member.avatar} alt={member.name} className="h-10 w-10 rounded-full object-cover" />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-accent-indigo text-xs font-bold text-white">
+                              {initials}
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="text-sm font-medium text-surface-200">
+                              {member.name}
+                              {isMe && (
+                                <span className="ml-1.5 text-[10px] text-surface-500 font-normal">(you)</span>
+                              )}
+                            </h3>
+                            <p className="text-xs text-surface-500">{member.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          {localUser?.role === 'admin' ? (
+                            <select
+                              value={member.role}
+                              disabled={roleUpdating === member.id}
+                              onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                              className="text-xs font-medium rounded-lg border border-surface-700 bg-surface-900 text-surface-200 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="manager">Manager</option>
+                              <option value="employee">Employee</option>
+                            </select>
+                          ) : (
+                            <Badge variant={roleColor as 'default' | 'warning' | 'muted'} dot>
+                              {member.role}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-surface-500">
+                            Joined {new Date(member.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Role Descriptions */}
             <Card className="mt-6">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { ThemeProvider } from '@/components/theme-provider';
+import { TenantProvider } from '@/components/tenant-provider';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -44,11 +45,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="ShipOS" />
       </head>
       <UserProvider>
-        <ThemeProvider>
-          <body className="min-h-screen bg-surface-950 font-sans antialiased">
-            {children}
-          </body>
-        </ThemeProvider>
+        <TenantProvider>
+          <ThemeProvider>
+            <body className="min-h-screen bg-surface-950 font-sans antialiased">
+              {children}
+            </body>
+          </ThemeProvider>
+        </TenantProvider>
       </UserProvider>
     </html>
   );
