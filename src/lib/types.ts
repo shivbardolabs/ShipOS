@@ -145,6 +145,86 @@ export interface DashboardStats {
 export type CarrierType = 'amazon' | 'ups' | 'fedex' | 'usps' | 'dhl' | 'walmart' | 'target' | 'lasership' | 'temu' | 'ontrac' | 'other';
 
 /* -------------------------------------------------------------------------- */
+/*  Loyalty Program                                                           */
+/* -------------------------------------------------------------------------- */
+
+export interface LoyaltyProgram {
+  id: string;
+  name: string;
+  isActive: boolean;
+  pointsPerDollar: number;
+  currencyName: string;
+  redemptionRate: number;
+  referralEnabled: boolean;
+  referrerBonusPoints: number;
+  refereeBonusPoints: number;
+  tiers?: LoyaltyTier[];
+  rewards?: LoyaltyReward[];
+}
+
+export interface LoyaltyTier {
+  id: string;
+  name: string;
+  minPoints: number;
+  maxPoints: number | null;
+  earningMultiplier: number;
+  shippingDiscount: number;
+  freeHoldDays: number;
+  benefits: string[];
+  color: string;
+  icon: string;
+  sortOrder: number;
+}
+
+export interface LoyaltyAccount {
+  id: string;
+  currentPoints: number;
+  lifetimePoints: number;
+  referralCode: string;
+  referredById: string | null;
+  customerId: string;
+  customer?: Customer;
+  currentTierId: string | null;
+  currentTier?: LoyaltyTier;
+  transactions?: LoyaltyTransaction[];
+  createdAt: string;
+}
+
+export type LoyaltyTransactionType = 'earn' | 'redeem' | 'expire' | 'bonus' | 'referral' | 'adjustment';
+
+export interface LoyaltyTransaction {
+  id: string;
+  type: LoyaltyTransactionType;
+  points: number;
+  balanceAfter: number;
+  description: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  loyaltyAccountId: string;
+  createdAt: string;
+}
+
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string | null;
+  pointsCost: number;
+  rewardType: 'discount' | 'free_service' | 'upgrade' | 'credit' | 'custom';
+  value: number;
+  isActive: boolean;
+  maxRedemptions: number | null;
+}
+
+export interface LoyaltyDashboardStats {
+  totalMembers: number;
+  pointsIssuedThisMonth: number;
+  redemptionsThisMonth: number;
+  tierBreakdown: { tier: string; count: number; color: string }[];
+  recentActivity: LoyaltyTransaction[];
+  topCustomers: { name: string; points: number; tier: string }[];
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Shipping Reconciliation                                                   */
 /* -------------------------------------------------------------------------- */
 
