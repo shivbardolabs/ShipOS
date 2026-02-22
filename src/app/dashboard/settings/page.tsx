@@ -324,7 +324,6 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" /> },
     { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" /> },
-    { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" /> },
     { id: 'rates', label: 'Rates & Pricing', icon: <DollarSign className="h-4 w-4" /> },
     { id: 'dropoff', label: 'Drop-off Settings', icon: <Truck className="h-4 w-4" /> },
     { id: 'receipts', label: 'Receipts', icon: <Receipt className="h-4 w-4" /> },
