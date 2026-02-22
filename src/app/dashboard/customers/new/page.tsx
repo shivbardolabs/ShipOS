@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select';
 import { Stepper, type Step } from '@/components/ui/stepper';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import { customers as mockCustomers } from '@/lib/mock-data';
-import { cn, formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   DEFAULT_MAILBOX_RANGES,
   getAvailableBoxNumbers,
