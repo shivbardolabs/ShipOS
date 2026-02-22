@@ -27,6 +27,14 @@ import {
   ChevronRight,
   User,
   X,
+  BarChart3,
+  CalendarClock,
+  Wallet,
+  TrendingUp,
+  Gift,
+  AlertTriangle,
+  Receipt,
+  BookOpen,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
@@ -116,6 +124,59 @@ const addOnServices: AddOn[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
+/*  Mock Accounts Payable Ledger                                              */
+/* -------------------------------------------------------------------------- */
+interface AccountLedgerEntry {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: 'charge' | 'payment' | 'credit';
+}
+
+const customerLedgers: Record<string, AccountLedgerEntry[]> = {
+  cust_001: [
+    { id: 'le_001', date: '2026-02-03', description: 'Package receiving (3 pkgs)', amount: 9.00, type: 'charge' },
+    { id: 'le_002', date: '2026-02-07', description: 'Storage fee — 7 days', amount: 5.00, type: 'charge' },
+    { id: 'le_003', date: '2026-02-10', description: 'Mail forwarding service', amount: 9.99, type: 'charge' },
+    { id: 'le_004', date: '2026-02-14', description: 'Package receiving (2 pkgs)', amount: 8.50, type: 'charge' },
+    { id: 'le_005', date: '2026-02-18', description: 'SMS notification add-on', amount: 2.99, type: 'charge' },
+  ],
+  cust_003: [
+    { id: 'le_010', date: '2026-02-01', description: 'Package receiving (5 pkgs)', amount: 22.50, type: 'charge' },
+    { id: 'le_011', date: '2026-02-05', description: 'Payment received — thank you', amount: -45.00, type: 'payment' },
+    { id: 'le_012', date: '2026-02-12', description: 'Package receiving (4 pkgs)', amount: 17.00, type: 'charge' },
+    { id: 'le_013', date: '2026-02-15', description: 'Package insurance (2 pkgs)', amount: 3.00, type: 'charge' },
+  ],
+};
+
+function getCustomerLedger(customerId: string): AccountLedgerEntry[] {
+  return customerLedgers[customerId] || [
+    { id: 'le_gen_1', date: '2026-02-05', description: 'Package receiving (2 pkgs)', amount: 6.00, type: 'charge' },
+    { id: 'le_gen_2', date: '2026-02-12', description: 'Package receiving (1 pkg)', amount: 3.00, type: 'charge' },
+  ];
+}
+
+function getLedgerBalance(entries: AccountLedgerEntry[]): number {
+  return entries.reduce((sum, e) => sum + (e.type === 'payment' ? e.amount : e.amount), 0);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Monthly Package Stats                                                     */
+/* -------------------------------------------------------------------------- */
+function getMonthlyPackageStats(customerId: string, allPackages: typeof packages) {
+  const now = new Date('2026-02-21T15:00:00');
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const custPkgs = allPackages.filter((p) => p.customerId === customerId);
+  const monthPkgs = custPkgs.filter((p) => new Date(p.checkedInAt) >= monthStart);
+  const totalReceivingFees = monthPkgs.reduce((s, p) => s + p.receivingFee, 0);
+  const totalStorageFees = monthPkgs.reduce((s, p) => s + (p.storageFee || 0), 0);
+  const releasedThisMonth = monthPkgs.filter((p) => p.status === 'released').length;
+  const pendingPickup = custPkgs.filter((p) => p.status !== 'released' && p.status !== 'returned').length;
+  return { receivedThisMonth: monthPkgs.length, releasedThisMonth, pendingPickup, totalReceivingFees, totalStorageFees, totalFees: totalReceivingFees + totalStorageFees };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Receipt option type                                                       */
 /* -------------------------------------------------------------------------- */
 type ReceiptMethod = 'sms' | 'email' | 'print' | 'sms+print';
@@ -143,6 +204,9 @@ export default function CheckOutPage() {
 
   /* ---- Receipt state ---- */
   const [receiptMethod, setReceiptMethod] = useState<ReceiptMethod>('sms');
+
+  /* ---- Payment mode: post to A/P vs collect now ---- */
+  const [paymentMode, setPaymentMode] = useState<'post_to_account' | 'pay_now'>('post_to_account');
 
   /* ---- Success overlay ---- */
   const [showSuccess, setShowSuccess] = useState(false);
@@ -287,6 +351,15 @@ export default function CheckOutPage() {
     return { packageFees, storageFees, addOnTotal, subtotal, tax, total };
   }, [selectedPackages, enabledAddOns]);
 
+  /* ---- Account stats for selected customer ---- */
+  const accountStats = useMemo(() => {
+    if (!foundCustomer) return null;
+    const stats = getMonthlyPackageStats(foundCustomer.id, packages);
+    const ledger = getCustomerLedger(foundCustomer.id);
+    const runningBalance = getLedgerBalance(ledger);
+    return { ...stats, ledger, runningBalance };
+  }, [foundCustomer]);
+
   /* ---- Release handler ---- */
   const handleRelease = () => {
     setShowSuccess(true);
@@ -303,6 +376,7 @@ export default function CheckOutPage() {
     setSelectedIds(new Set());
     setEnabledAddOns(new Set());
     setReceiptMethod('sms');
+    setPaymentMode('post_to_account');
     setActiveTab('packages');
     setShowSuccess(false);
     setLookupError('');
@@ -312,6 +386,7 @@ export default function CheckOutPage() {
   const tabItems = [
     { id: 'packages', label: 'Packages', icon: <Package className="h-4 w-4" />, count: customerPackages.length },
     { id: 'addons', label: 'Services & Add-ons', icon: <Sparkles className="h-4 w-4" /> },
+    { id: 'account', label: 'Account Status', icon: <BarChart3 className="h-4 w-4" /> },
     { id: 'receipt', label: 'Receipt & Payment', icon: <CreditCard className="h-4 w-4" /> },
   ];
 
@@ -350,8 +425,17 @@ export default function CheckOutPage() {
             ({foundCustomer?.pmbNumber})
           </p>
           <p className="text-surface-400 mb-2">
-            Total charged: <span className="text-emerald-600 font-bold text-lg">{formatCurrency(fees.total)}</span>
+            {paymentMode === 'post_to_account' ? (
+              <>Posted to account: <span className="text-blue-500 font-bold text-lg">{formatCurrency(fees.total)}</span></>
+            ) : (
+              <>Total charged: <span className="text-emerald-600 font-bold text-lg">{formatCurrency(fees.total)}</span></>
+            )}
           </p>
+          {paymentMode === 'post_to_account' && (
+            <p className="text-xs text-surface-500 mb-1">
+              Will be included in the consolidated monthly invoice
+            </p>
+          )}
           <p className="text-sm text-surface-500 mb-10">
             {receiptMethodLabel[receiptMethod]}
           </p>
@@ -794,24 +878,302 @@ export default function CheckOutPage() {
                   <Button
                     size="lg"
                     rightIcon={<ChevronRight className="h-4 w-4" />}
-                    onClick={() => setActiveTab('receipt')}
+                    onClick={() => setActiveTab('account')}
                   >
-                    Continue to Payment
+                    Continue to Account
                   </Button>
                 </div>
               </TabPanel>
 
               {/* ============================================================ */}
-              {/*  Tab 3: Receipt & Payment                                    */}
+              {/*  Tab 3: Account Status                                       */}
+              {/* ============================================================ */}
+              <TabPanel active={activeTab === 'account'}>
+                {foundCustomer && accountStats && (
+                  <div className="space-y-6">
+                    {/* Stat cards row */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="glass-card p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                            <Package className="h-4 w-4 text-blue-400" />
+                          </div>
+                          <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Received</span>
+                        </div>
+                        <p className="text-2xl font-bold text-surface-100">{accountStats.receivedThisMonth}</p>
+                        <p className="text-xs text-surface-500 mt-1">packages this month</p>
+                      </div>
+                      <div className="glass-card p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                          </div>
+                          <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Released</span>
+                        </div>
+                        <p className="text-2xl font-bold text-surface-100">{accountStats.releasedThisMonth}</p>
+                        <p className="text-xs text-surface-500 mt-1">picked up this month</p>
+                      </div>
+                      <div className="glass-card p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/10">
+                            <Wallet className="h-4 w-4 text-yellow-400" />
+                          </div>
+                          <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Fees This Month</span>
+                        </div>
+                        <p className="text-2xl font-bold text-surface-100">{formatCurrency(accountStats.totalFees)}</p>
+                        <p className="text-xs text-surface-500 mt-1">receiving + storage</p>
+                      </div>
+                      <div className="glass-card p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
+                            <BookOpen className="h-4 w-4 text-red-400" />
+                          </div>
+                          <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Account Balance</span>
+                        </div>
+                        <p className={cn("text-2xl font-bold", accountStats.runningBalance > 0 ? "text-red-400" : "text-emerald-400")}>
+                          {formatCurrency(Math.abs(accountStats.runningBalance))}
+                        </p>
+                        <p className="text-xs text-surface-500 mt-1">{accountStats.runningBalance > 0 ? 'outstanding' : 'credit'}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                      {/* Left: A/P Ledger */}
+                      <div className="lg:col-span-3">
+                        <Card padding="md">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-semibold text-surface-100">Accounts Payable Ledger</h3>
+                            <Badge variant="info" className="text-xs">Feb 2026</Badge>
+                          </div>
+                          <div className="space-y-0 divide-y divide-surface-800">
+                            {accountStats.ledger.map((entry) => (
+                              <div key={entry.id} className="flex items-center justify-between py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                                    entry.type === 'payment' ? "bg-emerald-500/10" : entry.type === 'credit' ? "bg-blue-500/10" : "bg-surface-800"
+                                  )}>
+                                    {entry.type === 'payment' ? (
+                                      <CreditCard className="h-4 w-4 text-emerald-400" />
+                                    ) : entry.type === 'credit' ? (
+                                      <Gift className="h-4 w-4 text-blue-400" />
+                                    ) : (
+                                      <Receipt className="h-4 w-4 text-surface-400" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-surface-200">{entry.description}</p>
+                                    <p className="text-xs text-surface-500">{entry.date}</p>
+                                  </div>
+                                </div>
+                                <span className={cn(
+                                  "text-sm font-semibold tabular-nums",
+                                  entry.type === 'payment' ? "text-emerald-400" : "text-surface-300"
+                                )}>
+                                  {entry.type === 'payment' ? '-' : '+'}{formatCurrency(Math.abs(entry.amount))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="border-t border-surface-700 pt-3 mt-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-semibold text-surface-300">Running Balance</span>
+                              <span className={cn("text-lg font-bold", accountStats.runningBalance > 0 ? "text-red-400" : "text-emerald-400")}>
+                                {formatCurrency(Math.abs(accountStats.runningBalance))}
+                              </span>
+                            </div>
+                            <p className="text-xs text-surface-500 mt-1">
+                              {accountStats.runningBalance > 0 ? 'Included in consolidated monthly invoice' : 'Account is current'}
+                            </p>
+                          </div>
+                        </Card>
+                      </div>
+
+                      {/* Right: Renewal & Incentives */}
+                      <div className="lg:col-span-2 space-y-4">
+                        <Card padding="md">
+                          <h3 className="text-base font-semibold text-surface-100 mb-4">Renewal Status</h3>
+                          {(() => {
+                            const renewalDate = foundCustomer.renewalDate;
+                            const daysUntil = renewalDate
+                              ? Math.ceil((new Date(renewalDate).getTime() - new Date('2026-02-21T15:00:00').getTime()) / 86400000)
+                              : null;
+                            return (
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-surface-400">Plan</span>
+                                  <span className="text-sm font-medium text-surface-200">{foundCustomer.billingTerms || 'Monthly'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-surface-400">Platform</span>
+                                  <Badge variant="info" className="text-xs capitalize">{foundCustomer.platform}</Badge>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-surface-400">Renewal Date</span>
+                                  <span className="text-sm font-medium text-surface-200">
+                                    {renewalDate ? new Date(renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                  </span>
+                                </div>
+                                {daysUntil !== null && (
+                                  <div className={cn(
+                                    "flex items-center gap-2 p-3 rounded-xl",
+                                    daysUntil <= 14 ? "bg-red-500/10 border border-red-500/20" :
+                                    daysUntil <= 30 ? "bg-yellow-500/10 border border-yellow-500/20" :
+                                    "bg-emerald-500/10 border border-emerald-500/20"
+                                  )}>
+                                    {daysUntil <= 14 ? (
+                                      <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+                                    ) : (
+                                      <CalendarClock className="h-4 w-4 text-emerald-400 shrink-0" />
+                                    )}
+                                    <div>
+                                      <p className={cn(
+                                        "text-sm font-semibold",
+                                        daysUntil <= 14 ? "text-red-400" : daysUntil <= 30 ? "text-yellow-400" : "text-emerald-400"
+                                      )}>
+                                        {daysUntil <= 0 ? 'Renewal Overdue!' : daysUntil + ' days until renewal'}
+                                      </p>
+                                      <p className="text-xs text-surface-500">
+                                        {daysUntil <= 14 ? 'Remind customer to renew' : daysUntil <= 30 ? 'Approaching renewal window' : 'Account in good standing'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-surface-400">Customer Since</span>
+                                  <span className="text-sm text-surface-300">
+                                    {new Date(foundCustomer.dateOpened).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </Card>
+
+                        <Card padding="md">
+                          <h3 className="text-base font-semibold text-surface-100 mb-3">Incentives & Offers</h3>
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                                <Gift className="h-4 w-4 text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-surface-200">Referral Bonus</p>
+                                <p className="text-xs text-surface-500">Earn $25 credit for each referral. Share code with customer.</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                                <TrendingUp className="h-4 w-4 text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-surface-200">Annual Plan Upgrade</p>
+                                <p className="text-xs text-surface-500">Save 15% by switching from {foundCustomer.billingTerms || 'Monthly'} to Annual billing.</p>
+                              </div>
+                            </div>
+                            {accountStats.receivedThisMonth >= 5 && (
+                              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-surface-200">High-Volume Customer</p>
+                                  <p className="text-xs text-surface-500">{accountStats.receivedThisMonth}+ packages this month — eligible for volume discount.</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between mt-2">
+                      <Button variant="ghost" onClick={() => setActiveTab('addons')}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Add-ons
+                      </Button>
+                      <Button
+                        size="lg"
+                        rightIcon={<ChevronRight className="h-4 w-4" />}
+                        onClick={() => setActiveTab('receipt')}
+                      >
+                        Continue to Payment
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TabPanel>
+
+              {/* ============================================================ */}
+              {/*  Tab 4: Receipt & Payment                                    */}
               {/* ============================================================ */}
               <TabPanel active={activeTab === 'receipt'}>
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                  {/* Left column: Fee breakdown */}
+                  {/* Left column: Payment mode + Fee breakdown */}
                   <div className="lg:col-span-3 space-y-6">
+                    {/* Payment mode toggle */}
+                    <Card padding="md">
+                      <h3 className="text-base font-semibold text-surface-100 mb-4">Payment Method</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setPaymentMode('post_to_account')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                            paymentMode === 'post_to_account'
+                              ? "border-primary-500 bg-primary-50"
+                              : "border-surface-700 bg-surface-900/50 hover:border-surface-500"
+                          )}
+                        >
+                          <BookOpen className={cn("h-6 w-6", paymentMode === 'post_to_account' ? "text-primary-600" : "text-surface-400")} />
+                          <div className="text-center">
+                            <p className={cn("text-sm font-semibold", paymentMode === 'post_to_account' ? "text-surface-100" : "text-surface-300")}>Post to Account</p>
+                            <p className="text-xs text-surface-500 mt-0.5">Add to monthly invoice</p>
+                          </div>
+                          <span className={cn(
+                            "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded",
+                            paymentMode === 'post_to_account' ? "bg-emerald-100 text-emerald-600" : "bg-surface-700 text-surface-400"
+                          )}>Recommended</span>
+                        </button>
+                        <button
+                          onClick={() => setPaymentMode('pay_now')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                            paymentMode === 'pay_now'
+                              ? "border-primary-500 bg-primary-50"
+                              : "border-surface-700 bg-surface-900/50 hover:border-surface-500"
+                          )}
+                        >
+                          <CreditCard className={cn("h-6 w-6", paymentMode === 'pay_now' ? "text-primary-600" : "text-surface-400")} />
+                          <div className="text-center">
+                            <p className={cn("text-sm font-semibold", paymentMode === 'pay_now' ? "text-surface-100" : "text-surface-300")}>Collect Now</p>
+                            <p className="text-xs text-surface-500 mt-0.5">Charge at checkout</p>
+                          </div>
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-transparent">&nbsp;</span>
+                        </button>
+                      </div>
+
+                      {/* A/P context when posting to account */}
+                      {paymentMode === 'post_to_account' && accountStats && (
+                        <div className="mt-4 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                          <div className="flex items-center gap-2 mb-1">
+                            <BookOpen className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm font-medium text-blue-300">Account Balance</span>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-bold text-surface-100">{formatCurrency(accountStats.runningBalance)}</span>
+                            <span className="text-xs text-surface-500">current balance</span>
+                          </div>
+                          <p className="text-xs text-surface-500 mt-1">
+                            This checkout of {formatCurrency(fees.total)} will be added. Consolidated invoice sent end of month.
+                          </p>
+                        </div>
+                      )}
+                    </Card>
+
                     <Card padding="md">
                       <h3 className="text-base font-semibold text-surface-100 mb-5">Fee Breakdown</h3>
 
-                      {/* Package fees — itemized */}
+                      {/* Package fees */}
                       <div className="mb-4">
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-500 mb-2">Package Fees</p>
                         {selectedPackages.map((pkg) => (
@@ -870,10 +1232,15 @@ export default function CheckOutPage() {
                           <span className="text-lg font-bold text-surface-100">Total</span>
                           <span className="text-2xl font-bold text-surface-100">{formatCurrency(fees.total)}</span>
                         </div>
+                        {paymentMode === 'post_to_account' && accountStats && (
+                          <p className="text-xs text-surface-500 mt-2">
+                            New account balance after posting: <span className="text-surface-300 font-medium">{formatCurrency(accountStats.runningBalance + fees.total)}</span>
+                          </p>
+                        )}
                       </div>
                     </Card>
 
-                    {/* Signature placeholder */}
+                    {/* Signature */}
                     <Card padding="md">
                       <label className="text-sm font-semibold text-surface-300 block mb-3">Customer Signature</label>
                       <div className="h-28 rounded-xl border-2 border-dashed border-surface-700 bg-surface-900/40 flex items-center justify-center">
@@ -924,16 +1291,29 @@ export default function CheckOutPage() {
 
                     {/* Action buttons */}
                     <div className="space-y-3">
-                      <Button
-                        fullWidth
-                        size="lg"
-                        leftIcon={<PackageCheck className="h-5 w-5" />}
-                        onClick={handleRelease}
-                        disabled={selectedIds.size === 0}
-                        className="!py-4 !text-base !rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-lg shadow-emerald-900/30"
-                      >
-                        Release {selectedIds.size} Package{selectedIds.size !== 1 ? 's' : ''} — {formatCurrency(fees.total)}
-                      </Button>
+                      {paymentMode === 'post_to_account' ? (
+                        <Button
+                          fullWidth
+                          size="lg"
+                          leftIcon={<BookOpen className="h-5 w-5" />}
+                          onClick={handleRelease}
+                          disabled={selectedIds.size === 0}
+                          className="!py-4 !text-base !rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 shadow-lg shadow-blue-900/30"
+                        >
+                          Post to Account & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}
+                        </Button>
+                      ) : (
+                        <Button
+                          fullWidth
+                          size="lg"
+                          leftIcon={<PackageCheck className="h-5 w-5" />}
+                          onClick={handleRelease}
+                          disabled={selectedIds.size === 0}
+                          className="!py-4 !text-base !rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-lg shadow-emerald-900/30"
+                        >
+                          Collect {formatCurrency(fees.total)} & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         fullWidth
@@ -949,9 +1329,9 @@ export default function CheckOutPage() {
 
                 {/* Navigate back */}
                 <div className="flex justify-start mt-6">
-                  <Button variant="ghost" onClick={() => setActiveTab('addons')}>
+                  <Button variant="ghost" onClick={() => setActiveTab('account')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Add-ons
+                    Back to Account Status
                   </Button>
                 </div>
               </TabPanel>
