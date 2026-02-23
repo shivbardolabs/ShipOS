@@ -45,6 +45,8 @@ import {
   Receipt,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
+import { useActivityLog } from '@/components/activity-log-provider';
+import { LastUpdatedBy, ActivityTimeline } from '@/components/ui/performed-by';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
