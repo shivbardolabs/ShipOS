@@ -44,6 +44,7 @@ const categoryIcons: Record<ActionCategory, { icon: React.ElementType; color: st
   compliance: { icon: Shield, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
   invoice: { icon: FileText, color: 'text-orange-400', bg: 'bg-orange-500/15' },
   report: { icon: BarChart3, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
+  auth: { icon: Shield, color: 'text-rose-400', bg: 'bg-rose-500/15' },
 };
 
 /* -------------------------------------------------------------------------- */

@@ -1183,7 +1183,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          {localUser?.role === 'admin' ? (
+                          {(localUser?.role === 'admin' || localUser?.role === 'superadmin') ? (
                             <select
                               value={member.role}
                               disabled={roleUpdating === member.id}

@@ -19,6 +19,7 @@ import {
   Truck,
   Clock,
   Shield,
+  ShieldCheck,
   Bell,
   BarChart3,
   FileText,
@@ -39,14 +40,25 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  /** Only show this nav item for specific roles */
+  requiredRole?: string;
 }
 
 interface NavSection {
   title: string;
   items: NavItem[];
+  /** Only show this entire section for specific roles */
+  requiredRole?: string;
 }
 
 const navSections: NavSection[] = [
+  {
+    title: 'PLATFORM',
+    requiredRole: 'superadmin',
+    items: [
+      { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
+    ],
+  },
   {
     title: 'MAIN',
     items: [
@@ -171,35 +183,68 @@ export function Sidebar() {
 
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {navSections.map((section) => (
-          <div key={section.title}>
-            <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-surface-600">
-              {section.title}
-            </p>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
-                      active
-                        ? 'nav-active pl-[10px]'
-                        : 'text-surface-400 hover:text-surface-200'
-                    )}
-                    style={!active ? { } : undefined}
-                  >
-                    <item.icon className={cn('h-[18px] w-[18px] flex-shrink-0', active && 'text-primary-600')} />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        {navSections
+          .filter((section) => !section.requiredRole || role === section.requiredRole)
+          .map((section) => {
+            const visibleItems = section.items.filter(
+              (item) => !item.requiredRole || role === item.requiredRole
+            );
+            if (visibleItems.length === 0) return null;
+
+            // Special styling for the PLATFORM section (superadmin)
+            const isPlatformSection = section.requiredRole === 'superadmin';
+
+            return (
+              <div key={section.title}>
+                <p
+                  className={cn(
+                    'mb-2 px-2 text-[10px] font-bold uppercase tracking-widest',
+                    isPlatformSection ? '' : 'text-surface-600'
+                  )}
+                  style={isPlatformSection ? { color: '#e11d48' } : undefined}
+                >
+                  {section.title}
+                </p>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                          active
+                            ? isPlatformSection ? 'pl-[10px]' : 'nav-active pl-[10px]'
+                            : isPlatformSection
+                            ? 'text-rose-400/70 hover:text-rose-300 hover:bg-rose-500/10'
+                            : 'text-surface-400 hover:text-surface-200'
+                        )}
+                        style={
+                          active && isPlatformSection
+                            ? { borderLeft: '3px solid #e11d48', background: 'rgba(225, 29, 72, 0.1)', color: '#fb7185' }
+                            : undefined
+                        }
+                      >
+                        <item.icon
+                          className={cn(
+                            'h-[18px] w-[18px] flex-shrink-0',
+                            active && !isPlatformSection && 'text-primary-600'
+                          )}
+                          style={isPlatformSection ? { color: '#e11d48' } : undefined}
+                        />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+                {isPlatformSection && (
+                  <div className="mt-3 mb-1 border-b" style={{ borderColor: 'rgba(225, 29, 72, 0.2)' }} />
+                )}
+              </div>
+            );
+          })}
       </nav>
 
       {/* User info at bottom */}

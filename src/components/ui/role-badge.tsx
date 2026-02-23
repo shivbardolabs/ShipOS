@@ -1,16 +1,17 @@
 'use client';
 
-import { Shield, UserCog, UserCheck } from 'lucide-react';
+import { Shield, ShieldCheck, UserCog, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------- */
 /*  Role Visual System                                                        */
+/*  Superadmin → rose/red (platform owner)                                    */
 /*  Admin  → purple/violet   (authority)                                      */
 /*  Manager → amber/orange   (oversight)                                      */
 /*  Employee → teal/blue     (operations)                                     */
 /* -------------------------------------------------------------------------- */
 
-export type UserRole = 'admin' | 'manager' | 'employee';
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'employee';
 
 interface RoleConfig {
   label: string;
@@ -29,6 +30,17 @@ interface RoleConfig {
 }
 
 export const roleConfig: Record<UserRole, RoleConfig> = {
+  superadmin: {
+    label: 'Super Admin',
+    icon: ShieldCheck,
+    badgeBg: 'bg-rose-50 dark:bg-rose-500/15',
+    badgeText: 'text-rose-700 dark:text-rose-400',
+    badgeBorder: 'border-rose-200 dark:border-rose-500/25',
+    dot: 'bg-rose-500',
+    stripFrom: '#e11d48',
+    stripTo: '#f43f5e',
+    ring: 'ring-rose-400/40',
+  },
   admin: {
     label: 'Admin',
     icon: Shield,
@@ -139,6 +151,14 @@ export function RoleStrip({ role }: { role: UserRole }) {
 /*  RoleCard — full role display for profile page                             */
 /* -------------------------------------------------------------------------- */
 const permissionsByRole: Record<UserRole, string[]> = {
+  superadmin: [
+    'All admin permissions',
+    'Master Admin panel — view all users across tenants',
+    'View login sessions & activity for all users',
+    'Cross-tenant user management',
+    'Platform-level configuration',
+    'System health monitoring',
+  ],
   admin: [
     'Full system access',
     'Manage users & invite team',

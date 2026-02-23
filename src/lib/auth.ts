@@ -4,19 +4,29 @@
  * `getOrProvisionUser(session)` is the single entry-point for connecting an
  * Auth0 session to a local User + Tenant row.  On first login it creates both;
  * on subsequent logins it returns the existing records.
+ *
+ * The `superadmin` role is auto-assigned to designated platform owner emails.
+ * Superadmins have cross-tenant visibility in the Master Admin panel.
  */
 
 import { getSession } from '@auth0/nextjs-auth0';
 import prisma from './prisma';
+
+/* ── Superadmin emails ─────────────────────────────────────────────────────── */
+const SUPERADMIN_EMAILS = ['shiv@bardolabs.ai'];
+
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'employee';
 
 export interface LocalUser {
   id: string;
   auth0Id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: UserRole;
   avatar: string | null;
   tenantId: string | null;
+  lastLoginAt: string | null;
+  loginCount: number;
   tenant: {
     id: string;
     name: string;
@@ -46,6 +56,9 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
 
   const { sub, name, email, picture } = session.user;
 
+  // Determine if this email is a superadmin
+  const isSuperadmin = SUPERADMIN_EMAILS.includes((email as string)?.toLowerCase());
+
   // 1. Try to find existing user by auth0Id
   let user = await prisma.user.findUnique({
     where: { auth0Id: sub },
@@ -53,16 +66,17 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
   });
 
   if (user) {
-    return {
-      id: user.id,
-      auth0Id: user.auth0Id!,
-      name: user.name,
-      email: user.email,
-      role: user.role as 'admin' | 'manager' | 'employee',
-      avatar: user.avatar,
-      tenantId: user.tenantId,
-      tenant: user.tenant,
-    };
+    // Ensure superadmin role is enforced for designated emails
+    const targetRole = isSuperadmin ? 'superadmin' : user.role;
+    if (user.role !== targetRole) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: targetRole },
+        include: { tenant: true },
+      });
+    }
+
+    return toLocalUser(user);
   }
 
   // 2. Also check by email (user might exist from seed but not linked yet)
@@ -73,9 +87,15 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
 
   if (user) {
     // Link existing user to Auth0
+    const targetRole = isSuperadmin ? 'superadmin' : user.role;
     user = await prisma.user.update({
       where: { id: user.id },
-      data: { auth0Id: sub, name: name || user.name, avatar: picture || user.avatar },
+      data: {
+        auth0Id: sub,
+        name: name || user.name,
+        avatar: picture || user.avatar,
+        role: targetRole,
+      },
       include: { tenant: true },
     });
 
@@ -91,7 +111,7 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
 
       if (invite) {
         tenantId = invite.tenantId;
-        role = invite.role;
+        role = isSuperadmin ? 'superadmin' : invite.role;
         await prisma.invitation.update({ where: { id: invite.id }, data: { status: 'accepted' } });
       } else {
         const tenant = await createDefaultTenant(name || email);
@@ -105,16 +125,7 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
       });
     }
 
-    return {
-      id: user.id,
-      auth0Id: user.auth0Id!,
-      name: user.name,
-      email: user.email,
-      role: user.role as 'admin' | 'manager' | 'employee',
-      avatar: user.avatar,
-      tenantId: user.tenantId,
-      tenant: user.tenant,
-    };
+    return toLocalUser(user);
   }
 
   // 3. Brand-new user — check for pending invitation first
@@ -132,7 +143,7 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
   if (pendingInvite) {
     // Accept the invitation — join the inviter's tenant with the specified role
     targetTenantId = pendingInvite.tenantId;
-    assignedRole = pendingInvite.role;
+    assignedRole = isSuperadmin ? 'superadmin' : pendingInvite.role;
 
     await prisma.invitation.update({
       where: { id: pendingInvite.id },
@@ -142,7 +153,7 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
     // No invitation — create a new tenant (original flow)
     const newTenant = await createDefaultTenant(name || email);
     targetTenantId = newTenant.id;
-    assignedRole = 'admin';
+    assignedRole = isSuperadmin ? 'superadmin' : 'admin';
   }
 
   const newUser = await prisma.user.create({
@@ -157,15 +168,48 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
     include: { tenant: true },
   });
 
+  return toLocalUser(newUser);
+}
+
+/**
+ * Record a login session for the current user.
+ * Called from /api/users/me on each page load (deduplicated by session).
+ */
+export async function recordLogin(userId: string): Promise<void> {
+  try {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          lastLoginAt: new Date(),
+          loginCount: { increment: 1 },
+        },
+      }),
+      prisma.loginSession.create({
+        data: { userId },
+      }),
+    ]);
+  } catch (err) {
+    // Non-critical — don't break auth flow
+    console.error('[recordLogin]', err);
+  }
+}
+
+/* ── Helpers ──────────────────────────────────────────────────────────────── */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toLocalUser(user: any): LocalUser {
   return {
-    id: newUser.id,
-    auth0Id: newUser.auth0Id!,
-    name: newUser.name,
-    email: newUser.email,
-    role: newUser.role as 'admin' | 'manager' | 'employee',
-    avatar: newUser.avatar,
-    tenantId: newUser.tenantId,
-    tenant: newUser.tenant,
+    id: user.id,
+    auth0Id: user.auth0Id!,
+    name: user.name,
+    email: user.email,
+    role: user.role as UserRole,
+    avatar: user.avatar,
+    tenantId: user.tenantId,
+    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    loginCount: user.loginCount ?? 0,
+    tenant: user.tenant,
   };
 }
 

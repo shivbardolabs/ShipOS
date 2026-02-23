@@ -28,9 +28,11 @@ export interface LocalUser {
   auth0Id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: 'superadmin' | 'admin' | 'manager' | 'employee';
   avatar: string | null;
   tenantId: string | null;
+  lastLoginAt: string | null;
+  loginCount: number;
   tenant: Tenant | null;
 }
 
@@ -76,16 +78,20 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
     // Fallback: if DB is unavailable (e.g. ephemeral SQLite on Vercel
     // serverless), build a minimal LocalUser from the Auth0 session so
-    // role-based UI still renders.  Default role = admin for store owners.
+    // role-based UI still renders.  Superadmin emails get superadmin role.
     if (!resolved && auth0User) {
+      const email = (auth0User.email as string) ?? '';
+      const isSuperadmin = email.toLowerCase() === 'shiv@bardolabs.ai';
       setLocalUser({
         id: (auth0User.sub as string) ?? 'local',
         auth0Id: (auth0User.sub as string) ?? '',
-        name: (auth0User.name as string) ?? (auth0User.email as string)?.split('@')[0] ?? 'User',
-        email: (auth0User.email as string) ?? '',
-        role: 'admin',
+        name: (auth0User.name as string) ?? email.split('@')[0] ?? 'User',
+        email,
+        role: isSuperadmin ? 'superadmin' : 'admin',
         avatar: (auth0User.picture as string) ?? null,
         tenantId: null,
+        lastLoginAt: null,
+        loginCount: 0,
         tenant: null,
       });
     }
