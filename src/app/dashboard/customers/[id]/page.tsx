@@ -43,6 +43,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Receipt,
+  Eye,
+  EyeOff,
+  PackageCheck,
+  ExternalLink,
+  Info,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { useActivityLog } from '@/components/activity-log-provider';
@@ -79,23 +84,7 @@ function expirationBadge(days: number | null) {
 /*  Column definitions                                                        */
 /* -------------------------------------------------------------------------- */
 
-const packageCols: Column<PackageType & Record<string, unknown>>[] = [
-  {
-    key: 'status',
-    label: 'Status',
-    render: (row) => <Badge status={row.status} className="text-xs">{row.status.replace('_', ' ')}</Badge> },
-  { key: 'trackingNumber', label: 'Tracking', render: (row) => <span className="font-mono text-xs">{row.trackingNumber || '—'}</span> },
-  { key: 'carrier', label: 'Carrier', sortable: true, render: (row) => <span className="uppercase text-xs font-medium">{row.carrier}</span> },
-  { key: 'packageType', label: 'Type', render: (row) => <span className="capitalize text-xs">{row.packageType}</span> },
-  { key: 'checkedInAt', label: 'Checked In', sortable: true, render: (row) => <span className="text-xs text-surface-400">{formatDate(row.checkedInAt)}</span> },
-  {
-    key: 'actions',
-    label: '',
-    align: 'right',
-    render: () => (
-      <Button variant="ghost" size="sm">View</Button>
-    ) },
-];
+/* packageCols moved inside component for router + state access */
 
 const mailCols: Column<MailPiece & Record<string, unknown>>[] = [
   {
@@ -159,6 +148,7 @@ export default function CustomerDetailPage() {
   const [activeTab, setActiveTab] = useState('packages');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editSaved, setEditSaved] = useState(false);
+  const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
 
   const customer = customers.find((c) => c.id === params.id);
 
@@ -166,6 +156,39 @@ export default function CustomerDetailPage() {
     () => packages.filter((p) => p.customerId === customer?.id) as (PackageType & Record<string, unknown>)[],
     [customer?.id]
   );
+  const inCustodyCount = useMemo(
+    () => customerPackages.filter((p) => p.status !== 'released' && p.status !== 'returned').length,
+    [customerPackages]
+  );
+
+  const packageCols: Column<PackageType & Record<string, unknown>>[] = useMemo(() => [
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row: PackageType & Record<string, unknown>) => <Badge status={row.status} className="text-xs">{row.status.replace('_', ' ')}</Badge> },
+    { key: 'trackingNumber', label: 'Tracking', render: (row: PackageType & Record<string, unknown>) => <span className="font-mono text-xs">{row.trackingNumber || '\u2014'}</span> },
+    { key: 'carrier', label: 'Carrier', sortable: true, render: (row: PackageType & Record<string, unknown>) => <span className="uppercase text-xs font-medium">{row.carrier}</span> },
+    { key: 'packageType', label: 'Type', render: (row: PackageType & Record<string, unknown>) => <span className="capitalize text-xs">{row.packageType}</span> },
+    { key: 'checkedInAt', label: 'Checked In', sortable: true, render: (row: PackageType & Record<string, unknown>) => <span className="text-xs text-surface-400">{formatDate(row.checkedInAt)}</span> },
+    {
+      key: 'actions',
+      label: '',
+      align: 'right' as const,
+      render: (row: PackageType & Record<string, unknown>) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            setExpandedPackageId(expandedPackageId === row.id ? null : row.id);
+          }}
+          leftIcon={expandedPackageId === row.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        >
+          {expandedPackageId === row.id ? 'Close' : 'View'}
+        </Button>
+      ) },
+  ], [expandedPackageId]);
+
   const customerMail = useMemo(
     () => mailPieces.filter((m) => m.customerId === customer?.id) as (MailPiece & Record<string, unknown>)[],
     [customer?.id]
@@ -224,7 +247,7 @@ export default function CustomerDetailPage() {
     idDays !== null && idDays <= 90 ? 'bg-yellow-500' : 'bg-emerald-500';
 
   const tabs = [
-    { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: customerPackages.length },
+    { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: inCustodyCount },
     { id: 'mail', label: 'Mail', icon: <Mail className="h-3.5 w-3.5" />, count: customerMail.length },
     { id: 'shipments', label: 'Shipments', icon: <Truck className="h-3.5 w-3.5" />, count: customerShipments.length },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
@@ -318,6 +341,57 @@ export default function CustomerDetailPage() {
               searchable={false}
               pageSize={8}
               emptyMessage="No packages found for this customer"
+              expandedRowKey={expandedPackageId}
+              renderExpandedRow={(row) => {
+                const pkg = row as PackageType & Record<string, unknown>;
+                const isInCustody = pkg.status !== 'released' && pkg.status !== 'returned';
+                const daysHeld = Math.max(0, Math.floor((Date.now() - new Date(pkg.checkedInAt).getTime()) / 86400000));
+                return (
+                  <div className="py-4 space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Sender</p>
+                        <p className="text-xs text-surface-200">{pkg.senderName || '\u2014'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Days Held</p>
+                        <p className="text-xs text-surface-200">{daysHeld} day{daysHeld !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Condition</p>
+                        <p className="text-xs text-surface-200 capitalize">{pkg.condition || 'Good'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Storage Fee</p>
+                        <p className="text-xs text-surface-200">{formatCurrency(pkg.storageFee)}</p>
+                      </div>
+                      {pkg.notes && (
+                        <div className="col-span-2 sm:col-span-4">
+                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Notes</p>
+                          <p className="text-xs text-surface-200">{pkg.notes}</p>
+                        </div>
+                      )}
+                      {pkg.releasedAt && (
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Released</p>
+                          <p className="text-xs text-surface-200">{formatDate(pkg.releasedAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                    {isInCustody && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => router.push('/dashboard/packages/check-out')}
+                          leftIcon={<PackageCheck className="h-3.5 w-3.5" />}
+                        >
+                          Check Out
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              }}
             />
           </TabPanel>
 

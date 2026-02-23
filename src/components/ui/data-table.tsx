@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, Fragment, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { SearchInput } from './input';
 import {
@@ -51,6 +51,10 @@ interface DataTableProps<T> {
   /** Header actions (filters, buttons, etc.) */
   headerActions?: ReactNode;
   className?: string;
+  /** Key of the currently expanded row (controlled) */
+  expandedRowKey?: string | null;
+  /** Render function for expanded row content */
+  renderExpandedRow?: (row: T) => ReactNode;
 }
 
 type SortDir = 'asc' | 'desc' | null;
@@ -68,6 +72,8 @@ export function DataTable<T extends Record<string, unknown>>({
   searchFields,
   pageSize = 10,
   loading = false,
+  expandedRowKey,
+  renderExpandedRow,
   emptyMessage = 'No results found',
   headerActions,
   className,
@@ -220,31 +226,44 @@ export function DataTable<T extends Record<string, unknown>>({
                 </td>
               </tr>
             ) : (
-              paged.map((row) => (
-                <tr
-                  key={keyAccessor(row)}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    'border-b border-surface-700/60 table-row-hover',
-                    onRowClick && 'cursor-pointer'
-                  )}
-                >
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
+              paged.map((row) => {
+                const rowKey = keyAccessor(row);
+                const isExpanded = expandedRowKey === rowKey;
+                return (
+                  <Fragment key={rowKey}>
+                    <tr
+                      onClick={onRowClick ? () => onRowClick(row) : undefined}
                       className={cn(
-                        'px-4 py-3 text-surface-200',
-                        alignClass(col.align),
-                        col.width
+                        'border-b border-surface-700/60 table-row-hover',
+                        onRowClick && 'cursor-pointer',
+                        isExpanded && 'border-b-0 bg-surface-900/40'
                       )}
                     >
-                      {col.render
-                        ? col.render(row)
-                        : (row[col.key] as ReactNode) ?? '—'}
-                    </td>
-                  ))}
-                </tr>
-              ))
+                      {columns.map((col) => (
+                        <td
+                          key={col.key}
+                          className={cn(
+                            'px-4 py-3 text-surface-200',
+                            alignClass(col.align),
+                            col.width
+                          )}
+                        >
+                          {col.render
+                            ? col.render(row)
+                            : (row[col.key] as ReactNode) ?? '—'}
+                        </td>
+                      ))}
+                    </tr>
+                    {isExpanded && renderExpandedRow && (
+                      <tr className="border-b border-surface-700/60 bg-surface-900/40">
+                        <td colSpan={columns.length} className="px-4 py-0">
+                          {renderExpandedRow(row)}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>
