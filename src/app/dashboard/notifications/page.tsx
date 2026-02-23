@@ -95,17 +95,11 @@ export default function NotificationsPage() {
     { id: 'failed', label: 'Failed', count: stats.failed },
   ];
 
-  /** Navigate to the relevant page for the notification. */
+  /** Navigate to the relevant page for the notification (customer profile, etc.). */
   const navigateToNotif = (row: Notification) => {
-    // For shipment tracking, open carrier tracking in new tab
-    if (row.type === 'shipment_update' && row.carrier && row.trackingNumber) {
-      const url = getCarrierTrackingUrl(row.carrier, row.trackingNumber);
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
-    }
-    // Otherwise navigate in-app
+    // Always navigate in-app to the related customer / entity page.
+    // External carrier tracking links are available separately in the detail
+    // modal and the row dropdown menu ("Track on CARRIER").
     const target = getNotificationTargetUrl(row.type, {
       customerId: row.customerId,
       linkedEntityId: row.linkedEntityId,

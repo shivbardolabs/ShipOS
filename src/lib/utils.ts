@@ -84,7 +84,9 @@ export function getNotificationTargetUrl(
     renewal_reminder: opts?.customerId
       ? `/dashboard/customers/${opts.customerId}`
       : '/dashboard/customers',
-    shipment_update: '/dashboard/shipping',
+    shipment_update: opts?.customerId
+      ? `/dashboard/customers/${opts.customerId}`
+      : '/dashboard/notifications',
     welcome: opts?.customerId
       ? `/dashboard/customers/${opts.customerId}`
       : '/dashboard',

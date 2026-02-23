@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { notifications } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import {
-  getCarrierTrackingUrl,
   getNotificationTargetUrl,
   getNotificationStatusLabel,
 } from '@/lib/utils';
@@ -100,17 +99,8 @@ export function NotificationPanel() {
   const handleNotifClick = (notif: (typeof recent)[0]) => {
     setReadIds((prev) => new Set([...prev, notif.id]));
 
-    // For shipment tracking updates, open the carrier tracking page in a new tab
-    if (notif.type === 'shipment_update' && notif.carrier && notif.trackingNumber) {
-      const url = getCarrierTrackingUrl(notif.carrier, notif.trackingNumber);
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        setOpen(false);
-        return;
-      }
-    }
-
-    // Otherwise navigate in-app
+    // Always navigate in-app to the related customer / entity page.
+    // External tracking links are available via the notifications detail view.
     const target = getNotificationTargetUrl(notif.type, {
       customerId: notif.customerId,
       linkedEntityId: notif.linkedEntityId,
