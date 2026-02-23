@@ -9,7 +9,6 @@ import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
 import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
-import type { Package as PackageType, MailPiece, Shipment, Notification } from '@/lib/types';
 import {
   ArrowLeft,
   Edit,
