@@ -74,21 +74,32 @@ export function getNotificationTargetUrl(
   type: string,
   opts?: { customerId?: string; linkedEntityId?: string }
 ): string {
+  const eid = opts?.linkedEntityId;
+  const cid = opts?.customerId;
+
   const routes: Record<string, string> = {
-    package_arrival: '/dashboard/packages',
-    package_reminder: '/dashboard/packages',
-    mail_received: '/dashboard/mail',
-    id_expiring: opts?.customerId
-      ? `/dashboard/customers/${opts.customerId}`
+    package_arrival: eid
+      ? `/dashboard/packages?highlight=${eid}`
+      : '/dashboard/packages',
+    package_reminder: eid
+      ? `/dashboard/packages?highlight=${eid}`
+      : '/dashboard/packages',
+    mail_received: eid
+      ? `/dashboard/mail?highlight=${eid}`
+      : '/dashboard/mail',
+    id_expiring: cid
+      ? `/dashboard/customers/${cid}`
       : '/dashboard/customers',
-    renewal_reminder: opts?.customerId
-      ? `/dashboard/customers/${opts.customerId}`
+    renewal_reminder: cid
+      ? `/dashboard/customers/${cid}`
       : '/dashboard/customers',
-    shipment_update: opts?.customerId
-      ? `/dashboard/customers/${opts.customerId}`
-      : '/dashboard/notifications',
-    welcome: opts?.customerId
-      ? `/dashboard/customers/${opts.customerId}`
+    shipment_update: eid
+      ? `/dashboard/packages?highlight=${eid}`
+      : cid
+        ? `/dashboard/customers/${cid}`
+        : '/dashboard/notifications',
+    welcome: cid
+      ? `/dashboard/customers/${cid}`
       : '/dashboard',
   };
   return routes[type] || '/dashboard/notifications';
