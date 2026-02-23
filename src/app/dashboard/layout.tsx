@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { ActivityLogProvider } from '@/components/activity-log-provider';
 
 export default function DashboardLayout({
   children,
@@ -22,14 +23,16 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-surface-950">
-      <Sidebar />
+    <ActivityLogProvider>
+      <div className="min-h-screen bg-surface-950">
+        <Sidebar />
 
-      {/* Main content area – offset by sidebar width on desktop */}
-      <div className="lg:pl-[260px] flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 p-6">{children}</main>
+        {/* Main content area – offset by sidebar width on desktop */}
+        <div className="lg:pl-[260px] flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </ActivityLogProvider>
   );
 }

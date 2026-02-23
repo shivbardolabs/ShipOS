@@ -34,15 +34,20 @@ import {
   Printer,
   Navigation,
   MessageSquare,
+  User,
+  Activity,
+  Award,
+  Shield,
 } from 'lucide-react';
 import {
   dashboardStats,
-  recentActivity,
 } from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
+import { useActivityLog } from '@/components/activity-log-provider';
+import type { ActionCategory } from '@/lib/activity-log';
 
 /* -------------------------------------------------------------------------- */
-/*  Activity icon mapping                                                     */
+/*  Activity icon mapping — for both legacy recentActivity and activity log   */
 /* -------------------------------------------------------------------------- */
 const activityIconMap: Record<string, { icon: React.ElementType; color: string }> = {
   package_checkin: { icon: PackagePlus, color: 'text-blue-600 bg-blue-50' },
@@ -52,6 +57,21 @@ const activityIconMap: Record<string, { icon: React.ElementType; color: string }
   mail: { icon: Mail, color: 'text-cyan-600 bg-cyan-500/15' },
   customer: { icon: UserPlus, color: 'text-teal-400 bg-teal-500/15' },
   alert: { icon: ShieldAlert, color: 'text-rose-400 bg-rose-500/15' },
+};
+
+/** Map activity log categories to icon config */
+const categoryIconMap: Record<ActionCategory, { icon: React.ElementType; color: string }> = {
+  package: { icon: Package, color: 'text-blue-600 bg-blue-50' },
+  customer: { icon: Users, color: 'text-teal-400 bg-teal-500/15' },
+  mail: { icon: Mail, color: 'text-cyan-600 bg-cyan-500/15' },
+  shipment: { icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
+  notification: { icon: Bell, color: 'text-amber-600 bg-amber-50' },
+  settings: { icon: Settings, color: 'text-surface-400 bg-surface-700/30' },
+  user: { icon: UserPlus, color: 'text-violet-400 bg-violet-500/15' },
+  loyalty: { icon: Award, color: 'text-amber-400 bg-amber-500/15' },
+  compliance: { icon: Shield, color: 'text-emerald-400 bg-emerald-500/15' },
+  invoice: { icon: FileText, color: 'text-orange-400 bg-orange-500/15' },
+  report: { icon: BarChart3, color: 'text-indigo-400 bg-indigo-500/15' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -212,16 +232,18 @@ function buildVolumeData() {
 /*  Time formatting                                                           */
 /* -------------------------------------------------------------------------- */
 function timeAgo(isoString: string): string {
-  const now = new Date('2026-02-21T15:00:00');
-  const then = new Date(isoString);
-  const diffMs = now.getTime() - then.getTime();
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -231,11 +253,15 @@ export default function DashboardPage() {
   const volumeData = useMemo(() => buildVolumeData(), []);
   const maxVolume = Math.max(...volumeData.map((v) => v.count));
   const s = dashboardStats;
+  const { entries: activityEntries } = useActivityLog();
 
   const [showAllStats, setShowAllStats] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [now, setNow] = useState<Date | null>(null);
   const { user } = useUser();
+
+  // Use activity log entries for the feed (most recent 10)
+  const feedItems = useMemo(() => activityEntries.slice(0, 10), [activityEntries]);
 
   // Hydrate time on client only (avoids SSR/client mismatch)
   useEffect(() => {
@@ -479,21 +505,32 @@ export default function DashboardPage() {
       {/*  Activity Feed + Quick Stats                                       */}
       {/* ------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity — 2/3 */}
+        {/* Recent Activity — 2/3 — now powered by Activity Log */}
         <Card className="lg:col-span-2" padding="none">
           <CardHeader className="px-6 pt-5 pb-0">
-            <CardTitle>Recent Activity</CardTitle>
-            <span className="text-xs text-surface-500">Last 24 hours</span>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <CardTitle>Recent Activity</CardTitle>
+                <span className="text-xs text-surface-500">Last 24 hours</span>
+              </div>
+              <Link
+                href="/dashboard/activity-log"
+                className="text-xs text-primary-600 hover:text-primary-500 font-medium transition-colors flex items-center gap-1"
+              >
+                <Activity className="h-3 w-3" />
+                View All
+              </Link>
+            </div>
           </CardHeader>
           <div className="px-6 pb-5 pt-3">
             <div className="space-y-0.5">
-              {recentActivity.map((item) => {
-                const cfg = activityIconMap[item.type] || activityIconMap.notification;
+              {feedItems.map((entry) => {
+                const cfg = categoryIconMap[entry.category] || activityIconMap.notification;
                 const Icon = cfg.icon;
                 return (
                   <div
-                    key={item.id}
-                    className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-surface-800/50 transition-colors"
+                    key={entry.id}
+                    className="group flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-surface-800/50 transition-colors"
                   >
                     <div
                       className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cfg.color}`}
@@ -502,16 +539,29 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-surface-200 leading-snug">
-                        {item.description}
+                        {entry.description}
                       </p>
+                      {/* User attribution — who performed this action */}
+                      <span className="inline-flex items-center gap-1 mt-0.5 text-[11px] text-surface-500">
+                        <User className="h-3 w-3" />
+                        <span className="font-medium text-surface-400">{entry.userName}</span>
+                        <span className="text-surface-600">·</span>
+                        <span className="capitalize text-surface-500">{entry.userRole}</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 text-xs text-surface-500">
                       <Clock className="h-3 w-3" />
-                      {timeAgo(item.time)}
+                      {timeAgo(entry.timestamp)}
                     </div>
                   </div>
                 );
               })}
+              {feedItems.length === 0 && (
+                <div className="text-center py-8 text-surface-500">
+                  <Activity className="h-8 w-8 mx-auto mb-2 text-surface-600" />
+                  <p className="text-sm">No activity yet</p>
+                </div>
+              )}
             </div>
           </div>
         </Card>
