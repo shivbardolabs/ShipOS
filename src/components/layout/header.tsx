@@ -55,6 +55,32 @@ function useBreadcrumbs() {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Inline role pill — uses inline styles for guaranteed rendering            */
+/* -------------------------------------------------------------------------- */
+function HeaderRolePill({ role }: { role: UserRole }) {
+  const cfg = roleConfig[role];
+  const RoleIcon = cfg.icon;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full"
+      style={{
+        padding: '4px 10px',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color: cfg.stripFrom,
+        background: `${cfg.stripFrom}15`,
+        border: `1.5px solid ${cfg.stripFrom}35`,
+      }}
+    >
+      <RoleIcon style={{ height: 14, width: 14 }} />
+      {cfg.label}
+    </span>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Header                                                                    */
 /* -------------------------------------------------------------------------- */
 export function Header() {
@@ -85,12 +111,15 @@ export function Header() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleGlobalKeyDown]);
 
+  const role = localUser?.role as UserRole | undefined;
+  const roleCfg = role ? roleConfig[role] : null;
+
   return (
     <>
       {/* Role color strip */}
-      {localUser?.role && (
+      {role && (
         <div className="sticky top-0" style={{ zIndex: 21 }}>
-          <RoleStrip role={localUser.role as UserRole} />
+          <RoleStrip role={role} />
         </div>
       )}
 
@@ -149,28 +178,7 @@ export function Header() {
           <NotificationPanel />
 
           {/* Role badge — persistent indicator next to user */}
-          {localUser?.role && (() => {
-            const cfg = roleConfig[localUser.role as UserRole];
-            const RoleIcon = cfg.icon;
-            return (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full"
-                style={{
-                  padding: '4px 10px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase' as const,
-                  color: cfg.stripFrom,
-                  background: `${cfg.stripFrom}15`,
-                  border: `1.5px solid ${cfg.stripFrom}35`,
-                }}
-              >
-                <RoleIcon style={{ height: 14, width: 14 }} />
-                {cfg.label}
-              </span>
-            );
-          })()}
+          {role && <HeaderRolePill role={role} />}
 
           {/* User avatar + dropdown */}
           {isLoading ? (
@@ -184,31 +192,29 @@ export function Header() {
                     <img
                       src={user.picture}
                       alt={displayName}
-                      className={cn(
-                        'h-9 w-9 rounded-full object-cover cursor-pointer hover:ring-2 transition-all',
-                        localUser?.role
-                          ? roleConfig[localUser.role as UserRole].ring
-                          : 'hover:ring-primary-500/30'
-                      )}
+                      className="h-9 w-9 rounded-full object-cover cursor-pointer hover:ring-2 transition-all"
+                      style={roleCfg ? { boxShadow: `0 0 0 2px ${roleCfg.stripFrom}60` } : undefined}
                     />
                   ) : (
-                    <div className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 transition-all',
-                      localUser?.role
-                        ? roleConfig[localUser.role as UserRole].ring
-                        : 'hover:ring-primary-500/30'
-                    )}>
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white cursor-pointer hover:ring-2 transition-all"
+                      style={{
+                        background: roleCfg
+                          ? `linear-gradient(135deg, ${roleCfg.stripFrom}, ${roleCfg.stripTo})`
+                          : 'linear-gradient(135deg, #6366f1, #818cf8)',
+                      }}
+                    >
                       {initials}
                     </div>
                   )}
                 </div>
               }
               header={
-                localUser?.role ? (
+                role ? (
                   <div className="px-3 py-2.5 border-b border-surface-700">
                     <p className="text-sm font-medium text-surface-200 truncate">{displayName}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon />
+                      <RoleBadge role={role} size="xs" showIcon />
                       <span className="text-[11px] text-surface-500 truncate">{user?.email}</span>
                     </div>
                   </div>

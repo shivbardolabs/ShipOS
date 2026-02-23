@@ -29,7 +29,7 @@ import {
   LogOut,
   Award,
 } from 'lucide-react';
-import { RoleBadge, RoleDot, roleConfig, type UserRole } from '@/components/ui/role-badge';
+import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
 /* -------------------------------------------------------------------------- */
 /*  Navigation config                                                         */
@@ -84,6 +84,33 @@ const navSections: NavSection[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
+/*  Role Banner — full-width colored bar showing current role                 */
+/* -------------------------------------------------------------------------- */
+function RoleBanner({ role }: { role: UserRole }) {
+  const cfg = roleConfig[role];
+  const RoleIcon = cfg.icon;
+  return (
+    <div
+      className="flex items-center justify-center gap-2 py-1.5"
+      style={{ background: `linear-gradient(90deg, ${cfg.stripFrom}, ${cfg.stripTo})` }}
+    >
+      <RoleIcon style={{ height: 14, width: 14, color: '#fff' }} />
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#fff',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {cfg.label}
+      </span>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Sidebar                                                                   */
 /* -------------------------------------------------------------------------- */
 export function Sidebar() {
@@ -105,6 +132,10 @@ export function Sidebar() {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  // Role-dependent styles (computed once, avoids inline lookups)
+  const role = localUser?.role as UserRole | undefined;
+  const roleCfg = role ? roleConfig[role] : null;
 
   const navContent = (
     <>
@@ -182,21 +213,8 @@ export function Sidebar() {
         ) : user ? (
           <>
             {/* ── Role banner ── */}
-            {localUser?.role && (() => {
-              const cfg = roleConfig[localUser.role as UserRole];
-              const RoleIcon = cfg.icon;
-              return (
-                <div
-                  className="flex items-center justify-center gap-2 py-1.5"
-                  style={{ background: `linear-gradient(90deg, ${cfg.stripFrom}, ${cfg.stripTo})` }}
-                >
-                  <RoleIcon style={{ height: 14, width: 14, color: '#fff' }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
-                    {cfg.label}
-                  </span>
-                </div>
-              );
-            })()}
+            {role && <RoleBanner role={role} />}
+
             <div className="px-4 py-3">
               <div className="flex items-center gap-3">
                 {/* Avatar with role-colored ring */}
@@ -207,19 +225,17 @@ export function Sidebar() {
                       src={user.picture}
                       alt={displayName}
                       className="h-9 w-9 rounded-full object-cover"
-                      style={localUser?.role ? {
-                        boxShadow: `0 0 0 2.5px ${roleConfig[localUser.role as UserRole].stripFrom}`,
-                      } : undefined}
+                      style={roleCfg ? { boxShadow: `0 0 0 2.5px ${roleCfg.stripFrom}` } : undefined}
                     />
                   ) : (
                     <div
                       className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
                       style={{
-                        background: localUser?.role
-                          ? `linear-gradient(135deg, ${roleConfig[localUser.role as UserRole].stripFrom}, ${roleConfig[localUser.role as UserRole].stripTo})`
+                        background: roleCfg
+                          ? `linear-gradient(135deg, ${roleCfg.stripFrom}, ${roleCfg.stripTo})`
                           : 'linear-gradient(135deg, #6366f1, #818cf8)',
-                        boxShadow: localUser?.role
-                          ? `0 0 0 2.5px ${roleConfig[localUser.role as UserRole].stripFrom}40`
+                        boxShadow: roleCfg
+                          ? `0 0 0 2.5px ${roleCfg.stripFrom}40`
                           : undefined,
                       }}
                     >
