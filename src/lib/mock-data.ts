@@ -19,6 +19,10 @@ import type {
   LoyaltyTransaction,
   LoyaltyReward,
   LoyaltyDashboardStats,
+  CustomerFee,
+  CustomerFeeSummary,
+  FeeCategory,
+  FeeStatus,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -651,3 +655,166 @@ export const loyaltyDashboardStats: LoyaltyDashboardStats = {
       tier: a.currentTier!.name,
     })),
 };
+
+// ---------------------------------------------------------------------------
+// Customer Fee Tracking
+// ---------------------------------------------------------------------------
+
+const feeCategories: FeeCategory[] = ['storage', 'overage', 'receiving', 'forwarding', 'late_pickup', 'other'];
+
+// Build realistic fee entries for active customers
+const feeDescriptions: Record<FeeCategory, string[]> = {
+  storage: [
+    'Package storage beyond 5-day free period',
+    'Oversized package extended storage',
+    'Long-term package hold (customer request)',
+  ],
+  overage: [
+    'Monthly package allowance exceeded (10/mo plan)',
+    'Mail scan allowance exceeded',
+    'Additional mailbox slot usage',
+  ],
+  receiving: [
+    'Oversized package receiving surcharge',
+    'Hazardous material handling fee',
+    'Multi-package delivery receiving',
+  ],
+  forwarding: [
+    'Mail forwarding — Priority Mail',
+    'Package consolidation & forward',
+    'International mail forwarding',
+  ],
+  late_pickup: [
+    'Package not picked up within 14-day window',
+    'Return-to-sender processing fee',
+  ],
+  other: [
+    'Notarization service fee',
+    'Copy/print service',
+    'Key replacement fee',
+  ],
+};
+
+const feeAmounts: Record<FeeCategory, { min: number; max: number }> = {
+  storage:     { min: 1.50, max: 25.00 },
+  overage:     { min: 2.00, max: 15.00 },
+  receiving:   { min: 3.00, max: 10.00 },
+  forwarding:  { min: 5.00, max: 35.00 },
+  late_pickup: { min: 5.00, max: 20.00 },
+  other:       { min: 2.00, max: 25.00 },
+};
+
+// Generate fees for each active customer for current month (Feb 2026)
+let feeId = 0;
+function nextFeeId(): string {
+  feeId += 1;
+  return `fee_${String(feeId).padStart(4, '0')}`;
+}
+
+function roundTo(n: number, d: number): number {
+  return Math.round(n * 10 ** d) / 10 ** d;
+}
+
+function randomBetween(min: number, max: number): number {
+  return roundTo(min + Math.random() * (max - min), 2);
+}
+
+// Deterministic-ish fee generation using customer index as seed
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 49297;
+  return x - Math.floor(x);
+}
+
+export const customerFees: CustomerFee[] = [];
+
+const activeCustomerIds = customers
+  .filter((c) => c.status === 'active')
+  .map((c) => c.id);
+
+activeCustomerIds.forEach((custId, custIdx) => {
+  const seed = custIdx + 1;
+  const numFees = Math.floor(seededRandom(seed) * 6) + 1; // 1–6 fees per customer
+
+  for (let f = 0; f < numFees; f++) {
+    const catSeed = seededRandom(seed * 100 + f);
+    const category = feeCategories[Math.floor(catSeed * feeCategories.length)];
+    const descs = feeDescriptions[category];
+    const description = descs[Math.floor(seededRandom(seed * 200 + f) * descs.length)];
+    const range = feeAmounts[category];
+
+    const statusSeed = seededRandom(seed * 300 + f);
+    let status: FeeStatus;
+    if (statusSeed < 0.35) status = 'accruing';
+    else if (statusSeed < 0.55) status = 'finalized';
+    else if (statusSeed < 0.7) status = 'invoiced';
+    else if (statusSeed < 0.9) status = 'paid';
+    else status = 'waived';
+
+    const isDaily = category === 'storage' || category === 'late_pickup';
+    const daysAccrued = isDaily ? Math.floor(seededRandom(seed * 400 + f) * 20) + 1 : undefined;
+    const dailyRate = isDaily ? roundTo(range.min + seededRandom(seed * 500 + f) * (range.max - range.min) * 0.15, 2) : undefined;
+    const amount = isDaily && dailyRate && daysAccrued
+      ? roundTo(dailyRate * daysAccrued, 2)
+      : roundTo(range.min + seededRandom(seed * 600 + f) * (range.max - range.min), 2);
+
+    // Link some fees to existing packages
+    const custPackages = packages.filter((p) => p.customerId === custId);
+    const linkedPkg = (category === 'storage' || category === 'receiving' || category === 'late_pickup') && custPackages.length > 0
+      ? custPackages[Math.floor(seededRandom(seed * 700 + f) * custPackages.length)]
+      : undefined;
+
+    const dayOfMonth = Math.floor(seededRandom(seed * 800 + f) * 21) + 1; // Feb 1–21
+    const dateStr = `2026-02-${String(dayOfMonth).padStart(2, '0')}T${String(8 + Math.floor(seededRandom(seed * 900 + f) * 10)).padStart(2, '0')}:${String(Math.floor(seededRandom(seed * 1000 + f) * 60)).padStart(2, '0')}:00.000Z`;
+
+    customerFees.push({
+      id: nextFeeId(),
+      customerId: custId,
+      category,
+      description,
+      amount,
+      status,
+      linkedEntityId: linkedPkg?.id,
+      linkedEntityType: linkedPkg ? 'package' : undefined,
+      linkedEntityLabel: linkedPkg ? `${linkedPkg.carrier.toUpperCase()} — ${linkedPkg.trackingNumber?.slice(-8) ?? 'N/A'}` : undefined,
+      accrualType: isDaily ? 'daily' : category === 'overage' ? 'per_item' : 'one_time',
+      dailyRate,
+      daysAccrued,
+      accrualStartDate: dateStr,
+      accrualEndDate: status !== 'accruing' ? daysFromNow(0) : undefined,
+      createdAt: dateStr,
+    });
+  }
+});
+
+// Build monthly summaries per customer
+export function getCustomerFeeSummary(customerId: string, month = '2026-02'): CustomerFeeSummary {
+  const fees = customerFees.filter(
+    (f) => f.customerId === customerId && f.createdAt.startsWith(month)
+  );
+  const sumByCategory = (cat: FeeCategory) =>
+    fees.filter((f) => f.category === cat && f.status !== 'waived' && f.status !== 'paid').reduce((s, f) => s + f.amount, 0);
+
+  const paidAmount = fees.filter((f) => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
+  const waivedAmount = fees.filter((f) => f.status === 'waived').reduce((s, f) => s + f.amount, 0);
+
+  const storageFees = sumByCategory('storage');
+  const overageFees = sumByCategory('overage');
+  const receivingFees = sumByCategory('receiving');
+  const forwardingFees = sumByCategory('forwarding');
+  const otherFees = sumByCategory('late_pickup') + sumByCategory('other');
+
+  return {
+    customerId,
+    month,
+    totalOwed: roundTo(storageFees + overageFees + receivingFees + forwardingFees + otherFees, 2),
+    storageFees: roundTo(storageFees, 2),
+    overageFees: roundTo(overageFees, 2),
+    receivingFees: roundTo(receivingFees, 2),
+    forwardingFees: roundTo(forwardingFees, 2),
+    otherFees: roundTo(otherFees, 2),
+    paidAmount: roundTo(paidAmount, 2),
+    waivedAmount: roundTo(waivedAmount, 2),
+    feeCount: fees.length,
+    fees: fees.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  };
+}
