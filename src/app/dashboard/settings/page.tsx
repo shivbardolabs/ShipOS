@@ -11,6 +11,8 @@ import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { carrierRates } from '@/lib/mock-data';
+import { useActivityLog } from '@/components/activity-log-provider';
+import { LastUpdatedBy } from '@/components/ui/performed-by';
 import { formatCurrency } from '@/lib/utils';
 import {
   Building2,
@@ -106,6 +108,8 @@ const mockPrinters = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const { theme, setTheme } = useTheme();
+  const { lastActionByVerb } = useActivityLog();
+  const lastSettingsUpdate = lastActionByVerb('settings.update');
   const { tenant, localUser, refresh: refreshTenant } = useTenant();
 
   // ─── Live tenant state (synced from API) ────────────────────────────────
@@ -345,7 +349,8 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Configure your store, pricing, and preferences" />
+      <PageHeader title="Settings"
+        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store, pricing, and preferences" />
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left sidebar navigation */}

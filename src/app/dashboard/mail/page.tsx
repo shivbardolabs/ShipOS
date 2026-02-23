@@ -12,6 +12,8 @@ import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { mailPieces, customers } from '@/lib/mock-data';
+import { useActivityLog } from '@/components/activity-log-provider';
+import { PerformedBy } from '@/components/ui/performed-by';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import type { MailPiece } from '@/lib/types';
 import {
@@ -163,6 +165,10 @@ function useColumns(onView: (mail: MailPiece) => void) {
 export default function MailPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [scanModalOpen, setScanModalOpen] = useState(false);
+  const { lastActionByVerb } = useActivityLog();
+  const lastMailAction = lastActionByVerb('mail.scan');
+  
+
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
   const stats = useMailStats();
 
@@ -187,6 +193,7 @@ export default function MailPage() {
       {/* Header */}
       <PageHeader
         title="Mail Management"
+        badge={lastMailAction ? <PerformedBy entry={lastMailAction} showAction className="ml-2" /> : undefined}
         description="Process, scan, and manage incoming mail for all customers"
         actions={
           <Button leftIcon={<ScanLine className="h-4 w-4" />} onClick={() => setScanModalOpen(true)}>

@@ -23,6 +23,8 @@ import {
   Snowflake } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
+import { PerformedBy } from '@/components/ui/performed-by';
+import { useActivityLog } from '@/components/activity-log-provider';
 import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
@@ -151,8 +153,29 @@ export default function CheckInPage() {
     else setSenderName('');
   };
 
-  // Handle submit
+  // Handle submit — log the action
+  const { log: logActivity, lastActionByVerb } = useActivityLog();
+  const lastCheckIn = lastActionByVerb('package.check_in');
+
   const handleSubmit = () => {
+    const carrierLabel = selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown';
+    const custLabel = selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})` : '';
+    logActivity({
+      action: 'package.check_in',
+      entityType: 'package',
+      entityId: `pkg_${Date.now()}`,
+      entityLabel: trackingNumber || `${carrierLabel} package`,
+      description: `Checked in ${carrierLabel} package for ${custLabel}`,
+      metadata: {
+        carrier: selectedCarrier,
+        trackingNumber,
+        packageType,
+        customerId: selectedCustomer?.id,
+        customerName: custLabel,
+        hazardous,
+        perishable,
+      },
+    });
     setShowSuccess(true);
   };
 
@@ -189,6 +212,7 @@ export default function CheckInPage() {
       <PageHeader
         title="Check In Package"
         description="Process a new incoming package"
+        badge={lastCheckIn ? <PerformedBy entry={lastCheckIn} showAction className="ml-2" /> : undefined}
         actions={
           <Button
             variant="ghost"

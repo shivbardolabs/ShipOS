@@ -37,6 +37,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { PerformedBy } from '@/components/ui/performed-by';
+import { useActivityLog } from '@/components/activity-log-provider';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { customers, packages } from '@/lib/mock-data';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
@@ -360,8 +362,27 @@ export default function CheckOutPage() {
     return { ...stats, ledger, runningBalance };
   }, [foundCustomer]);
 
+  /* ---- Activity log ---- */
+  const { log: logActivity, lastActionByVerb } = useActivityLog();
+  const lastRelease = lastActionByVerb('package.release');
+
   /* ---- Release handler ---- */
   const handleRelease = () => {
+    if (foundCustomer && selectedIds.size > 0) {
+      logActivity({
+        action: 'package.release',
+        entityType: 'package',
+        entityId: Array.from(selectedIds).join(','),
+        entityLabel: `${selectedIds.size} package${selectedIds.size > 1 ? 's' : ''}`,
+        description: `Released ${selectedIds.size} package${selectedIds.size > 1 ? 's' : ''} to ${foundCustomer.firstName} ${foundCustomer.lastName} (${foundCustomer.pmbNumber})`,
+        metadata: {
+          packageIds: Array.from(selectedIds),
+          customerId: foundCustomer.id,
+          customerName: `${foundCustomer.firstName} ${foundCustomer.lastName}`,
+          pmbNumber: foundCustomer.pmbNumber,
+        },
+      });
+    }
     setShowSuccess(true);
   };
 
@@ -456,6 +477,7 @@ export default function CheckOutPage() {
       <PageHeader
         title="Package Check-Out"
         description="Release packages to customers"
+        badge={lastRelease ? <PerformedBy entry={lastRelease} showAction className="ml-2" /> : undefined}
         actions={
           <Button
             variant="ghost"

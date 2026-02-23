@@ -11,6 +11,8 @@ import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { shipments, customers } from '@/lib/mock-data';
+import { useActivityLog } from '@/components/activity-log-provider';
+import { PerformedBy } from '@/components/ui/performed-by';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Shipment } from '@/lib/types';
 import {
@@ -53,6 +55,10 @@ const pendingCount = shipments.filter(
 export default function ShippingPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [showNewShipment, setShowNewShipment] = useState(false);
+  const { lastActionByVerb } = useActivityLog();
+  const lastShipment = lastActionByVerb('shipment.create');
+  
+
   const [actionRow, setActionRow] = useState<string | null>(null);
 
   // Form state for new shipment
@@ -259,6 +265,7 @@ export default function ShippingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Shipping Center"
+        badge={lastShipment ? <PerformedBy entry={lastShipment} showAction className="ml-2" /> : undefined}
         description="Create and manage outbound shipments"
         actions={
           <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setShowNewShipment(true)}>

@@ -28,6 +28,7 @@ import {
   Scale,
   LogOut,
   Award,
+  Activity,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -78,6 +79,7 @@ const navSections: NavSection[] = [
       { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText },
+      { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },

@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
+import { useActivityLog } from '@/components/activity-log-provider';
+import { ActivityTimeline, LastUpdatedBy } from '@/components/ui/performed-by';
 import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
 import {
@@ -166,6 +168,13 @@ export default function CustomerDetailPage() {
     () => notifications.filter((n) => n.customerId === customer?.id) as (Notification & Record<string, unknown>)[],
     [customer?.id]
   );
+  // Use activity log for customer activity
+  const { entries: allActivity, lastActionFor } = useActivityLog();
+  const customerActivityLog = useMemo(
+    () => allActivity.filter((e) => e.entityType === 'customer' && e.entityId === customer?.id).slice(0, 10),
+    [allActivity, customer?.id]
+  );
+  const lastCustomerUpdate = lastActionFor('customer', customer?.id ?? '');
   const customerActivity = useMemo(
     () => auditLog.slice(0, 10) as (AuditLogEntry & Record<string, unknown>)[],
     []
@@ -259,6 +268,7 @@ export default function CustomerDetailPage() {
               <p className="text-sm text-surface-400 mt-1">{customer.businessName}</p>
             )}
             <p className="text-sm text-surface-500 mt-1">{customer.pmbNumber}</p>
+            {lastCustomerUpdate && <LastUpdatedBy entry={lastCustomerUpdate} className="mt-2" />}
           </div>
 
           {/* Actions */}
@@ -330,33 +340,37 @@ export default function CustomerDetailPage() {
             />
           </TabPanel>
 
-          {/* Activity tab */}
+          {/* Activity tab — powered by Activity Log */}
           <TabPanel active={activeTab === 'activity'}>
-            <div className="space-y-3">
-              {customerActivity.map((entry, i) => (
-                <div
-                  key={entry.id}
-                  className={cn(
-                    'flex items-start gap-3 py-3',
-                    i < customerActivity.length - 1 && 'border-b border-surface-800'
-                  )}
-                >
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
-                    {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
-                     entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
-                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
-                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
-                     <FileText className="h-3.5 w-3.5 text-surface-400" />}
+            {customerActivityLog.length > 0 ? (
+              <ActivityTimeline entries={customerActivityLog} maxItems={10} />
+            ) : (
+              <div className="space-y-3">
+                {customerActivity.map((entry, i) => (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      'flex items-start gap-3 py-3',
+                      i < customerActivity.length - 1 && 'border-b border-surface-800'
+                    )}
+                  >
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
+                      {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
+                       entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
+                       entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
+                       entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
+                       <FileText className="h-3.5 w-3.5 text-surface-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-surface-200">{entry.details}</p>
+                      <p className="text-xs text-surface-500 mt-0.5">
+                        {entry.user?.name} · {formatDateTime(entry.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-surface-200">{entry.details}</p>
-                    <p className="text-xs text-surface-500 mt-0.5">
-                      {entry.user?.name} · {formatDateTime(entry.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabPanel>
 
           {/* Loyalty tab */}
