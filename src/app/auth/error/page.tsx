@@ -64,6 +64,7 @@ function AuthErrorContent() {
           )}
 
           <div className="flex flex-col gap-3">
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Auth0 API route requires full page navigation */}
             <a
               href="/api/auth/login"
               className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -71,6 +72,7 @@ function AuthErrorContent() {
               <RefreshCw className="h-4 w-4" />
               Try Again
             </a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Home redirect requires full navigation */}
             <a
               href="/"
               className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium text-surface-400 hover:text-surface-200 transition-colors"
