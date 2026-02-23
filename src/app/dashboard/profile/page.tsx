@@ -4,10 +4,13 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 
 import { useUser } from '@auth0/nextjs-auth0/client';
+import { useTenant } from '@/components/tenant-provider';
+import { RoleBadge, RoleCard, type UserRole } from '@/components/ui/role-badge';
 import { User, Mail, Calendar, Shield, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, isLoading } = useUser();
+  const { localUser } = useTenant();
 
   if (isLoading) {
     return (
@@ -63,9 +66,14 @@ export default function ProfilePage() {
             </div>
           )}
           <div>
-            <h2 className="text-xl font-semibold text-surface-100">
-              {displayName}
-            </h2>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-semibold text-surface-100">
+                {displayName}
+              </h2>
+              {localUser?.role && (
+                <RoleBadge role={localUser.role as UserRole} size="sm" showIcon />
+              )}
+            </div>
             <p className="text-sm text-surface-500">{user.email}</p>
             {user.email_verified && (
               <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">
@@ -146,6 +154,11 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Role & Permissions card */}
+      {localUser?.role && (
+        <RoleCard role={localUser.role as UserRole} />
+      )}
 
       {/* Sign out section */}
       <div className="glass-card p-6">

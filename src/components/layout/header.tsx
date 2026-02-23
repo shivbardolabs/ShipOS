@@ -18,6 +18,8 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
+import { useTenant } from '@/components/tenant-provider';
+import { RoleBadge, RoleStrip, roleConfig, type UserRole } from '@/components/ui/role-badge';
 
 /* -------------------------------------------------------------------------- */
 /*  Breadcrumb builder                                                        */
@@ -59,6 +61,7 @@ export function Header() {
   const crumbs = useBreadcrumbs();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { user, isLoading } = useUser();
+  const { localUser } = useTenant();
 
   // Derive initials from Auth0 user
   const displayName = user?.name || user?.email?.split('@')[0] || 'User';
@@ -84,8 +87,15 @@ export function Header() {
 
   return (
     <>
+      {/* Role color strip */}
+      {localUser?.role && (
+        <div className="sticky top-0" style={{ zIndex: 21 }}>
+          <RoleStrip role={localUser.role as UserRole} />
+        </div>
+      )}
+
       <header
-        className="sticky top-0 z-20 flex h-16 items-center justify-between px-6 layout-header"
+        className="sticky top-[3px] z-20 flex h-16 items-center justify-between px-6 layout-header"
       >
         {/* Left – Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-sm">
@@ -138,24 +148,52 @@ export function Header() {
           {/* Notification bell + dropdown panel */}
           <NotificationPanel />
 
+          {/* Role badge */}
+          {localUser?.role && (
+            <RoleBadge role={localUser.role as UserRole} size="sm" showIcon />
+          )}
+
           {/* User avatar + dropdown */}
           {isLoading ? (
             <div className="h-9 w-9 rounded-full bg-surface-800 animate-pulse" />
           ) : (
             <DropdownMenu
               trigger={
-                user?.picture ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.picture}
-                    alt={displayName}
-                    className="h-9 w-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
-                  />
-                ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all">
-                    {initials}
+                <div className="relative">
+                  {user?.picture ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.picture}
+                      alt={displayName}
+                      className={cn(
+                        'h-9 w-9 rounded-full object-cover cursor-pointer hover:ring-2 transition-all',
+                        localUser?.role
+                          ? roleConfig[localUser.role as UserRole].ring
+                          : 'hover:ring-primary-500/30'
+                      )}
+                    />
+                  ) : (
+                    <div className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white cursor-pointer hover:ring-2 transition-all',
+                      localUser?.role
+                        ? roleConfig[localUser.role as UserRole].ring
+                        : 'hover:ring-primary-500/30'
+                    )}>
+                      {initials}
+                    </div>
+                  )}
+                </div>
+              }
+              header={
+                localUser?.role ? (
+                  <div className="px-3 py-2.5 border-b border-surface-700">
+                    <p className="text-sm font-medium text-surface-200 truncate">{displayName}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon />
+                      <span className="text-[11px] text-surface-500 truncate">{user?.email}</span>
+                    </div>
                   </div>
-                )
+                ) : undefined
               }
               items={[
                 {
