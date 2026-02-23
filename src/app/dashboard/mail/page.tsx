@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,10 @@ import {
   ExternalLink,
   FileImage,
   User,
+  ClipboardCopy,
+  CheckCircle2,
+  Plus,
+  Hash,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -59,8 +63,18 @@ const mailTypeIconClass: Record<string, { icon: typeof Mail; color: string }> = 
 
 type MailRow = MailPiece & Record<string, unknown>;
 
+/** Generate a unique mail code (format: ML-XXXXXX) */
+function generateUniqueMailCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `ML-${code}`;
+}
+
 /* -------------------------------------------------------------------------- */
-/*  countByField – generic bucket counter                                     */
+/*  countByField                                                              */
 /* -------------------------------------------------------------------------- */
 
 function countByField<T>(
@@ -95,7 +109,7 @@ function useMailStats() {
     const forwardedItems = mailPieces.filter((m) => m.status === 'forwarded');
     const heldItems = mailPieces.filter((m) => m.status === 'held');
 
-    /* ---- Received Today details ---- */
+    /* ---- Received Today ---- */
     const rtByType = countByField(receivedTodayItems, (m) => m.type);
     const rtTotal = receivedTodayItems.length || 1;
     const receivedTodayDetails: DetailSection[] = [
@@ -107,7 +121,16 @@ function useMailStats() {
             label: type.charAt(0).toUpperCase() + type.slice(1),
             value: count,
             bar: Math.round((count / rtTotal) * 100),
-            barColor: type === 'letter' ? 'bg-blue-500' : type === 'legal' ? 'bg-red-400' : type === 'magazine' ? 'bg-indigo-400' : type === 'catalog' ? 'bg-amber-400' : 'bg-surface-500',
+            barColor:
+              type === 'letter'
+                ? 'bg-blue-500'
+                : type === 'legal'
+                  ? 'bg-red-400'
+                  : type === 'magazine'
+                    ? 'bg-indigo-400'
+                    : type === 'catalog'
+                      ? 'bg-amber-400'
+                      : 'bg-surface-500',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
           })),
@@ -132,7 +155,7 @@ function useMailStats() {
       },
     ];
 
-    /* ---- Pending Action details ---- */
+    /* ---- Pending Action ---- */
     const pendByStatus = countByField(pendingItems, (m) => m.status);
     const pendByType = countByField(pendingItems, (m) => m.type);
     const pendTotal = pendingItems.length || 1;
@@ -147,7 +170,8 @@ function useMailStats() {
             bar: Math.round((count / pendTotal) * 100),
             barColor: status === 'received' ? 'bg-yellow-400' : 'bg-cyan-400',
             icon: status === 'received' ? Inbox : ScanLine,
-            iconColor: status === 'received' ? 'text-yellow-400' : 'text-cyan-400',
+            iconColor:
+              status === 'received' ? 'text-yellow-400' : 'text-cyan-400',
           })),
       },
       {
@@ -158,7 +182,16 @@ function useMailStats() {
             label: type.charAt(0).toUpperCase() + type.slice(1),
             value: count,
             bar: Math.round((count / pendTotal) * 100),
-            barColor: type === 'letter' ? 'bg-blue-400' : type === 'legal' ? 'bg-red-400' : type === 'magazine' ? 'bg-indigo-400' : type === 'catalog' ? 'bg-amber-400' : 'bg-surface-400',
+            barColor:
+              type === 'letter'
+                ? 'bg-blue-400'
+                : type === 'legal'
+                  ? 'bg-red-400'
+                  : type === 'magazine'
+                    ? 'bg-indigo-400'
+                    : type === 'catalog'
+                      ? 'bg-amber-400'
+                      : 'bg-surface-400',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
           })),
@@ -183,7 +216,7 @@ function useMailStats() {
       },
     ];
 
-    /* ---- Forwarded details ---- */
+    /* ---- Forwarded ---- */
     const fwdByType = countByField(forwardedItems, (m) => m.type);
     const fwdTotal = forwardedItems.length || 1;
     const forwardedDetails: DetailSection[] = [
@@ -220,13 +253,13 @@ function useMailStats() {
       },
     ];
 
-    /* ---- Held details ---- */
+    /* ---- Held ---- */
     const heldByType = countByField(heldItems, (m) => m.type);
     const heldTotal = heldItems.length || 1;
-    // Compute hold duration buckets
     const heldDuration = { under24h: 0, d1to3: 0, d4to7: 0, over7: 0 };
     for (const m of heldItems) {
-      const hrs = (now.getTime() - new Date(m.receivedAt).getTime()) / 3600000;
+      const hrs =
+        (now.getTime() - new Date(m.receivedAt).getTime()) / 3600000;
       if (hrs < 24) heldDuration.under24h++;
       else if (hrs < 72) heldDuration.d1to3++;
       else if (hrs < 168) heldDuration.d4to7++;
@@ -249,10 +282,30 @@ function useMailStats() {
       {
         title: 'Hold Duration',
         rows: [
-          { label: '< 24 hours', value: heldDuration.under24h, bar: Math.round((heldDuration.under24h / heldTotal) * 100), barColor: 'bg-emerald-400' },
-          { label: '1–3 days', value: heldDuration.d1to3, bar: Math.round((heldDuration.d1to3 / heldTotal) * 100), barColor: 'bg-yellow-400' },
-          { label: '4–7 days', value: heldDuration.d4to7, bar: Math.round((heldDuration.d4to7 / heldTotal) * 100), barColor: 'bg-orange-400' },
-          { label: '7+ days', value: heldDuration.over7, bar: Math.round((heldDuration.over7 / heldTotal) * 100), barColor: 'bg-red-400' },
+          {
+            label: '< 24 hours',
+            value: heldDuration.under24h,
+            bar: Math.round((heldDuration.under24h / heldTotal) * 100),
+            barColor: 'bg-emerald-400',
+          },
+          {
+            label: '1\u20133 days',
+            value: heldDuration.d1to3,
+            bar: Math.round((heldDuration.d1to3 / heldTotal) * 100),
+            barColor: 'bg-yellow-400',
+          },
+          {
+            label: '4\u20137 days',
+            value: heldDuration.d4to7,
+            bar: Math.round((heldDuration.d4to7 / heldTotal) * 100),
+            barColor: 'bg-orange-400',
+          },
+          {
+            label: '7+ days',
+            value: heldDuration.over7,
+            bar: Math.round((heldDuration.over7 / heldTotal) * 100),
+            barColor: 'bg-red-400',
+          },
         ].filter((r) => r.value > 0),
       },
       {
@@ -284,19 +337,18 @@ function useMailStats() {
       pendingDetails,
       forwardedDetails,
       heldDetails,
-      // Summaries
       receivedTodaySummary:
         receivedTodayItems.length > 0
-          ? `${receivedTodayItems.filter((m) => m.status === 'received').length} unscanned · ${receivedTodayItems.filter((m) => m.scanImage).length} already scanned`
+          ? `${receivedTodayItems.filter((m) => m.status === 'received').length} unscanned \u00b7 ${receivedTodayItems.filter((m) => m.scanImage).length} already scanned`
           : 'No mail received today yet',
-      pendingSummary: `${pendByStatus['received'] || 0} awaiting scan · ${pendByStatus['scanned'] || 0} scanned & awaiting next step`,
+      pendingSummary: `${pendByStatus['received'] || 0} awaiting scan \u00b7 ${pendByStatus['scanned'] || 0} scanned & awaiting next step`,
       forwardedSummary:
         forwardedItems.length > 0
           ? `${forwardedItems.length} piece${forwardedItems.length !== 1 ? 's' : ''} forwarded to customers`
           : 'No forwarded mail',
       heldSummary:
         heldItems.length > 0
-          ? `${heldItems.length} piece${heldItems.length !== 1 ? 's' : ''} on hold · Oldest: ${Math.round(Math.max(...heldItems.map((m) => (now.getTime() - new Date(m.receivedAt).getTime()) / 86400000)))} days`
+          ? `${heldItems.length} piece${heldItems.length !== 1 ? 's' : ''} on hold \u00b7 Oldest: ${Math.round(Math.max(...heldItems.map((m) => (now.getTime() - new Date(m.receivedAt).getTime()) / 86400000)))} days`
           : 'No mail on hold',
     };
   }, []);
@@ -309,6 +361,17 @@ function useMailStats() {
 function useColumns(onView: (mail: MailPiece) => void) {
   return useMemo<Column<MailRow>[]>(
     () => [
+      {
+        key: 'mailCode',
+        label: 'Code',
+        width: 'w-28',
+        sortable: true,
+        render: (row) => (
+          <span className="font-mono text-xs text-brand-400 font-semibold tracking-wide">
+            {row.mailCode || '\u2014'}
+          </span>
+        ),
+      },
       {
         key: 'type',
         label: 'Type',
@@ -336,7 +399,7 @@ function useColumns(onView: (mail: MailPiece) => void) {
               </span>
             </div>
           ) : (
-            <span className="text-surface-500">—</span>
+            <span className="text-surface-500">{'\u2014'}</span>
           );
         },
       },
@@ -344,7 +407,9 @@ function useColumns(onView: (mail: MailPiece) => void) {
         key: 'sender',
         label: 'Sender',
         sortable: true,
-        render: (row) => <span className="text-sm">{row.sender || '—'}</span>,
+        render: (row) => (
+          <span className="text-sm">{row.sender || '\u2014'}</span>
+        ),
       },
       {
         key: 'status',
@@ -383,7 +448,7 @@ function useColumns(onView: (mail: MailPiece) => void) {
               <FileImage className="h-4 w-4" />
             </a>
           ) : (
-            <span className="text-surface-600">—</span>
+            <span className="text-surface-600">{'\u2014'}</span>
           ),
       },
       {
@@ -442,9 +507,13 @@ function useColumns(onView: (mail: MailPiece) => void) {
 
 export default function MailPage() {
   const [activeTab, setActiveTab] = useState('all');
-  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [insertModalOpen, setInsertModalOpen] = useState(false);
+  const [insertStep, setInsertStep] = useState<'form' | 'success'>('form');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
   const { lastActionByVerb } = useActivityLog();
-  const lastMailAction = lastActionByVerb('mail.scan');
+  const lastMailAction =
+    lastActionByVerb('mail.insert') || lastActionByVerb('mail.scan');
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
   const stats = useMailStats();
@@ -485,6 +554,38 @@ export default function MailPage() {
     },
   ];
 
+  /* ------ Insert mail handlers ------ */
+
+  const handleOpenInsertModal = useCallback(() => {
+    setInsertStep('form');
+    setGeneratedCode('');
+    setCodeCopied(false);
+    setInsertModalOpen(true);
+  }, []);
+
+  const handleCloseInsertModal = useCallback(() => {
+    setInsertModalOpen(false);
+    setInsertStep('form');
+    setGeneratedCode('');
+    setCodeCopied(false);
+  }, []);
+
+  const handleConfirmInsert = useCallback(() => {
+    const code = generateUniqueMailCode();
+    setGeneratedCode(code);
+    setInsertStep('success');
+  }, []);
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  }, [generatedCode]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -498,10 +599,10 @@ export default function MailPage() {
         description="Process, scan, and manage incoming mail for all customers"
         actions={
           <Button
-            leftIcon={<ScanLine className="h-4 w-4" />}
-            onClick={() => setScanModalOpen(true)}
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleOpenInsertModal}
           >
-            Scan Mail
+            Insert Mail
           </Button>
         }
       />
@@ -551,7 +652,7 @@ export default function MailPage() {
         data={filtered}
         keyAccessor={(row) => row.id}
         searchable={true}
-        searchPlaceholder="Search mail by customer, sender..."
+        searchPlaceholder="Search mail by customer, sender, code..."
         pageSize={10}
         emptyMessage="No mail pieces found"
         onRowClick={(row) => setDetailModal(row)}
@@ -576,6 +677,21 @@ export default function MailPage() {
       >
         {detailModal && (
           <div className="space-y-4">
+            {/* Mail Code Banner */}
+            {detailModal.mailCode && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
+                  <Hash className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-surface-500">Mail Code</p>
+                  <p className="text-lg font-mono font-bold text-brand-400 tracking-wider">
+                    {detailModal.mailCode}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-surface-500">Type</p>
@@ -589,7 +705,9 @@ export default function MailPage() {
               <div>
                 <p className="text-xs text-surface-500">Status</p>
                 <div className="mt-1">
-                  <Badge status={detailModal.status}>{detailModal.status}</Badge>
+                  <Badge status={detailModal.status}>
+                    {detailModal.status}
+                  </Badge>
                 </div>
               </div>
               <div>
@@ -597,13 +715,13 @@ export default function MailPage() {
                 <p className="text-sm text-surface-200 mt-1">
                   {detailModal.customer
                     ? `${detailModal.customer.firstName} ${detailModal.customer.lastName} (${detailModal.customer.pmbNumber})`
-                    : '—'}
+                    : '\u2014'}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-surface-500">Sender</p>
                 <p className="text-sm text-surface-200 mt-1">
-                  {detailModal.sender || '—'}
+                  {detailModal.sender || '\u2014'}
                 </p>
               </div>
               <div>
@@ -621,6 +739,7 @@ export default function MailPage() {
                 </div>
               )}
             </div>
+
             {/* Scan Preview */}
             {detailModal.scanImage && (
               <a
@@ -661,62 +780,132 @@ export default function MailPage() {
             {detailModal.notes && (
               <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
                 <p className="text-xs text-surface-500 mb-1">Notes</p>
-                <p className="text-sm text-surface-300">{detailModal.notes}</p>
+                <p className="text-sm text-surface-300">
+                  {detailModal.notes}
+                </p>
               </div>
             )}
           </div>
         )}
       </Modal>
 
-      {/* Scan New Mail Modal */}
+      {/* Insert Mail Modal */}
       <Modal
-        open={scanModalOpen}
-        onClose={() => setScanModalOpen(false)}
-        title="Scan New Mail"
-        description="Log a new mail piece for a customer"
+        open={insertModalOpen}
+        onClose={handleCloseInsertModal}
+        title={
+          insertStep === 'form'
+            ? 'Insert Mail'
+            : 'Mail Inserted Successfully'
+        }
+        description={
+          insertStep === 'form'
+            ? 'Enter a new mail piece into the system for a customer'
+            : undefined
+        }
         size="md"
         footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setScanModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button leftIcon={<ScanLine className="h-4 w-4" />}>
-              Save Mail Piece
-            </Button>
-          </>
+          insertStep === 'form' ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={handleCloseInsertModal}
+              >
+                Cancel
+              </Button>
+              <Button
+                leftIcon={<ScanLine className="h-4 w-4" />}
+                onClick={handleConfirmInsert}
+              >
+                Confirm &amp; Upload
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleCloseInsertModal}>Done</Button>
+          )
         }
       >
-        <div className="space-y-4">
-          <Select
-            label="Customer"
-            placeholder="Select customer..."
-            options={customers
-              .filter((c) => c.status === 'active')
-              .map((c) => ({
-                value: c.id,
-                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
-              }))}
-          />
-          <Select
-            label="Mail Type"
-            placeholder="Select type..."
-            options={[
-              { value: 'letter', label: 'Letter' },
-              { value: 'magazine', label: 'Magazine' },
-              { value: 'catalog', label: 'Catalog' },
-              { value: 'legal', label: 'Legal' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
-          <Textarea
-            label="Notes"
-            placeholder="Any additional notes about this mail piece..."
-          />
-        </div>
+        {insertStep === 'form' ? (
+          <div className="space-y-4">
+            <Select
+              label="Customer"
+              placeholder="Select customer..."
+              options={customers
+                .filter((c) => c.status === 'active')
+                .map((c) => ({
+                  value: c.id,
+                  label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
+                }))}
+            />
+            <Select
+              label="Mail Type"
+              placeholder="Select type..."
+              options={[
+                { value: 'letter', label: 'Letter' },
+                { value: 'magazine', label: 'Magazine' },
+                { value: 'catalog', label: 'Catalog' },
+                { value: 'legal', label: 'Legal' },
+                { value: 'other', label: 'Other' },
+              ]}
+            />
+            <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
+            <Textarea
+              label="Notes"
+              placeholder="Any additional notes about this mail piece..."
+            />
+          </div>
+        ) : (
+          <div className="space-y-5 py-2">
+            {/* Success icon */}
+            <div className="flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500/30">
+                <CheckCircle2 className="h-8 w-8 text-green-400" />
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-surface-300">
+              Mail piece has been uploaded to the platform. Write the code
+              below on the physical mail piece.
+            </p>
+
+            {/* Generated Code Display */}
+            <div className="mx-auto max-w-xs">
+              <div className="rounded-xl bg-surface-800/80 border-2 border-brand-500/30 p-5">
+                <p className="text-center text-xs text-surface-500 uppercase tracking-wider mb-2">
+                  Unique Mail Code
+                </p>
+                <p className="text-center text-3xl font-mono font-bold text-brand-400 tracking-[0.2em] select-all">
+                  {generatedCode}
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={handleCopyCode}
+                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 border border-brand-500/20 transition-colors"
+                  >
+                    {codeCopied ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <ClipboardCopy className="h-4 w-4" />
+                        Copy Code
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3">
+              <p className="text-xs text-amber-400 font-medium">
+                {'\u26a0\ufe0f'} Write this code clearly on the physical mail
+                piece before filing it.
+              </p>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
