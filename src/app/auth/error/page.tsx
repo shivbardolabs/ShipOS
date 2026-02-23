@@ -1,10 +1,12 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages */
+/* Auth0 routes require full-page redirects — <a> is intentional */
+
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 
-/* Auth0 routes require full-page redirects — <a> is intentional */
 
 function AuthErrorContent() {
   const searchParams = useSearchParams();
