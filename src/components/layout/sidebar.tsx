@@ -29,6 +29,7 @@ import {
   LogOut,
   Award,
 } from 'lucide-react';
+import { RoleBadge, RoleDot, roleConfig, type UserRole } from '@/components/ui/role-badge';
 
 /* -------------------------------------------------------------------------- */
 /*  Navigation config                                                         */
@@ -169,9 +170,9 @@ export function Sidebar() {
       </nav>
 
       {/* User info at bottom */}
-      <div className="px-4 py-4 border-t layout-border">
+      <div className="border-t layout-border">
         {isLoading ? (
-          <div className="flex items-center gap-3 animate-pulse">
+          <div className="px-4 py-4 flex items-center gap-3 animate-pulse">
             <div className="h-9 w-9 rounded-full bg-surface-800" />
             <div className="flex-1">
               <div className="h-3.5 w-24 bg-surface-800 rounded" />
@@ -179,48 +180,67 @@ export function Sidebar() {
             </div>
           </div>
         ) : user ? (
-          <div className="flex items-center gap-3">
-            {user.picture ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.picture}
-                alt={displayName}
-                className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+          <>
+            {/* Role strip accent */}
+            {localUser?.role && (
+              <div
+                className="h-[2px] w-full"
+                style={{
+                  background: `linear-gradient(90deg, ${roleConfig[localUser.role as UserRole].stripFrom}, ${roleConfig[localUser.role as UserRole].stripTo})`,
+                }}
               />
-            ) : (
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white">
-                {initials}
-              </div>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-surface-200 truncate">
-                {displayName}
-              </p>
-              <div className="flex items-center gap-1.5">
-                <p className="text-[11px] text-surface-500 truncate">
-                  {user.email}
-                </p>
-                {localUser?.role && (
-                  <span className={`inline-flex items-center rounded-full px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider ${
-                    localUser.role === 'admin'
-                      ? 'bg-primary-500/15 text-primary-400'
-                      : localUser.role === 'manager'
-                      ? 'bg-amber-500/15 text-amber-400'
-                      : 'bg-surface-500/15 text-surface-400'
-                  }`}>
-                    {localUser.role}
-                  </span>
-                )}
+            <div className="px-4 py-4">
+              <div className="flex items-center gap-3">
+                {/* Avatar with role-colored ring */}
+                <div className="relative flex-shrink-0">
+                  {user.picture ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.picture}
+                      alt={displayName}
+                      className={cn(
+                        'h-9 w-9 rounded-full object-cover ring-2',
+                        localUser?.role ? roleConfig[localUser.role as UserRole].ring : 'ring-surface-700'
+                      )}
+                    />
+                  ) : (
+                    <div className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white ring-2',
+                      localUser?.role ? roleConfig[localUser.role as UserRole].ring : 'ring-surface-700'
+                    )}>
+                      {initials}
+                    </div>
+                  )}
+                  {/* Role dot on avatar */}
+                  {localUser?.role && (
+                    <span className="absolute -bottom-0.5 -right-0.5">
+                      <RoleDot role={localUser.role as UserRole} />
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-surface-200 truncate">
+                    {displayName}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {localUser?.role && (
+                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon={false} />
+                    )}
+                  </div>
+                </div>
+
+                <a
+                  href="/api/auth/logout"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-accent-rose hover:bg-red-50 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </a>
               </div>
             </div>
-            <a
-              href="/api/auth/logout"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-accent-rose hover:bg-red-50 transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </a>
-          </div>
+          </>
         ) : null}
       </div>
     </>

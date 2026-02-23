@@ -18,6 +18,8 @@ interface DropdownItem {
 interface DropdownMenuProps {
   trigger: ReactNode;
   items: (DropdownItem | 'separator')[];
+  /** Optional header section rendered above the items */
+  header?: ReactNode;
   align?: 'left' | 'right';
   className?: string;
 }
@@ -28,6 +30,7 @@ interface DropdownMenuProps {
 export function DropdownMenu({
   trigger,
   items,
+  header,
   align = 'right',
   className,
 }: DropdownMenuProps) {
@@ -80,6 +83,7 @@ export function DropdownMenu({
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >
+          {header}
           {items.map((item, i) => {
             if (item === 'separator') {
               return (
