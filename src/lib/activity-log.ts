@@ -33,6 +33,7 @@ export type ActionVerb =
   | 'customer.close'
   // Mail
   | 'mail.receive'
+  | 'mail.insert'
   | 'mail.scan'
   | 'mail.forward'
   | 'mail.hold'
@@ -239,6 +240,7 @@ export const ACTION_LABELS: Record<ActionVerb, string> = {
   'customer.reactivate': 'Reactivated customer',
   'customer.close': 'Closed customer account',
   'mail.receive': 'Received mail',
+  'mail.insert': 'Inserted mail',
   'mail.scan': 'Scanned mail',
   'mail.forward': 'Forwarded mail',
   'mail.hold': 'Held mail',

@@ -88,6 +88,8 @@ export interface MailPiece {
   customerId: string;
   customer?: Customer;
   receivedAt: string;
+  /** Unique code assigned by the digital mail platform after insert & upload */
+  mailCode?: string;
 }
 
 export interface Shipment {
@@ -442,4 +444,49 @@ export interface ReconciliationStats {
   successRate: number;
   runsThisMonth: number;
   avgRefundPerRun: number;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Customer Fee Tracking                                                     */
+/* -------------------------------------------------------------------------- */
+
+export type FeeCategory = 'storage' | 'overage' | 'receiving' | 'forwarding' | 'late_pickup' | 'other';
+
+export type FeeStatus = 'accruing' | 'finalized' | 'invoiced' | 'paid' | 'waived';
+
+export interface CustomerFee {
+  id: string;
+  customerId: string;
+  category: FeeCategory;
+  description: string;
+  amount: number;
+  status: FeeStatus;
+  /** The entity that triggered this fee (package, mail, etc.) */
+  linkedEntityId?: string;
+  linkedEntityType?: 'package' | 'mail' | 'shipment';
+  linkedEntityLabel?: string;
+  /** How this fee accrues (daily, per-item, one-time) */
+  accrualType: 'daily' | 'per_item' | 'one_time';
+  /** Daily rate if accruing daily */
+  dailyRate?: number;
+  /** Days accrued so far */
+  daysAccrued?: number;
+  accrualStartDate: string;
+  accrualEndDate?: string;
+  createdAt: string;
+}
+
+export interface CustomerFeeSummary {
+  customerId: string;
+  month: string; // e.g. '2026-02'
+  totalOwed: number;
+  storageFees: number;
+  overageFees: number;
+  receivingFees: number;
+  forwardingFees: number;
+  otherFees: number;
+  paidAmount: number;
+  waivedAmount: number;
+  feeCount: number;
+  fees: CustomerFee[];
 }

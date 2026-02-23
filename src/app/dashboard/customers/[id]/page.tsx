@@ -8,11 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
-import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
-import { useActivityLog } from '@/components/activity-log-provider';
-import { ActivityTimeline, LastUpdatedBy } from '@/components/ui/performed-by';
-import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
-import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
+import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
 import {
   ArrowLeft,
   Edit,
@@ -43,6 +39,10 @@ import {
   MapPin,
   Forward,
   Users,
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
+  Receipt,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
@@ -186,6 +186,12 @@ export default function CustomerDetailPage() {
     []
   );
 
+  // Fee tracking data for this customer
+  const feeSummary = useMemo(
+    () => getCustomerFeeSummary(customer?.id ?? ''),
+    [customer?.id]
+  );
+
   if (!customer) {
     return (
       <div className="space-y-6">
@@ -220,6 +226,7 @@ export default function CustomerDetailPage() {
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
     { id: 'activity', label: 'Activity', icon: <Clock className="h-3.5 w-3.5" /> },
     { id: 'loyalty', label: 'Loyalty', icon: <Award className="h-3.5 w-3.5" /> },
+    { id: 'fees', label: 'Fees', icon: <DollarSign className="h-3.5 w-3.5" />, count: feeSummary.feeCount },
   ];
 
   // Loyalty data for this customer
@@ -534,6 +541,334 @@ export default function CustomerDetailPage() {
                 </button>
               </div>
             )}
+          </TabPanel>
+
+          {/* Fees tab */}
+          <TabPanel active={activeTab === 'fees'}>
+            <div className="space-y-6">
+              {/* Monthly Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="h-3.5 w-3.5 text-accent-amber" />
+                    <p className="text-xs text-surface-500">Total Owed</p>
+                  </div>
+                  <p className="text-2xl font-bold text-surface-100">{formatCurrency(feeSummary.totalOwed)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Feb 2026 • {feeSummary.feeCount} charges</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="h-3.5 w-3.5 text-primary-400" />
+                    <p className="text-xs text-surface-500">Storage</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.storageFees)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Accrued this month</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-accent-rose" />
+                    <p className="text-xs text-surface-500">Overage</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.overageFees)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Plan limit exceeded</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Receipt className="h-3.5 w-3.5 text-accent-emerald" />
+                    <p className="text-xs text-surface-500">Other Fees</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">
+                    {formatCurrency(feeSummary.receivingFees + feeSummary.forwardingFees + feeSummary.otherFees)}
+                  </p>
+                  <p className="text-[10px] text-surface-500 mt-1">Receiving, forwarding, misc</p>
+                </div>
+              </div>
+
+              {/* Paid / Waived banner */}
+              {(feeSummary.paidAmount > 0 || feeSummary.waivedAmount > 0) && (
+                <div className="flex gap-3 text-xs">
+                  {feeSummary.paidAmount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-emerald/10 px-3 py-1 text-accent-emerald font-medium">
+                      <CheckCircle className="h-3 w-3" />
+                      {formatCurrency(feeSummary.paidAmount)} paid
+                    </span>
+                  )}
+                  {feeSummary.waivedAmount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-700 px-3 py-1 text-surface-400 font-medium">
+                      <XCircle className="h-3 w-3" />
+                      {formatCurrency(feeSummary.waivedAmount)} waived
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Fee Line Items */}
+              {feeSummary.fees.length > 0 ? (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-surface-200">Fee Details</h4>
+                  <div className="rounded-lg border border-surface-800 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-surface-800 bg-surface-900/50">
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Date</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Category</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Description</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Linked Item</th>
+                          <th className="text-right px-4 py-2.5 text-xs font-medium text-surface-500">Amount</th>
+                          <th className="text-center px-4 py-2.5 text-xs font-medium text-surface-500">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feeSummary.fees.map((fee) => (
+                          <tr key={fee.id} className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors">
+                            <td className="px-4 py-2.5 text-xs text-surface-400 whitespace-nowrap">
+                              {formatDate(fee.createdAt)}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={cn(
+                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                fee.category === 'storage' && 'bg-primary-500/15 text-primary-400',
+                                fee.category === 'overage' && 'bg-accent-rose/15 text-accent-rose',
+                                fee.category === 'receiving' && 'bg-blue-500/15 text-blue-400',
+                                fee.category === 'forwarding' && 'bg-accent-amber/15 text-accent-amber',
+                                fee.category === 'late_pickup' && 'bg-orange-500/15 text-orange-400',
+                                fee.category === 'other' && 'bg-surface-600/30 text-surface-300',
+                              )}>
+                                {fee.category.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <p className="text-xs text-surface-200">{fee.description}</p>
+                              {fee.accrualType === 'daily' && fee.dailyRate && fee.daysAccrued && (
+                                <p className="text-[10px] text-surface-500 mt-0.5">
+                                  {formatCurrency(fee.dailyRate)}/day × {fee.daysAccrued} days
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {fee.linkedEntityLabel ? (
+                                <span className="text-xs font-mono text-primary-400">{fee.linkedEntityLabel}</span>
+                              ) : (
+                                <span className="text-xs text-surface-600">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
+                              <span className={cn(
+                                'text-sm font-semibold',
+                                fee.status === 'paid' ? 'text-accent-emerald' :
+                                fee.status === 'waived' ? 'text-surface-500 line-through' :
+                                fee.status === 'accruing' ? 'text-accent-amber' :
+                                'text-surface-100'
+                              )}>
+                                {formatCurrency(fee.amount)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <Badge
+                                status={
+                                  fee.status === 'paid' ? 'delivered' :
+                                  fee.status === 'accruing' ? 'pending' :
+                                  fee.status === 'waived' ? 'returned' :
+                                  fee.status === 'invoiced' ? 'sent' :
+                                  'ready'
+                                }
+                                className="text-[10px]"
+                              >
+                                {fee.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <DollarSign className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+                  <p className="text-sm text-surface-400">No fees accrued this month</p>
+                  <p className="text-xs text-surface-500 mt-1">Storage and overage charges will appear here as they accrue</p>
+                </div>
+              )}
+
+              {/* Month-end Snapshot Notice */}
+              {feeSummary.totalOwed > 0 && (
+                <div className="flex items-start gap-3 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-4">
+                  <AlertTriangle className="h-4 w-4 text-accent-amber flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-surface-200">End-of-Month Summary</p>
+                    <p className="text-xs text-surface-400 mt-0.5">
+                      At the end of the billing period, all accruing fees will be finalized and included in the customer&apos;s invoice.
+                      Current balance owed: <span className="font-semibold text-accent-amber">{formatCurrency(feeSummary.totalOwed)}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabPanel>
+
+          {/* Fees tab */}
+          <TabPanel active={activeTab === 'fees'}>
+            <div className="space-y-6">
+              {/* Monthly Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="h-3.5 w-3.5 text-accent-amber" />
+                    <p className="text-xs text-surface-500">Total Owed</p>
+                  </div>
+                  <p className="text-2xl font-bold text-surface-100">{formatCurrency(feeSummary.totalOwed)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Feb 2026 &bull; {feeSummary.feeCount} charges</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="h-3.5 w-3.5 text-primary-400" />
+                    <p className="text-xs text-surface-500">Storage</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.storageFees)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Accrued this month</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-accent-rose" />
+                    <p className="text-xs text-surface-500">Overage</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.overageFees)}</p>
+                  <p className="text-[10px] text-surface-500 mt-1">Plan limit exceeded</p>
+                </div>
+                <div className="rounded-xl border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Receipt className="h-3.5 w-3.5 text-accent-emerald" />
+                    <p className="text-xs text-surface-500">Other Fees</p>
+                  </div>
+                  <p className="text-xl font-bold text-surface-100">
+                    {formatCurrency(feeSummary.receivingFees + feeSummary.forwardingFees + feeSummary.otherFees)}
+                  </p>
+                  <p className="text-[10px] text-surface-500 mt-1">Receiving, forwarding, misc</p>
+                </div>
+              </div>
+
+              {/* Paid / Waived banner */}
+              {(feeSummary.paidAmount > 0 || feeSummary.waivedAmount > 0) && (
+                <div className="flex gap-3 text-xs">
+                  {feeSummary.paidAmount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-emerald/10 px-3 py-1 text-accent-emerald font-medium">
+                      <CheckCircle className="h-3 w-3" />
+                      {formatCurrency(feeSummary.paidAmount)} paid
+                    </span>
+                  )}
+                  {feeSummary.waivedAmount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-700 px-3 py-1 text-surface-400 font-medium">
+                      <XCircle className="h-3 w-3" />
+                      {formatCurrency(feeSummary.waivedAmount)} waived
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Fee Line Items */}
+              {feeSummary.fees.length > 0 ? (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-surface-200">Fee Details</h4>
+                  <div className="rounded-lg border border-surface-800 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-surface-800 bg-surface-900/50">
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Date</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Category</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Description</th>
+                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Linked Item</th>
+                          <th className="text-right px-4 py-2.5 text-xs font-medium text-surface-500">Amount</th>
+                          <th className="text-center px-4 py-2.5 text-xs font-medium text-surface-500">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feeSummary.fees.map((fee) => (
+                          <tr key={fee.id} className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors">
+                            <td className="px-4 py-2.5 text-xs text-surface-400 whitespace-nowrap">
+                              {formatDate(fee.createdAt)}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={cn(
+                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                fee.category === 'storage' && 'bg-primary-500/15 text-primary-400',
+                                fee.category === 'overage' && 'bg-accent-rose/15 text-accent-rose',
+                                fee.category === 'receiving' && 'bg-blue-500/15 text-blue-400',
+                                fee.category === 'forwarding' && 'bg-accent-amber/15 text-accent-amber',
+                                fee.category === 'late_pickup' && 'bg-orange-500/15 text-orange-400',
+                                fee.category === 'other' && 'bg-surface-600/30 text-surface-300',
+                              )}>
+                                {fee.category.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <p className="text-xs text-surface-200">{fee.description}</p>
+                              {fee.accrualType === 'daily' && fee.dailyRate && fee.daysAccrued && (
+                                <p className="text-[10px] text-surface-500 mt-0.5">
+                                  {formatCurrency(fee.dailyRate)}/day &times; {fee.daysAccrued} days
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {fee.linkedEntityLabel ? (
+                                <span className="text-xs font-mono text-primary-400">{fee.linkedEntityLabel}</span>
+                              ) : (
+                                <span className="text-xs text-surface-600">&mdash;</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
+                              <span className={cn(
+                                'text-sm font-semibold',
+                                fee.status === 'paid' ? 'text-accent-emerald' :
+                                fee.status === 'waived' ? 'text-surface-500 line-through' :
+                                fee.status === 'accruing' ? 'text-accent-amber' :
+                                'text-surface-100'
+                              )}>
+                                {formatCurrency(fee.amount)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <Badge
+                                status={
+                                  fee.status === 'paid' ? 'delivered' :
+                                  fee.status === 'accruing' ? 'pending' :
+                                  fee.status === 'waived' ? 'returned' :
+                                  fee.status === 'invoiced' ? 'sent' :
+                                  'ready'
+                                }
+                                className="text-[10px]"
+                              >
+                                {fee.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <DollarSign className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+                  <p className="text-sm text-surface-400">No fees accrued this month</p>
+                  <p className="text-xs text-surface-500 mt-1">Storage and overage charges will appear here as they accrue</p>
+                </div>
+              )}
+
+              {/* Month-end Snapshot Notice */}
+              {feeSummary.totalOwed > 0 && (
+                <div className="flex items-start gap-3 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-4">
+                  <AlertTriangle className="h-4 w-4 text-accent-amber flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-surface-200">End-of-Month Summary</p>
+                    <p className="text-xs text-surface-400 mt-0.5">
+                      At the end of the billing period, all accruing fees will be finalized and included in the customer&apos;s invoice.
+                      Current balance owed: <span className="font-semibold text-accent-amber">{formatCurrency(feeSummary.totalOwed)}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </TabPanel>
         </div>
 
