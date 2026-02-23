@@ -61,18 +61,37 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchMe = useCallback(async () => {
+    let resolved = false;
+
     try {
       const res = await fetch('/api/users/me');
       if (res.ok) {
         const data: LocalUser = await res.json();
         setLocalUser(data);
+        resolved = true;
       }
     } catch (e) {
       console.error('Failed to fetch user data', e);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+
+    // Fallback: if DB is unavailable (e.g. ephemeral SQLite on Vercel
+    // serverless), build a minimal LocalUser from the Auth0 session so
+    // role-based UI still renders.  Default role = admin for store owners.
+    if (!resolved && auth0User) {
+      setLocalUser({
+        id: (auth0User.sub as string) ?? 'local',
+        auth0Id: (auth0User.sub as string) ?? '',
+        name: (auth0User.name as string) ?? (auth0User.email as string)?.split('@')[0] ?? 'User',
+        email: (auth0User.email as string) ?? '',
+        role: 'admin',
+        avatar: (auth0User.picture as string) ?? null,
+        tenantId: null,
+        tenant: null,
+      });
+    }
+
+    setLoading(false);
+  }, [auth0User]);
 
   useEffect(() => {
     if (!auth0Loading && auth0User) {
