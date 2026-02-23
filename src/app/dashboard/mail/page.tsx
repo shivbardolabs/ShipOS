@@ -28,7 +28,9 @@ import {
   MoreVertical,
   Send,
   Clock,
-  ArrowUpRight } from 'lucide-react';
+  ArrowUpRight,
+  ExternalLink,
+  FileImage } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -109,6 +111,26 @@ function useColumns(onView: (mail: MailPiece) => void) {
       label: 'Received',
       sortable: true,
       render: (row) => <span className="text-xs text-surface-400">{formatDate(row.receivedAt)}</span> },
+    {
+      key: 'scan',
+      label: 'Scan',
+      width: 'w-16',
+      align: 'center',
+      render: (row) =>
+        row.scanImage ? (
+          <a
+            href={row.scanImage}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-brand-400 hover:bg-brand-400/10 hover:text-brand-300 transition-colors"
+            title="View scanned mail"
+          >
+            <FileImage className="h-4 w-4" />
+          </a>
+        ) : (
+          <span className="text-surface-600">—</span>
+        ) },
     {
       key: 'actions',
       label: '',
@@ -264,6 +286,37 @@ export default function MailPage() {
                 </div>
               )}
             </div>
+            {/* Scan Preview */}
+            {detailModal.scanImage && (
+              <a
+                href={detailModal.scanImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-3 p-3 rounded-lg bg-brand-500/10 border border-brand-500/20 hover:bg-brand-500/20 transition-colors cursor-pointer"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400 group-hover:bg-brand-500/30 transition-colors">
+                  <FileImage className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-surface-200">Scanned Document</p>
+                  <p className="text-xs text-surface-400 truncate">{detailModal.scanImage}</p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-surface-400 group-hover:text-brand-400 transition-colors shrink-0" />
+              </a>
+            )}
+
+            {!detailModal.scanImage && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-700/50 text-surface-500">
+                  <FileImage className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm text-surface-400">No scan available</p>
+                  <p className="text-xs text-surface-500">Mail has not been scanned yet</p>
+                </div>
+              </div>
+            )}
+
             {detailModal.notes && (
               <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
                 <p className="text-xs text-surface-500 mb-1">Notes</p>
