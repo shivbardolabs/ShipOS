@@ -1,8 +1,10 @@
 'use client';
 
+/* eslint-disable @next/next/no-html-link-for-pages */
+/* Auth0 routes require full-page redirects — <a> is intentional */
+
 import { useEffect } from 'react';
 
-/* Auth0 routes require full-page redirects — <a> is intentional */
 
 export default function LoginPage() {
   useEffect(() => {
