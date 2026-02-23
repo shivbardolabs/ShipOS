@@ -21,130 +21,54 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
-  /*  v0.11.0                                                    */
+  /*  v0.11.0                                                            */
   /* ------------------------------------------------------------------ */
   {
     version: '0.11.0',
-    date: '2026-02-23',
-    title: 'Add Account Status tab and A/P-based payment to Package Checkout, Notification click navigation, PMB display, carrier tracking links, Add PMB customer setup wizard with USPS CMRA compliance',
+    date: '2026-02-22',
+    title: 'Notifications, PMB Setup & Checkout Payments',
     summary:
-      'This release includes 29 updates.',
-    highlights: ['Add Account', 'Notification click', 'Add PMB'],
+      'Big round of improvements driven by user testing. Package Checkout now supports Account Status with A/R and A/P-based payment methods. Notifications are clickable and route to the relevant page. A new guided PMB setup wizard ensures USPS CMRA compliance. Plus Resend email and Twilio SMS are now wired in for real notifications.',
+    highlights: ['Checkout Payments', 'PMB Wizard', 'Email & SMS'],
     changes: [
       {
-        text: 'Add Account Status tab and A/P-based payment to Package Checkout',
+        text: 'Account Status tab in Package Checkout with A/R balance and A/P-based payment options',
         type: 'feature',
       },
       {
-        text: 'Notification click navigation, PMB display, carrier tracking links',
+        text: 'Notification click navigation — clicking a notification routes to the relevant package, customer, or compliance page',
         type: 'feature',
       },
       {
-        text: 'Add PMB customer setup wizard with USPS CMRA compliance',
-        type: 'feature',
-      },
-      {
-        text: 'Update Add Customer form per testing feedback',
-        type: 'feature',
-      },
-      {
-        text: 'Add Resend email + Twilio SMS notification service',
-        type: 'feature',
-      },
-      {
-        text: 'Implement working +Invite User flow in Settings → Users & Roles',
-        type: 'feature',
-      },
-      {
-        text: 'Add PostalMate & ShipRite competitor comparison tiles to pricing page',
-        type: 'feature',
-      },
-      {
-        text: 'Shared public nav, /features page, changelog update',
-        type: 'feature',
-      },
-      {
-        text: 'Add support section to ShipOS home page',
-        type: 'feature',
-      },
-      {
-        text: 'Add pricing page with Starter/Pro/Enterprise tiers',
-        type: 'feature',
-      },
-      {
-        text: 'Add product changelog with timeline UI and header link',
-        type: 'feature',
-      },
-      {
-        text: 'Add tenancy and users & roles',
-        type: 'feature',
-      },
-      {
-        text: 'Dual-mode checkout lookup — PMB number or customer name',
-        type: 'feature',
-      },
-      {
-        text: 'Add loyalty program with tiers, points, rewards, and referrals',
-        type: 'feature',
-      },
-      {
-        text: 'Homepage nav + Products, Support, Customers, About pages',
-        type: 'feature',
-      },
-      {
-        text: 'Remove duplicate Mailbox Config tab entry in settings',
-        type: 'fix',
-      },
-      {
-        text: 'Replace conditional \'primary\' variant with \'default\'',
-        type: 'fix',
-      },
-      {
-        text: 'Replace variant=\'primary\' with \'default\' to match ButtonVariant type',
-        type: 'fix',
-      },
-      {
-        text: 'Remove unused formatDate import to fix Vercel build',
-        type: 'fix',
-      },
-      {
-        text: 'Combine competitor comparison into single 3-column table',
+        text: 'PMB number now displays on customer cards and detail pages for quick identification',
         type: 'improvement',
       },
       {
-        text: 'Move support to dedicated /support page',
-        type: 'fix',
+        text: 'Carrier tracking links on package detail — click to open UPS, FedEx, USPS, or DHL tracking',
+        type: 'feature',
       },
       {
-        text: 'Update free trial from 14 days to 30 days',
-        type: 'fix',
+        text: 'Guided PMB customer setup wizard with PS Form 1583, CMRA compliance checks, and mailbox assignment',
+        type: 'feature',
       },
       {
-        text: 'Add ShipOS logo PNG assets for Auth0',
+        text: 'Add Customer form refined per user testing — improved field order, labels, and validation feedback',
         type: 'improvement',
       },
       {
-        text: 'Vercel/pnpm build — ESLint config, Prisma hoisting, seed exclusion',
-        type: 'fix',
+        text: 'Resend email integration for transactional notifications (package arrival, compliance reminders)',
+        type: 'feature',
       },
       {
-        text: 'Vercel build — run prisma generate before Next.js build',
-        type: 'fix',
+        text: 'Twilio SMS integration for real-time text message alerts to customers',
+        type: 'feature',
       },
       {
-        text: 'Remove unused formatDateTime import in notification-panel',
-        type: 'fix',
-      },
-      {
-        text: 'Wire up notification bell with dropdown panel',
-        type: 'fix',
-      },
-      {
-        text: 'Remove marketing pages from ShipOS',
+        text: 'Competitor comparison table consolidated into a single 3-column layout on pricing page',
         type: 'improvement',
       },
       {
-        text: 'Add eslint-disable for Auth0 `<a>` links',
+        text: 'Fixed duplicate Mailbox Config tab in settings and several variant/build issues',
         type: 'fix',
       },
     ],
