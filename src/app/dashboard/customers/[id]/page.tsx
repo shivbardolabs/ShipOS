@@ -46,8 +46,6 @@ import {
   Eye,
   EyeOff,
   PackageCheck,
-  ExternalLink,
-  Info,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { useActivityLog } from '@/components/activity-log-provider';
