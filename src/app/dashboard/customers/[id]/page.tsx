@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
 import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { ActivityTimeline, LastUpdatedBy } from '@/components/ui/performed-by';
@@ -39,6 +40,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Copy,
+  MapPin,
+  Forward,
+  Users,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
@@ -149,6 +153,8 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('packages');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSaved, setEditSaved] = useState(false);
 
   const customer = customers.find((c) => c.id === params.id);
 
@@ -273,7 +279,7 @@ export default function CustomerDetailPage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
+            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />} onClick={() => setShowEditModal(true)}>
               Edit
             </Button>
             <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />}>
@@ -573,6 +579,68 @@ export default function CustomerDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Address & Forwarding */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Address Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="text-surface-500 flex-shrink-0 mt-0.5"><MapPin className="h-3.5 w-3.5" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-surface-500">Street Address</p>
+                  <p className="text-sm text-surface-200">{customer.address || '—'}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="text-surface-500 flex-shrink-0 mt-0.5"><Forward className="h-3.5 w-3.5" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-surface-500">Preferred Forwarding Address</p>
+                  <p className="text-sm text-surface-200">{customer.forwardingAddress || '—'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Authorized Pickup Persons */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-surface-400" />
+                <CardTitle>Authorized Pickup</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {customer.authorizedPickupPersons && customer.authorizedPickupPersons.length > 0 ? (
+                <div className="space-y-3">
+                  {customer.authorizedPickupPersons.map((person) => (
+                    <div key={person.id} className="flex items-center gap-3 rounded-lg bg-surface-800/50 px-3 py-2.5">
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600/10 text-primary-500 text-xs font-semibold">
+                        {person.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-surface-200">{person.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {person.relationship && (
+                            <span className="text-[10px] text-surface-500">{person.relationship}</span>
+                          )}
+                          {person.phone && (
+                            <>
+                              {person.relationship && <span className="text-surface-700">·</span>}
+                              <span className="text-[10px] text-surface-500">{person.phone}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-surface-500 italic">No authorized persons on file.</p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* CMRA Compliance */}
           <Card>
             <CardHeader>
@@ -711,6 +779,18 @@ export default function CustomerDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Customer Modal */}
+      <EditCustomerModal
+        customer={customer}
+        open={showEditModal}
+        onClose={() => { setShowEditModal(false); setEditSaved(false); }}
+        saved={editSaved}
+        onSave={() => {
+          setEditSaved(true);
+          setTimeout(() => { setShowEditModal(false); setEditSaved(false); }, 1200);
+        }}
+      />
     </div>
   );
 }
@@ -730,3 +810,4 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
     </div>
   );
 }
+

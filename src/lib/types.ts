@@ -36,9 +36,22 @@ export interface Customer {
   notifySms: boolean;
   /** URL to customer photo (ID photo, headshot, etc.) */
   photoUrl?: string;
+  /** Physical street address */
+  address?: string;
+  /** Preferred forwarding address for mail */
+  forwardingAddress?: string;
+  /** People authorized to pick up mail/packages on behalf of this customer */
+  authorizedPickupPersons?: AuthorizedPerson[];
   // Computed/joined
   packageCount?: number;
   mailCount?: number;
+}
+
+export interface AuthorizedPerson {
+  id: string;
+  name: string;
+  phone?: string;
+  relationship?: string;
 }
 
 export interface Package {
