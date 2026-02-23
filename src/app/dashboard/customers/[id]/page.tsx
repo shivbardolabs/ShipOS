@@ -147,6 +147,7 @@ export default function CustomerDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editSaved, setEditSaved] = useState(false);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
+  const [form1583Override, setForm1583Override] = useState<string | null>(null);
 
   const customer = customers.find((c) => c.id === params.id);
 
@@ -243,6 +244,13 @@ export default function CustomerDetailPage() {
     idDays !== null && idDays < 0 ? 'bg-red-500' :
     idDays !== null && idDays <= 30 ? 'bg-red-500' :
     idDays !== null && idDays <= 90 ? 'bg-yellow-500' : 'bg-emerald-500';
+
+  // Form 1583 approval logic — cannot approve unless both ID forms are satisfied
+  const effective1583Status = form1583Override ?? customer.form1583Status;
+  const hasGovernmentId = !!customer.idType;
+  const hasProofOfAddress = customer.proofOfAddressStatus === 'submitted' || customer.proofOfAddressStatus === 'approved';
+  const can1583Approve = hasGovernmentId && hasProofOfAddress;
+  const show1583ApproveBtn = effective1583Status === 'submitted' || effective1583Status === 'pending';
 
   const tabs = [
     { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: inCustodyCount },
@@ -1056,9 +1064,9 @@ export default function CustomerDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>CMRA Compliance</CardTitle>
-              {customer.form1583Status && (
-                <Badge status={customer.form1583Status} className="text-xs">
-                  1583 {customer.form1583Status}
+              {effective1583Status && (
+                <Badge status={effective1583Status as 'pending' | 'submitted' | 'approved' | 'expired'} className="text-xs">
+                  1583 {effective1583Status}
                 </Badge>
               )}
             </CardHeader>
@@ -1126,6 +1134,69 @@ export default function CustomerDetailPage() {
                 </div>
                 <p className="text-xs text-surface-500">Required for CMRA compliance</p>
               </div>
+
+              {/* Approve / Requirements section */}
+              {show1583ApproveBtn && (
+                <div className="pt-3 border-t border-surface-800">
+                  {can1583Approve ? (
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
+                      onClick={() => setForm1583Override('approved')}
+                    >
+                      Approve Form 1583
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-yellow-500 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                        Cannot approve — missing requirements
+                      </p>
+                      <ul className="space-y-1 ml-5">
+                        <li className="flex items-center gap-2 text-xs">
+                          {hasGovernmentId ? (
+                            <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                          )}
+                          <span className={hasGovernmentId ? 'text-surface-400 line-through' : 'text-surface-200'}>
+                            Government-issued ID on file
+                          </span>
+                        </li>
+                        <li className="flex items-center gap-2 text-xs">
+                          {hasProofOfAddress ? (
+                            <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                          )}
+                          <span className={hasProofOfAddress ? 'text-surface-400 line-through' : 'text-surface-200'}>
+                            Proof of address submitted
+                          </span>
+                        </li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="w-full mt-1"
+                        leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
+                        disabled
+                      >
+                        Approve Form 1583
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Just-approved confirmation */}
+              {form1583Override === 'approved' && customer.form1583Status !== 'approved' && (
+                <div className="pt-3 border-t border-surface-800">
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-400">
+                    <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs font-medium">Form 1583 approved successfully</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
