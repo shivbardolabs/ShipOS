@@ -21,6 +21,48 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.12.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.12.0',
+    date: '2026-02-23',
+    title: 'User Activity Logging & Audit Trail',
+    summary:
+      'Every action in ShipOS is now tracked and attributed to the user who performed it. A new Activity Log page gives admins and managers full visibility into staff operations. "Last performed by" indicators appear across the product so you always know who did what.',
+    highlights: ['Activity Logging', 'Audit Trail', 'User Attribution'],
+    changes: [
+      {
+        text: 'Activity Log service with 30+ tracked action types across packages, customers, mail, shipping, notifications, and settings',
+        type: 'feature',
+      },
+      {
+        text: 'Dedicated Activity Log page at /dashboard/activity-log with search, category/user filters, aggregate stats, and timeline view',
+        type: 'feature',
+      },
+      {
+        text: '"Last performed by" indicators on Package Check-In, Check-Out, Mail, Shipping, and Settings pages showing who last took action',
+        type: 'feature',
+      },
+      {
+        text: 'Dashboard Recent Activity feed now displays user attribution (name + role) for every logged action',
+        type: 'improvement',
+      },
+      {
+        text: 'Customer detail Activity tab powered by real activity log data with full ActivityTimeline component',
+        type: 'improvement',
+      },
+      {
+        text: 'PageHeader component extended with icon and badge props for flexible page-level indicators',
+        type: 'improvement',
+      },
+      {
+        text: 'Activity Log added to sidebar navigation under Business section',
+        type: 'improvement',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   /*  v0.11.0                                                            */
   /* ------------------------------------------------------------------ */
   {
