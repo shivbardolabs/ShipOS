@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -506,6 +507,15 @@ function useColumns(onView: (mail: MailPiece) => void) {
 /* -------------------------------------------------------------------------- */
 
 export default function MailPage() {
+  return (
+    <Suspense>
+      <MailContent />
+    </Suspense>
+  );
+}
+
+function MailContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('all');
   const [insertModalOpen, setInsertModalOpen] = useState(false);
   const [insertStep, setInsertStep] = useState<'form' | 'success'>('form');
@@ -516,6 +526,15 @@ export default function MailPage() {
     lastActionByVerb('mail.insert') || lastActionByVerb('mail.scan');
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
+
+  // Auto-open detail modal when navigated with ?highlight={id}
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (highlightId) {
+      const target = mailPieces.find((m) => m.id === highlightId);
+      if (target) setDetailModal(target);
+    }
+  }, [searchParams]);
   const stats = useMailStats();
 
   const filtered = useMemo<MailRow[]>(() => {

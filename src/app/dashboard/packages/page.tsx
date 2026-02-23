@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,10 +91,28 @@ function daysHeld(checkedInAt: string): number {
 const PAGE_SIZE = 12;
 
 export default function PackagesPage() {
+  return (
+    <Suspense>
+      <PackagesContent />
+    </Suspense>
+  );
+}
+
+function PackagesContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
+
+  // Auto-open detail modal when navigated with ?highlight={id}
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (highlightId) {
+      const target = packages.find((p) => p.id === highlightId);
+      if (target) setSelectedPackage(target);
+    }
+  }, [searchParams]);
 
   // Tab definitions with counts
   const tabs = useMemo(() => {
