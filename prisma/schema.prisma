@@ -35,22 +35,36 @@ model Tenant {
 // ── Users & Roles ────────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  auth0Id   String?  @unique // Auth0 `sub` claim — links login to local user
-  name      String
-  email     String   @unique
-  password  String   @default("")
-  role      String   @default("admin") // admin, manager, employee — default admin for testing
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  auth0Id     String?   @unique // Auth0 `sub` claim — links login to local user
+  name        String
+  email       String    @unique
+  password    String    @default("")
+  role        String    @default("admin") // superadmin, admin, manager, employee
+  avatar      String?
+  lastLoginAt DateTime? // Tracks most recent login
+  loginCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
-  auditLogs AuditLog[]
-  checkins  Package[]  @relation("CheckedInBy")
-  checkouts Package[]  @relation("CheckedOutBy")
+  auditLogs     AuditLog[]
+  checkins      Package[]      @relation("CheckedInBy")
+  checkouts     Package[]      @relation("CheckedOutBy")
+  loginSessions LoginSession[]
+}
+
+// ── Login Session Tracking ───────────────────────────────────────────────────
+
+model LoginSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  ipAddress String?
+  userAgent String?
+  loginAt   DateTime @default(now())
 }
 
 model Customer {

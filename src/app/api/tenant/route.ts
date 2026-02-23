@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
   try {
     const user = await getOrProvisionUser();
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
     }
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 404 });

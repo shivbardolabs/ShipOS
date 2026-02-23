@@ -72,6 +72,7 @@ const categoryIconMap: Record<ActionCategory, { icon: React.ElementType; color: 
   compliance: { icon: Shield, color: 'text-emerald-400 bg-emerald-500/15' },
   invoice: { icon: FileText, color: 'text-orange-400 bg-orange-500/15' },
   report: { icon: BarChart3, color: 'text-indigo-400 bg-indigo-500/15' },
+  auth: { icon: Shield, color: 'text-rose-400 bg-rose-500/15' },
 };
 
 /* -------------------------------------------------------------------------- */

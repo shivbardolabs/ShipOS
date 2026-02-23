@@ -21,6 +21,55 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.13.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.13.0',
+    date: '2026-02-23',
+    title: 'Super Admin & Master Admin Panel',
+    summary:
+      'New platform-level Super Admin role for designated owner accounts, with a Master Admin panel providing cross-tenant visibility into all users, login sessions, and platform activity. Login session tracking records every app access for audit and monitoring purposes.',
+    highlights: ['Super Admin', 'Master Admin', 'Login Tracking', 'Cross-Tenant'],
+    changes: [
+      {
+        text: 'New Super Admin role with rose/red visual identity — auto-assigned to platform owner (shiv@bardolabs.ai) on login',
+        type: 'feature',
+      },
+      {
+        text: 'Master Admin panel at /dashboard/admin with cross-tenant user directory showing all users, roles, tenants, login counts, and status',
+        type: 'feature',
+      },
+      {
+        text: 'Login Session tracking — every user login is recorded with timestamp for audit trail; user last-login and login count tracked',
+        type: 'feature',
+      },
+      {
+        text: 'Login Sessions tab in Master Admin showing chronological login activity grouped by date with user details',
+        type: 'feature',
+      },
+      {
+        text: 'Platform stats dashboard showing total users, active users (7-day), tenant count, and daily login count',
+        type: 'feature',
+      },
+      {
+        text: 'Sidebar shows "PLATFORM" section with Master Admin link only for Super Admin users, styled with distinctive rose accent',
+        type: 'improvement',
+      },
+      {
+        text: 'Role system expanded from 3 to 4 roles: Super Admin (rose), Admin (violet), Manager (amber), Employee (teal)',
+        type: 'improvement',
+      },
+      {
+        text: 'All admin-gated API routes now accept both admin and superadmin roles for backwards compatibility',
+        type: 'improvement',
+      },
+      {
+        text: 'Access-restricted guard on Master Admin page with clear messaging for non-superadmin users',
+        type: 'security',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.12.0                                                            */
   /* ------------------------------------------------------------------ */
   {

@@ -26,6 +26,7 @@ import { RoleBadge, RoleStrip, roleConfig, type UserRole } from '@/components/ui
 /* -------------------------------------------------------------------------- */
 const labelMap: Record<string, string> = {
   dashboard: 'Dashboard',
+  admin: 'Master Admin',
   packages: 'Packages',
   'check-in': 'Check-In',
   'check-out': 'Check-Out',

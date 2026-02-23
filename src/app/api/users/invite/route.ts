@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   try {
     const me = await getOrProvisionUser();
     if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin') {
+    if (me.role !== 'admin' && me.role !== 'superadmin') {
       return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
     }
     if (!me.tenantId) {
@@ -96,7 +96,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const me = await getOrProvisionUser();
     if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin') {
+    if (me.role !== 'admin' && me.role !== 'superadmin') {
       return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
     }
 

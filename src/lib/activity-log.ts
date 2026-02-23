@@ -16,7 +16,8 @@ export type ActionCategory =
   | 'loyalty'
   | 'compliance'
   | 'invoice'
-  | 'report';
+  | 'report'
+  | 'auth';
 
 export type ActionVerb =
   // Package
@@ -65,7 +66,10 @@ export type ActionVerb =
   | 'invoice.void'
   // Report
   | 'report.generate'
-  | 'report.export';
+  | 'report.export'
+  // Auth
+  | 'auth.login'
+  | 'auth.logout';
 
 export interface ActivityLogEntry {
   id: string;
@@ -261,6 +265,8 @@ export const ACTION_LABELS: Record<ActionVerb, string> = {
   'invoice.void': 'Voided invoice',
   'report.generate': 'Generated report',
   'report.export': 'Exported report',
+  'auth.login': 'Logged in',
+  'auth.logout': 'Logged out',
 };
 
 export const CATEGORY_LABELS: Record<ActionCategory, string> = {
@@ -275,4 +281,5 @@ export const CATEGORY_LABELS: Record<ActionCategory, string> = {
   compliance: 'Compliance',
   invoice: 'Invoicing',
   report: 'Reports',
+  auth: 'Authentication',
 };

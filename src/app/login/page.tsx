@@ -47,8 +47,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Manual fallback links */}
+        {/* Manual fallback links — Auth0 API routes require <a> tags for full-page redirect */}
         <div className="mt-6 space-y-2">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Auth0 API route */}
           <a
             href="/api/auth/login"
             className="block text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
@@ -57,6 +58,7 @@ export default function LoginPage() {
           </a>
           <p className="text-xs text-surface-600">
             Don&apos;t have an account?{' '}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Auth0 API route */}
             <a href="/api/auth/signup" className="text-primary-600 hover:text-primary-700 font-medium">
               Sign up
             </a>
