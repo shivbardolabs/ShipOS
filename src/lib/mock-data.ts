@@ -722,10 +722,6 @@ function roundTo(n: number, d: number): number {
   return Math.round(n * 10 ** d) / 10 ** d;
 }
 
-function randomBetween(min: number, max: number): number {
-  return roundTo(min + Math.random() * (max - min), 2);
-}
-
 // Deterministic-ish fee generation using customer index as seed
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 49297;
