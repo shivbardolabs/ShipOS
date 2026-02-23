@@ -11,7 +11,7 @@ import { customers, packages, mailPieces, shipments, notifications, auditLog, lo
 import { useActivityLog } from '@/components/activity-log-provider';
 import { ActivityTimeline, LastUpdatedBy } from '@/components/ui/performed-by';
 import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
-import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry, CustomerFee } from '@/lib/types';
+import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
 import {
   ArrowLeft,
   Edit,
@@ -184,6 +184,12 @@ export default function CustomerDetailPage() {
     []
   );
 
+  // Fee tracking data for this customer
+  const feeSummary = useMemo(
+    () => getCustomerFeeSummary(customer?.id ?? ''),
+    [customer?.id]
+  );
+
   if (!customer) {
     return (
       <div className="space-y-6">
@@ -210,12 +216,6 @@ export default function CustomerDetailPage() {
     idDays !== null && idDays < 0 ? 'bg-red-500' :
     idDays !== null && idDays <= 30 ? 'bg-red-500' :
     idDays !== null && idDays <= 90 ? 'bg-yellow-500' : 'bg-emerald-500';
-
-  // Fee tracking data for this customer
-  const feeSummary = useMemo(
-    () => getCustomerFeeSummary(customer?.id ?? ''),
-    [customer?.id]
-  );
 
   const tabs = [
     { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: customerPackages.length },
