@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { StatCard } from '@/components/ui/card';
+import { ExpandableStatCard } from '@/components/ui/expandable-stat-card';
+import type { DetailSection } from '@/components/ui/expandable-stat-card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Tabs } from '@/components/ui/tabs';
 import { Modal } from '@/components/ui/modal';
@@ -32,7 +33,9 @@ import {
   Clock,
   ArrowUpRight,
   ExternalLink,
-  FileImage } from 'lucide-react';
+  FileImage,
+  User,
+} from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -43,26 +46,259 @@ const mailTypeIcon: Record<string, React.ReactNode> = {
   magazine: <BookOpen className="h-4 w-4 text-indigo-600" />,
   catalog: <ScrollText className="h-4 w-4 text-amber-600" />,
   legal: <FileText className="h-4 w-4 text-red-600" />,
-  other: <Inbox className="h-4 w-4 text-surface-400" /> };
+  other: <Inbox className="h-4 w-4 text-surface-400" />,
+};
+
+const mailTypeIconClass: Record<string, { icon: typeof Mail; color: string }> = {
+  letter: { icon: Mail, color: 'text-blue-400' },
+  magazine: { icon: BookOpen, color: 'text-indigo-400' },
+  catalog: { icon: ScrollText, color: 'text-amber-400' },
+  legal: { icon: FileText, color: 'text-red-400' },
+  other: { icon: Inbox, color: 'text-surface-400' },
+};
 
 type MailRow = MailPiece & Record<string, unknown>;
 
 /* -------------------------------------------------------------------------- */
-/*  Stats                                                                     */
+/*  countByField – generic bucket counter                                     */
+/* -------------------------------------------------------------------------- */
+
+function countByField<T>(
+  items: T[],
+  accessor: (item: T) => string,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const item of items) {
+    const key = accessor(item);
+    out[key] = (out[key] || 0) + 1;
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Stats + detail breakdowns                                                 */
 /* -------------------------------------------------------------------------- */
 
 function useMailStats() {
   return useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.getTime();
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayMs = todayStart.getTime();
 
-    const receivedToday = mailPieces.filter((m) => new Date(m.receivedAt).getTime() >= todayStr).length;
-    const pending = mailPieces.filter((m) => m.status === 'received' || m.status === 'scanned').length;
-    const forwarded = mailPieces.filter((m) => m.status === 'forwarded').length;
-    const held = mailPieces.filter((m) => m.status === 'held').length;
+    const receivedTodayItems = mailPieces.filter(
+      (m) => new Date(m.receivedAt).getTime() >= todayMs,
+    );
+    const pendingItems = mailPieces.filter(
+      (m) => m.status === 'received' || m.status === 'scanned',
+    );
+    const forwardedItems = mailPieces.filter((m) => m.status === 'forwarded');
+    const heldItems = mailPieces.filter((m) => m.status === 'held');
 
-    return { receivedToday, pending, forwarded, held };
+    /* ---- Received Today details ---- */
+    const rtByType = countByField(receivedTodayItems, (m) => m.type);
+    const rtTotal = receivedTodayItems.length || 1;
+    const receivedTodayDetails: DetailSection[] = [
+      {
+        title: 'By Type',
+        rows: Object.entries(rtByType)
+          .sort(([, a], [, b]) => b - a)
+          .map(([type, count]) => ({
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            value: count,
+            bar: Math.round((count / rtTotal) * 100),
+            barColor: type === 'letter' ? 'bg-blue-500' : type === 'legal' ? 'bg-red-400' : type === 'magazine' ? 'bg-indigo-400' : type === 'catalog' ? 'bg-amber-400' : 'bg-surface-500',
+            icon: mailTypeIconClass[type]?.icon || Inbox,
+            iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
+          })),
+      },
+      {
+        title: 'By Customer',
+        rows: Object.entries(
+          countByField(receivedTodayItems, (m) =>
+            m.customer
+              ? `${m.customer.firstName} ${m.customer.lastName}`
+              : 'Unknown',
+          ),
+        )
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({
+            label: name,
+            value: count,
+            icon: User,
+            iconColor: 'text-blue-400',
+          })),
+      },
+    ];
+
+    /* ---- Pending Action details ---- */
+    const pendByStatus = countByField(pendingItems, (m) => m.status);
+    const pendByType = countByField(pendingItems, (m) => m.type);
+    const pendTotal = pendingItems.length || 1;
+    const pendingDetails: DetailSection[] = [
+      {
+        title: 'By Status',
+        rows: Object.entries(pendByStatus)
+          .sort(([, a], [, b]) => b - a)
+          .map(([status, count]) => ({
+            label: status.charAt(0).toUpperCase() + status.slice(1),
+            value: count,
+            bar: Math.round((count / pendTotal) * 100),
+            barColor: status === 'received' ? 'bg-yellow-400' : 'bg-cyan-400',
+            icon: status === 'received' ? Inbox : ScanLine,
+            iconColor: status === 'received' ? 'text-yellow-400' : 'text-cyan-400',
+          })),
+      },
+      {
+        title: 'By Type',
+        rows: Object.entries(pendByType)
+          .sort(([, a], [, b]) => b - a)
+          .map(([type, count]) => ({
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            value: count,
+            bar: Math.round((count / pendTotal) * 100),
+            barColor: type === 'letter' ? 'bg-blue-400' : type === 'legal' ? 'bg-red-400' : type === 'magazine' ? 'bg-indigo-400' : type === 'catalog' ? 'bg-amber-400' : 'bg-surface-400',
+            icon: mailTypeIconClass[type]?.icon || Inbox,
+            iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
+          })),
+      },
+      {
+        title: 'Top Customers Waiting',
+        rows: Object.entries(
+          countByField(pendingItems, (m) =>
+            m.customer
+              ? `${m.customer.firstName} ${m.customer.lastName}`
+              : 'Unknown',
+          ),
+        )
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({
+            label: name,
+            value: count,
+            icon: User,
+            iconColor: 'text-yellow-400',
+          })),
+      },
+    ];
+
+    /* ---- Forwarded details ---- */
+    const fwdByType = countByField(forwardedItems, (m) => m.type);
+    const fwdTotal = forwardedItems.length || 1;
+    const forwardedDetails: DetailSection[] = [
+      {
+        title: 'By Type',
+        rows: Object.entries(fwdByType)
+          .sort(([, a], [, b]) => b - a)
+          .map(([type, count]) => ({
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            value: count,
+            bar: Math.round((count / fwdTotal) * 100),
+            barColor: 'bg-indigo-400',
+            icon: mailTypeIconClass[type]?.icon || Inbox,
+            iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
+          })),
+      },
+      {
+        title: 'By Customer',
+        rows: Object.entries(
+          countByField(forwardedItems, (m) =>
+            m.customer
+              ? `${m.customer.firstName} ${m.customer.lastName}`
+              : 'Unknown',
+          ),
+        )
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({
+            label: name,
+            value: count,
+            icon: User,
+            iconColor: 'text-indigo-400',
+          })),
+      },
+    ];
+
+    /* ---- Held details ---- */
+    const heldByType = countByField(heldItems, (m) => m.type);
+    const heldTotal = heldItems.length || 1;
+    // Compute hold duration buckets
+    const heldDuration = { under24h: 0, d1to3: 0, d4to7: 0, over7: 0 };
+    for (const m of heldItems) {
+      const hrs = (now.getTime() - new Date(m.receivedAt).getTime()) / 3600000;
+      if (hrs < 24) heldDuration.under24h++;
+      else if (hrs < 72) heldDuration.d1to3++;
+      else if (hrs < 168) heldDuration.d4to7++;
+      else heldDuration.over7++;
+    }
+    const heldDetails: DetailSection[] = [
+      {
+        title: 'By Type',
+        rows: Object.entries(heldByType)
+          .sort(([, a], [, b]) => b - a)
+          .map(([type, count]) => ({
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            value: count,
+            bar: Math.round((count / heldTotal) * 100),
+            barColor: 'bg-amber-400',
+            icon: mailTypeIconClass[type]?.icon || Inbox,
+            iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
+          })),
+      },
+      {
+        title: 'Hold Duration',
+        rows: [
+          { label: '< 24 hours', value: heldDuration.under24h, bar: Math.round((heldDuration.under24h / heldTotal) * 100), barColor: 'bg-emerald-400' },
+          { label: '1–3 days', value: heldDuration.d1to3, bar: Math.round((heldDuration.d1to3 / heldTotal) * 100), barColor: 'bg-yellow-400' },
+          { label: '4–7 days', value: heldDuration.d4to7, bar: Math.round((heldDuration.d4to7 / heldTotal) * 100), barColor: 'bg-orange-400' },
+          { label: '7+ days', value: heldDuration.over7, bar: Math.round((heldDuration.over7 / heldTotal) * 100), barColor: 'bg-red-400' },
+        ].filter((r) => r.value > 0),
+      },
+      {
+        title: 'By Customer',
+        rows: Object.entries(
+          countByField(heldItems, (m) =>
+            m.customer
+              ? `${m.customer.firstName} ${m.customer.lastName}`
+              : 'Unknown',
+          ),
+        )
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({
+            label: name,
+            value: count,
+            icon: User,
+            iconColor: 'text-amber-400',
+          })),
+      },
+    ];
+
+    return {
+      receivedToday: receivedTodayItems.length,
+      pending: pendingItems.length,
+      forwarded: forwardedItems.length,
+      held: heldItems.length,
+      receivedTodayDetails,
+      pendingDetails,
+      forwardedDetails,
+      heldDetails,
+      // Summaries
+      receivedTodaySummary:
+        receivedTodayItems.length > 0
+          ? `${receivedTodayItems.filter((m) => m.status === 'received').length} unscanned · ${receivedTodayItems.filter((m) => m.scanImage).length} already scanned`
+          : 'No mail received today yet',
+      pendingSummary: `${pendByStatus['received'] || 0} awaiting scan · ${pendByStatus['scanned'] || 0} scanned & awaiting next step`,
+      forwardedSummary:
+        forwardedItems.length > 0
+          ? `${forwardedItems.length} piece${forwardedItems.length !== 1 ? 's' : ''} forwarded to customers`
+          : 'No forwarded mail',
+      heldSummary:
+        heldItems.length > 0
+          ? `${heldItems.length} piece${heldItems.length !== 1 ? 's' : ''} on hold · Oldest: ${Math.round(Math.max(...heldItems.map((m) => (now.getTime() - new Date(m.receivedAt).getTime()) / 86400000)))} days`
+          : 'No mail on hold',
+    };
   }, []);
 }
 
@@ -71,91 +307,133 @@ function useMailStats() {
 /* -------------------------------------------------------------------------- */
 
 function useColumns(onView: (mail: MailPiece) => void) {
-  return useMemo<Column<MailRow>[]>(() => [
-    {
-      key: 'type',
-      label: 'Type',
-      width: 'w-24',
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          {mailTypeIcon[row.type] || mailTypeIcon.other}
-          <span className="capitalize text-xs font-medium">{row.type}</span>
-        </div>
-      ) },
-    {
-      key: 'customer',
-      label: 'Customer',
-      sortable: true,
-      render: (row) => {
-        const c = row.customer;
-        return c ? (
-          <div>
-            <span className="text-sm text-surface-200 font-medium">
-              {c.firstName} {c.lastName}
-            </span>
-            <span className="ml-2 text-[10px] text-surface-500">{c.pmbNumber}</span>
+  return useMemo<Column<MailRow>[]>(
+    () => [
+      {
+        key: 'type',
+        label: 'Type',
+        width: 'w-24',
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            {mailTypeIcon[row.type] || mailTypeIcon.other}
+            <span className="capitalize text-xs font-medium">{row.type}</span>
           </div>
-        ) : (
-          <span className="text-surface-500">—</span>
-        );
-      } },
-    {
-      key: 'sender',
-      label: 'Sender',
-      sortable: true,
-      render: (row) => <span className="text-sm">{row.sender || '—'}</span> },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (row) => <Badge status={row.status} className="text-xs">{row.status}</Badge> },
-    {
-      key: 'receivedAt',
-      label: 'Received',
-      sortable: true,
-      render: (row) => <span className="text-xs text-surface-400">{formatDate(row.receivedAt)}</span> },
-    {
-      key: 'scan',
-      label: 'Scan',
-      width: 'w-16',
-      align: 'center',
-      render: (row) =>
-        row.scanImage ? (
-          <a
-            href={row.scanImage}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-brand-400 hover:bg-brand-400/10 hover:text-brand-300 transition-colors"
-            title="View scanned mail"
-          >
-            <FileImage className="h-4 w-4" />
-          </a>
-        ) : (
-          <span className="text-surface-600">—</span>
-        ) },
-    {
-      key: 'actions',
-      label: '',
-      align: 'right',
-      width: 'w-12',
-      render: (row) => (
-        <DropdownMenu
-          trigger={
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
-              <MoreVertical className="h-4 w-4" />
+        ),
+      },
+      {
+        key: 'customer',
+        label: 'Customer',
+        sortable: true,
+        render: (row) => {
+          const c = row.customer;
+          return c ? (
+            <div>
+              <span className="text-sm text-surface-200 font-medium">
+                {c.firstName} {c.lastName}
+              </span>
+              <span className="ml-2 text-[10px] text-surface-500">
+                {c.pmbNumber}
+              </span>
             </div>
-          }
-          items={[
-            { id: 'view', label: 'View Details', icon: <Eye className="h-4 w-4" />, onClick: () => onView(row) },
-            { id: 'notify', label: 'Notify Customer', icon: <Send className="h-4 w-4" /> },
-            { id: 'hold', label: 'Hold', icon: <Hand className="h-4 w-4" /> },
-            { id: 'forward', label: 'Forward', icon: <Forward className="h-4 w-4" /> },
-            'separator',
-            { id: 'discard', label: 'Discard', icon: <Trash2 className="h-4 w-4" />, danger: true },
-          ]}
-        />
-      ) },
-  ], [onView]);
+          ) : (
+            <span className="text-surface-500">—</span>
+          );
+        },
+      },
+      {
+        key: 'sender',
+        label: 'Sender',
+        sortable: true,
+        render: (row) => <span className="text-sm">{row.sender || '—'}</span>,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        render: (row) => (
+          <Badge status={row.status} className="text-xs">
+            {row.status}
+          </Badge>
+        ),
+      },
+      {
+        key: 'receivedAt',
+        label: 'Received',
+        sortable: true,
+        render: (row) => (
+          <span className="text-xs text-surface-400">
+            {formatDate(row.receivedAt)}
+          </span>
+        ),
+      },
+      {
+        key: 'scan',
+        label: 'Scan',
+        width: 'w-16',
+        align: 'center',
+        render: (row) =>
+          row.scanImage ? (
+            <a
+              href={row.scanImage}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-brand-400 hover:bg-brand-400/10 hover:text-brand-300 transition-colors"
+              title="View scanned mail"
+            >
+              <FileImage className="h-4 w-4" />
+            </a>
+          ) : (
+            <span className="text-surface-600">—</span>
+          ),
+      },
+      {
+        key: 'actions',
+        label: '',
+        align: 'right',
+        width: 'w-12',
+        render: (row) => (
+          <DropdownMenu
+            trigger={
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
+                <MoreVertical className="h-4 w-4" />
+              </div>
+            }
+            items={[
+              {
+                id: 'view',
+                label: 'View Details',
+                icon: <Eye className="h-4 w-4" />,
+                onClick: () => onView(row),
+              },
+              {
+                id: 'notify',
+                label: 'Notify Customer',
+                icon: <Send className="h-4 w-4" />,
+              },
+              {
+                id: 'hold',
+                label: 'Hold',
+                icon: <Hand className="h-4 w-4" />,
+              },
+              {
+                id: 'forward',
+                label: 'Forward',
+                icon: <Forward className="h-4 w-4" />,
+              },
+              'separator',
+              {
+                id: 'discard',
+                label: 'Discard',
+                icon: <Trash2 className="h-4 w-4" />,
+                danger: true,
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+    [onView],
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -167,7 +445,6 @@ export default function MailPage() {
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const { lastActionByVerb } = useActivityLog();
   const lastMailAction = lastActionByVerb('mail.scan');
-  
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
   const stats = useMailStats();
@@ -181,11 +458,31 @@ export default function MailPage() {
 
   const tabs = [
     { id: 'all', label: 'All', count: mailPieces.length },
-    { id: 'received', label: 'Received', count: mailPieces.filter((m) => m.status === 'received').length },
-    { id: 'scanned', label: 'Scanned', count: mailPieces.filter((m) => m.status === 'scanned').length },
-    { id: 'notified', label: 'Notified', count: mailPieces.filter((m) => m.status === 'notified').length },
-    { id: 'held', label: 'Held', count: mailPieces.filter((m) => m.status === 'held').length },
-    { id: 'forwarded', label: 'Forwarded', count: mailPieces.filter((m) => m.status === 'forwarded').length },
+    {
+      id: 'received',
+      label: 'Received',
+      count: mailPieces.filter((m) => m.status === 'received').length,
+    },
+    {
+      id: 'scanned',
+      label: 'Scanned',
+      count: mailPieces.filter((m) => m.status === 'scanned').length,
+    },
+    {
+      id: 'notified',
+      label: 'Notified',
+      count: mailPieces.filter((m) => m.status === 'notified').length,
+    },
+    {
+      id: 'held',
+      label: 'Held',
+      count: mailPieces.filter((m) => m.status === 'held').length,
+    },
+    {
+      id: 'forwarded',
+      label: 'Forwarded',
+      count: mailPieces.filter((m) => m.status === 'forwarded').length,
+    },
   ];
 
   return (
@@ -193,36 +490,55 @@ export default function MailPage() {
       {/* Header */}
       <PageHeader
         title="Mail Management"
-        badge={lastMailAction ? <PerformedBy entry={lastMailAction} showAction className="ml-2" /> : undefined}
+        badge={
+          lastMailAction ? (
+            <PerformedBy entry={lastMailAction} showAction className="ml-2" />
+          ) : undefined
+        }
         description="Process, scan, and manage incoming mail for all customers"
         actions={
-          <Button leftIcon={<ScanLine className="h-4 w-4" />} onClick={() => setScanModalOpen(true)}>
+          <Button
+            leftIcon={<ScanLine className="h-4 w-4" />}
+            onClick={() => setScanModalOpen(true)}
+          >
             Scan Mail
           </Button>
         }
       />
 
-      {/* Stats */}
+      {/* Expandable Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Inbox className="h-5 w-5" />}
+        <ExpandableStatCard
+          icon={<Inbox className="h-5 w-5 text-blue-400" />}
           title="Received Today"
           value={stats.receivedToday}
+          className="[&_div.bg-primary-50]:bg-blue-500/15 [&_div.text-primary-600]:text-blue-400"
+          details={stats.receivedTodayDetails}
+          detailSummary={stats.receivedTodaySummary}
         />
-        <StatCard
-          icon={<Clock className="h-5 w-5" />}
+        <ExpandableStatCard
+          icon={<Clock className="h-5 w-5 text-yellow-400" />}
           title="Pending Action"
           value={stats.pending}
+          className="[&_div.bg-primary-50]:bg-yellow-500/15 [&_div.text-primary-600]:text-yellow-400"
+          details={stats.pendingDetails}
+          detailSummary={stats.pendingSummary}
         />
-        <StatCard
-          icon={<ArrowUpRight className="h-5 w-5" />}
+        <ExpandableStatCard
+          icon={<ArrowUpRight className="h-5 w-5 text-indigo-400" />}
           title="Forwarded"
           value={stats.forwarded}
+          className="[&_div.bg-primary-50]:bg-indigo-500/15 [&_div.text-primary-600]:text-indigo-400"
+          details={stats.forwardedDetails}
+          detailSummary={stats.forwardedSummary}
         />
-        <StatCard
-          icon={<Hand className="h-5 w-5" />}
+        <ExpandableStatCard
+          icon={<Hand className="h-5 w-5 text-amber-400" />}
           title="Held"
           value={stats.held}
+          className="[&_div.bg-primary-50]:bg-amber-500/15 [&_div.text-primary-600]:text-amber-400"
+          details={stats.heldDetails}
+          detailSummary={stats.heldSummary}
         />
       </div>
 
@@ -249,8 +565,12 @@ export default function MailPage() {
         size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setDetailModal(null)}>Close</Button>
-            <Button leftIcon={<Send className="h-4 w-4" />}>Notify Customer</Button>
+            <Button variant="secondary" onClick={() => setDetailModal(null)}>
+              Close
+            </Button>
+            <Button leftIcon={<Send className="h-4 w-4" />}>
+              Notify Customer
+            </Button>
           </>
         }
       >
@@ -261,7 +581,9 @@ export default function MailPage() {
                 <p className="text-xs text-surface-500">Type</p>
                 <div className="flex items-center gap-2 mt-1">
                   {mailTypeIcon[detailModal.type]}
-                  <span className="text-sm text-surface-200 capitalize font-medium">{detailModal.type}</span>
+                  <span className="text-sm text-surface-200 capitalize font-medium">
+                    {detailModal.type}
+                  </span>
                 </div>
               </div>
               <div>
@@ -280,16 +602,22 @@ export default function MailPage() {
               </div>
               <div>
                 <p className="text-xs text-surface-500">Sender</p>
-                <p className="text-sm text-surface-200 mt-1">{detailModal.sender || '—'}</p>
+                <p className="text-sm text-surface-200 mt-1">
+                  {detailModal.sender || '—'}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-surface-500">Received</p>
-                <p className="text-sm text-surface-200 mt-1">{formatDateTime(detailModal.receivedAt)}</p>
+                <p className="text-sm text-surface-200 mt-1">
+                  {formatDateTime(detailModal.receivedAt)}
+                </p>
               </div>
               {detailModal.action && (
                 <div>
                   <p className="text-xs text-surface-500">Action</p>
-                  <p className="text-sm text-surface-200 mt-1 capitalize">{detailModal.action.replace('_', ' ')}</p>
+                  <p className="text-sm text-surface-200 mt-1 capitalize">
+                    {detailModal.action.replace('_', ' ')}
+                  </p>
                 </div>
               )}
             </div>
@@ -305,8 +633,12 @@ export default function MailPage() {
                   <FileImage className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-surface-200">Scanned Document</p>
-                  <p className="text-xs text-surface-400 truncate">{detailModal.scanImage}</p>
+                  <p className="text-sm font-medium text-surface-200">
+                    Scanned Document
+                  </p>
+                  <p className="text-xs text-surface-400 truncate">
+                    {detailModal.scanImage}
+                  </p>
                 </div>
                 <ExternalLink className="h-4 w-4 text-surface-400 group-hover:text-brand-400 transition-colors shrink-0" />
               </a>
@@ -319,7 +651,9 @@ export default function MailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-surface-400">No scan available</p>
-                  <p className="text-xs text-surface-500">Mail has not been scanned yet</p>
+                  <p className="text-xs text-surface-500">
+                    Mail has not been scanned yet
+                  </p>
                 </div>
               </div>
             )}
@@ -343,8 +677,15 @@ export default function MailPage() {
         size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setScanModalOpen(false)}>Cancel</Button>
-            <Button leftIcon={<ScanLine className="h-4 w-4" />}>Save Mail Piece</Button>
+            <Button
+              variant="secondary"
+              onClick={() => setScanModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button leftIcon={<ScanLine className="h-4 w-4" />}>
+              Save Mail Piece
+            </Button>
           </>
         }
       >
@@ -352,9 +693,12 @@ export default function MailPage() {
           <Select
             label="Customer"
             placeholder="Select customer..."
-            options={customers.filter((c) => c.status === 'active').map((c) => ({
-              value: c.id,
-              label: `${c.firstName} ${c.lastName} (${c.pmbNumber})` }))}
+            options={customers
+              .filter((c) => c.status === 'active')
+              .map((c) => ({
+                value: c.id,
+                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
+              }))}
           />
           <Select
             label="Mail Type"
@@ -368,7 +712,10 @@ export default function MailPage() {
             ]}
           />
           <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
-          <Textarea label="Notes" placeholder="Any additional notes about this mail piece..." />
+          <Textarea
+            label="Notes"
+            placeholder="Any additional notes about this mail piece..."
+          />
         </div>
       </Modal>
     </div>
