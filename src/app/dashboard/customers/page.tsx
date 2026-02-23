@@ -70,7 +70,7 @@ const IMPORTABLE_FIELDS = [
   { key: 'lastName', label: 'Last Name', required: true },
   { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' },
   { key: 'businessName', label: 'Business Name' },
-  { key: 'pmbNumber', label: 'PMB Number', required: true },
+  { key: 'pmbNumber', label: 'PMB Number' },
   { key: 'platform', label: 'Store' },
   { key: 'billingTerms', label: 'Billing Terms' },
   { key: 'notes', label: 'Notes' },
@@ -171,7 +171,6 @@ export default function CustomersPage() {
     const errors: Record<string, string> = {};
     if (!form.firstName.trim()) errors.firstName = 'First name is required';
     if (!form.lastName.trim()) errors.lastName = 'Last name is required';
-    if (!form.pmbNumber.trim()) errors.pmbNumber = 'PMB number is required';
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Invalid email address';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -393,7 +392,7 @@ export default function CustomersPage() {
           <div className="flex flex-col items-center text-center py-8">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4"><CheckCircle2 className="h-8 w-8 text-emerald-600" /></div>
             <h3 className="text-lg font-semibold text-surface-100 mb-1">Customer Added!</h3>
-            <p className="text-sm text-surface-400"><span className="font-medium text-surface-200">{form.firstName} {form.lastName}</span> ({form.pmbNumber}) has been created.</p>
+            <p className="text-sm text-surface-400"><span className="font-medium text-surface-200">{form.firstName} {form.lastName}</span>{form.pmbNumber ? ` (${form.pmbNumber})` : ''} has been created.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -410,7 +409,7 @@ export default function CustomersPage() {
             <div>
               <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-4">Mailbox Setup</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input label="PMB Number *" placeholder="PMB-0100" value={form.pmbNumber} onChange={(e) => handleFormChange('pmbNumber', e.target.value)} error={formErrors.pmbNumber} />
+                <Input label="PMB Number" placeholder="PMB-0100" value={form.pmbNumber} onChange={(e) => handleFormChange('pmbNumber', e.target.value)} error={formErrors.pmbNumber} />
                 <Select label="Store" options={[{ value: 'iPostal', label: 'iPostal' },{ value: 'anytime', label: 'Anytime Mailbox' },{ value: 'postscan', label: 'PostScan Mail' },{ value: 'other', label: 'Other' }]} value={form.platform} onChange={(e) => handleFormChange('platform', e.target.value)} />
                 <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' },{ value: 'Quarterly', label: 'Quarterly' },{ value: 'Semiannual', label: 'Semiannual (6 months)' },{ value: 'Annual', label: 'Annual' },{ value: 'Custom', label: 'Custom' }]} value={form.billingTerms} onChange={(e) => handleFormChange('billingTerms', e.target.value)} />
               </div>
@@ -478,7 +477,7 @@ export default function CustomersPage() {
             )}
             <div className="rounded-lg border border-surface-700/50 bg-surface-800/30 p-4">
               <h4 className="text-sm font-medium text-surface-200 mb-2">Expected Format</h4>
-              <p className="text-xs text-surface-400 mb-3">Your CSV should have a header row. We auto-detect the column mapping. Required: <span className="text-surface-200">First Name, Last Name, PMB Number</span></p>
+              <p className="text-xs text-surface-400 mb-3">Your CSV should have a header row. We auto-detect the column mapping. Required: <span className="text-surface-200">First Name, Last Name</span></p>
               <div className="overflow-x-auto">
                 <table className="text-xs text-surface-400 border border-surface-700 rounded">
                   <thead><tr className="bg-surface-800">

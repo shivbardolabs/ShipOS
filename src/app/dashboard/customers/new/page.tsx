@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 const WIZARD_STEPS: Step[] = [
-  { id: 'info', label: 'Customer Info', description: 'Name, contact, PMB' },
+  { id: 'info', label: 'Customer Info', description: 'Name & contact details' },
   { id: 'ids', label: 'Identification', description: 'Two forms of ID' },
   { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
   { id: 'agreement', label: 'Service Agreement', description: 'Sign & finalize' },
@@ -209,7 +209,6 @@ export default function NewCustomerPage() {
     if (stepNum === 0) {
       if (!customerForm.firstName.trim()) errors.firstName = 'Required';
       if (!customerForm.lastName.trim()) errors.lastName = 'Required';
-      if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB';
       if (customerForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
     }
     if (stepNum === 1) {
@@ -240,12 +239,12 @@ export default function NewCustomerPage() {
           <h2 className="text-2xl font-bold text-surface-100">Customer Created Successfully</h2>
           <p className="text-surface-400 max-w-md mx-auto">
             <span className="text-surface-200 font-medium">{customerForm.firstName} {customerForm.lastName}</span> has been
-            set up at <span className="font-mono text-primary-400">{formatPmbNumber(parseInt(customerForm.pmbNumber))}</span> ({platformLabels[customerForm.platform as MailboxPlatform]?.label}).
+            set up{customerForm.pmbNumber ? <> at <span className="font-mono text-primary-400">{formatPmbNumber(parseInt(customerForm.pmbNumber))}</span></> : ''}{customerForm.platform ? <> ({platformLabels[customerForm.platform as MailboxPlatform]?.label})</> : ''} successfully.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto pt-4">
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">PMB</div>
-              <div className="text-sm font-semibold text-surface-100 font-mono">{formatPmbNumber(parseInt(customerForm.pmbNumber))}</div>
+              <div className="text-sm font-semibold text-surface-100 font-mono">{customerForm.pmbNumber ? formatPmbNumber(parseInt(customerForm.pmbNumber)) : 'N/A'}</div>
             </div>
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">IDs</div>
@@ -346,7 +345,7 @@ export default function NewCustomerPage() {
                     ]} value={customerForm.platform} onChange={(e) => { updateField('platform', e.target.value); updateField('pmbNumber', ''); }} />
 
                     <div className="relative">
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">PMB Number *</label>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">PMB Number</label>
                       <div className={cn('flex items-center gap-2 rounded-lg border bg-surface-900 px-3 py-2 cursor-pointer transition-colors', formErrors.pmbNumber ? 'border-red-500' : pmbDropdownOpen ? 'border-primary-500 ring-1 ring-primary-500/30' : 'border-surface-700 hover:border-surface-600')} onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)}>
                         {customerForm.pmbNumber ? (
                           <div className="flex items-center gap-2 flex-1">
@@ -629,7 +628,7 @@ export default function NewCustomerPage() {
                       <div><p className="text-base font-semibold text-surface-100">{customerForm.firstName} {customerForm.lastName}</p>{customerForm.businessName && <p className="text-xs text-surface-400">{customerForm.businessName}</p>}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-y-2 text-sm">
-                      <p className="text-surface-500">PMB</p><p className="text-surface-200 font-mono font-medium">{formatPmbNumber(parseInt(customerForm.pmbNumber))}</p>
+                      <p className="text-surface-500">PMB</p><p className="text-surface-200 font-mono font-medium">{customerForm.pmbNumber ? formatPmbNumber(parseInt(customerForm.pmbNumber)) : 'Not assigned'}</p>
                       <p className="text-surface-500">Platform</p><p className="text-surface-200">{platformLabels[customerForm.platform as MailboxPlatform]?.label}</p>
                       {customerForm.email && (<><p className="text-surface-500">Email</p><p className="text-surface-200">{customerForm.email}</p></>)}
                       {customerForm.phone && (<><p className="text-surface-500">Phone</p><p className="text-surface-200">{customerForm.phone}</p></>)}
