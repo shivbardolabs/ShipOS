@@ -140,6 +140,18 @@ const mailTypes: MailPiece['type'][] = ['letter', 'letter', 'magazine', 'catalog
 const mailStatuses: MailPiece['status'][] = ['received', 'scanned', 'notified', 'held', 'forwarded', 'discarded'];
 const mailSenders = ['IRS', 'State of California', 'Chase Bank', 'Wells Fargo', 'GEICO Insurance', 'AT&T', 'Verizon', 'Comcast', 'Time Magazine', 'Wall Street Journal', 'County Tax Assessor', 'Social Security Admin', 'DMV', 'Blue Cross', 'Fidelity Investments'];
 
+/** Generate a deterministic mail code for mock data (format: ML-XXXXXX) */
+function generateMailCode(index: number): string {
+  const code = String(100000 + index * 7331).slice(-6);
+  return `ML-${code}`;
+}
+
+/** Generate a deterministic mail code for mock data (format: ML-XXXXXX) */
+function generateMailCode(index: number): string {
+  const code = String(100000 + index * 7331).slice(-6);
+  return `ML-${code}`;
+}
+
 export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
   const custIdx = i % 26;
   const status = mailStatuses[i % mailStatuses.length];
@@ -154,6 +166,7 @@ export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
     customerId: customers[custIdx].id,
     customer: customers[custIdx],
     receivedAt: hoursAgo((i % 7) * 24 + i * 2),
+    mailCode: generateMailCode(i + 1),
   };
 });
 

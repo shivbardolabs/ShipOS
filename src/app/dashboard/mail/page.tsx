@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,11 @@ import {
   Clock,
   ArrowUpRight,
   ExternalLink,
-  FileImage } from 'lucide-react';
+  FileImage,
+  ClipboardCopy,
+  CheckCircle2,
+  Plus,
+  Hash } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -46,6 +50,16 @@ const mailTypeIcon: Record<string, React.ReactNode> = {
   other: <Inbox className="h-4 w-4 text-surface-400" /> };
 
 type MailRow = MailPiece & Record<string, unknown>;
+
+/** Generate a unique mail code (format: ML-XXXXXX) */
+function generateUniqueMailCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `ML-${code}`;
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Stats                                                                     */
@@ -72,6 +86,16 @@ function useMailStats() {
 
 function useColumns(onView: (mail: MailPiece) => void) {
   return useMemo<Column<MailRow>[]>(() => [
+    {
+      key: 'mailCode',
+      label: 'Code',
+      width: 'w-28',
+      sortable: true,
+      render: (row) => (
+        <span className="font-mono text-xs text-brand-400 font-semibold tracking-wide">
+          {row.mailCode || '—'}
+        </span>
+      ) },
     {
       key: 'type',
       label: 'Type',
@@ -164,10 +188,12 @@ function useColumns(onView: (mail: MailPiece) => void) {
 
 export default function MailPage() {
   const [activeTab, setActiveTab] = useState('all');
-  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [insertModalOpen, setInsertModalOpen] = useState(false);
+  const [insertStep, setInsertStep] = useState<'form' | 'success'>('form');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
   const { lastActionByVerb } = useActivityLog();
-  const lastMailAction = lastActionByVerb('mail.scan');
-  
+  const lastMailAction = lastActionByVerb('mail.insert') || lastActionByVerb('mail.scan');
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
   const stats = useMailStats();
@@ -188,6 +214,38 @@ export default function MailPage() {
     { id: 'forwarded', label: 'Forwarded', count: mailPieces.filter((m) => m.status === 'forwarded').length },
   ];
 
+  /* ------ Insert mail handlers ------ */
+
+  const handleOpenInsertModal = useCallback(() => {
+    setInsertStep('form');
+    setGeneratedCode('');
+    setCodeCopied(false);
+    setInsertModalOpen(true);
+  }, []);
+
+  const handleCloseInsertModal = useCallback(() => {
+    setInsertModalOpen(false);
+    setInsertStep('form');
+    setGeneratedCode('');
+    setCodeCopied(false);
+  }, []);
+
+  const handleConfirmInsert = useCallback(() => {
+    const code = generateUniqueMailCode();
+    setGeneratedCode(code);
+    setInsertStep('success');
+  }, []);
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // fallback: select text for manual copy
+    }
+  }, [generatedCode]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,8 +254,8 @@ export default function MailPage() {
         badge={lastMailAction ? <PerformedBy entry={lastMailAction} showAction className="ml-2" /> : undefined}
         description="Process, scan, and manage incoming mail for all customers"
         actions={
-          <Button leftIcon={<ScanLine className="h-4 w-4" />} onClick={() => setScanModalOpen(true)}>
-            Scan Mail
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleOpenInsertModal}>
+            Insert Mail
           </Button>
         }
       />
@@ -235,7 +293,7 @@ export default function MailPage() {
         data={filtered}
         keyAccessor={(row) => row.id}
         searchable={true}
-        searchPlaceholder="Search mail by customer, sender..."
+        searchPlaceholder="Search mail by customer, sender, code..."
         pageSize={10}
         emptyMessage="No mail pieces found"
         onRowClick={(row) => setDetailModal(row)}
@@ -256,6 +314,19 @@ export default function MailPage() {
       >
         {detailModal && (
           <div className="space-y-4">
+            {/* Mail Code Banner */}
+            {detailModal.mailCode && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
+                  <Hash className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-surface-500">Mail Code</p>
+                  <p className="text-lg font-mono font-bold text-brand-400 tracking-wider">{detailModal.mailCode}</p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-surface-500">Type</p>
@@ -334,42 +405,99 @@ export default function MailPage() {
         )}
       </Modal>
 
-      {/* Scan New Mail Modal */}
+      {/* Insert Mail Modal */}
       <Modal
-        open={scanModalOpen}
-        onClose={() => setScanModalOpen(false)}
-        title="Scan New Mail"
-        description="Log a new mail piece for a customer"
+        open={insertModalOpen}
+        onClose={handleCloseInsertModal}
+        title={insertStep === 'form' ? 'Insert Mail' : 'Mail Inserted Successfully'}
+        description={insertStep === 'form' ? 'Enter a new mail piece into the system for a customer' : undefined}
         size="md"
         footer={
-          <>
-            <Button variant="secondary" onClick={() => setScanModalOpen(false)}>Cancel</Button>
-            <Button leftIcon={<ScanLine className="h-4 w-4" />}>Save Mail Piece</Button>
-          </>
+          insertStep === 'form' ? (
+            <>
+              <Button variant="secondary" onClick={handleCloseInsertModal}>Cancel</Button>
+              <Button leftIcon={<ScanLine className="h-4 w-4" />} onClick={handleConfirmInsert}>
+                Confirm &amp; Upload
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleCloseInsertModal}>Done</Button>
+          )
         }
       >
-        <div className="space-y-4">
-          <Select
-            label="Customer"
-            placeholder="Select customer..."
-            options={customers.filter((c) => c.status === 'active').map((c) => ({
-              value: c.id,
-              label: `${c.firstName} ${c.lastName} (${c.pmbNumber})` }))}
-          />
-          <Select
-            label="Mail Type"
-            placeholder="Select type..."
-            options={[
-              { value: 'letter', label: 'Letter' },
-              { value: 'magazine', label: 'Magazine' },
-              { value: 'catalog', label: 'Catalog' },
-              { value: 'legal', label: 'Legal' },
-              { value: 'other', label: 'Other' },
-            ]}
-          />
-          <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
-          <Textarea label="Notes" placeholder="Any additional notes about this mail piece..." />
-        </div>
+        {insertStep === 'form' ? (
+          <div className="space-y-4">
+            <Select
+              label="Customer"
+              placeholder="Select customer..."
+              options={customers.filter((c) => c.status === 'active').map((c) => ({
+                value: c.id,
+                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})` }))}
+            />
+            <Select
+              label="Mail Type"
+              placeholder="Select type..."
+              options={[
+                { value: 'letter', label: 'Letter' },
+                { value: 'magazine', label: 'Magazine' },
+                { value: 'catalog', label: 'Catalog' },
+                { value: 'legal', label: 'Legal' },
+                { value: 'other', label: 'Other' },
+              ]}
+            />
+            <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
+            <Textarea label="Notes" placeholder="Any additional notes about this mail piece..." />
+          </div>
+        ) : (
+          <div className="space-y-5 py-2">
+            {/* Success icon */}
+            <div className="flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500/30">
+                <CheckCircle2 className="h-8 w-8 text-green-400" />
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-surface-300">
+              Mail piece has been uploaded to the platform. Write the code below on the physical mail piece.
+            </p>
+
+            {/* Generated Code Display */}
+            <div className="mx-auto max-w-xs">
+              <div className="rounded-xl bg-surface-800/80 border-2 border-brand-500/30 p-5">
+                <p className="text-center text-xs text-surface-500 uppercase tracking-wider mb-2">
+                  Unique Mail Code
+                </p>
+                <p className="text-center text-3xl font-mono font-bold text-brand-400 tracking-[0.2em] select-all">
+                  {generatedCode}
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={handleCopyCode}
+                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 border border-brand-500/20 transition-colors"
+                  >
+                    {codeCopied ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <ClipboardCopy className="h-4 w-4" />
+                        Copy Code
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3">
+              <p className="text-xs text-amber-400 font-medium">
+                ⚠️ Write this code clearly on the physical mail piece before filing it.
+              </p>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

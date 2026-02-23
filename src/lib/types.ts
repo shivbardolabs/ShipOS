@@ -75,6 +75,8 @@ export interface MailPiece {
   customerId: string;
   customer?: Customer;
   receivedAt: string;
+  /** Unique code assigned by the digital mail platform after insert & upload */
+  mailCode?: string;
 }
 
 export interface Shipment {
