@@ -24,7 +24,6 @@ import {
   ChevronRight,
   User,
   X,
-  Receipt,
   BookOpen,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
@@ -312,16 +311,6 @@ export default function CheckOutPage() {
 
   const selectAll = () => setSelectedIds(new Set(customerPackages.map((p) => p.id)));
   const deselectAll = () => setSelectedIds(new Set());
-
-  /* ---- Add-on toggles ---- */
-  const toggleAddOn = (id: string) => {
-    setEnabledAddOns((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   /* ---- Fee calculations ---- */
   const selectedPackages = useMemo(
