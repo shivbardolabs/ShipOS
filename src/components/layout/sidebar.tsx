@@ -221,14 +221,17 @@ export function Sidebar() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-200 truncate">
-                    {displayName}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-surface-200 truncate">
+                      {displayName}
+                    </p>
                     {localUser?.role && (
-                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon={false} />
+                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon />
                     )}
                   </div>
+                  <p className="text-[11px] text-surface-500 truncate mt-0.5">
+                    {user.email}
+                  </p>
                 </div>
 
                 <a

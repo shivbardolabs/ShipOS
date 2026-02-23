@@ -148,9 +148,9 @@ export function Header() {
           {/* Notification bell + dropdown panel */}
           <NotificationPanel />
 
-          {/* Role badge */}
+          {/* Role badge — persistent indicator next to user */}
           {localUser?.role && (
-            <RoleBadge role={localUser.role as UserRole} size="sm" showIcon />
+            <RoleBadge role={localUser.role as UserRole} size="md" showIcon />
           )}
 
           {/* User avatar + dropdown */}
