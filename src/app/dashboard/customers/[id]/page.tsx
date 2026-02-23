@@ -47,6 +47,7 @@ import {
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy, ActivityTimeline } from '@/components/ui/performed-by';
+import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
