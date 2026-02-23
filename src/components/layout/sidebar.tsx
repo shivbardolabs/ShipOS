@@ -181,16 +181,23 @@ export function Sidebar() {
           </div>
         ) : user ? (
           <>
-            {/* Role strip accent */}
-            {localUser?.role && (
-              <div
-                className="h-[2px] w-full"
-                style={{
-                  background: `linear-gradient(90deg, ${roleConfig[localUser.role as UserRole].stripFrom}, ${roleConfig[localUser.role as UserRole].stripTo})`,
-                }}
-              />
-            )}
-            <div className="px-4 py-4">
+            {/* ── Role banner ── */}
+            {localUser?.role && (() => {
+              const cfg = roleConfig[localUser.role as UserRole];
+              const RoleIcon = cfg.icon;
+              return (
+                <div
+                  className="flex items-center justify-center gap-2 py-1.5"
+                  style={{ background: `linear-gradient(90deg, ${cfg.stripFrom}, ${cfg.stripTo})` }}
+                >
+                  <RoleIcon style={{ height: 14, width: 14, color: '#fff' }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+                    {cfg.label}
+                  </span>
+                </div>
+              );
+            })()}
+            <div className="px-4 py-3">
               <div className="flex items-center gap-3">
                 {/* Avatar with role-colored ring */}
                 <div className="relative flex-shrink-0">
@@ -199,36 +206,32 @@ export function Sidebar() {
                     <img
                       src={user.picture}
                       alt={displayName}
-                      className={cn(
-                        'h-9 w-9 rounded-full object-cover ring-2',
-                        localUser?.role ? roleConfig[localUser.role as UserRole].ring : 'ring-surface-700'
-                      )}
+                      className="h-9 w-9 rounded-full object-cover"
+                      style={localUser?.role ? {
+                        boxShadow: `0 0 0 2.5px ${roleConfig[localUser.role as UserRole].stripFrom}`,
+                      } : undefined}
                     />
                   ) : (
-                    <div className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-400 text-xs font-bold text-white ring-2',
-                      localUser?.role ? roleConfig[localUser.role as UserRole].ring : 'ring-surface-700'
-                    )}>
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
+                      style={{
+                        background: localUser?.role
+                          ? `linear-gradient(135deg, ${roleConfig[localUser.role as UserRole].stripFrom}, ${roleConfig[localUser.role as UserRole].stripTo})`
+                          : 'linear-gradient(135deg, #6366f1, #818cf8)',
+                        boxShadow: localUser?.role
+                          ? `0 0 0 2.5px ${roleConfig[localUser.role as UserRole].stripFrom}40`
+                          : undefined,
+                      }}
+                    >
                       {initials}
                     </div>
-                  )}
-                  {/* Role dot on avatar */}
-                  {localUser?.role && (
-                    <span className="absolute -bottom-0.5 -right-0.5">
-                      <RoleDot role={localUser.role as UserRole} />
-                    </span>
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-surface-200 truncate">
-                      {displayName}
-                    </p>
-                    {localUser?.role && (
-                      <RoleBadge role={localUser.role as UserRole} size="xs" showIcon />
-                    )}
-                  </div>
+                  <p className="text-sm font-medium text-surface-200 truncate">
+                    {displayName}
+                  </p>
                   <p className="text-[11px] text-surface-500 truncate mt-0.5">
                     {user.email}
                   </p>

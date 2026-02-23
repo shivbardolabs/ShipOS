@@ -149,9 +149,28 @@ export function Header() {
           <NotificationPanel />
 
           {/* Role badge — persistent indicator next to user */}
-          {localUser?.role && (
-            <RoleBadge role={localUser.role as UserRole} size="md" showIcon />
-          )}
+          {localUser?.role && (() => {
+            const cfg = roleConfig[localUser.role as UserRole];
+            const RoleIcon = cfg.icon;
+            return (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full"
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase' as const,
+                  color: cfg.stripFrom,
+                  background: `${cfg.stripFrom}15`,
+                  border: `1.5px solid ${cfg.stripFrom}35`,
+                }}
+              >
+                <RoleIcon style={{ height: 14, width: 14 }} />
+                {cfg.label}
+              </span>
+            );
+          })()}
 
           {/* User avatar + dropdown */}
           {isLoading ? (
