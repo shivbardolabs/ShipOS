@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { PageHeader } from '@/components/layout/page-header';
-import { StatCard } from '@/components/ui/card';
+import { ExpandableStatCard } from '@/components/ui/expandable-stat-card';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   PackagePlus,
@@ -374,7 +374,7 @@ export default function DashboardPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/*  Operational Pulse — Primary 4 stat cards + expandable 8            */}
+      {/*  Operational Pulse — Expandable stat cards                          */}
       {/* ------------------------------------------------------------------ */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -395,64 +395,226 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Primary 4 — always visible */}
-          <StatCard
+          {/* Primary 4 — always visible, now expandable */}
+          <ExpandableStatCard
             icon={<Package className="h-5 w-5 text-amber-600" />}
             title="Packages Held"
             value={s.packagesHeld}
             change={-3}
-            className="[&>div>div]:bg-amber-50 [&>div>div]:text-amber-600"
+            href="/dashboard/packages"
+            className="[&_div.bg-primary-50]:bg-amber-50 [&_div.text-primary-600]:text-amber-600"
+            details={[
+              {
+                title: 'By Carrier',
+                rows: [
+                  { label: 'Amazon', value: 12, bar: 32, barColor: 'bg-amber-500', icon: Package, iconColor: 'text-amber-400' },
+                  { label: 'UPS', value: 9, bar: 24, barColor: 'bg-amber-400', icon: Package, iconColor: 'text-amber-400' },
+                  { label: 'FedEx', value: 8, bar: 22, barColor: 'bg-amber-400', icon: Package, iconColor: 'text-amber-400' },
+                  { label: 'USPS', value: 5, bar: 14, barColor: 'bg-amber-300', icon: Package, iconColor: 'text-amber-400' },
+                  { label: 'Other', value: 3, bar: 8, barColor: 'bg-amber-300', icon: Package, iconColor: 'text-amber-400' },
+                ],
+              },
+              {
+                title: 'Hold Duration',
+                rows: [
+                  { label: '< 24 hours', value: 15, bar: 41, barColor: 'bg-emerald-400' },
+                  { label: '1–3 days', value: 14, bar: 38, barColor: 'bg-yellow-400' },
+                  { label: '4–7 days', value: 6, bar: 16, barColor: 'bg-orange-400' },
+                  { label: '7+ days', value: 2, bar: 5, barColor: 'bg-red-400' },
+                ],
+              },
+            ]}
+            detailSummary="Avg hold time: 2.1 days · Oldest: 9 days (PMB-0007)"
           />
-          <StatCard
+          <ExpandableStatCard
             icon={<PackagePlus className="h-5 w-5 text-teal-400" />}
             title="Checked In Today"
             value={s.packagesCheckedInToday}
             change={12}
-            className="[&>div>div]:bg-teal-500/15 [&>div>div]:text-teal-400"
+            href="/dashboard/packages"
+            className="[&_div.bg-primary-50]:bg-teal-500/15 [&_div.text-primary-600]:text-teal-400"
+            details={[
+              {
+                title: 'By Hour',
+                rows: [
+                  { label: '8 AM – 10 AM', value: 3, bar: 21, barColor: 'bg-teal-300' },
+                  { label: '10 AM – 12 PM', value: 5, bar: 36, barColor: 'bg-teal-400' },
+                  { label: '12 PM – 2 PM', value: 4, bar: 29, barColor: 'bg-teal-400' },
+                  { label: '2 PM – Now', value: 2, bar: 14, barColor: 'bg-teal-300' },
+                ],
+              },
+              {
+                title: 'By Carrier',
+                rows: [
+                  { label: 'Amazon', value: 5, bar: 36, barColor: 'bg-teal-500' },
+                  { label: 'UPS', value: 4, bar: 29, barColor: 'bg-teal-400' },
+                  { label: 'FedEx', value: 3, bar: 21, barColor: 'bg-teal-400' },
+                  { label: 'USPS', value: 2, bar: 14, barColor: 'bg-teal-300' },
+                ],
+              },
+            ]}
+            detailSummary="Yesterday: 12 check-ins · Weekly avg: 13/day"
           />
-          <StatCard
+          <ExpandableStatCard
             icon={<PackageCheck className="h-5 w-5 text-emerald-600" />}
             title="Released Today"
             value={s.packagesReleasedToday}
             change={8}
-            className="[&>div>div]:bg-emerald-50 [&>div>div]:text-emerald-600"
+            href="/dashboard/packages"
+            className="[&_div.bg-primary-50]:bg-emerald-50 [&_div.text-primary-600]:text-emerald-600"
+            details={[
+              {
+                title: 'By Method',
+                rows: [
+                  { label: 'Customer Pickup', value: 6, bar: 67, barColor: 'bg-emerald-500' },
+                  { label: 'Authorized Agent', value: 2, bar: 22, barColor: 'bg-emerald-400' },
+                  { label: 'Forwarded / Shipped', value: 1, bar: 11, barColor: 'bg-emerald-300' },
+                ],
+              },
+              {
+                title: 'Comparison',
+                rows: [
+                  { label: 'Yesterday', value: 8 },
+                  { label: 'Weekly Average', value: '10/day' },
+                  { label: 'Release Rate', value: '24%' },
+                ],
+              },
+            ]}
+            detailSummary="Avg time-to-release: 1.8 days"
           />
-          <StatCard
+          <ExpandableStatCard
             icon={<DollarSign className="h-5 w-5 text-green-400" />}
             title="Revenue Today"
             value={formatCurrency(s.revenueToday)}
             change={6}
-            className="[&>div>div]:bg-green-500/15 [&>div>div]:text-green-400"
+            href="/dashboard/invoicing"
+            className="[&_div.bg-primary-50]:bg-green-500/15 [&_div.text-primary-600]:text-green-400"
+            details={[
+              {
+                title: 'Breakdown',
+                rows: [
+                  { label: 'Shipping Labels', value: '$412.00', bar: 49, barColor: 'bg-green-500' },
+                  { label: 'Mailbox Rentals', value: '$195.50', bar: 23, barColor: 'bg-green-400' },
+                  { label: 'Storage Fees', value: '$128.00', bar: 15, barColor: 'bg-green-400' },
+                  { label: 'Packing / Supplies', value: '$72.00', bar: 8, barColor: 'bg-green-300' },
+                  { label: 'Notary & Other', value: '$40.00', bar: 5, barColor: 'bg-green-300' },
+                ],
+              },
+              {
+                title: 'Trend',
+                rows: [
+                  { label: 'Yesterday', value: '$799.20' },
+                  { label: 'Weekly Average', value: '$823/day' },
+                  { label: 'MTD Revenue', value: '$17,283' },
+                ],
+              },
+            ]}
+            detailSummary="6% above daily average · Top source: Shipping Labels"
           />
 
           {/* Secondary 4 — progressive disclosure */}
           {showAllStats && (
             <>
-              <StatCard
+              <ExpandableStatCard
                 icon={<Users className="h-5 w-5 text-primary-600" />}
                 title="Active Customers"
                 value={s.activeCustomers}
                 change={2}
-                className="[&>div>div]:bg-primary-50 [&>div>div]:text-primary-600"
+                href="/dashboard/customers"
+                className="[&_div.bg-primary-50]:bg-primary-50 [&_div.text-primary-600]:text-primary-600"
+                details={[
+                  {
+                    title: 'By Platform',
+                    rows: [
+                      { label: 'iPostal', value: 10, bar: 38, barColor: 'bg-primary-500' },
+                      { label: 'PostScan', value: 7, bar: 27, barColor: 'bg-primary-400' },
+                      { label: 'Anytime', value: 6, bar: 23, barColor: 'bg-primary-400' },
+                      { label: 'Other', value: 3, bar: 12, barColor: 'bg-primary-300' },
+                    ],
+                  },
+                  {
+                    title: 'Activity',
+                    rows: [
+                      { label: 'New This Month', value: 2 },
+                      { label: 'Renewals Due (30d)', value: 4 },
+                      { label: 'Suspended', value: 2 },
+                    ],
+                  },
+                ]}
+                detailSummary="2 customers closed in last 90 days"
               />
-              <StatCard
+              <ExpandableStatCard
                 icon={<AlertTriangle className="h-5 w-5 text-rose-400" />}
                 title="ID Expiring Soon"
                 value={s.idExpiringSoon}
-                className="[&>div>div]:bg-rose-500/15 [&>div>div]:text-rose-400"
+                href="/dashboard/compliance"
+                className="[&_div.bg-primary-50]:bg-rose-500/15 [&_div.text-primary-600]:text-rose-400"
+                details={[
+                  {
+                    title: 'Expiring Customers',
+                    rows: [
+                      { label: 'Steven Allen (PMB-0023)', value: '3 days', icon: AlertTriangle, iconColor: 'text-red-400' },
+                      { label: 'David Kim (PMB-0005)', value: '5 days', icon: AlertTriangle, iconColor: 'text-red-400' },
+                      { label: 'Linda Nakamura (PMB-0002)', value: '12 days', icon: AlertTriangle, iconColor: 'text-orange-400' },
+                      { label: 'Sarah Taylor (PMB-0012)', value: '30 days', icon: AlertTriangle, iconColor: 'text-yellow-400' },
+                    ],
+                  },
+                ]}
+                detailSummary="2 IDs already expired · 1 reminder sent today"
               />
-              <StatCard
+              <ExpandableStatCard
                 icon={<Truck className="h-5 w-5 text-indigo-600" />}
                 title="Shipments Today"
                 value={s.shipmentsToday}
                 change={15}
-                className="[&>div>div]:bg-indigo-50 [&>div>div]:text-indigo-600"
+                href="/dashboard/shipping"
+                className="[&_div.bg-primary-50]:bg-indigo-50 [&_div.text-primary-600]:text-indigo-600"
+                details={[
+                  {
+                    title: 'By Carrier',
+                    rows: [
+                      { label: 'FedEx', value: 2, bar: 33, barColor: 'bg-indigo-500' },
+                      { label: 'UPS', value: 2, bar: 33, barColor: 'bg-indigo-400' },
+                      { label: 'USPS', value: 1, bar: 17, barColor: 'bg-indigo-300' },
+                      { label: 'DHL', value: 1, bar: 17, barColor: 'bg-indigo-300' },
+                    ],
+                  },
+                  {
+                    title: 'Service Level',
+                    rows: [
+                      { label: 'Express / Overnight', value: 2 },
+                      { label: 'Ground / Standard', value: 3 },
+                      { label: 'International', value: 1 },
+                    ],
+                  },
+                ]}
+                detailSummary="Total shipping cost: $187.40 · Avg margin: 22%"
               />
-              <StatCard
+              <ExpandableStatCard
                 icon={<Bell className="h-5 w-5 text-primary-600" />}
                 title="Notifications Sent"
                 value={s.notificationsSent}
-                className="[&>div>div]:bg-primary-50 [&>div>div]:text-primary-600"
+                href="/dashboard/notifications"
+                className="[&_div.bg-primary-50]:bg-primary-50 [&_div.text-primary-600]:text-primary-600"
+                details={[
+                  {
+                    title: 'By Channel',
+                    rows: [
+                      { label: 'SMS', value: 15, bar: 65, barColor: 'bg-primary-500' },
+                      { label: 'Email', value: 8, bar: 35, barColor: 'bg-primary-400' },
+                    ],
+                  },
+                  {
+                    title: 'By Type',
+                    rows: [
+                      { label: 'Package Arrival', value: 10, bar: 43, barColor: 'bg-blue-400' },
+                      { label: 'Pickup Reminder', value: 6, bar: 26, barColor: 'bg-amber-400' },
+                      { label: 'Renewal / ID Alert', value: 4, bar: 17, barColor: 'bg-orange-400' },
+                      { label: 'Shipment Update', value: 3, bar: 13, barColor: 'bg-indigo-400' },
+                    ],
+                  },
+                ]}
+                detailSummary="Delivery rate: 98% · 0 failures today"
               />
             </>
           )}
