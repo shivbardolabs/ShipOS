@@ -21,6 +21,136 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.11.0                                                    */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.11.0',
+    date: '2026-02-23',
+    title: 'Add Account Status tab and A/P-based payment to Package Checkout, Notification click navigation, PMB display, carrier tracking links, Add PMB customer setup wizard with USPS CMRA compliance',
+    summary:
+      'This release includes 29 updates.',
+    highlights: ['Add Account', 'Notification click', 'Add PMB'],
+    changes: [
+      {
+        text: 'Add Account Status tab and A/P-based payment to Package Checkout',
+        type: 'feature',
+      },
+      {
+        text: 'Notification click navigation, PMB display, carrier tracking links',
+        type: 'feature',
+      },
+      {
+        text: 'Add PMB customer setup wizard with USPS CMRA compliance',
+        type: 'feature',
+      },
+      {
+        text: 'Update Add Customer form per testing feedback',
+        type: 'feature',
+      },
+      {
+        text: 'Add Resend email + Twilio SMS notification service',
+        type: 'feature',
+      },
+      {
+        text: 'Implement working +Invite User flow in Settings → Users & Roles',
+        type: 'feature',
+      },
+      {
+        text: 'Add PostalMate & ShipRite competitor comparison tiles to pricing page',
+        type: 'feature',
+      },
+      {
+        text: 'Shared public nav, /features page, changelog update',
+        type: 'feature',
+      },
+      {
+        text: 'Add support section to ShipOS home page',
+        type: 'feature',
+      },
+      {
+        text: 'Add pricing page with Starter/Pro/Enterprise tiers',
+        type: 'feature',
+      },
+      {
+        text: 'Add product changelog with timeline UI and header link',
+        type: 'feature',
+      },
+      {
+        text: 'Add tenancy and users & roles',
+        type: 'feature',
+      },
+      {
+        text: 'Dual-mode checkout lookup — PMB number or customer name',
+        type: 'feature',
+      },
+      {
+        text: 'Add loyalty program with tiers, points, rewards, and referrals',
+        type: 'feature',
+      },
+      {
+        text: 'Homepage nav + Products, Support, Customers, About pages',
+        type: 'feature',
+      },
+      {
+        text: 'Remove duplicate Mailbox Config tab entry in settings',
+        type: 'fix',
+      },
+      {
+        text: 'Replace conditional \'primary\' variant with \'default\'',
+        type: 'fix',
+      },
+      {
+        text: 'Replace variant=\'primary\' with \'default\' to match ButtonVariant type',
+        type: 'fix',
+      },
+      {
+        text: 'Remove unused formatDate import to fix Vercel build',
+        type: 'fix',
+      },
+      {
+        text: 'Combine competitor comparison into single 3-column table',
+        type: 'improvement',
+      },
+      {
+        text: 'Move support to dedicated /support page',
+        type: 'fix',
+      },
+      {
+        text: 'Update free trial from 14 days to 30 days',
+        type: 'fix',
+      },
+      {
+        text: 'Add ShipOS logo PNG assets for Auth0',
+        type: 'improvement',
+      },
+      {
+        text: 'Vercel/pnpm build — ESLint config, Prisma hoisting, seed exclusion',
+        type: 'fix',
+      },
+      {
+        text: 'Vercel build — run prisma generate before Next.js build',
+        type: 'fix',
+      },
+      {
+        text: 'Remove unused formatDateTime import in notification-panel',
+        type: 'fix',
+      },
+      {
+        text: 'Wire up notification bell with dropdown panel',
+        type: 'fix',
+      },
+      {
+        text: 'Remove marketing pages from ShipOS',
+        type: 'improvement',
+      },
+      {
+        text: 'Add eslint-disable for Auth0 `<a>` links',
+        type: 'fix',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   /*  v0.10.0                                                            */
   /* ------------------------------------------------------------------ */
   {
