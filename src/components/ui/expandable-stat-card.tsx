@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, ChevronRight, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
