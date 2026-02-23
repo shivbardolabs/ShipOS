@@ -401,13 +401,14 @@ export default function MasterAdminPage() {
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="w-40"
-          >
-            <option value="all">All Roles</option>
-            <option value="superadmin">Super Admin</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="employee">Employee</option>
-          </Select>
+            options={[
+              { value: 'all', label: 'All Roles' },
+              { value: 'superadmin', label: 'Super Admin' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'employee', label: 'Employee' },
+            ]}
+          />
         )}
       </div>
 
