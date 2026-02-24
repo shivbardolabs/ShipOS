@@ -58,6 +58,7 @@ import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 /* -------------------------------------------------------------------------- */
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
+  physical: { label: 'Physical PMB', classes: 'bg-amber-100 text-amber-600 border-amber-500/30' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
   postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },

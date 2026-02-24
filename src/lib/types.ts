@@ -18,7 +18,7 @@ export interface Customer {
   phone?: string;
   businessName?: string;
   pmbNumber: string;
-  platform: 'iPostal' | 'anytime' | 'postscan' | 'other';
+  platform: 'physical' | 'iPostal' | 'anytime' | 'postscan' | 'other';
   status: 'active' | 'closed' | 'suspended';
   dateOpened: string;
   dateClosed?: string;

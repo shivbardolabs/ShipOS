@@ -202,6 +202,7 @@ export default function CheckInPage() {
   /*  Store badge                                                             */
   /* ======================================================================== */
   const platformColors: Record<string, string> = {
+    physical: 'warning',
     iPostal: 'info',
     anytime: 'success',
     postscan: 'warning',
