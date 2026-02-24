@@ -21,6 +21,35 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.14.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.14.0',
+    date: '2026-02-23',
+    title: 'Persistent Database — Vercel Postgres',
+    summary:
+      'Migrated from ephemeral SQLite to Vercel Postgres (Neon) for a fully persistent database. All data — users, tenants, customers, packages, login sessions — now persists across deployments, making the Master Admin panel and all features fully operational.',
+    highlights: ['Vercel Postgres', 'Persistent Data', 'Production-Ready'],
+    changes: [
+      {
+        text: 'Migrated database from SQLite to PostgreSQL via Vercel Postgres (Neon) — all data persists across deployments',
+        type: 'feature',
+      },
+      {
+        text: 'Prisma schema updated with pooled connection (pgBouncer) and direct connection for migrations',
+        type: 'improvement',
+      },
+      {
+        text: 'Automatic schema sync on each deploy via prisma db push in build pipeline',
+        type: 'improvement',
+      },
+      {
+        text: 'Master Admin panel now shows real, persistent user and login session data',
+        type: 'fix',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.13.0                                                            */
   /* ------------------------------------------------------------------ */
   {
