@@ -270,10 +270,9 @@ export default function FeatureFlagsPage() {
       <div>
         <div className="flex items-center gap-3 mb-1">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl"
-            style={{ background: 'rgba(225, 29, 72, 0.15)' }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15"
           >
-            <Flag className="h-5 w-5" style={{ color: '#e11d48' }} />
+            <Flag className="h-5 w-5 text-rose-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-surface-100">Feature Flags</h1>
@@ -287,9 +286,9 @@ export default function FeatureFlagsPage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total Flags" value={stats.total} icon={Flag} />
-        <StatCard label="Enabled by Default" value={stats.enabledByDefault} icon={ToggleRight} accent="#22c55e" />
-        <StatCard label="Tenant Overrides" value={stats.tenantOverrides} icon={Building2} accent="#8b5cf6" />
-        <StatCard label="User Overrides" value={stats.userOverrides} icon={User} accent="#f59e0b" />
+        <StatCard label="Enabled by Default" value={stats.enabledByDefault} icon={ToggleRight} accentClass="text-emerald-500" />
+        <StatCard label="Tenant Overrides" value={stats.tenantOverrides} icon={Building2} accentClass="text-violet-500" />
+        <StatCard label="User Overrides" value={stats.userOverrides} icon={User} accentClass="text-amber-500" />
       </div>
 
       {/* ── Search ── */}
@@ -309,8 +308,7 @@ export default function FeatureFlagsPage() {
           return (
             <div
               key={category}
-              className="rounded-xl border border-surface-800 overflow-hidden"
-              style={{ background: 'rgba(15, 15, 20, 0.5)' }}
+              className="rounded-xl border border-surface-800 overflow-hidden bg-surface-900/50"
             >
               {/* Category header */}
               <button
@@ -392,8 +390,7 @@ export default function FeatureFlagsPage() {
                           <button
                             onClick={() => toggleDefault(flag)}
                             disabled={saving === flag.id}
-                            className="flex items-center gap-2 flex-shrink-0 transition-opacity"
-                            style={{ opacity: saving === flag.id ? 0.5 : 1 }}
+                            className={`flex items-center gap-2 flex-shrink-0 transition-opacity ${saving === flag.id ? 'opacity-50' : ''}`}
                             title={flag.defaultEnabled ? 'Default: ON — Click to disable' : 'Default: OFF — Click to enable'}
                           >
                             {flag.defaultEnabled ? (
@@ -415,8 +412,7 @@ export default function FeatureFlagsPage() {
                                   Default for all tenants &amp; users
                                 </span>
                                 <span
-                                  className="text-xs font-semibold"
-                                  style={{ color: flag.defaultEnabled ? '#22c55e' : '#ef4444' }}
+                                  className={`text-xs font-semibold ${flag.defaultEnabled ? 'text-emerald-500' : 'text-red-500'}`}
                                 >
                                   {flag.defaultEnabled ? 'ON' : 'OFF'}
                                 </span>
@@ -437,8 +433,7 @@ export default function FeatureFlagsPage() {
                                     {getTargetName(override)}
                                   </span>
                                   <span
-                                    className="text-xs font-semibold"
-                                    style={{ color: override.enabled ? '#22c55e' : '#ef4444' }}
+                                    className={`text-xs font-semibold ${override.enabled ? 'text-emerald-500' : 'text-red-500'}`}
                                   >
                                     {override.enabled ? 'ON' : 'OFF'}
                                   </span>
@@ -506,17 +501,17 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  accent,
+  accentClass,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
-  accent?: string;
+  accentClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-surface-800 px-4 py-3" style={{ background: 'rgba(15, 15, 20, 0.5)' }}>
+    <div className="rounded-xl border border-surface-800 px-4 py-3 bg-surface-900/50">
       <div className="flex items-center gap-2 mb-1">
-        <Icon className="h-4 w-4" style={{ color: accent ?? '#e11d48' }} />
+        <Icon className={`h-4 w-4 ${accentClass ?? 'text-rose-500'}`} />
         <span className="text-[11px] text-surface-500 font-medium uppercase tracking-wide">
           {label}
         </span>

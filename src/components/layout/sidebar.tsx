@@ -149,6 +149,8 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
+    // Exact match for parent routes that have sub-pages (e.g. /dashboard/admin vs /dashboard/admin/feature-flags)
+    if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
     return pathname.startsWith(href);
   };
 
