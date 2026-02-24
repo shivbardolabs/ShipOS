@@ -21,6 +21,7 @@ import {
   FileText,
   ShieldCheck,
   LayoutDashboard,
+  Sparkles,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -65,6 +66,7 @@ interface SearchResult {
 /* -------------------------------------------------------------------------- */
 const actions: SearchResult[] = [
   { id: 'act_dashboard', type: 'action', title: 'Dashboard', subtitle: 'Go to dashboard overview', icon: <LayoutDashboard className="h-4 w-4" />, href: '/dashboard', shortcut: '' },
+  { id: 'act_smart_intake', type: 'action', title: 'Smart Intake', subtitle: 'AI-powered package check-in', icon: <Sparkles className="h-4 w-4" />, href: '/dashboard/packages/smart-intake', shortcut: '' },
   { id: 'act_checkin', type: 'action', title: 'Check In', subtitle: 'Check in a new package', icon: <ClipboardCheck className="h-4 w-4" />, href: '/dashboard/check-in', shortcut: '' },
   { id: 'act_checkout', type: 'action', title: 'Check Out', subtitle: 'Release packages to customers', icon: <Package className="h-4 w-4" />, href: '/dashboard/check-out', shortcut: '' },
   { id: 'act_packages', type: 'action', title: 'Packages', subtitle: 'View all packages', icon: <Package className="h-4 w-4" />, href: '/dashboard/packages', shortcut: '' },
