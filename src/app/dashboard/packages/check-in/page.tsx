@@ -103,6 +103,7 @@ export default function CheckInPage() {
   const [condition, setCondition] = useState('good');
   const [conditionOther, setConditionOther] = useState('');
   const [notes, setNotes] = useState('');
+  const [storageLocation, setStorageLocation] = useState(''); // Physical shelf/bin location
 
   // Step 4 — Notify
   const [printLabel, setPrintLabel] = useState(true);
@@ -175,6 +176,7 @@ export default function CheckInPage() {
         customerName: custLabel,
         hazardous,
         perishable,
+        storageLocation: storageLocation || undefined,
       },
     });
     setShowSuccess(true);
@@ -194,6 +196,7 @@ export default function CheckInPage() {
     setCondition('good');
     setConditionOther('');
     setNotes('');
+    setStorageLocation('');
     setPrintLabel(true);
     setSendEmail(true);
     setSendSms(true);
@@ -528,6 +531,17 @@ export default function CheckInPage() {
               </div>
             )}
 
+            {/* Storage Location — where the package will be physically stored */}
+            <div className="max-w-lg">
+              <Input
+                label="Storage Location"
+                placeholder="e.g. Shelf A3, Bin 12, Rack B-2..."
+                value={storageLocation}
+                onChange={(e) => setStorageLocation(e.target.value)}
+                helperText="Where this package will be stored in your facility"
+              />
+            </div>
+
             {/* Notes */}
             <div className="max-w-lg">
               <Textarea
@@ -621,6 +635,12 @@ export default function CheckInPage() {
                       .join(', ') || 'None'
                   }
                 />
+                {storageLocation && (
+                  <SummaryField
+                    label="Storage Location"
+                    value={storageLocation}
+                  />
+                )}
               </div>
               {notes && (
                 <div className="pt-3 border-t border-surface-800">

@@ -228,6 +228,9 @@ function PackagesContent() {
                   Type
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
+                  Location
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
                   Checked In
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-surface-400">
@@ -242,7 +245,7 @@ function PackagesContent() {
               {paged.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 py-16 text-center text-surface-500"
                   >
                     <Package className="mx-auto h-8 w-8 text-surface-600 mb-3" />
@@ -286,6 +289,15 @@ function PackagesContent() {
                       </td>
                       <td className="px-4 py-3 text-surface-300">
                         {packageTypeLabels[pkg.packageType]}
+                      </td>
+                      <td className="px-4 py-3">
+                        {pkg.storageLocation ? (
+                          <span className="text-xs font-mono text-surface-300 bg-surface-800 px-1.5 py-0.5 rounded">
+                            {pkg.storageLocation}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-surface-600">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-surface-400 text-xs">
                         {formatDate(pkg.checkedInAt)}

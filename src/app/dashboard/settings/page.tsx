@@ -93,6 +93,7 @@ interface TenantUser {
   name: string;
   email: string;
   role: string;
+  status: string;
   avatar: string | null;
   createdAt: string;
   updatedAt: string;
@@ -214,6 +215,51 @@ export default function SettingsPage() {
       console.error('Role change failed', e);
     } finally {
       setRoleUpdating(null);
+    }
+  }, []);
+
+
+  // ─── User status toggle (activate/deactivate) ────────────────────────────
+  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
+
+  const handleStatusToggle = useCallback(async (userId: string, newStatus: string) => {
+    setStatusUpdating(userId);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, status: newStatus }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTeamUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+      }
+    } catch (e) {
+      console.error('Status toggle failed', e);
+    } finally {
+      setStatusUpdating(null);
+    }
+  }, []);
+
+  // ─── Soft delete user ─────────────────────────────────────────────────────
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+
+  const handleSoftDelete = useCallback(async (userId: string) => {
+    if (!confirm('Are you sure you want to remove this user? They will be deactivated and removed from the team.')) return;
+    setDeletingUser(userId);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        setTeamUsers(prev => prev.filter(u => u.id !== userId));
+      }
+    } catch (e) {
+      console.error('Soft delete failed', e);
+    } finally {
+      setDeletingUser(null);
     }
   }, []);
 
@@ -1209,6 +1255,21 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
+                          {/* User status badge */}
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                              member.status === 'active'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : member.status === 'suspended'
+                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                : 'bg-surface-500/10 text-surface-400 border-surface-500/20'
+                            }`}
+                          >
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              member.status === 'active' ? 'bg-emerald-400' : member.status === 'suspended' ? 'bg-red-400' : 'bg-surface-400'
+                            }`} />
+                            {member.status === 'active' ? 'Active' : member.status === 'suspended' ? 'Suspended' : 'Inactive'}
+                          </span>
                           {(localUser?.role === 'admin' || localUser?.role === 'superadmin') ? (
                             <select
                               value={member.role}
@@ -1224,6 +1285,29 @@ export default function SettingsPage() {
                             <Badge variant={roleColor as 'default' | 'warning' | 'muted'} dot>
                               {member.role}
                             </Badge>
+                          )}
+                          {/* Status toggle and soft delete — admin only, cannot self-modify */}
+                          {(localUser?.role === 'admin' || localUser?.role === 'superadmin') && !isMe && (
+                            <>
+                              <button
+                                onClick={() => handleStatusToggle(member.id, member.status === 'active' ? 'inactive' : 'active')}
+                                disabled={statusUpdating === member.id}
+                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border transition-all disabled:opacity-50 ${
+                                  member.status === 'active'
+                                    ? 'text-amber-400 border-amber-500/20 hover:bg-amber-500/10'
+                                    : 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'
+                                }`}
+                              >
+                                {member.status === 'active' ? 'Deactivate' : 'Activate'}
+                              </button>
+                              <button
+                                onClick={() => handleSoftDelete(member.id)}
+                                disabled={deletingUser === member.id}
+                                className="text-[10px] font-semibold px-2 py-1 rounded-md border text-red-400 border-red-500/20 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                              >
+                                Remove
+                              </button>
+                            </>
                           )}
                           <span className="text-xs text-surface-500">
                             Joined {new Date(member.createdAt).toLocaleDateString()}

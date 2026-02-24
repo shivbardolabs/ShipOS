@@ -43,6 +43,10 @@ interface AdminTenant {
   id: string;
   name: string;
   slug: string;
+  status: string;
+  subscriptionTier: string;
+  trialEndsAt: string | null;
+  createdAt: string;
   userCount: number;
 }
 
@@ -130,7 +134,7 @@ function OnlineIndicator({ lastLogin }: { lastLogin: string | null }) {
 /* -------------------------------------------------------------------------- */
 /*  Tab navigation                                                            */
 /* -------------------------------------------------------------------------- */
-type TabKey = 'users' | 'sessions';
+type TabKey = 'users' | 'sessions' | 'tenants';
 
 function TabButton({
   active,
@@ -463,6 +467,31 @@ export default function MasterAdminPage() {
     []
   );
 
+  // Handle tenant status change
+  const handleTenantStatusChange = useCallback(
+    async (tenantId: string, newStatus: string) => {
+      try {
+        const res = await fetch('/api/admin/tenants', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenantId, status: newStatus }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update tenant');
+        }
+
+        const updated = await res.json();
+        setTenants((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      } catch (err) {
+        console.error('Failed to update tenant status', err);
+        setError(err instanceof Error ? err.message : 'Failed to update tenant');
+      }
+    },
+    []
+  );
+
   const openEditModal = useCallback((user: AdminUser) => {
     setEditUser(user);
     setEditModalOpen(true);
@@ -655,6 +684,13 @@ export default function MasterAdminPage() {
           count={sessions.length}
           onClick={() => setActiveTab('sessions')}
         />
+        <TabButton
+          active={activeTab === 'tenants'}
+          label="Tenants"
+          icon={Building2}
+          count={tenants.length}
+          onClick={() => setActiveTab('tenants')}
+        />
       </div>
 
       {/* Filters */}
@@ -697,6 +733,8 @@ export default function MasterAdminPage() {
         </div>
       ) : activeTab === 'users' ? (
         <UsersTable users={filteredUsers} onEdit={openEditModal} />
+      ) : activeTab === 'tenants' ? (
+        <TenantsTable tenants={tenants} onStatusChange={handleTenantStatusChange} />
       ) : (
         <SessionsTable sessions={filteredSessions} />
       )}
@@ -861,6 +899,172 @@ function UsersTable({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Tenants Table — Status badges, tier, and activate/pause/disable toggle    */
+/* -------------------------------------------------------------------------- */
+const tenantStatusConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  active: { label: 'Active', bg: '#22c55e15', text: '#22c55e', border: '#22c55e30' },
+  paused: { label: 'Paused', bg: '#f59e0b15', text: '#f59e0b', border: '#f59e0b30' },
+  disabled: { label: 'Disabled', bg: '#ef444415', text: '#ef4444', border: '#ef444430' },
+  trial: { label: 'Trial', bg: '#6366f115', text: '#6366f1', border: '#6366f130' },
+};
+
+const tierLabels: Record<string, string> = {
+  starter: 'Starter',
+  pro: 'Pro',
+  enterprise: 'Enterprise',
+};
+
+function TenantsTable({
+  tenants,
+  onStatusChange,
+}: {
+  tenants: AdminTenant[];
+  onStatusChange: (tenantId: string, status: string) => Promise<void>;
+}) {
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const handleStatusChange = async (tenantId: string, newStatus: string) => {
+    setUpdatingId(tenantId);
+    try {
+      await onStatusChange(tenantId, newStatus);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  if (tenants.length === 0) {
+    return (
+      <div className="glass-card p-12 text-center">
+        <Building2 className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+        <p className="text-surface-400 font-medium">No tenants found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card overflow-hidden">
+      {/* Table header */}
+      <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-surface-500 border-b border-surface-800">
+        <div className="col-span-3">Tenant</div>
+        <div className="col-span-2">Status</div>
+        <div className="col-span-2">Plan</div>
+        <div className="col-span-1 text-center">Users</div>
+        <div className="col-span-2">Created</div>
+        <div className="col-span-2 text-center">Actions</div>
+      </div>
+
+      {/* Tenant rows */}
+      <div className="divide-y divide-surface-800/50">
+        {tenants.map((tenant) => {
+          const statusCfg = tenantStatusConfig[tenant.status] || tenantStatusConfig.active;
+          const isUpdating = updatingId === tenant.id;
+
+          return (
+            <div
+              key={tenant.id}
+              className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-surface-800/30 transition-colors group"
+            >
+              {/* Name & slug */}
+              <div className="col-span-3 min-w-0">
+                <p className="text-sm font-medium text-surface-200 truncate">{tenant.name}</p>
+                <p className="text-xs text-surface-500 font-mono truncate">/{tenant.slug}</p>
+              </div>
+
+              {/* Status badge */}
+              <div className="col-span-2">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                  style={{
+                    background: statusCfg.bg,
+                    color: statusCfg.text,
+                    border: `1px solid ${statusCfg.border}`,
+                  }}
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ background: statusCfg.text }}
+                  />
+                  {statusCfg.label}
+                </span>
+              </div>
+
+              {/* Tier */}
+              <div className="col-span-2">
+                <span className="text-sm text-surface-300">
+                  {tierLabels[tenant.subscriptionTier] || tenant.subscriptionTier}
+                </span>
+                {tenant.trialEndsAt && (
+                  <p className="text-[10px] text-surface-500">
+                    Trial ends {new Date(tenant.trialEndsAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+
+              {/* User count */}
+              <div className="col-span-1 text-center">
+                <span className="text-sm font-medium text-surface-300">{tenant.userCount}</span>
+              </div>
+
+              {/* Created */}
+              <div className="col-span-2">
+                <span className="text-xs text-surface-400">
+                  {new Date(tenant.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+
+              {/* Status actions */}
+              <div className="col-span-2 flex items-center justify-center gap-1">
+                {tenant.status !== 'active' && (
+                  <button
+                    onClick={() => handleStatusChange(tenant.id, 'active')}
+                    disabled={isUpdating}
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 disabled:opacity-50"
+                    title="Activate tenant"
+                  >
+                    Activate
+                  </button>
+                )}
+                {tenant.status !== 'paused' && tenant.status !== 'disabled' && (
+                  <button
+                    onClick={() => handleStatusChange(tenant.id, 'paused')}
+                    disabled={isUpdating}
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-amber-500/15 text-amber-400 border border-amber-500/20 disabled:opacity-50"
+                    title="Pause tenant"
+                  >
+                    Pause
+                  </button>
+                )}
+                {tenant.status !== 'disabled' && (
+                  <button
+                    onClick={() => handleStatusChange(tenant.id, 'disabled')}
+                    disabled={isUpdating}
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-red-500/15 text-red-400 border border-red-500/20 disabled:opacity-50"
+                    title="Disable tenant"
+                  >
+                    Disable
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 py-3 border-t border-surface-800">
+        <p className="text-xs text-surface-500">
+          {tenants.length} tenant{tenants.length !== 1 ? 's' : ''} •
+          {' '}{tenants.filter((t) => t.status === 'active').length} active
+        </p>
+      </div>
+    </div>
+  );
+}
 /* -------------------------------------------------------------------------- */
 /*  Sessions Table                                                            */
 /* -------------------------------------------------------------------------- */

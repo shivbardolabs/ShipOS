@@ -5,6 +5,8 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { ActivityLogProvider } from '@/components/activity-log-provider';
 import { VoiceAssistant } from '@/components/voice-assistant';
+import { AgreementGate } from '@/components/agreement-gate';
+import { TenantStatusGate } from '@/components/tenant-status-gate';
 
 export default function DashboardLayout({
   children,
@@ -24,19 +26,23 @@ export default function DashboardLayout({
   }
 
   return (
-    <ActivityLogProvider>
-      <div className="min-h-screen bg-surface-950">
-        <Sidebar />
+    <AgreementGate>
+      <TenantStatusGate>
+        <ActivityLogProvider>
+          <div className="min-h-screen bg-surface-950">
+            <Sidebar />
 
-        {/* Main content area – offset by sidebar width on desktop */}
-        <div className="lg:pl-[260px] flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1 p-6">{children}</main>
-        </div>
+            {/* Main content area – offset by sidebar width on desktop */}
+            <div className="lg:pl-[260px] flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-1 p-6">{children}</main>
+            </div>
 
-        {/* Voice assistant — floating on all dashboard pages */}
-        <VoiceAssistant />
-      </div>
-    </ActivityLogProvider>
+            {/* Voice assistant — floating on all dashboard pages */}
+            <VoiceAssistant />
+          </div>
+        </ActivityLogProvider>
+      </TenantStatusGate>
+    </AgreementGate>
   );
 }

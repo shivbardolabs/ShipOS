@@ -13,6 +13,7 @@ import {
 } from '@/lib/activity-log';
 import {
   Activity,
+  ChevronDown,
   User,
   Clock,
   Package,
@@ -87,6 +88,111 @@ const roleBadgeStyle: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Page                                                                      */
 /* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/*  Activity Entry Row — Expandable with metadata/diff view                   */
+/* -------------------------------------------------------------------------- */
+function ActivityEntryRow({ entry }: { entry: import('@/lib/activity-log').ActivityLogEntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const catCfg = categoryIcons[entry.category] || categoryIcons.package;
+  const CatIcon = catCfg.icon;
+  const roleStyle = roleBadgeStyle[entry.userRole] || roleBadgeStyle.employee;
+  const hasMetadata = entry.metadata && Object.keys(entry.metadata).length > 0;
+  const oldData = entry.metadata?.oldData as Record<string, unknown> | undefined;
+  const newData = entry.metadata?.newData as Record<string, unknown> | undefined;
+  const hasDiff = oldData && newData;
+
+  return (
+    <div className="rounded-lg hover:bg-surface-800/50 transition-colors">
+      <button
+        onClick={() => hasMetadata && setExpanded(!expanded)}
+        className={`w-full group flex items-start gap-3 px-3 py-2.5 text-left ${hasMetadata ? 'cursor-pointer' : 'cursor-default'}`}
+      >
+        {/* Category icon */}
+        <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${catCfg.bg}`}>
+          <CatIcon className={`h-4 w-4 ${catCfg.color}`} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-surface-200 leading-snug">{entry.description}</p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[11px]">
+              <User className="h-3 w-3 text-surface-500" />
+              <span className="font-medium text-surface-400">{entry.userName}</span>
+            </span>
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${roleStyle}`}>
+              {entry.userRole}
+            </span>
+            {entry.entityLabel && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-surface-500">
+                <span className="text-surface-600">·</span>
+                <span className="font-mono">{entry.entityLabel}</span>
+              </span>
+            )}
+            <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-surface-500 bg-surface-800/60 px-1.5 py-0.5 rounded">
+              {ACTION_LABELS[entry.action] || entry.action}
+            </span>
+            {hasMetadata && (
+              <ChevronDown className={`h-3 w-3 text-surface-500 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            )}
+          </div>
+        </div>
+
+        {/* Timestamp */}
+        <div className="shrink-0 text-right">
+          <div className="flex items-center gap-1 text-xs text-surface-500">
+            <Clock className="h-3 w-3" />
+            {timeAgo(entry.timestamp)}
+          </div>
+          <p className="text-[10px] text-surface-600 mt-0.5 hidden group-hover:block">
+            {formatTimestamp(entry.timestamp)}
+          </p>
+        </div>
+      </button>
+
+      {/* Expandable metadata / diff view */}
+      {expanded && hasMetadata && (
+        <div className="ml-14 mr-3 mb-3 p-3 rounded-lg bg-surface-900/80 border border-surface-800 text-xs">
+          {hasDiff ? (
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider mb-2">Changes</p>
+              {Object.keys({ ...oldData, ...newData }).map((key) => {
+                const oldVal = oldData[key];
+                const newVal = newData[key];
+                if (JSON.stringify(oldVal) === JSON.stringify(newVal)) return null;
+                return (
+                  <div key={key} className="flex items-start gap-2">
+                    <span className="font-mono text-surface-500 min-w-[100px]">{key}:</span>
+                    <div className="flex flex-col gap-0.5">
+                      {oldVal !== undefined && (
+                        <span className="text-red-400/70 line-through">{String(oldVal)}</span>
+                      )}
+                      {newVal !== undefined && (
+                        <span className="text-emerald-400">{String(newVal)}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider mb-2">Details</p>
+              {Object.entries(entry.metadata!).map(([key, value]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span className="font-mono text-surface-500 min-w-[100px]">{key}:</span>
+                  <span className="text-surface-300">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ActivityLogPage() {
   const { entries } = useActivityLog();
   const [search, setSearch] = useState('');
@@ -257,72 +363,9 @@ export default function ActivityLogPage() {
             </div>
           ) : (
             <div className="space-y-0.5">
-              {filtered.map((entry) => {
-                const catCfg = categoryIcons[entry.category] || categoryIcons.package;
-                const CatIcon = catCfg.icon;
-                const roleStyle = roleBadgeStyle[entry.userRole] || roleBadgeStyle.employee;
-
-                return (
-                  <div
-                    key={entry.id}
-                    className="group flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-surface-800/50 transition-colors"
-                  >
-                    {/* Category icon */}
-                    <div
-                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${catCfg.bg}`}
-                    >
-                      <CatIcon className={`h-4 w-4 ${catCfg.color}`} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-surface-200 leading-snug">
-                        {entry.description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {/* User */}
-                        <span className="inline-flex items-center gap-1 text-[11px]">
-                          <User className="h-3 w-3 text-surface-500" />
-                          <span className="font-medium text-surface-400">
-                            {entry.userName}
-                          </span>
-                        </span>
-
-                        {/* Role badge */}
-                        <span
-                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${roleStyle}`}
-                        >
-                          {entry.userRole}
-                        </span>
-
-                        {/* Entity label */}
-                        {entry.entityLabel && (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-surface-500">
-                            <span className="text-surface-600">·</span>
-                            <span className="font-mono">{entry.entityLabel}</span>
-                          </span>
-                        )}
-
-                        {/* Action badge */}
-                        <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-surface-500 bg-surface-800/60 px-1.5 py-0.5 rounded">
-                          {ACTION_LABELS[entry.action] || entry.action}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Timestamp */}
-                    <div className="shrink-0 text-right">
-                      <div className="flex items-center gap-1 text-xs text-surface-500">
-                        <Clock className="h-3 w-3" />
-                        {timeAgo(entry.timestamp)}
-                      </div>
-                      <p className="text-[10px] text-surface-600 mt-0.5 hidden group-hover:block">
-                        {formatTimestamp(entry.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+              {filtered.map((entry) => (
+                  <ActivityEntryRow key={entry.id} entry={entry} />
+              ))}
             </div>
           )}
         </div>
