@@ -190,7 +190,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
   {
     key: 'action-pricing',
     name: 'Action Pricing',
-    description: 'Administrative pricing dashboard for all mailbox actions with COGS, segment, and customer-level overrides',
+    description: 'Tenant pricing dashboard for all mailbox actions with COGS tracking, segment overrides, and customer-level overrides',
     category: 'business',
     defaultEnabled: true,
   },

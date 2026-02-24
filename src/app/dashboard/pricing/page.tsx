@@ -516,14 +516,14 @@ export default function ActionPricingPage() {
     open: boolean; id: string; name: string;
   }>({ open: false, id: '', name: '' });
 
-  // Guard: superadmin only
-  if (localUser && localUser.role !== 'superadmin') {
+  // Guard: admin or superadmin only
+  if (localUser && localUser.role !== 'admin' && localUser.role !== 'superadmin') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <ShieldCheck className="h-12 w-12 text-surface-600 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-surface-300">Access Restricted</h2>
-          <p className="text-sm text-surface-500 mt-1">Action Pricing is available to platform administrators only.</p>
+          <p className="text-sm text-surface-500 mt-1">Action Pricing is available to administrators only.</p>
         </div>
       </div>
     );
@@ -703,9 +703,8 @@ export default function ActionPricingPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ background: 'rgba(225, 29, 72, 0.15)' }}>
-              <DollarSign className="h-5 w-5" style={{ color: '#e11d48' }} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
+              <DollarSign className="h-5 w-5 text-primary-600" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-surface-100">Action Pricing</h1>

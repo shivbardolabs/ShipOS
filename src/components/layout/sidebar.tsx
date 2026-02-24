@@ -67,7 +67,6 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
       { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
-      { label: 'Action Pricing', href: '/dashboard/admin/pricing', icon: DollarSign },
     ],
   },
   {
@@ -107,6 +106,7 @@ const navSections: NavSection[] = [
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
+      { label: 'Action Pricing', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
@@ -154,7 +154,6 @@ export function Sidebar() {
     // Exact match for parent routes that have sub-pages (e.g. /dashboard/admin vs /dashboard/admin/feature-flags)
     if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
     if (href === '/dashboard/admin/feature-flags') return pathname === '/dashboard/admin/feature-flags';
-    if (href === '/dashboard/admin/pricing') return pathname.startsWith('/dashboard/admin/pricing');
     return pathname.startsWith(href);
   };
 
