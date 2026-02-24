@@ -1720,13 +1720,14 @@ export default function SettingsPage() {
                   </div>
                   <ul className="space-y-2.5 mb-6">
                     {[
+                      'AI Smart Intake (photo → check-in)',
                       'Package receiving & tracking',
                       '4×6 label printing',
                       'Auto carrier detection',
                       'Email notifications',
                       'Mailbox management',
                       'Basic reporting',
-                      'Up to 500 packages/mo',
+                      '100 AI scans/mo',
                     ].map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-surface-300">
                         <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -1786,12 +1787,14 @@ export default function SettingsPage() {
                   <ul className="space-y-2.5 mb-6">
                     {[
                       'Everything in Starter, plus:',
-                      'Carrier bill reconciliation',
+                      'AI Morning Briefing',
+                      'AI Carrier Bill Auditor',
+                      'AI ID Scan Onboarding',
+                      'AI Mail Sorting (Snap & Route)',
+                      'Voice AI (Hey ShipOS)',
                       'Loyalty rewards program',
-                      'Add-on rate management',
                       'SMS & email notifications',
-                      'Advanced analytics',
-                      'Unlimited packages',
+                      '2,000 AI scans/mo',
                     ].map((f, i) => (
                       <li key={i} className={`flex items-start gap-2 text-sm ${i === 0 ? 'text-primary-400 font-medium' : 'text-surface-300'}`}>
                         {i === 0 ? <Zap className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />}
@@ -1844,12 +1847,13 @@ export default function SettingsPage() {
                   <ul className="space-y-2.5 mb-6">
                     {[
                       'Everything in Pro, plus:',
+                      'Custom AI model training',
+                      'Unlimited AI scans',
                       'Multi-location dashboard',
                       'API access & webhooks',
                       'Custom integrations',
                       'White-label options',
                       'Dedicated account mgr',
-                      'Unlimited everything',
                     ].map((f, i) => (
                       <li key={i} className={`flex items-start gap-2 text-sm ${i === 0 ? 'text-amber-400 font-medium' : 'text-surface-300'}`}>
                         {i === 0 ? <Zap className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />}
@@ -1891,14 +1895,18 @@ export default function SettingsPage() {
                       </thead>
                       <tbody className="divide-y divide-surface-800">
                         {[
+                          { feature: 'AI Smart Intake', starter: true, pro: true, enterprise: true },
+                          { feature: 'AI ID Scan Onboarding', starter: false, pro: true, enterprise: true },
+                          { feature: 'AI Morning Briefing', starter: false, pro: true, enterprise: true },
+                          { feature: 'AI Carrier Bill Auditor', starter: false, pro: true, enterprise: true },
+                          { feature: 'AI Mail Sorting', starter: false, pro: true, enterprise: true },
+                          { feature: 'Voice AI Assistant', starter: false, pro: true, enterprise: true },
+                          { feature: 'AI Scans/Month', starter: '100', pro: '2,000', enterprise: 'Unlimited' },
                           { feature: 'Monthly Packages', starter: '500', pro: 'Unlimited', enterprise: 'Unlimited' },
-                          { feature: 'Team Members', starter: '3', pro: '10', enterprise: 'Unlimited' },
                           { feature: 'SMS Notifications', starter: false, pro: true, enterprise: true },
                           { feature: 'Loyalty Program', starter: false, pro: true, enterprise: true },
-                          { feature: 'Reconciliation', starter: false, pro: true, enterprise: true },
                           { feature: 'API Access', starter: false, pro: false, enterprise: true },
                           { feature: 'Multi-Location', starter: false, pro: false, enterprise: true },
-                          { feature: 'White-Label', starter: false, pro: false, enterprise: true },
                           { feature: 'Support', starter: 'Email', pro: 'Priority', enterprise: 'Dedicated' },
                         ].map((row, i) => (
                           <tr key={i} className="hover:bg-surface-800/30 transition-colors">

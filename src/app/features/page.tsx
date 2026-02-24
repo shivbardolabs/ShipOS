@@ -20,6 +20,11 @@ import {
   Palette,
   Smartphone,
   Zap,
+  Camera,
+  Sun,
+  DollarSign,
+  Mic,
+  ScanLine,
 } from "lucide-react";
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -30,13 +35,51 @@ import { PublicFooter } from "@/components/layout/public-footer";
 /* ── Hero features (top highlight row) ─────────────── */
 const heroStats = [
   { label: "Dashboard Pages", value: "18+" },
+  { label: "AI Features", value: "6" },
   { label: "Carriers Supported", value: "10+" },
-  { label: "Free Trial", value: "30 days" },
   { label: "Uptime SLA", value: "99.9%" },
 ];
 
 /* ── Feature categories ────────────────────────────── */
 const categories = [
+  {
+    tag: "AI Intelligence",
+    title: "AI that actually runs your store",
+    description:
+      "ShipOS is the first postal retail platform with built-in AI. Six intelligent features that see, hear, read, and think — so your team can focus on customers instead of busywork.",
+    features: [
+      {
+        icon: Camera,
+        name: "AI Smart Intake",
+        desc: "Photograph a package and AI reads the carrier, tracking number, sender, and PMB — checks in, prints a label, and notifies the customer. Batch mode handles 5–10 packages at once.",
+      },
+      {
+        icon: ScanLine,
+        name: "AI ID Scan Onboarding",
+        desc: "Snap a photo of a driver's license and AI extracts name, address, DOB, and ID number. New customer profiles created in 30 seconds flat.",
+      },
+      {
+        icon: Sun,
+        name: "AI Morning Briefing",
+        desc: "Every morning, an AI-generated briefing card shows store status, action items, revenue snapshot, and predictions for the day ahead.",
+      },
+      {
+        icon: DollarSign,
+        name: "AI Carrier Bill Auditor",
+        desc: "Upload a carrier invoice and AI scans every line for overcharges, duplicates, invalid surcharges, and service mismatches — with exact dollar amounts.",
+      },
+      {
+        icon: Mail,
+        name: "AI Mail Sorting",
+        desc: "Photograph a spread of mail and AI reads addresses, identifies types, extracts PMB numbers, and auto-routes each piece to the right mailbox.",
+      },
+      {
+        icon: Mic,
+        name: "Voice AI Assistant",
+        desc: "\"Check in a FedEx package for PMB 142\" — hands-free voice commands for all common operations. Available on every page via the floating mic button.",
+      },
+    ],
+  },
   {
     tag: "Core Operations",
     title: "Package & mail management, reimagined",
@@ -217,7 +260,7 @@ export default function FeaturesPage() {
               Features
             </p>
             <h1 className="text-4xl md:text-5xl font-extrabold text-surface-100 mb-4">
-              Everything your store needs,{" "}
+              AI-powered features that{" "}
               <em
                 className="not-italic"
                 style={{
@@ -226,13 +269,13 @@ export default function FeaturesPage() {
                   color: "var(--color-primary-600)",
                 }}
               >
-                nothing it doesn&rsquo;t
+                run your store
               </em>
             </h1>
             <p className="text-lg text-surface-400 max-w-2xl mx-auto mb-12">
-              ShipOS replaces a patchwork of tools with one modern platform —
-              purpose-built for postal retail, pack-and-ship, and CMRA
-              businesses.
+              ShipOS is the first postal retail platform with built-in AI —
+              six intelligent features plus everything you need to manage
+              packages, customers, shipping, and compliance.
             </p>
 
             {/* Stats row */}
