@@ -23,9 +23,7 @@ import {
   RotateCcw,
   Loader2,
   ScanLine,
-  ArrowRight,
   AlertTriangle,
-  Edit3,
   UserPlus,
   CreditCard,
   Shield,
@@ -135,7 +133,7 @@ export default function AiOnboardPage() {
   const [phase, setPhase] = useState<OnboardPhase>('capture');
   const [selectedIdType, setSelectedIdType] = useState<IdTypeOption>('drivers_license');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<IdScanResult | null>(null);
+  const [_scanResult, setScanResult] = useState<IdScanResult | null>(null);
   const [responseMode, setResponseMode] = useState<'ai' | 'demo'>('ai');
   const [confidence, setConfidence] = useState(0);
   const [error, setError] = useState<string | null>(null);

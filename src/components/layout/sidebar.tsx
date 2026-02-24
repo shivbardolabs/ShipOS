@@ -33,8 +33,6 @@ import {
   Activity,
   Sparkles,
   ScanLine,
-  Mic,
-  Search as SearchIcon,
   UserPlus,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';

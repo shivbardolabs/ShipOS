@@ -47,7 +47,6 @@ import {
   Minus,
   MailOpen,
   ScanLine,
-  Mic,
 } from 'lucide-react';
 import {
   dashboardStats,

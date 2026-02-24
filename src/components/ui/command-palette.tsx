@@ -25,7 +25,6 @@ import {
   UserPlus,
   MailOpen,
   ScanLine,
-  Mic,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
