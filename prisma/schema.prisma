@@ -31,9 +31,21 @@ model Tenant {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  users       User[]
-  customers   Customer[]
-  invitations Invitation[]
+  // Stripe integration
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+
+  // Storage rate for package checkout (default $1/day after 30 days)
+  storageRate     Float @default(1.0)
+  storageFreedays Int   @default(30)
+
+  users         User[]
+  customers     Customer[]
+  invitations   Invitation[]
+  stores        Store[]
+  subscriptions Subscription[]
+  paymentRecords PaymentRecord[]
 }
 
 // ── Users & Roles ────────────────────────────────────────────────────────────
@@ -49,6 +61,7 @@ model User {
   status          String    @default("active") // active, inactive, suspended
   deletedAt       DateTime? // Soft delete timestamp — filtered from queries when set
   agreedToTermsAt DateTime? // When user accepted Terms of Service & Privacy Policy
+  mfaEnabled      Boolean   @default(false) // Whether user has MFA enrolled
   lastLoginAt     DateTime? // Tracks most recent login
   loginCount      Int       @default(0)
   createdAt       DateTime  @default(now())
@@ -56,6 +69,9 @@ model User {
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  storeId String?
+  store   Store? @relation(fields: [storeId], references: [id])
 
   auditLogs     AuditLog[]
   checkins      Package[]      @relation("CheckedInBy")
@@ -66,12 +82,14 @@ model User {
 // ── Login Session Tracking ───────────────────────────────────────────────────
 
 model LoginSession {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  ipAddress String?
-  userAgent String?
-  loginAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  ipAddress     String?
+  userAgent     String?
+  success       Boolean  @default(true) // Whether login was successful
+  failureReason String?  // Reason for failed login attempt
+  loginAt       DateTime @default(now())
 }
 
 model Customer {
@@ -109,6 +127,12 @@ model Customer {
   homeState          String?
   homeZip            String?
 
+  // Stripe billing
+  stripeCustomerId String? // For customer-facing billing
+
+  // Encrypted PII
+  ssn String? // AES-256-GCM encrypted SSN
+
   // Notification preferences
   notifyEmail Boolean @default(true)
   notifySms   Boolean @default(true)
@@ -119,6 +143,9 @@ model Customer {
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  storeId String?
+  store   Store? @relation(fields: [storeId], references: [id])
 
   packages        Package[]
   mailPieces      MailPiece[]
@@ -164,6 +191,14 @@ model Package {
 
   checkedOutById String?
   checkedOutBy   User?   @relation("CheckedOutBy", fields: [checkedOutById], references: [id])
+
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id])
+
+  // Pickup delegation
+  delegateName String? // Name of person picking up on behalf of customer
+  delegateIdType String? // Type of ID provided by delegate
+  delegateIdNumber String? // ID number of delegate (encrypted)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -562,4 +597,76 @@ model FeatureFlagOverride {
   updatedAt  DateTime    @updatedAt
 
   @@unique([flagId, targetType, targetId])
+}
+
+// ── Multi-Store Support ──────────────────────────────────────────────────────
+
+model Store {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  phone     String?
+  isDefault Boolean  @default(false)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  customers Customer[]
+  packages  Package[]
+}
+
+// ── Subscription Billing ─────────────────────────────────────────────────────
+
+model BillingPlan {
+  id            String  @id @default(cuid())
+  name          String  // Starter, Pro, Enterprise
+  slug          String  @unique // starter, pro, enterprise
+  priceMonthly  Float   // Monthly price in dollars
+  priceYearly   Float?  // Optional yearly price
+  maxMailboxes  Int     @default(100)
+  maxUsers      Int     @default(5)
+  maxStores     Int     @default(1)
+  features      String? // JSON array of feature strings
+  isActive      Boolean @default(true)
+  sortOrder     Int     @default(0)
+  stripePriceId String? // Stripe Price ID if synced
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  planId               String
+  plan                 BillingPlan @relation(fields: [planId], references: [id])
+  status               String   @default("active") // active, canceled, past_due, trialing, manual
+  billingCycle         String   @default("monthly") // monthly, yearly
+  currentPeriodStart   DateTime @default(now())
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean  @default(false)
+  stripeSubscriptionId String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model PaymentRecord {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  amount      Float
+  currency    String   @default("usd")
+  status      String   @default("succeeded") // succeeded, failed, pending, refunded
+  method      String   @default("stripe") // stripe, manual, check, wire
+  description String?
+  stripePaymentId String?
+  invoiceUrl  String?
+  createdAt   DateTime @default(now())
 }

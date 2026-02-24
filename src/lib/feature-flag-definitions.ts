@@ -244,6 +244,55 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     description: 'Integrated signature pad in package check-out flow with signature storage and history display',
     category: 'packages',
     defaultEnabled: true,
+  // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
+  {
+    key: 'stripe_payments',
+    name: 'Stripe Payments',
+    description: 'Stripe payment integration for subscription billing, checkout, and customer portal',
+    category: 'business',
+    defaultEnabled: false,
+  },
+  {
+    key: 'subscription_billing',
+    name: 'Subscription Billing',
+    description: 'Plan-based subscription billing engine with Starter, Pro, and Enterprise tiers',
+    category: 'business',
+    defaultEnabled: false,
+  },
+  {
+    key: 'multi_store',
+    name: 'Multi-Store Support',
+    description: 'Multiple store locations per tenant with store selector and per-store assignment',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'auth_security',
+    name: 'Auth Security Enhancements',
+    description: 'Session timeout warnings, MFA enrollment status, login attempt tracking, and security settings page',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'field_encryption',
+    name: 'Field-Level Encryption',
+    description: 'AES-256-GCM encryption for PII at rest — SSN, home address, and ID numbers',
+    category: 'compliance',
+    defaultEnabled: false,
+  },
+  {
+    key: 'enhanced_checkout',
+    name: 'Enhanced Checkout',
+    description: 'Bulk checkout, storage fee calculation, pickup delegation, and release receipts',
+    category: 'packages',
+    defaultEnabled: false,
+  },
+  {
+    key: 'advanced_reports',
+    name: 'Advanced BI Reports',
+    description: 'Revenue breakdown by service, customer growth charts, CSV/PDF export, and comparison periods',
+    category: 'business',
+    defaultEnabled: false,
   },
 ];
 

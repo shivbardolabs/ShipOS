@@ -23,6 +23,11 @@ export interface Tenant {
   logoUrl: string | null;
   status: string;
   subscriptionTier: string;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripePriceId?: string | null;
+  storageRate?: number;
+  storageFreedays?: number;
 }
 
 export interface LocalUser {
@@ -38,6 +43,8 @@ export interface LocalUser {
   loginCount: number;
   agreedToTermsAt: string | null;
   tenant: Tenant | null;
+  mfaEnabled?: boolean;
+  storeId?: string | null;
 }
 
 interface TenantContextValue {
