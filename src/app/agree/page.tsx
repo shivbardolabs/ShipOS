@@ -14,10 +14,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTenant } from '@/components/tenant-provider';
 import { Shield, FileText, Lock, Check, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function AgreePage() {
   const router = useRouter();
+  const { refresh } = useTenant();
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,6 +38,8 @@ export default function AgreePage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to record agreement');
       }
+      // Refresh the cached user so AgreementGate sees the updated agreedToTermsAt
+      await refresh();
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
