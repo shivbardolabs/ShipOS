@@ -3,18 +3,24 @@
  *
  * ── Client-side (React components) ─────────────────────────────────────────
  *
+ *   // Preferred: context-based (evaluates from DB, respects overrides)
+ *   import { useFlags } from '@/components/feature-flag-provider';
+ *   const { isEnabled } = useFlags();
+ *   if (isEnabled('ai-smart-intake')) { ... }
+ *
+ *   // PostHog direct (for A/B testing & experiments)
  *   import { useFeatureFlag } from '@/lib/feature-flags';
- *   const showNewUI = useFeatureFlag('new-mail-ui');
+ *   const showNewUI = useFeatureFlag('experiment-new-ui');
  *
  * ── Server-side (API routes, server components) ────────────────────────────
  *
  *   import { getFeatureFlag } from '@/lib/posthog-server';
- *   const enabled = await getFeatureFlag('new-mail-ui', user.id);
+ *   const enabled = await getFeatureFlag('experiment-new-ui', user.id);
  *
  * ── Flag keys ──────────────────────────────────────────────────────────────
  *
- * Define all flag keys in `FLAGS` below so they're discoverable and
- * type-safe.  Create matching flags in the PostHog dashboard.
+ * All feature flag keys are defined in `FLAGS` below and in
+ * `src/lib/feature-flag-definitions.ts` (for the DB-backed system).
  */
 
 'use client';
@@ -28,32 +34,61 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * Central registry of all feature-flag keys used in the app.
- * Add new flags here and reference them as `FLAGS.myNewFeature`.
+ * These map to flags in the DB (managed via Super Admin → Feature Flags).
  *
- * Create the matching flag in PostHog → Feature Flags with the same key.
+ * When adding a new feature, also add the definition to
+ * `src/lib/feature-flag-definitions.ts` so it gets auto-seeded.
  */
 export const FLAGS = {
-  // Example flags — replace with real ones as you create them
-  // newMailUI: 'new-mail-ui',
-  // betaCheckout: 'beta-checkout',
-  // v2CustomerProfile: 'v2-customer-profile',
+  // AI Features
+  aiSmartIntake: 'ai-smart-intake',
+  aiCustomerOnboarding: 'ai-customer-onboarding',
+  aiMailSort: 'ai-mail-sort',
+  aiBillAudit: 'ai-bill-audit',
+  aiVoiceAssistant: 'ai-voice-assistant',
+  aiMorningBriefing: 'ai-morning-briefing',
+
+  // Package Management
+  packageManagement: 'package-management',
+  packageCheckIn: 'package-check-in',
+  packageCheckOut: 'package-check-out',
+
+  // Operations
+  customerManagement: 'customer-management',
+  mailManagement: 'mail-management',
+  shipping: 'shipping',
+  reconciliation: 'reconciliation',
+  endOfDay: 'end-of-day',
+
+  // Compliance
+  cmraCompliance: 'cmra-compliance',
+  notifications: 'notifications',
+
+  // Business
+  loyaltyProgram: 'loyalty-program',
+  invoicing: 'invoicing',
+  reports: 'reports',
+  activityLog: 'activity-log',
+  kioskMode: 'kiosk-mode',
+
+  // Platform
+  dataMigration: 'data-migration',
+  tenantSettings: 'tenant-settings',
 } as const;
 
 export type FlagKey = (typeof FLAGS)[keyof typeof FLAGS];
 
 /* -------------------------------------------------------------------------- */
-/*  Client-side hook                                                          */
+/*  PostHog direct hook (for experiments / A/B tests)                         */
 /* -------------------------------------------------------------------------- */
 
 /**
- * React hook that reactively returns whether a feature flag is enabled.
+ * React hook that reactively returns whether a PostHog feature flag is enabled.
  *
- * Automatically updates when PostHog evaluates / re-evaluates the flag.
+ * For DB-backed feature flags (managed in admin panel), use:
+ *   import { useFlags } from '@/components/feature-flag-provider';
  *
- * @example
- * const showNewUI = useFeatureFlag('new-mail-ui');
- * if (showNewUI) return <NewMailPage />;
- * return <OldMailPage />;
+ * This hook is for PostHog-native flags (experiments, A/B tests).
  */
 export function useFeatureFlag(flag: string): boolean {
   const posthog = usePostHog();
