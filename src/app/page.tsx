@@ -30,6 +30,13 @@ import {
   Globe,
   Lock,
   Sparkles,
+  Camera,
+  Sun,
+  DollarSign,
+  Mic,
+  ScanLine,
+  Brain,
+  Volume2,
 } from "lucide-react";
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -39,9 +46,9 @@ import { PublicFooter } from "@/components/layout/public-footer";
 
 /* ── Stats bar data ──────────────────────────────────── */
 const stats = [
+  { value: "6", label: "AI Features" },
   { value: "18+", label: "Dashboard Pages" },
   { value: "10+", label: "Carriers Supported" },
-  { value: "30-Day", label: "Free Trial" },
   { value: "99.9%", label: "Uptime SLA" },
 ];
 
@@ -57,6 +64,21 @@ const painPoints = [
 
 /* ── Core capability sections ────────────────────────── */
 const capabilities = [
+  {
+    tag: "AI Intelligence",
+    title: "AI that sees, hears, and thinks",
+    description:
+      "Six built-in AI features powered by GPT-4o Vision — from photographing packages to voice commands to catching carrier overcharges. No other postal software even comes close.",
+    features: [
+      { icon: Camera, name: "AI Smart Intake", desc: "Photo a package, AI checks it in" },
+      { icon: ScanLine, name: "AI ID Scan", desc: "Snap a license, onboard in 30 sec" },
+      { icon: Sun, name: "Morning Briefing", desc: "AI-generated daily store digest" },
+      { icon: DollarSign, name: "Bill Auditor", desc: "AI finds carrier overcharges" },
+      { icon: Mail, name: "AI Mail Sort", desc: "Photo mail → auto-route to PMBs" },
+      { icon: Mic, name: "Voice AI", desc: "Hands-free commands on every page" },
+    ],
+    gradient: "from-violet-500/10 to-purple-500/10",
+  },
   {
     tag: "Package Operations",
     title: "Check in to check out — in seconds",
@@ -113,6 +135,8 @@ const capabilities = [
 
 /* ── Platform features ───────────────────────────────── */
 const platformFeatures = [
+  { icon: Brain, name: "Built-in AI (GPT-4o)", desc: "Vision AI across 6 features" },
+  { icon: Volume2, name: "Voice Assistant", desc: "Hands-free on every page" },
   { icon: Lock, name: "Auth0 SSO", desc: "Enterprise-grade authentication" },
   { icon: UserCog, name: "Roles & Permissions", desc: "Admin, Manager & Staff access" },
   { icon: Tablet, name: "Kiosk Mode", desc: "Self-service customer pickup" },
@@ -121,26 +145,24 @@ const platformFeatures = [
   { icon: Globe, name: "Multi-Tenant", desc: "Isolated stores with custom branding" },
   { icon: Smartphone, name: "Mobile & PWA", desc: "Install on any device" },
   { icon: RefreshCw, name: "PostalMate Migration", desc: "Import data with rollback support" },
-  { icon: Activity, name: "Activity Logging", desc: "'Last performed by' on every action" },
   { icon: Star, name: "Loyalty Engine", desc: "Points, rewards & referral program" },
-  { icon: Bell, name: "Smart Notifications", desc: "SMS-first with email fallback" },
   { icon: Sparkles, name: "Auto-Updates", desc: "New features every week, zero downtime" },
 ];
 
 /* ── Competitor comparison ───────────────────────────── */
 const comparisonRows = [
+  { feature: "Built-in AI (GPT-4o Vision)", shipOS: true, legacy: false },
+  { feature: "AI package intake (photo → check-in)", shipOS: true, legacy: false },
+  { feature: "AI carrier bill auditing", shipOS: true, legacy: false },
+  { feature: "Voice AI assistant", shipOS: true, legacy: false },
   { feature: "Cloud-based (access anywhere)", shipOS: true, legacy: false },
   { feature: "Modern web & mobile interface", shipOS: true, legacy: false },
-  { feature: "Free 30-day trial", shipOS: true, legacy: false },
-  { feature: "No setup fees", shipOS: true, legacy: false },
   { feature: "Auto carrier detection", shipOS: true, legacy: false },
   { feature: "SMS notifications", shipOS: true, legacy: false },
   { feature: "Loyalty rewards program", shipOS: true, legacy: false },
   { feature: "Built-in migration tools", shipOS: true, legacy: false },
   { feature: "Multi-location support", shipOS: true, legacy: false },
-  { feature: "Advanced analytics", shipOS: true, legacy: false },
   { feature: "Automatic SaaS updates", shipOS: true, legacy: false },
-  { feature: "API access & webhooks", shipOS: true, legacy: false },
 ];
 
 /* ── How-it-works steps ──────────────────────────────── */
@@ -203,7 +225,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-extrabold text-surface-100 mb-6 leading-[1.08] tracking-tight">
-              The operating system for{" "}
+              The AI-powered OS for{" "}
               <em
                 className="not-italic block md:inline"
                 style={{
@@ -217,11 +239,11 @@ export default function Home() {
             </h1>
 
             <p className="text-xl md:text-2xl text-surface-400 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Package tracking, customer management, multi-carrier shipping, compliance, loyalty, and analytics —{" "}
+              AI-powered package intake, voice commands, carrier bill auditing, and more —{" "}
               <span className="text-surface-200 font-semibold">
-                all in one cloud platform
+                plus everything you need in one cloud platform
               </span>{" "}
-              that replaces your legacy desktop software.
+              to replace legacy desktop software.
             </p>
 
             {/* CTA buttons */}
@@ -320,16 +342,16 @@ export default function Home() {
                   </em>
                 </h2>
                 <p className="text-base text-surface-400 leading-relaxed mb-6">
-                  One modern, cloud-native platform that handles your entire postal retail operation — from the moment a package arrives to the moment it leaves, and everything in between.
+                  One AI-powered, cloud-native platform that handles your entire postal retail operation — from the moment a package arrives to the moment it leaves, and everything in between.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    "Cloud-based, any device",
-                    "Real-time across locations",
-                    "Automated reconciliation",
+                    "6 built-in AI features",
+                    "Voice commands, hands-free",
+                    "AI carrier bill auditing",
                     "CMRA compliance built in",
                     "Instant SMS notifications",
-                    "Loyalty & rewards engine",
+                    "Cloud-based, any device",
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-2">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent-emerald/10 flex items-center justify-center">

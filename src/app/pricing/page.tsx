@@ -26,13 +26,14 @@ const tiers = [
     monthly: 99,
     annual: 79,
     description:
-      "Everything you need to manage packages and mailboxes in one place.",
+      "Everything you need to manage packages and mailboxes — with AI Smart Intake included.",
     cta: "Get Started for Free",
     ctaHref: "/api/auth/signup",
     featured: false,
     icon: Package,
     features: [
       "Package receiving & tracking",
+      "AI Smart Intake (photo → check-in)",
       "4×6 label printing",
       "Auto carrier detection",
       "Customer notifications (email)",
@@ -46,7 +47,7 @@ const tiers = [
     monthly: 179,
     annual: 143,
     description:
-      "Advanced tools to optimize your store and maximize revenue.",
+      "Full AI suite — voice commands, carrier auditing, ID scan onboarding, and more.",
     cta: "Get Started for Free",
     ctaHref: "/api/auth/signup",
     featured: true,
@@ -54,12 +55,15 @@ const tiers = [
     icon: Star,
     features: [
       "Everything in Starter, plus:",
+      "AI Morning Briefing",
+      "AI Carrier Bill Auditor",
+      "AI ID Scan Onboarding",
+      "AI Mail Sorting (Snap & Route)",
+      "Voice AI Assistant (Hey ShipOS)",
       "Carrier bill reconciliation",
       "Loyalty rewards program",
-      "Add-on rate management",
       "SMS & email notifications",
       "Advanced analytics dashboard",
-      "Priority email & chat support",
       "Unlimited packages",
     ],
   },
@@ -68,26 +72,40 @@ const tiers = [
     monthly: 299,
     annual: 239,
     description:
-      "Full power for multi-location operators and growing businesses.",
+      "Full AI suite plus multi-location, API access, and dedicated support.",
     cta: "Contact Sales",
     ctaHref: "mailto:hello@bardolabs.ai?subject=ShipOS Enterprise",
     featured: false,
     icon: Building2,
     features: [
       "Everything in Pro, plus:",
+      "Custom AI model training",
+      "Unlimited AI scans & commands",
       "Multi-location dashboard",
       "API access & webhooks",
       "Custom integrations",
       "White-label options",
       "Dedicated account manager",
       "Custom onboarding & training",
-      "Unlimited everything",
     ],
   },
 ];
 
 /* ── Comparison table data ───────────────────────────── */
 const compareCategories = [
+  {
+    name: "AI Features",
+    rows: [
+      { feature: "AI Smart Intake (photo → check-in)", starter: true, pro: true, enterprise: true },
+      { feature: "AI ID Scan Onboarding", starter: false, pro: true, enterprise: true },
+      { feature: "AI Morning Briefing", starter: false, pro: true, enterprise: true },
+      { feature: "AI Carrier Bill Auditor", starter: false, pro: true, enterprise: true },
+      { feature: "AI Mail Sorting (Snap & Route)", starter: false, pro: true, enterprise: true },
+      { feature: "Voice AI Assistant", starter: false, pro: true, enterprise: true },
+      { feature: "Custom AI model training", starter: false, pro: false, enterprise: true },
+      { feature: "AI scans per month", starter: "100", pro: "2,000", enterprise: "Unlimited" },
+    ],
+  },
   {
     name: "Core Platform",
     rows: [
@@ -148,15 +166,19 @@ const compareCategories = [
 const faqs = [
   {
     q: "Is there a free trial?",
-    a: "Yes! Every plan includes a 30-day free trial with full access. No credit card required to start.",
+    a: "Yes! Every plan includes a 30-day free trial with full access to all features, including AI. No credit card required to start.",
+  },
+  {
+    q: "How does the AI work? Is it accurate?",
+    a: "ShipOS AI is powered by GPT-4o Vision — the same model behind ChatGPT. It reads packages, IDs, mail, and invoices with high accuracy. All AI features include a review step so you can verify before confirming. When no API key is configured, features run in demo mode with sample data.",
+  },
+  {
+    q: "What AI features are included on each plan?",
+    a: "Starter includes AI Smart Intake (photo → package check-in) with 100 AI scans/month. Pro unlocks the full AI suite: ID Scan Onboarding, Morning Briefing, Carrier Bill Auditor, Mail Sorting, and Voice AI with 2,000 scans/month. Enterprise gets unlimited scans and custom AI model training.",
   },
   {
     q: "Can I switch plans anytime?",
     a: "Absolutely. Upgrade or downgrade at any time. Changes take effect on your next billing cycle, and we'll prorate accordingly.",
-  },
-  {
-    q: "What happens if I exceed 500 packages?",
-    a: "On the Starter plan, you can still process packages beyond 500 — we'll just nudge you to upgrade to Pro for the best experience.",
   },
   {
     q: "Do you offer migration from PostalMate?",
@@ -164,32 +186,32 @@ const faqs = [
   },
   {
     q: "Is my data secure?",
-    a: "ShipOS uses enterprise-grade Auth0 authentication, encrypted data storage, and SOC 2–aligned practices. Your data is safe with us.",
+    a: "ShipOS uses enterprise-grade Auth0 authentication, encrypted data storage, and SOC 2–aligned practices. AI processing happens via secure API calls — your images and data are never stored by the AI provider.",
   },
   {
     q: "Do you offer discounts for multiple locations?",
-    a: "Yes — the Enterprise plan supports multi-location management. Contact our sales team for custom volume pricing.",
+    a: "Yes — the Enterprise plan supports multi-location management with unlimited AI. Contact our sales team for custom volume pricing.",
   },
 ];
 
 
 /* ── Competitor comparison data ───────────────────────── */
 const competitorRows = [
+  { feature: "Built-in AI (GPT-4o Vision)", shipOS: true, postalMate: false, shipRite: false },
+  { feature: "AI package intake (photo → check-in)", shipOS: true, postalMate: false, shipRite: false },
+  { feature: "AI carrier bill auditing", shipOS: true, postalMate: false, shipRite: false },
+  { feature: "Voice AI assistant", shipOS: true, postalMate: false, shipRite: false },
+  { feature: "AI customer onboarding (ID scan)", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Cloud-based (access anywhere)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Modern web interface", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Free trial (30 days)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "No setup fees", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Starting price", shipOS: "$99/mo", postalMate: "$90/mo + $295 setup", shipRite: "$1,000+ upfront" },
   { feature: "Auto carrier detection", shipOS: true, postalMate: false, shipRite: false },
   { feature: "SMS notifications", shipOS: true, postalMate: false, shipRite: "Partial" },
-  { feature: "Multi-location support", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "API access & webhooks", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Loyalty rewards program", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Automatic updates (SaaS)", shipOS: true, postalMate: false, shipRite: false },
+  { feature: "Multi-location support", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Advanced analytics dashboard", shipOS: true, postalMate: "Basic", shipRite: "Basic" },
-  { feature: "White-label branding", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Mobile-friendly access", shipOS: true, postalMate: false, shipRite: false },
   { feature: "Built-in migration tools", shipOS: true, postalMate: "N/A", shipRite: "N/A" },
+  { feature: "Automatic updates (SaaS)", shipOS: true, postalMate: false, shipRite: false },
 ];
 
 /* ── Cell renderers ──────────────────────────────────── */
@@ -275,7 +297,7 @@ export default function PricingPage() {
               Pricing
             </p>
             <h1 className="text-4xl md:text-5xl font-extrabold text-surface-100 mb-4">
-              Simple pricing,{" "}
+              AI-powered plans,{" "}
               <em
                 className="not-italic"
                 style={{
@@ -284,12 +306,12 @@ export default function PricingPage() {
                   color: "var(--color-primary-600)",
                 }}
               >
-                powerful tools
+                simple pricing
               </em>
             </h1>
             <p className="text-lg text-surface-400 max-w-xl mx-auto">
-              Start shipping smarter today. No contracts, no hidden fees.
-              Cancel anytime.
+              Every plan includes AI. Start with Smart Intake on Starter, or unlock
+              the full AI suite on Pro. No contracts, no hidden fees.
             </p>
 
             {/* Billing toggle */}
