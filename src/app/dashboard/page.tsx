@@ -373,6 +373,48 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* ------------------------------------------------------------------ */}
+      {/*  Favorites Grid — the key POS pattern                              */}
+      {/* ------------------------------------------------------------------ */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 mb-3">
+          Favorites
+        </h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3">
+          {favoriteTiles.map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <Link
+                key={tile.label}
+                href={tile.href}
+                className={`group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-700/60 p-4 min-h-[88px] text-center transition-all duration-150 hover:border-surface-700/50 hover:scale-[1.02] active:scale-[0.98] ${tile.bgColor}`}
+              >
+                {/* Badge */}
+                {tile.badge && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
+                    {tile.badge}
+                  </span>
+                )}
+
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-surface-900/60 group-hover:bg-surface-900/80 transition-colors ${tile.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-medium text-surface-300 leading-tight">
+                  {tile.label}
+                </span>
+
+                {/* Subtitle */}
+                {tile.subtitle && (
+                  <span className="text-[10px] text-surface-500 -mt-1 leading-tight">
+                    {tile.subtitle}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
 
       {/* ------------------------------------------------------------------ */}
       {/*  Operational Pulse — Expandable stat cards                          */}
@@ -619,48 +661,6 @@ export default function DashboardPage() {
               />
             </>
           )}
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/*  Favorites Grid — the key POS pattern                              */}
-      {/* ------------------------------------------------------------------ */}
-      <div>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 mb-3">
-          Favorites
-        </h2>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3">
-          {favoriteTiles.map((tile) => {
-            const Icon = tile.icon;
-            return (
-              <Link
-                key={tile.label}
-                href={tile.href}
-                className={`group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-700/60 p-4 min-h-[88px] text-center transition-all duration-150 hover:border-surface-700/50 hover:scale-[1.02] active:scale-[0.98] ${tile.bgColor}`}
-              >
-                {/* Badge */}
-                {tile.badge && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
-                    {tile.badge}
-                  </span>
-                )}
-
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-surface-900/60 group-hover:bg-surface-900/80 transition-colors ${tile.color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className="text-xs font-medium text-surface-300 leading-tight">
-                  {tile.label}
-                </span>
-
-                {/* Subtitle */}
-                {tile.subtitle && (
-                  <span className="text-[10px] text-surface-500 -mt-1 leading-tight">
-                    {tile.subtitle}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
         </div>
       </div>
 
