@@ -90,6 +90,15 @@ interface FavoriteTile {
 
 const favoriteTiles: FavoriteTile[] = [
   {
+    label: 'Smart Intake',
+    icon: Sparkles,
+    href: '/dashboard/packages/smart-intake',
+    color: 'text-violet-500',
+    bgColor: 'bg-gradient-to-br from-violet-500/15 to-blue-500/15 hover:from-violet-500/25 hover:to-blue-500/25',
+    badge: 'AI',
+    subtitle: 'Snap to check-in',
+  },
+  {
     label: 'Check In Package',
     icon: PackagePlus,
     href: '/dashboard/packages/check-in',

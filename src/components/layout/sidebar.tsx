@@ -30,6 +30,7 @@ import {
   LogOut,
   Award,
   Activity,
+  Sparkles,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -64,6 +65,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package },
+      { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles },
       { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus },
       { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck },
     ],

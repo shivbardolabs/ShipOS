@@ -21,6 +21,47 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.15.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.15.0',
+    date: '2026-02-24',
+    title: 'AI Smart Intake — Snap to Check-In',
+    summary:
+      'Introducing the flagship AI-powered package intake system. Point your camera at a shipping label (or upload a photo), and our vision AI instantly extracts the carrier, tracking number, sender, and customer — then checks the package in with a single tap. Process packages in seconds, not minutes.',
+    highlights: ['AI Vision', 'Instant Check-In', 'Batch Mode', 'Zero Data Entry'],
+    changes: [
+      {
+        text: 'New Smart Intake page with live camera capture, photo upload, and real-time AI label analysis',
+        type: 'feature',
+      },
+      {
+        text: 'Vision AI extracts carrier, tracking number, sender, and PMB from any shipping label — supports all major carriers',
+        type: 'feature',
+      },
+      {
+        text: 'Automatic customer matching by PMB number with one-tap confirmation to complete check-in',
+        type: 'feature',
+      },
+      {
+        text: 'Batch mode: photograph multiple packages at once and check them all in simultaneously',
+        type: 'feature',
+      },
+      {
+        text: 'Smart Intake tile added to Dashboard Favorites and sidebar navigation for quick access',
+        type: 'improvement',
+      },
+      {
+        text: 'Demo mode available for testing when OpenAI API key is not configured — cycles through realistic sample data',
+        type: 'improvement',
+      },
+      {
+        text: 'Full activity log integration — all AI-assisted check-ins are tracked with confidence scores and method metadata',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.14.0                                                            */
   /* ------------------------------------------------------------------ */
   {
