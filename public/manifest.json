@@ -7,6 +7,7 @@
   "theme_color": "#4F46E5",
   "background_color": "#FFFFFF",
   "orientation": "any",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/shipos-logo-mark.svg",
