@@ -244,6 +244,8 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     description: 'Integrated signature pad in package check-out flow with signature storage and history display',
     category: 'packages',
     defaultEnabled: true,
+  },
+
   // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
   {
     key: 'stripe_payments',
