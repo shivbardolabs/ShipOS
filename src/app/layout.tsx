@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TenantProvider } from '@/components/tenant-provider';
+import { FeatureFlagProvider } from '@/components/feature-flag-provider';
 import { PostHogAnalyticsProvider } from '@/components/posthog-provider';
 import "./globals.css";
 
@@ -48,15 +49,17 @@ export default function RootLayout({
       </head>
       <UserProvider>
         <TenantProvider>
-          <ThemeProvider>
-            <Suspense fallback={null}>
-              <PostHogAnalyticsProvider>
-                <body className="min-h-screen bg-surface-950 font-sans antialiased">
-                  {children}
-                </body>
-              </PostHogAnalyticsProvider>
-            </Suspense>
-          </ThemeProvider>
+          <FeatureFlagProvider>
+            <ThemeProvider>
+              <Suspense fallback={null}>
+                <PostHogAnalyticsProvider>
+                  <body className="min-h-screen bg-surface-950 font-sans antialiased">
+                    {children}
+                  </body>
+                </PostHogAnalyticsProvider>
+              </Suspense>
+            </ThemeProvider>
+          </FeatureFlagProvider>
         </TenantProvider>
       </UserProvider>
     </html>

@@ -524,3 +524,31 @@ model Invitation {
 
   @@unique([email, tenantId])
 }
+
+// ── Feature Flags ────────────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id             String   @id @default(cuid())
+  key            String   @unique // e.g. "ai-smart-intake"
+  name           String   // Human-readable name
+  description    String?  // What this feature does
+  category       String   @default("general") // ai, packages, operations, compliance, business, platform
+  defaultEnabled Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  overrides FeatureFlagOverride[]
+}
+
+model FeatureFlagOverride {
+  id         String      @id @default(cuid())
+  flagId     String
+  flag       FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  targetType String      // 'user' | 'tenant'
+  targetId   String      // user.id or tenant.id
+  enabled    Boolean
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([flagId, targetType, targetId])
+}

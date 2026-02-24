@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useTenant } from '@/components/tenant-provider';
+import { useFlags } from '@/components/feature-flag-provider';
 import { cn } from '@/lib/utils';
 import {
   Package,
@@ -34,6 +35,7 @@ import {
   Sparkles,
   ScanLine,
   UserPlus,
+  Flag,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -46,6 +48,8 @@ interface NavItem {
   icon: React.ElementType;
   /** Only show this nav item for specific roles */
   requiredRole?: string;
+  /** Feature flag key — item hidden if flag is disabled */
+  flagKey?: string;
 }
 
 interface NavSection {
@@ -61,45 +65,46 @@ const navSections: NavSection[] = [
     requiredRole: 'superadmin',
     items: [
       { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
+      { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
     ],
   },
   {
     title: 'MAIN',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package },
-      { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles },
-      { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus },
-      { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck },
+      { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package, flagKey: 'package-management' },
+      { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles, flagKey: 'ai-smart-intake' },
+      { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus, flagKey: 'package-check-in' },
+      { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck, flagKey: 'package-check-out' },
     ],
   },
   {
     title: 'OPERATIONS',
     items: [
-      { label: 'Customers', href: '/dashboard/customers', icon: Users },
-      { label: 'AI Onboard', href: '/dashboard/customers/ai-onboard', icon: UserPlus },
-      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-      { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen },
-      { label: 'Shipping', href: '/dashboard/shipping', icon: Truck },
-      { label: 'Reconciliation', href: '/dashboard/reconciliation', icon: Scale },
-      { label: 'AI Bill Audit', href: '/dashboard/reconciliation/ai-audit', icon: ScanLine },
-      { label: 'End of Day', href: '/dashboard/end-of-day', icon: Clock },
+      { label: 'Customers', href: '/dashboard/customers', icon: Users, flagKey: 'customer-management' },
+      { label: 'AI Onboard', href: '/dashboard/customers/ai-onboard', icon: UserPlus, flagKey: 'ai-customer-onboarding' },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail, flagKey: 'mail-management' },
+      { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen, flagKey: 'ai-mail-sort' },
+      { label: 'Shipping', href: '/dashboard/shipping', icon: Truck, flagKey: 'shipping' },
+      { label: 'Reconciliation', href: '/dashboard/reconciliation', icon: Scale, flagKey: 'reconciliation' },
+      { label: 'AI Bill Audit', href: '/dashboard/reconciliation/ai-audit', icon: ScanLine, flagKey: 'ai-bill-audit' },
+      { label: 'End of Day', href: '/dashboard/end-of-day', icon: Clock, flagKey: 'end-of-day' },
     ],
   },
   {
     title: 'COMPLIANCE',
     items: [
-      { label: 'CMRA Compliance', href: '/dashboard/compliance', icon: Shield },
-      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+      { label: 'CMRA Compliance', href: '/dashboard/compliance', icon: Shield, flagKey: 'cmra-compliance' },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, flagKey: 'notifications' },
     ],
   },
   {
     title: 'BUSINESS',
     items: [
-      { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award },
-      { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
-      { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText },
-      { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity },
+      { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award, flagKey: 'loyalty-program' },
+      { label: 'Reports', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
+      { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
+      { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
@@ -140,6 +145,7 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, isLoading } = useUser();
   const { tenant, localUser } = useTenant();
+  const { isEnabled } = useFlags();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -195,7 +201,9 @@ export function Sidebar() {
           .filter((section) => !section.requiredRole || role === section.requiredRole)
           .map((section) => {
             const visibleItems = section.items.filter(
-              (item) => !item.requiredRole || role === item.requiredRole
+              (item) =>
+                (!item.requiredRole || role === item.requiredRole) &&
+                (!item.flagKey || isEnabled(item.flagKey))
             );
             if (visibleItems.length === 0) return null;
 
