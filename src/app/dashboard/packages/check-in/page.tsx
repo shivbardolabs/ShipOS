@@ -138,7 +138,7 @@ export default function CheckInPage() {
       case 2:
         return !!selectedCarrier;
       case 3:
-        return !!packageType;
+        return !!packageType && !!trackingNumber.trim();
       case 4:
         return true;
       default:
