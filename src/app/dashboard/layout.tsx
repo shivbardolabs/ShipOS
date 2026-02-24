@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { ActivityLogProvider } from '@/components/activity-log-provider';
+import { VoiceAssistant } from '@/components/voice-assistant';
 
 export default function DashboardLayout({
   children,
@@ -32,6 +33,9 @@ export default function DashboardLayout({
           <Header />
           <main className="flex-1 p-6">{children}</main>
         </div>
+
+        {/* Voice assistant — floating on all dashboard pages */}
+        <VoiceAssistant />
       </div>
     </ActivityLogProvider>
   );
