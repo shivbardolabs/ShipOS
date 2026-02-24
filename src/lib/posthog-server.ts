@@ -52,7 +52,7 @@ export async function getFeatureFlagPayload(
   properties?: Record<string, string>,
 ): Promise<unknown> {
   const ph = getPostHogServer();
-  return ph.getFeatureFlagPayload(flag, distinctId, {
+  return ph.getFeatureFlagPayload(flag, distinctId, undefined, {
     personProperties: properties,
   });
 }
