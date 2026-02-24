@@ -37,6 +37,11 @@ import {
   UserPlus,
   Flag,
   DollarSign,
+  CalendarClock,
+  ClipboardList,
+  Palette,
+  Printer,
+  Database,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -84,6 +89,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Customers', href: '/dashboard/customers', icon: Users, flagKey: 'customer-management' },
       { label: 'AI Onboard', href: '/dashboard/customers/ai-onboard', icon: UserPlus, flagKey: 'ai-customer-onboarding' },
+      { label: 'Provision', href: '/dashboard/customers/provision', icon: ClipboardList, flagKey: 'account_provisioning' },
       { label: 'Mail', href: '/dashboard/mail', icon: Mail, flagKey: 'mail-management' },
       { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen, flagKey: 'ai-mail-sort' },
       { label: 'Shipping', href: '/dashboard/shipping', icon: Truck, flagKey: 'shipping' },
@@ -102,6 +108,7 @@ const navSections: NavSection[] = [
   {
     title: 'BUSINESS',
     items: [
+      { label: 'Renewals', href: '/dashboard/renewals', icon: CalendarClock, flagKey: 'automated_renewals' },
       { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award, flagKey: 'loyalty-program' },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },

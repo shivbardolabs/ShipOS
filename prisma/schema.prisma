@@ -31,6 +31,12 @@ model Tenant {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+  // White-Label Branding
+  brandLogo        String? // URL to uploaded logo
+  brandAccentColor String? // Hex color e.g. #6366f1
+  brandTagline     String? // Custom tagline
+  brandFavicon     String? // URL to favicon
+
   // Stripe integration
   stripeCustomerId     String?
   stripeSubscriptionId String?
@@ -126,6 +132,16 @@ model Customer {
   homeCity           String?
   homeState          String?
   homeZip            String?
+
+  // Renewal tracking
+  renewalStatus      String?   @default("current") // current, due_soon, past_due, suspended
+  lastRenewalNotice  DateTime? // Last time a renewal notification was sent
+
+  // SMS Compliance
+  smsConsent         Boolean   @default(false)
+  smsConsentAt       DateTime?
+  smsOptOutAt        DateTime?
+  smsConsentMethod   String?   // web_form, verbal, written
 
   // Stripe billing
   stripeCustomerId String? // For customer-facing billing
@@ -669,4 +685,31 @@ model PaymentRecord {
   stripePaymentId String?
   invoiceUrl  String?
   createdAt   DateTime @default(now())
+}
+
+// ── Email Verification Tokens ────────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  newEmail  String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// ── Printer Configuration ────────────────────────────────────────────────────
+
+model PrinterConfig {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String   @default("ZPL Printer")
+  type      String   @default("zpl") // zpl, thermal, laser
+  ipAddress String?
+  port      Int      @default(9100)
+  isDefault Boolean  @default(true)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
