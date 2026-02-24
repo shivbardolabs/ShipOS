@@ -81,7 +81,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           leftIcon
         )}
-        {!iconOnly && children}
+        {iconOnly ? (
+          !loading && !leftIcon && children
+        ) : (
+          children
+        )}
         {!loading && rightIcon}
       </button>
     );
