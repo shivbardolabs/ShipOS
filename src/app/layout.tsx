@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TenantProvider } from '@/components/tenant-provider';
+import { PostHogAnalyticsProvider } from '@/components/posthog-provider';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,9 +49,13 @@ export default function RootLayout({
       <UserProvider>
         <TenantProvider>
           <ThemeProvider>
-            <body className="min-h-screen bg-surface-950 font-sans antialiased">
-              {children}
-            </body>
+            <Suspense fallback={null}>
+              <PostHogAnalyticsProvider>
+                <body className="min-h-screen bg-surface-950 font-sans antialiased">
+                  {children}
+                </body>
+              </PostHogAnalyticsProvider>
+            </Suspense>
           </ThemeProvider>
         </TenantProvider>
       </UserProvider>
