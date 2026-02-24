@@ -53,7 +53,7 @@ export async function POST() {
       await prisma.user.upsert({
         where: { id: u.id },
         update: {},
-        create: { ...u, status: 'active', hasAgreedToTerms: true, tenantId: DEMO_TENANT_ID },
+        create: { ...u, status: 'active', agreedToTermsAt: new Date(), tenantId: DEMO_TENANT_ID },
       });
     }
 
