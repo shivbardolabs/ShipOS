@@ -26,13 +26,40 @@ import {
   Loader2, Mailbox, Info, ChevronDown, Search, Lock,
 } from 'lucide-react';
 
-const WIZARD_STEPS: Step[] = [
-  { id: 'info', label: 'Customer Info', description: 'Name & contact details' },
-  { id: 'ids', label: 'Identification', description: 'Two forms of ID' },
-  { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
-  { id: 'agreement', label: 'Service Agreement', description: 'Sign & finalize' },
-  { id: 'review', label: 'Review & Create', description: 'Confirm details' },
+const BUSINESS_DOC_TYPES = [
+  { value: 'articles_of_incorporation', label: 'Articles of Incorporation' },
+  { value: 'certificate_of_formation', label: 'Certificate of Formation / Organization' },
+  { value: 'ein_letter', label: 'EIN Letter (IRS Determination)' },
+  { value: 'operating_agreement', label: 'Operating Agreement' },
+  { value: 'business_license', label: 'Business License' },
+  { value: 'certificate_good_standing', label: 'Certificate of Good Standing' },
+  { value: 'dba_filing', label: 'DBA / Fictitious Name Filing' },
+  { value: 'other_business_doc', label: 'Other Business Document' },
 ];
+
+/** Personal PMB fee structure */
+const PERSONAL_FEES = {
+  setupFee: 15,
+  overageRate: 1.00,
+  storageRate: 1.00,
+  additionalCustomer: 10,
+  additionalKey: 10,
+  lateFee: 20,
+  monthlyItems: 10,
+  storageDays: 7,
+};
+
+/** Business PMB fee structure — higher base rates for commercial accounts */
+const BUSINESS_FEES = {
+  setupFee: 50,
+  overageRate: 1.50,
+  storageRate: 2.00,
+  additionalCustomer: 15,
+  additionalKey: 10,
+  lateFee: 35,
+  monthlyItems: 25,
+  storageDays: 7,
+};
 
 const STORE_INFO = {
   name: 'ShipOS Mail Center',
@@ -42,7 +69,8 @@ const STORE_INFO = {
   zip: '90210',
 };
 
-function getAgreementText(vars: Record<string, string>) {
+function getAgreementText(vars: Record<string, string>, isBusinessPmb = false) {
+  const fees = isBusinessPmb ? BUSINESS_FEES : PERSONAL_FEES;
   return `CONTRACT FOR MAILBOX SERVICE
 
 ${vars.storeAddress || STORE_INFO.address} PMB ${vars.pmbNumber || '___'}
@@ -78,19 +106,19 @@ ADDRESSING: Customer shall use only the address designation "PMB ${vars.pmbNumbe
 
 END OF TERM: Upon conclusion of Mail Service Term, Customer agrees not to submit a Change of Address Order with the USPS.
 
-INCLUDED SERVICES:
+${isBusinessPmb ? 'BUSINESS ACCOUNT — INCLUDED SERVICES' : 'INCLUDED SERVICES'}:
 • Text/Email notification for accountable mail/packages
 • Text/Email notification for new mail items distributed to PMB ${vars.pmbNumber || '___'}
-• 10 accountable mail/package items received per month
-• 7 days storage for mail/packages not placed in mailbox
+• ${fees.monthlyItems} accountable mail/package items received per month
+• ${fees.storageDays} days storage for mail/packages not placed in mailbox${isBusinessPmb ? '\n• Business entity documentation on file' : ''}
 
 ADDITIONAL SERVICES:
-• Accountable mail/packages over 10/month: $1.00 each
-• Storage beyond 7 days: $1.00 per day per item
-• Additional customers: $10 per customer per month
-• Additional keys: $10 each
-• Setup Fee: $15 at initial application
-• Late Fee: $20 per month after 7 days`;
+• Accountable mail/packages over ${fees.monthlyItems}/month: $${fees.overageRate.toFixed(2)} each
+• Storage beyond ${fees.storageDays} days: $${fees.storageRate.toFixed(2)} per day per item
+• Additional customers: $${fees.additionalCustomer} per customer per month
+• Additional keys: $${fees.additionalKey} each
+• Setup Fee: $${fees.setupFee} at initial application
+• Late Fee: $${fees.lateFee} per month after 7 days`;
 }
 
 const platformLabels: Record<MailboxPlatform, { label: string; color: string }> = {
@@ -105,6 +133,7 @@ export default function NewCustomerPage() {
   const [step, setStep] = useState(0);
   const fileInputRef1 = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
+  const fileInputRef3 = useRef<HTMLInputElement>(null);
 
   const [customerForm, setCustomerForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
@@ -127,6 +156,9 @@ export default function NewCustomerPage() {
   const [extractedData, setExtractedData] = useState<ExtractedIdData | null>(null);
   const [primaryIdExpiration, setPrimaryIdExpiration] = useState('');
   const [secondaryIdExpiration, setSecondaryIdExpiration] = useState('');
+  const [businessDocType, setBusinessDocType] = useState('');
+  const [businessDocFile, setBusinessDocFile] = useState<File | null>(null);
+  const [businessDocPreview, setBusinessDocPreview] = useState<string | null>(null);
 
   const [form1583, setForm1583] = useState<Partial<PS1583FormData>>({
     cmraName: STORE_INFO.name, cmraAddress: STORE_INFO.address,
@@ -137,6 +169,15 @@ export default function NewCustomerPage() {
   const [agreementSigned, setAgreementSigned] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
+
+  const isBusinessPmb = customerForm.businessName.trim().length > 0;
+  const WIZARD_STEPS: Step[] = [
+    { id: 'info', label: 'Customer Info', description: 'Name & contact details' },
+    { id: 'ids', label: 'Identification', description: isBusinessPmb ? 'Three forms of ID' : 'Two forms of ID' },
+    { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
+    { id: 'agreement', label: 'Service Agreement', description: 'Sign & finalize' },
+    { id: 'review', label: 'Review & Create', description: 'Confirm details' },
+  ];
 
   const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, mockCustomers), []);
   const availableBoxes = useMemo(() => {
@@ -216,10 +257,14 @@ export default function NewCustomerPage() {
       if (!idValid.valid) errors.ids = idValid.error || 'Invalid ID selection';
       if (!primaryIdFile) errors.primaryFile = 'Upload primary ID';
       if (!secondaryIdFile) errors.secondaryFile = 'Upload secondary ID';
+      if (isBusinessPmb) {
+        if (!businessDocType) errors.businessDocType = 'Business document type required';
+        if (!businessDocFile) errors.businessDocFile = 'Upload business documentation';
+      }
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [customerForm, primaryIdType, secondaryIdType, primaryIdFile, secondaryIdFile]);
+  }, [customerForm, primaryIdType, secondaryIdType, primaryIdFile, secondaryIdFile, isBusinessPmb, businessDocType, businessDocFile]);
 
   const handleNext = useCallback(() => {
     if (validateStep(step)) setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
@@ -248,7 +293,7 @@ export default function NewCustomerPage() {
             </div>
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">IDs</div>
-              <div className="text-sm font-semibold text-emerald-400">2 Verified</div>
+              <div className="text-sm font-semibold text-emerald-400">{isBusinessPmb ? '3' : '2'} Verified</div>
             </div>
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">PS 1583</div>
@@ -268,6 +313,7 @@ export default function NewCustomerPage() {
               setPrimaryIdFile(null); setSecondaryIdFile(null);
               setPrimaryIdPreview(null); setSecondaryIdPreview(null);
               setExtractedData(null); setAgreementSigned(false); setSignatureDataUrl(null);
+              setBusinessDocType(''); setBusinessDocFile(null); setBusinessDocPreview(null);
             }}>Add Another Customer</Button>
           </div>
         </div>
@@ -307,6 +353,18 @@ export default function NewCustomerPage() {
                       <Input label="Phone" type="tel" placeholder="(555) 555-0100" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} leftIcon={<Phone className="h-4 w-4" />} />
                     </div>
                     <Input label="Business Name (optional)" placeholder="Business LLC" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} leftIcon={<Building2 className="h-4 w-4" />} />
+                    {isBusinessPmb && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-3">
+                        <Building2 className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-amber-300">Business PMB Detected</p>
+                            <Badge dot={false} className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">Business Account</Badge>
+                          </div>
+                          <p className="text-xs text-surface-400 mt-1">Business mailboxes require a <span className="text-surface-200 font-medium">third form of documentation</span> (e.g. Articles of Incorporation, EIN Letter) and follow a <span className="text-surface-200 font-medium">business fee structure</span> with higher included volume.</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="border-t border-surface-800 pt-4">
                       <p className="text-sm font-medium text-surface-300 mb-3 flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</p>
                       <div className="space-y-3">
@@ -385,6 +443,23 @@ export default function NewCustomerPage() {
                   </div>
                 </CardContent>
               </Card>
+              {isBusinessPmb && (
+                <Card padding="sm">
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-xs font-medium text-amber-400">Business Fee Structure</p>
+                    </div>
+                    <div className="space-y-1.5 text-[11px]">
+                      <div className="flex justify-between"><span className="text-surface-400">Setup Fee</span><span className="text-surface-200 font-medium">${BUSINESS_FEES.setupFee}</span></div>
+                      <div className="flex justify-between"><span className="text-surface-400">Included Items/mo</span><span className="text-surface-200 font-medium">{BUSINESS_FEES.monthlyItems}</span></div>
+                      <div className="flex justify-between"><span className="text-surface-400">Overage Rate</span><span className="text-surface-200 font-medium">${BUSINESS_FEES.overageRate.toFixed(2)}/item</span></div>
+                      <div className="flex justify-between"><span className="text-surface-400">Storage Rate</span><span className="text-surface-200 font-medium">${BUSINESS_FEES.storageRate.toFixed(2)}/day</span></div>
+                      <div className="flex justify-between"><span className="text-surface-400">Late Fee</span><span className="text-surface-200 font-medium">${BUSINESS_FEES.lateFee}/mo</span></div>
+                    </div>
+                  </div>
+                </Card>
+              )}
               <Card padding="sm">
                 <div className="px-3 py-2">
                   <p className="text-xs font-medium text-surface-400 mb-2">Box Availability</p>
@@ -406,11 +481,18 @@ export default function NewCustomerPage() {
         {/* Step 2: Identification */}
         {step === 1 && (
           <div className="space-y-6">
-            <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-blue-500">
-              <Info className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className={cn("glass-card p-4 flex items-start gap-3 border-l-4", isBusinessPmb ? "border-amber-500" : "border-blue-500")}>
+              <Info className={cn("h-5 w-5 mt-0.5 flex-shrink-0", isBusinessPmb ? "text-amber-400" : "text-blue-400")} />
               <div>
-                <p className="text-sm font-medium text-surface-200">Two Forms of ID Required</p>
-                <p className="text-xs text-surface-400 mt-1">Per USPS regulations, a primary photo ID and a secondary form of identification are required. <a href="https://faq.usps.com/articles/Knowledge/Acceptable-Form-of-Identification" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 ml-1">USPS Acceptable IDs →</a></p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-surface-200">{isBusinessPmb ? 'Three Forms of ID Required' : 'Two Forms of ID Required'}</p>
+                  {isBusinessPmb && <Badge dot={false} className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">Business PMB</Badge>}
+                </div>
+                <p className="text-xs text-surface-400 mt-1">
+                  Per USPS regulations, a primary photo ID and a secondary form of identification are required.
+                  {isBusinessPmb && <span className="text-amber-400 font-medium"> Business accounts also require a business entity document.</span>}
+                  <a href="https://faq.usps.com/articles/Knowledge/Acceptable-Form-of-Identification" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 ml-1">USPS Acceptable IDs →</a>
+                </p>
               </div>
             </div>
             {formErrors.ids && (
@@ -477,6 +559,33 @@ export default function NewCustomerPage() {
                 </CardContent>
               </Card>
             </div>
+            {isBusinessPmb && (
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-400" />Business Documentation</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Select label="Document Type *" placeholder="Select business document..." options={BUSINESS_DOC_TYPES.map((d) => ({ value: d.value, label: d.label }))} value={businessDocType} onChange={(e) => setBusinessDocType(e.target.value)} error={formErrors.businessDocType} />
+                    {businessDocType && <p className="text-xs text-surface-500">This document verifies the business entity associated with this PMB.</p>}
+                    <div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document *</label>
+                      <input ref={fileInputRef3} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setBusinessDocPreview(ev.target?.result as string); setBusinessDocFile(file); }; reader.readAsDataURL(file); } }} />
+                      {businessDocPreview ? (
+                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
+                          <img src={businessDocPreview} alt="Business Doc" className="w-full h-40 object-cover" />
+                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{businessDocFile?.name}</p></div>
+                        </div>
+                      ) : (
+                        <div onClick={() => fileInputRef3.current?.click()} className={cn('rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition-colors', formErrors.businessDocFile ? 'border-red-500/50 bg-red-500/5' : 'border-surface-700 hover:border-amber-500/50 hover:bg-amber-500/5')}>
+                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
+                        </div>
+                      )}
+                      {formErrors.businessDocFile && <p className="text-xs text-red-500 mt-1">{formErrors.businessDocFile}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {primaryIdFile && (
               <Card padding="md">
                 <div className="flex items-center justify-between">
@@ -591,7 +700,7 @@ export default function NewCustomerPage() {
               <CardContent>
                 <p className="text-xs text-surface-400 mb-4">Review the agreement below. This is auto-populated with customer and store details. Stores can customize this template in Settings → Mailbox Configuration.</p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-6 max-h-[400px] overflow-y-auto font-mono text-xs text-surface-300 leading-relaxed whitespace-pre-wrap">
-                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString() })}
+                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString() }, isBusinessPmb)}
                 </div>
               </CardContent>
             </Card>
@@ -625,7 +734,10 @@ export default function NewCustomerPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-lg">{customerForm.firstName[0]}{customerForm.lastName[0]}</div>
-                      <div><p className="text-base font-semibold text-surface-100">{customerForm.firstName} {customerForm.lastName}</p>{customerForm.businessName && <p className="text-xs text-surface-400">{customerForm.businessName}</p>}</div>
+                      <div>
+                        <div className="flex items-center gap-2"><p className="text-base font-semibold text-surface-100">{customerForm.firstName} {customerForm.lastName}</p>{isBusinessPmb && <Badge dot={false} className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">Business</Badge>}</div>
+                        {customerForm.businessName && <p className="text-xs text-surface-400">{customerForm.businessName}</p>}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-y-2 text-sm">
                       <p className="text-surface-500">PMB</p><p className="text-surface-200 font-mono font-medium">{customerForm.pmbNumber ? formatPmbNumber(parseInt(customerForm.pmbNumber)) : 'Not assigned'}</p>
@@ -645,6 +757,7 @@ export default function NewCustomerPage() {
                     {[
                       { label: 'Primary ID', value: USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || 'Not selected', ok: !!primaryIdFile && !!primaryIdType, step: 1 },
                       { label: 'Secondary ID', value: ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 1 },
+                      ...(isBusinessPmb ? [{ label: 'Business Document', value: BUSINESS_DOC_TYPES.find((d) => d.value === businessDocType)?.label || 'Not selected', ok: !!businessDocFile && !!businessDocType, step: 1 }] : []),
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 2 },
                       { label: 'USPS CRD Upload', value: form1583.crdUploaded ? 'Uploaded' : 'Pending', ok: form1583.crdUploaded, warn: !form1583.crdUploaded, step: 2 },
                       { label: 'Form 1583 Notarized', value: form1583.notarized ? 'Yes' : 'Pending', ok: form1583.notarized, warn: !form1583.notarized, step: 2 },
