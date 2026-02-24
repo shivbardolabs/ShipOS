@@ -36,6 +36,7 @@ import {
   ScanLine,
   UserPlus,
   Flag,
+  DollarSign,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -66,6 +67,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
       { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
+      { label: 'Action Pricing', href: '/dashboard/admin/pricing', icon: DollarSign },
     ],
   },
   {
@@ -151,6 +153,8 @@ export function Sidebar() {
     if (href === '/dashboard') return pathname === '/dashboard';
     // Exact match for parent routes that have sub-pages (e.g. /dashboard/admin vs /dashboard/admin/feature-flags)
     if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
+    if (href === '/dashboard/admin/feature-flags') return pathname === '/dashboard/admin/feature-flags';
+    if (href === '/dashboard/admin/pricing') return pathname.startsWith('/dashboard/admin/pricing');
     return pathname.startsWith(href);
   };
 
