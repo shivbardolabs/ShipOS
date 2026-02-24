@@ -34,7 +34,7 @@ export function getPostHogServer(): PostHog {
 export async function getFeatureFlag(
   flag: string,
   distinctId: string,
-  properties?: Record<string, string | number | boolean>,
+  properties?: Record<string, string>,
 ): Promise<boolean> {
   const ph = getPostHogServer();
   const value = await ph.isFeatureEnabled(flag, distinctId, {
@@ -49,7 +49,7 @@ export async function getFeatureFlag(
 export async function getFeatureFlagPayload(
   flag: string,
   distinctId: string,
-  properties?: Record<string, string | number | boolean>,
+  properties?: Record<string, string>,
 ): Promise<unknown> {
   const ph = getPostHogServer();
   return ph.getFeatureFlagPayload(flag, distinctId, {
