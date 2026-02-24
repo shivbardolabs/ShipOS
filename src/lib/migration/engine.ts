@@ -9,7 +9,7 @@
  * 2. Restore: gbak → temporary .fdb file
  * 3. Read: query Firebird DB for source data
  * 4. Transform: map PostalMate schema → ShipOS schema
- * 5. Write: batch insert into ShipOS SQLite via Prisma
+ * 5. Write: batch insert into ShipOS database via Prisma
  */
 
 import {

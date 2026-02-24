@@ -76,9 +76,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       console.error('Failed to fetch user data', e);
     }
 
-    // Fallback: if DB is unavailable (e.g. ephemeral SQLite on Vercel
-    // serverless), build a minimal LocalUser from the Auth0 session so
-    // role-based UI still renders.  Superadmin emails get superadmin role.
+    // Fallback: if DB is temporarily unreachable, build a minimal LocalUser
+    // from the Auth0 session so role-based UI still renders.
+    // Superadmin emails get superadmin role.
     if (!resolved && auth0User) {
       const email = (auth0User.email as string) ?? '';
       const isSuperadmin = email.toLowerCase() === 'shiv@bardolabs.ai';
