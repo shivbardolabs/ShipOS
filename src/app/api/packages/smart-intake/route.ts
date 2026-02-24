@@ -202,13 +202,23 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('OpenAI API error:', errText);
+      console.error('OpenAI API error:', response.status, errText);
+
+      // Parse OpenAI error for a user-friendly message
+      let detail = `OpenAI returned ${response.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        detail = errJson?.error?.message ?? detail;
+      } catch {
+        // keep generic detail
+      }
+
       return NextResponse.json(
         {
           success: false,
           mode: 'ai' as const,
           results: [],
-          error: 'Vision API call failed',
+          error: `Vision API error: ${detail}`,
         },
         { status: 502 }
       );
