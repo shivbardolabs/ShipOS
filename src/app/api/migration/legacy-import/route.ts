@@ -78,15 +78,14 @@ export async function POST(req: Request) {
               lastName: String(mapped.lastName ?? ''),
               email: String(mapped.email ?? ''),
               phone: mapped.phone ? String(mapped.phone) : undefined,
-              pmbNumber: mapped.pmbNumber ? String(mapped.pmbNumber) : undefined,
+              pmbNumber: String(mapped.pmbNumber ?? `IMPORT-${Date.now()}-${i}`),
               status: String(mapped.status ?? 'active'),
               form1583Status: String(mapped.form1583Status ?? 'pending'),
               idType: mapped.idType ? String(mapped.idType) : undefined,
-              idNumber: mapped.idNumber ? String(mapped.idNumber) : undefined,
-              address: mapped.address ? String(mapped.address) : undefined,
-              city: mapped.city ? String(mapped.city) : undefined,
-              state: mapped.state ? String(mapped.state) : undefined,
-              zipCode: mapped.zipCode ? String(mapped.zipCode) : undefined,
+              homeAddress: mapped.address ? String(mapped.address) : undefined,
+              homeCity: mapped.city ? String(mapped.city) : undefined,
+              homeState: mapped.state ? String(mapped.state) : undefined,
+              homeZip: mapped.zipCode ? String(mapped.zipCode) : undefined,
               renewalDate: mapped.renewalDate ? new Date(String(mapped.renewalDate)) : undefined,
               tenantId,
             },
@@ -102,17 +101,17 @@ export async function POST(req: Request) {
             customerId = cust?.id;
           }
 
+          if (!customerId) continue; // Package requires a customerId
+
           const pkg = await prisma.package.create({
             data: {
               trackingNumber: String(mapped.trackingNumber ?? ''),
               carrier: String(mapped.carrier ?? 'Unknown'),
               status: String(mapped.status ?? 'checked_in'),
-              weight: mapped.weight ? Number(mapped.weight) : undefined,
               storageLocation: mapped.storageLocation ? String(mapped.storageLocation) : undefined,
-              description: mapped.description ? String(mapped.description) : undefined,
+              notes: mapped.description ? String(mapped.description) : undefined,
               checkedInAt: mapped.checkedInAt ? new Date(String(mapped.checkedInAt)) : new Date(),
-              customerId: customerId ?? undefined,
-              tenantId,
+              customerId,
             },
           });
           importedIds.push(pkg.id);
@@ -126,13 +125,14 @@ export async function POST(req: Request) {
     await prisma.auditLog.create({
       data: {
         action: 'LEGACY_MIGRATION',
-        description: `Imported ${importedIds.length} ${config.targetModel}(s) from legacy ${preset ?? 'custom'} format`,
-        userId: user.id,
-        tenantId,
-        metadata: JSON.stringify({
+        entityType: 'migration',
+        entityId: preset ?? 'custom',
+        details: JSON.stringify({
+          description: `Imported ${importedIds.length} ${config.targetModel}(s) from legacy ${preset ?? 'custom'} format`,
           preset, totalRows: result.totalRows,
           imported: importedIds.length, skipped: result.skippedRows,
         }),
+        userId: user.id,
       },
     });
 
