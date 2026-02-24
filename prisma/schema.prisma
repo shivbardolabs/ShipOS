@@ -11,22 +11,25 @@ datasource db {
 // ── Tenancy ──────────────────────────────────────────────────────────────────
 
 model Tenant {
-  id            String   @id @default(cuid())
-  name          String   // Store / business name
-  slug          String   @unique // URL-friendly identifier
-  address       String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String   @default("US")
-  phone         String?
-  email         String?
-  timezone      String   @default("America/New_York")
-  businessHours String?  // JSON: { mon: { open, close }, tue: … }
-  taxRate       Float    @default(0)
-  logoUrl       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String    @id @default(cuid())
+  name             String    // Store / business name
+  slug             String    @unique // URL-friendly identifier
+  address          String?
+  city             String?
+  state            String?
+  zipCode          String?
+  country          String    @default("US")
+  phone            String?
+  email            String?
+  timezone         String    @default("America/New_York")
+  businessHours    String?   // JSON: { mon: { open, close }, tue: … }
+  taxRate          Float     @default(0)
+  logoUrl          String?
+  status           String    @default("active") // active, paused, disabled, trial
+  subscriptionTier String    @default("starter") // starter, pro, enterprise
+  trialEndsAt      DateTime? // When trial period expires (null = no trial)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   users       User[]
   customers   Customer[]
@@ -36,17 +39,20 @@ model Tenant {
 // ── Users & Roles ────────────────────────────────────────────────────────────
 
 model User {
-  id          String    @id @default(cuid())
-  auth0Id     String?   @unique // Auth0 `sub` claim — links login to local user
-  name        String
-  email       String    @unique
-  password    String    @default("")
-  role        String    @default("admin") // superadmin, admin, manager, employee
-  avatar      String?
-  lastLoginAt DateTime? // Tracks most recent login
-  loginCount  Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  auth0Id         String?   @unique // Auth0 `sub` claim — links login to local user
+  name            String
+  email           String    @unique
+  password        String    @default("")
+  role            String    @default("admin") // superadmin, admin, manager, employee
+  avatar          String?
+  status          String    @default("active") // active, inactive, suspended
+  deletedAt       DateTime? // Soft delete timestamp — filtered from queries when set
+  agreedToTermsAt DateTime? // When user accepted Terms of Service & Privacy Policy
+  lastLoginAt     DateTime? // Tracks most recent login
+  loginCount      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
@@ -143,6 +149,9 @@ model Package {
   receivingFee Float @default(0)
   quotaFee     Float @default(0)
 
+  storageLocation  String? // Physical shelf/bin location (e.g. "Shelf A3", "Bin 12")
+  releaseSignature String? // Base64 data URL of customer signature on release
+
   checkedInAt DateTime  @default(now())
   notifiedAt  DateTime?
   releasedAt  DateTime?
@@ -234,6 +243,8 @@ model AuditLog {
   entityType String // package, customer, shipment, etc.
   entityId   String
   details    String? // JSON string with change details
+  oldData    String? // JSON snapshot of entity state before the change
+  newData    String? // JSON snapshot of entity state after the change
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

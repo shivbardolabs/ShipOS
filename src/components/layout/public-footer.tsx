@@ -1,6 +1,10 @@
 /**
  * Shared footer for all public (unauthenticated) pages.
+ * Includes links to Terms of Service and Privacy Policy.
  */
+
+import Link from 'next/link';
+
 export function PublicFooter() {
   return (
     <footer
@@ -9,9 +13,17 @@ export function PublicFooter() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-surface-600">
         <span>ShipOS v0.1.0</span>
-        <span>
-          Built by <span className="text-surface-400">Bardo Labs</span>
-        </span>
+        <div className="flex items-center gap-4">
+          <Link href="/terms" className="hover:text-surface-400 transition-colors">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-surface-400 transition-colors">
+            Privacy
+          </Link>
+          <span>
+            Built by <span className="text-surface-400">Bardo Labs</span>
+          </span>
+        </div>
       </div>
     </footer>
   );

@@ -73,6 +73,8 @@ export interface Package {
   releasedAt?: string;
   customerId: string;
   customer?: Customer;
+  storageLocation?: string;  // Physical shelf/bin location
+  releaseSignature?: string; // Base64 data URL of customer signature on release
   checkedInBy?: User;
   checkedOutBy?: User;
 }

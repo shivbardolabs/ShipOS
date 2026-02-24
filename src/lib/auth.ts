@@ -23,10 +23,12 @@ export interface LocalUser {
   name: string;
   email: string;
   role: UserRole;
+  status: string;
   avatar: string | null;
   tenantId: string | null;
   lastLoginAt: string | null;
   loginCount: number;
+  agreedToTermsAt: string | null;
   tenant: {
     id: string;
     name: string;
@@ -42,6 +44,8 @@ export interface LocalUser {
     businessHours: string | null;
     taxRate: number;
     logoUrl: string | null;
+    status: string;
+    subscriptionTier: string;
   } | null;
 }
 
@@ -205,11 +209,19 @@ function toLocalUser(user: any): LocalUser {
     name: user.name,
     email: user.email,
     role: user.role as UserRole,
+    status: user.status ?? 'active',
     avatar: user.avatar,
     tenantId: user.tenantId,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     loginCount: user.loginCount ?? 0,
-    tenant: user.tenant,
+    agreedToTermsAt: user.agreedToTermsAt?.toISOString() ?? null,
+    tenant: user.tenant
+      ? {
+          ...user.tenant,
+          status: user.tenant.status ?? 'active',
+          subscriptionTier: user.tenant.subscriptionTier ?? 'starter',
+        }
+      : null,
   };
 }
 

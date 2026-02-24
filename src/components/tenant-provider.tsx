@@ -21,6 +21,8 @@ export interface Tenant {
   businessHours: string | null;
   taxRate: number;
   logoUrl: string | null;
+  status: string;
+  subscriptionTier: string;
 }
 
 export interface LocalUser {
@@ -29,10 +31,12 @@ export interface LocalUser {
   name: string;
   email: string;
   role: 'superadmin' | 'admin' | 'manager' | 'employee';
+  status: string;
   avatar: string | null;
   tenantId: string | null;
   lastLoginAt: string | null;
   loginCount: number;
+  agreedToTermsAt: string | null;
   tenant: Tenant | null;
 }
 
@@ -92,6 +96,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         tenantId: null,
         lastLoginAt: null,
         loginCount: 0,
+        status: 'active',
+        agreedToTermsAt: new Date().toISOString(),
         tenant: null,
       });
     }

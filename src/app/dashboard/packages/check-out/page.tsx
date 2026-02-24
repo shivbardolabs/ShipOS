@@ -20,13 +20,13 @@ import {
   Printer,
   Send,
   CreditCard,
-  FileSignature,
   ChevronRight,
   User,
   X,
   BookOpen,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { SignaturePad } from '@/components/ui/signature-pad';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
@@ -198,6 +198,9 @@ export default function CheckOutPage() {
   /* ---- Receipt state ---- */
   const [receiptMethod, setReceiptMethod] = useState<ReceiptMethod>('sms');
 
+  /* ---- Release signature state — captured during checkout ---- */
+  const [releaseSignature, setReleaseSignature] = useState<string | null>(null);
+
   /* ---- Payment mode: post to A/P vs collect now ---- */
   const [paymentMode, setPaymentMode] = useState<'post_to_account' | 'pay_now'>('post_to_account');
 
@@ -227,6 +230,7 @@ export default function CheckOutPage() {
     setActiveTab('packages');
     setEnabledAddOns(new Set());
     setReceiptMethod('sms');
+    setReleaseSignature(null);
 
     if (!pmbInput.trim()) {
       setLookupError('Please enter a PMB number');
@@ -279,6 +283,7 @@ export default function CheckOutPage() {
     setActiveTab('packages');
     setEnabledAddOns(new Set());
     setReceiptMethod('sms');
+    setReleaseSignature(null);
     setNameInput(`${customer.firstName} ${customer.lastName}`);
     selectCustomer(customer);
   };
@@ -361,6 +366,7 @@ export default function CheckOutPage() {
           customerId: foundCustomer.id,
           customerName: `${foundCustomer.firstName} ${foundCustomer.lastName}`,
           pmbNumber: foundCustomer.pmbNumber,
+          hasSignature: !!releaseSignature,
         },
       });
     }
@@ -924,15 +930,29 @@ export default function CheckOutPage() {
                       </div>
                     </Card>
 
-                    {/* Signature */}
+                    {/* Signature — captures customer signature for package release */}
                     <Card padding="md">
                       <label className="text-sm font-semibold text-surface-300 block mb-3">Customer Signature</label>
-                      <div className="h-28 rounded-xl border-2 border-dashed border-surface-700 bg-surface-900/40 flex items-center justify-center">
-                        <div className="text-center">
-                          <FileSignature className="mx-auto h-7 w-7 text-surface-600 mb-1.5" />
-                          <p className="text-xs text-surface-500">Tap or click to sign</p>
+                      {releaseSignature ? (
+                        <div className="space-y-2">
+                          <div className="h-28 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-center p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={releaseSignature} alt="Customer signature" className="max-h-full max-w-full object-contain" />
+                          </div>
+                          <button
+                            onClick={() => setReleaseSignature(null)}
+                            className="text-xs text-surface-500 hover:text-surface-300 transition-colors"
+                          >
+                            Clear &amp; re-sign
+                          </button>
                         </div>
-                      </div>
+                      ) : (
+                        <SignaturePad
+                          onSign={(dataUrl) => setReleaseSignature(dataUrl)}
+                          height={112}
+                          label=""
+                        />
+                      )}
                     </Card>
                   </div>
 

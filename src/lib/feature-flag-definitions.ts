@@ -194,6 +194,57 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     category: 'business',
     defaultEnabled: true,
   },
+
+  // ── Requirements Gaps — Batch 1 ──────────────────────────────────────────
+  {
+    key: 'legal-pages',
+    name: 'Legal Pages & Agreement Gate',
+    description: 'Terms of Service, Privacy Policy pages, and first-login agreement gate requiring user consent',
+    category: 'compliance',
+    defaultEnabled: true,
+  },
+  {
+    key: 'tenant-lifecycle',
+    name: 'Tenant Lifecycle Management',
+    description: 'Tenant status badges, activate/pause/disable toggles, and suspended tenant blocking in admin panel',
+    category: 'platform',
+    defaultEnabled: true,
+  },
+  {
+    key: 'user-status',
+    name: 'User Status & Soft Delete',
+    description: 'User status badges, activate/deactivate toggles, and soft delete with login blocking for inactive users',
+    category: 'platform',
+    defaultEnabled: true,
+  },
+  {
+    key: 'rbac',
+    name: 'RBAC Permissions',
+    description: 'Role-based access control with granular permission matrix and server-side API route guards',
+    category: 'platform',
+    defaultEnabled: true,
+  },
+  {
+    key: 'package-storage-location',
+    name: 'Package Storage Location',
+    description: 'Storage location tracking during check-in, display on package cards, and location filter on packages list',
+    category: 'packages',
+    defaultEnabled: true,
+  },
+  {
+    key: 'audit-log-diff',
+    name: 'Audit Log Before/After',
+    description: 'Captures old/new data snapshots on updates with expandable diff view in the Activity Log page',
+    category: 'business',
+    defaultEnabled: true,
+  },
+  {
+    key: 'checkout-signature',
+    name: 'Checkout Signature Capture',
+    description: 'Integrated signature pad in package check-out flow with signature storage and history display',
+    category: 'packages',
+    defaultEnabled: true,
+  },
 ];
 
 /** Category display metadata */
