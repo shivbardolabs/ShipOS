@@ -571,7 +571,7 @@ export default function SmartIntakePage() {
                 {matchedPackages.length === 1 ? 'Package Detected' : `${matchedPackages.length} Packages Detected`}
               </h3>
               {responseMode === 'demo' && (
-                <Badge variant="warning" size="sm">Demo Mode</Badge>
+                <Badge variant="warning">Demo Mode</Badge>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -656,7 +656,7 @@ export default function SmartIntakePage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="default" size="sm">
+                        <Badge variant="default">
                           {packageSizeLabels[effective.packageSize] ?? effective.packageSize}
                         </Badge>
                         <ConfidenceBadge score={effective.confidence} />
