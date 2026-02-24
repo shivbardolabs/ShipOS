@@ -22,6 +22,10 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Sparkles,
+  UserPlus,
+  MailOpen,
+  ScanLine,
+  Mic,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -78,6 +82,9 @@ const actions: SearchResult[] = [
   { id: 'act_compliance', type: 'action', title: 'CMRA Compliance', subtitle: 'Form 1583 and ID management', icon: <ShieldCheck className="h-4 w-4" />, href: '/dashboard/compliance', shortcut: '' },
   { id: 'act_invoicing', type: 'action', title: 'Invoicing', subtitle: 'Manage invoices and billing', icon: <FileText className="h-4 w-4" />, href: '/dashboard/invoicing', shortcut: '' },
   { id: 'act_eod', type: 'action', title: 'End of Day', subtitle: 'End-of-day reconciliation', icon: <ClipboardCheck className="h-4 w-4" />, href: '/dashboard/end-of-day', shortcut: '' },
+  { id: 'act_ai_onboard', type: 'action', title: 'AI Onboard Customer', subtitle: 'Scan ID to create customer profile', icon: <UserPlus className="h-4 w-4" />, href: '/dashboard/customers/ai-onboard', shortcut: '' },
+  { id: 'act_ai_mail_sort', type: 'action', title: 'AI Mail Sort', subtitle: 'Snap & route mail to mailboxes', icon: <MailOpen className="h-4 w-4" />, href: '/dashboard/mail/ai-sort', shortcut: '' },
+  { id: 'act_ai_audit', type: 'action', title: 'AI Bill Audit', subtitle: 'Find carrier overcharges', icon: <ScanLine className="h-4 w-4" />, href: '/dashboard/reconciliation/ai-audit', shortcut: '' },
   { id: 'act_settings', type: 'action', title: 'Settings', subtitle: 'Store settings and configuration', icon: <Settings className="h-4 w-4" />, href: '/dashboard/settings', shortcut: '' },
 ];
 

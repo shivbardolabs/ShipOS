@@ -45,6 +45,9 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  MailOpen,
+  ScanLine,
+  Mic,
 } from 'lucide-react';
 import {
   dashboardStats,
@@ -105,6 +108,33 @@ const favoriteTiles: FavoriteTile[] = [
     bgColor: 'bg-gradient-to-br from-violet-500/15 to-blue-500/15 hover:from-violet-500/25 hover:to-blue-500/25',
     badge: 'AI',
     subtitle: 'Snap to check-in',
+  },
+  {
+    label: 'AI Onboard',
+    icon: UserPlus,
+    href: '/dashboard/customers/ai-onboard',
+    color: 'text-violet-400',
+    bgColor: 'bg-gradient-to-br from-violet-500/15 to-purple-500/15 hover:from-violet-500/25 hover:to-purple-500/25',
+    badge: 'AI',
+    subtitle: 'Scan ID to sign up',
+  },
+  {
+    label: 'AI Mail Sort',
+    icon: MailOpen,
+    href: '/dashboard/mail/ai-sort',
+    color: 'text-violet-400',
+    bgColor: 'bg-gradient-to-br from-violet-500/15 to-cyan-500/15 hover:from-violet-500/25 hover:to-cyan-500/25',
+    badge: 'AI',
+    subtitle: 'Snap & route mail',
+  },
+  {
+    label: 'AI Bill Audit',
+    icon: ScanLine,
+    href: '/dashboard/reconciliation/ai-audit',
+    color: 'text-violet-400',
+    bgColor: 'bg-gradient-to-br from-violet-500/15 to-green-500/15 hover:from-violet-500/25 hover:to-green-500/25',
+    badge: 'AI',
+    subtitle: 'Find overcharges',
   },
   {
     label: 'Check In Package',
