@@ -347,6 +347,36 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     category: 'platform',
     defaultEnabled: false,
   },
+
+  // ── Batch 4 Features (Requirements Gaps) ─────────────────────────────────
+  {
+    key: 'demo_mode',
+    name: 'Demo Mode',
+    description: 'Demo accounts, seed data, and guided walkthrough for product demos and onboarding',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'legacy_migration',
+    name: 'Legacy Data Migration',
+    description: 'Generic import engine for PostalMate, Mail Manager, and custom CSV/JSON with field mapping and validation',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'offline_mode',
+    name: 'Offline Mode (PWA)',
+    description: 'Service worker with cache-first static assets, network-first API, offline mutation queue, and auto-replay on reconnect',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'qa_test_suite',
+    name: 'QA Test Suite',
+    description: 'Playwright E2E tests, API integration tests, and k6 load testing configuration',
+    category: 'platform',
+    defaultEnabled: false,
+  },
 ];
 
 /** Category display metadata */

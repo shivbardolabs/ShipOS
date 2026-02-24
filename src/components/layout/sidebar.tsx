@@ -39,6 +39,8 @@ import {
   DollarSign,
   CalendarClock,
   ClipboardList,
+  BookOpen,
+  Database,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -112,6 +114,13 @@ const navSections: NavSection[] = [
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Action Pricing', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+    ],
+  },
+  {
+    title: 'TOOLS',
+    items: [
+      { label: 'Legacy Migration', href: '/dashboard/settings/legacy-migration', icon: Database, flagKey: 'legacy_migration' },
+      { label: 'Demo & Walkthrough', href: '/dashboard/demo', icon: BookOpen, flagKey: 'demo_mode' },
     ],
   },
 ];
