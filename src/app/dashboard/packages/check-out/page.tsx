@@ -88,6 +88,7 @@ function daysHeld(checkedInAt: string): number {
 /*  Store display                                                             */
 /* -------------------------------------------------------------------------- */
 const platformVariant: Record<string, 'default' | 'info' | 'success' | 'warning'> = {
+  physical: 'warning',
   iPostal: 'info',
   anytime: 'success',
   postscan: 'warning',

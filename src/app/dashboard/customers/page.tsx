@@ -19,6 +19,7 @@ import {
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
+  physical: { label: 'Physical PMB', classes: 'bg-amber-100 text-amber-600 border-amber-500/30' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
   postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
@@ -45,8 +46,9 @@ const STATUS_FILTERS = [
 
 const PLATFORM_FILTERS = [
   { id: 'all', label: 'All Stores' },
-  { id: 'iPostal', label: 'iPostal' }, { id: 'anytime', label: 'Anytime' },
-  { id: 'postscan', label: 'PostScan' }, { id: 'other', label: 'Other' },
+  { id: 'physical', label: 'Physical PMB' }, { id: 'iPostal', label: 'iPostal' },
+  { id: 'anytime', label: 'Anytime' }, { id: 'postscan', label: 'PostScan' },
+  { id: 'other', label: 'Other' },
 ] as const;
 
 const PAGE_SIZE = 12;
@@ -410,7 +412,7 @@ export default function CustomersPage() {
               <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-4">Mailbox Setup</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input label="PMB Number" placeholder="PMB-0100" value={form.pmbNumber} onChange={(e) => handleFormChange('pmbNumber', e.target.value)} error={formErrors.pmbNumber} />
-                <Select label="Store" options={[{ value: 'iPostal', label: 'iPostal' },{ value: 'anytime', label: 'Anytime Mailbox' },{ value: 'postscan', label: 'PostScan Mail' },{ value: 'other', label: 'Other' }]} value={form.platform} onChange={(e) => handleFormChange('platform', e.target.value)} />
+                <Select label="Store" options={[{ value: 'physical', label: 'Physical PMB' },{ value: 'iPostal', label: 'iPostal' },{ value: 'anytime', label: 'Anytime Mailbox' },{ value: 'postscan', label: 'PostScan Mail' },{ value: 'other', label: 'Other' }]} value={form.platform} onChange={(e) => handleFormChange('platform', e.target.value)} />
                 <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' },{ value: 'Quarterly', label: 'Quarterly' },{ value: 'Semiannual', label: 'Semiannual (6 months)' },{ value: 'Annual', label: 'Annual' },{ value: 'Custom', label: 'Custom' }]} value={form.billingTerms} onChange={(e) => handleFormChange('billingTerms', e.target.value)} />
               </div>
             </div>
