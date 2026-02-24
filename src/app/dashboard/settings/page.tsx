@@ -44,7 +44,6 @@ import {
   CreditCard,
   Crown,
   Star,
-  ArrowRight,
   Zap,
   Package } from 'lucide-react';
 
