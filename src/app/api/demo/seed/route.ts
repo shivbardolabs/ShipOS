@@ -80,7 +80,7 @@ export async function POST() {
           status: i < 13 ? 'active' : 'pending',
           form1583Status: i < 13 ? 'approved' : 'pending',
           idType: 'drivers_license',
-          address: `${1000 + i} Elm Street`, city: 'Austin', state: 'TX', zipCode: '78702',
+          homeAddress: `${1000 + i} Elm Street`, homeCity: 'Austin', homeState: 'TX', homeZip: '78702',
           notifyEmail: true, notifySms: i % 3 !== 0,
           renewalDate: daysFromNow(30 + i * 10),
           tenantId: DEMO_TENANT_ID,
@@ -91,7 +91,7 @@ export async function POST() {
 
     // 30 packages
     const carriers = ['UPS', 'FedEx', 'USPS', 'DHL', 'Amazon'];
-    const pkgStatuses = ['checked_in', 'checked_in', 'checked_in', 'notified', 'notified', 'checked_out'];
+    const pkgStatuses = ['checked_in', 'checked_in', 'checked_in', 'notified', 'notified', 'released'];
     let pkgCount = 0;
     for (let i = 0; i < 30; i++) {
       const pkgId = `demo_pkg_${String(i + 1).padStart(3, '0')}`;
@@ -103,15 +103,13 @@ export async function POST() {
         create: {
           id: pkgId,
           trackingNumber: `${carrier.slice(0, 3).toUpperCase()}${1000000000 + i}`,
-          carrier, status, packageType: 'box',
-          weight: Math.round((1 + Math.random() * 20) * 10) / 10,
+          carrier, status, packageType: 'medium',
           storageLocation: `Shelf ${String.fromCharCode(65 + (i % 5))}-${(i % 10) + 1}`,
-          notificationSent: status !== 'checked_in',
+          notifiedAt: status !== 'checked_in' ? daysAgo(i < 10 ? 0 : i < 20 ? 1 : 5) : undefined,
           checkedInAt: daysAgo(i < 10 ? 0 : i < 20 ? 2 : 7),
-          checkedOutAt: status === 'checked_out' ? daysAgo(0) : undefined,
-          checkedInBy: i % 2 === 0 ? 'Dana Martinez' : 'Jordan Lee',
+          releasedAt: status === 'released' ? daysAgo(0) : undefined,
+          checkedInById: i % 2 === 0 ? 'demo_admin_001' : 'demo_staff_001',
           customerId: customerIds[i % 15],
-          tenantId: DEMO_TENANT_ID,
         },
       });
       pkgCount++;
@@ -137,13 +135,21 @@ export async function DELETE() {
   }
 
   try {
-    // Delete in dependency order
-    await prisma.auditLog.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
-    await prisma.notification.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
-    await prisma.invoice.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
-    await prisma.mailPiece.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
-    await prisma.package.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
-    await prisma.customer.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
+    // Delete in dependency order — use demo customer/user IDs since most models lack tenantId
+    const demoCustomers = await prisma.customer.findMany({ where: { tenantId: DEMO_TENANT_ID }, select: { id: true } });
+    const demoUsers = await prisma.user.findMany({ where: { tenantId: DEMO_TENANT_ID }, select: { id: true } });
+    const custIds = demoCustomers.map(c => c.id);
+    const userIds = demoUsers.map(u => u.id);
+
+    if (custIds.length > 0) {
+      await prisma.notification.deleteMany({ where: { customerId: { in: custIds } } });
+      await prisma.mailPiece.deleteMany({ where: { customerId: { in: custIds } } });
+      await prisma.package.deleteMany({ where: { customerId: { in: custIds } } });
+      await prisma.customer.deleteMany({ where: { id: { in: custIds } } });
+    }
+    if (userIds.length > 0) {
+      await prisma.auditLog.deleteMany({ where: { userId: { in: userIds } } });
+    }
     await prisma.user.deleteMany({ where: { tenantId: DEMO_TENANT_ID } });
     await prisma.tenant.deleteMany({ where: { id: DEMO_TENANT_ID } });
 
