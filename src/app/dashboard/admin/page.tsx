@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTenant } from '@/components/tenant-provider';
 import { SearchInput } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
 import {
   ShieldCheck,
@@ -14,6 +16,9 @@ import {
   LogIn,
   Building2,
   AlertCircle,
+  Pencil,
+  Check,
+  UserCog,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -32,6 +37,13 @@ interface AdminUser {
   updatedAt: string;
   tenant: { id: string; name: string; slug: string } | null;
   sessionCount: number;
+}
+
+interface AdminTenant {
+  id: string;
+  name: string;
+  slug: string;
+  userCount: number;
 }
 
 interface LoginSession {
@@ -98,9 +110,7 @@ function OnlineIndicator({ lastLogin }: { lastLogin: string | null }) {
   const isRecent = minutesAgo < 30;
   return (
     <div className="flex items-center gap-1.5">
-      <span
-        className="relative flex h-2 w-2"
-      >
+      <span className="relative flex h-2 w-2">
         {isRecent && (
           <span
             className="absolute inline-flex h-full w-full rounded-full opacity-50 animate-ping"
@@ -160,17 +170,231 @@ function TabButton({
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Edit User Modal                                                           */
+/* -------------------------------------------------------------------------- */
+function EditUserModal({
+  user,
+  tenants,
+  open,
+  onClose,
+  onSave,
+}: {
+  user: AdminUser | null;
+  tenants: AdminTenant[];
+  open: boolean;
+  onClose: () => void;
+  onSave: (userId: string, role: string, tenantId: string | null) => Promise<void>;
+}) {
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Reset form when user changes
+  useEffect(() => {
+    if (user) {
+      setSelectedRole(user.role);
+      setSelectedTenantId(user.tenant?.id ?? '__none__');
+      setSaveSuccess(false);
+    }
+  }, [user]);
+
+  const hasChanges =
+    user &&
+    (selectedRole !== user.role ||
+      (selectedTenantId === '__none__' ? null : selectedTenantId) !==
+        (user.tenant?.id ?? null));
+
+  const handleSave = async () => {
+    if (!user || !hasChanges) return;
+    setSaving(true);
+    setSaveSuccess(false);
+    try {
+      const tenantId = selectedTenantId === '__none__' ? null : selectedTenantId;
+      await onSave(user.id, selectedRole, tenantId);
+      setSaveSuccess(true);
+      setTimeout(() => onClose(), 800);
+    } catch {
+      // Error handling done in parent
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!user) return null;
+
+  const rc = roleColors[user.role] || roleColors.employee;
+
+  const roleOptions = [
+    { value: 'superadmin', label: 'Super Admin' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'employee', label: 'Employee' },
+  ];
+
+  const tenantOptions = [
+    { value: '__none__', label: 'No Tenant (Unassigned)' },
+    ...tenants.map((t) => ({
+      value: t.id,
+      label: `${t.name} (${t.userCount} user${t.userCount !== 1 ? 's' : ''})`,
+    })),
+  ];
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Edit User Assignment"
+      description="Assign a tenant and role to this user"
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            loading={saving}
+            disabled={!hasChanges || saving}
+            onClick={handleSave}
+            leftIcon={
+              saveSuccess ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <UserCog className="h-4 w-4" />
+              )
+            }
+            className={
+              saveSuccess
+                ? 'bg-green-600 hover:bg-green-600'
+                : undefined
+            }
+          >
+            {saveSuccess ? 'Saved!' : 'Save Changes'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-6">
+        {/* User identity */}
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-surface-700 bg-surface-800/50">
+          {user.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+              style={{ boxShadow: `0 0 0 2px ${rc.text}40` }}
+            />
+          ) : (
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white flex-shrink-0"
+              style={{ background: rc.text }}
+            >
+              {user.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-surface-100 truncate">{user.name}</p>
+            <p className="text-sm text-surface-400 truncate">{user.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <RoleBadge role={user.role as UserRole} size="xs" />
+              {user.tenant && (
+                <span className="text-xs text-surface-500 flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  {user.tenant.name}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Role selector */}
+        <div>
+          <Select
+            label="Role"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            options={roleOptions}
+          />
+          <p className="text-xs text-surface-500 mt-1.5">
+            {selectedRole === 'superadmin' && 'Full platform access — cross-tenant management, system configuration'}
+            {selectedRole === 'admin' && 'Full tenant access — manage users, settings, billing'}
+            {selectedRole === 'manager' && 'Operations — packages, mail, customers, reports'}
+            {selectedRole === 'employee' && 'Basic operations — check-in, check-out, customer lookup'}
+          </p>
+        </div>
+
+        {/* Tenant selector */}
+        <div>
+          <Select
+            label="Tenant"
+            value={selectedTenantId}
+            onChange={(e) => setSelectedTenantId(e.target.value)}
+            options={tenantOptions}
+          />
+          <p className="text-xs text-surface-500 mt-1.5">
+            Assign this user to a specific tenant (store/location). Unassigned users will have a tenant created on next login.
+          </p>
+        </div>
+
+        {/* Change summary */}
+        {hasChanges && (
+          <div
+            className="p-3 rounded-lg border"
+            style={{ background: '#f59e0b08', borderColor: '#f59e0b25' }}
+          >
+            <p className="text-xs font-semibold text-amber-400 mb-2">Pending Changes</p>
+            <div className="space-y-1">
+              {selectedRole !== user.role && (
+                <p className="text-xs text-surface-300">
+                  Role: <span className="text-surface-500">{user.role}</span>{' '}
+                  <span className="text-surface-500">→</span>{' '}
+                  <span className="font-medium text-surface-100">{selectedRole}</span>
+                </p>
+              )}
+              {(selectedTenantId === '__none__' ? null : selectedTenantId) !==
+                (user.tenant?.id ?? null) && (
+                <p className="text-xs text-surface-300">
+                  Tenant: <span className="text-surface-500">{user.tenant?.name || 'None'}</span>{' '}
+                  <span className="text-surface-500">→</span>{' '}
+                  <span className="font-medium text-surface-100">
+                    {selectedTenantId === '__none__'
+                      ? 'None'
+                      : tenants.find((t) => t.id === selectedTenantId)?.name || 'Unknown'}
+                  </span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Main Page                                                                 */
 /* -------------------------------------------------------------------------- */
 export default function MasterAdminPage() {
   const { localUser, loading } = useTenant();
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [tenants, setTenants] = useState<AdminTenant[]>([]);
   const [sessions, setSessions] = useState<LoginSession[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('users');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+
+  // Edit modal state
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   // Fetch data
   useEffect(() => {
@@ -181,9 +405,10 @@ export default function MasterAdminPage() {
       setLoadingData(true);
       setError(null);
       try {
-        const [usersRes, sessionsRes] = await Promise.all([
+        const [usersRes, sessionsRes, tenantsRes] = await Promise.all([
           fetch('/api/admin/users'),
           fetch('/api/admin/sessions'),
+          fetch('/api/admin/tenants'),
         ]);
 
         if (usersRes.ok) {
@@ -191,6 +416,9 @@ export default function MasterAdminPage() {
         }
         if (sessionsRes.ok) {
           setSessions(await sessionsRes.json());
+        }
+        if (tenantsRes.ok) {
+          setTenants(await tenantsRes.json());
         }
       } catch (err) {
         console.error('Failed to fetch admin data', err);
@@ -202,6 +430,48 @@ export default function MasterAdminPage() {
 
     fetchData();
   }, [loading, localUser?.role]);
+
+  // Handle save from edit modal
+  const handleSaveUser = useCallback(
+    async (userId: string, role: string, tenantId: string | null) => {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role, tenantId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update user');
+      }
+
+      const updated: AdminUser = await res.json();
+
+      // Update local state
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+
+      // Refresh tenants to get updated user counts
+      try {
+        const tenantsRes = await fetch('/api/admin/tenants');
+        if (tenantsRes.ok) {
+          setTenants(await tenantsRes.json());
+        }
+      } catch {
+        // non-critical
+      }
+    },
+    []
+  );
+
+  const openEditModal = useCallback((user: AdminUser) => {
+    setEditUser(user);
+    setEditModalOpen(true);
+  }, []);
+
+  const closeEditModal = useCallback(() => {
+    setEditModalOpen(false);
+    setTimeout(() => setEditUser(null), 200);
+  }, []);
 
   // Filtered users
   const filteredUsers = useMemo(() => {
@@ -240,12 +510,12 @@ export default function MasterAdminPage() {
       const daysSince = (Date.now() - new Date(u.lastLoginAt).getTime()) / (1000 * 60 * 60 * 24);
       return daysSince < 7;
     }).length;
-    const tenants = new Set(users.map((u) => u.tenant?.id).filter(Boolean)).size;
+    const tenantCount = new Set(users.map((u) => u.tenant?.id).filter(Boolean)).size;
     const todaySessions = sessions.filter((s) => {
       const loginDate = new Date(s.loginAt).toDateString();
       return loginDate === new Date().toDateString();
     }).length;
-    return { totalUsers, activeUsers, tenants, todaySessions };
+    return { totalUsers, activeUsers, tenants: tenantCount, todaySessions };
   }, [users, sessions]);
 
   // ── Access guard ──────────────────────────────────────────────────────────
@@ -426,10 +696,19 @@ export default function MasterAdminPage() {
           ))}
         </div>
       ) : activeTab === 'users' ? (
-        <UsersTable users={filteredUsers} />
+        <UsersTable users={filteredUsers} onEdit={openEditModal} />
       ) : (
         <SessionsTable sessions={filteredSessions} />
       )}
+
+      {/* Edit modal */}
+      <EditUserModal
+        user={editUser}
+        tenants={tenants}
+        open={editModalOpen}
+        onClose={closeEditModal}
+        onSave={handleSaveUser}
+      />
     </div>
   );
 }
@@ -437,7 +716,13 @@ export default function MasterAdminPage() {
 /* -------------------------------------------------------------------------- */
 /*  Users Table                                                               */
 /* -------------------------------------------------------------------------- */
-function UsersTable({ users }: { users: AdminUser[] }) {
+function UsersTable({
+  users,
+  onEdit,
+}: {
+  users: AdminUser[];
+  onEdit: (user: AdminUser) => void;
+}) {
   if (users.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
@@ -452,12 +737,13 @@ function UsersTable({ users }: { users: AdminUser[] }) {
     <div className="glass-card overflow-hidden">
       {/* Table header */}
       <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-surface-500 border-b border-surface-800">
-        <div className="col-span-4">User</div>
+        <div className="col-span-3">User</div>
         <div className="col-span-2">Role</div>
         <div className="col-span-2">Tenant</div>
         <div className="col-span-2">Last Login</div>
         <div className="col-span-1 text-center">Logins</div>
         <div className="col-span-1 text-center">Status</div>
+        <div className="col-span-1 text-center">Actions</div>
       </div>
 
       {/* User rows */}
@@ -468,10 +754,10 @@ function UsersTable({ users }: { users: AdminUser[] }) {
           return (
             <div
               key={user.id}
-              className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-surface-800/30 transition-colors"
+              className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-surface-800/30 transition-colors group"
             >
               {/* User info */}
-              <div className="col-span-4 flex items-center gap-3 min-w-0">
+              <div className="col-span-3 flex items-center gap-3 min-w-0">
                 {user.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -544,6 +830,19 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                   {hasLoggedIn ? 'Active' : 'Pending'}
                 </span>
               </div>
+
+              {/* Actions */}
+              <div className="col-span-1 text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconOnly
+                  onClick={() => onEdit(user)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-surface-400 hover:text-rose-400"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           );
         })}
@@ -553,6 +852,9 @@ function UsersTable({ users }: { users: AdminUser[] }) {
       <div className="px-5 py-3 border-t border-surface-800 flex items-center justify-between">
         <p className="text-xs text-surface-500">
           Showing {users.length} user{users.length !== 1 ? 's' : ''}
+        </p>
+        <p className="text-xs text-surface-600">
+          Click the edit icon to assign roles & tenants
         </p>
       </div>
     </div>
