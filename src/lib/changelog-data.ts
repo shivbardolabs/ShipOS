@@ -21,6 +21,55 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.16.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.16.0',
+    date: '2026-02-24',
+    title: 'AI Everywhere — 5 New AI Features',
+    summary:
+      'The biggest ShipOS update ever: five new AI-powered features that transform every aspect of store operations. Scan IDs to onboard customers in 30 seconds, sort entire mail batches with a single photo, catch carrier overcharges automatically, get a personalized AI morning briefing, and control ShipOS hands-free with voice commands.',
+    highlights: ['AI ID Scan', 'AI Mail Sort', 'AI Bill Audit', 'Morning Briefing', 'Voice AI', '5 New Features'],
+    changes: [
+      {
+        text: 'AI Customer Onboarding: photograph a driver\'s license or passport, and GPT-4o Vision extracts all fields to create a customer profile in 30 seconds',
+        type: 'feature',
+      },
+      {
+        text: 'AI Morning Briefing: personalized AI-generated daily briefing card on the dashboard with store status, action items, and predictions',
+        type: 'feature',
+      },
+      {
+        text: 'AI Carrier Bill Auditor: upload a UPS/FedEx invoice and AI cross-references against shipment records to find overcharges, duplicates, and invalid surcharges',
+        type: 'feature',
+      },
+      {
+        text: 'AI Mail Sorting: photograph a spread of mail pieces and AI reads addresses, extracts PMB numbers, and auto-routes to customer mailboxes with notifications',
+        type: 'feature',
+      },
+      {
+        text: 'Voice AI Assistant: floating microphone button on every page — say "Check in UPS package for PMB 142" and it happens. Supports check-ins, queries, reminders, and more',
+        type: 'feature',
+      },
+      {
+        text: 'New dashboard tiles for all AI features with consistent violet/purple AI branding and badges',
+        type: 'improvement',
+      },
+      {
+        text: 'Sidebar navigation updated with quick links to AI Onboard, AI Mail Sort, and AI Bill Audit',
+        type: 'improvement',
+      },
+      {
+        text: 'Command palette now includes all new AI features for instant keyboard access',
+        type: 'improvement',
+      },
+      {
+        text: 'All AI features include demo mode with realistic sample data when no OpenAI API key is configured',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.15.0                                                            */
   /* ------------------------------------------------------------------ */
   {

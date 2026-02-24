@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Users,
   Mail,
+  MailOpen,
   Truck,
   Clock,
   Shield,
@@ -31,6 +32,10 @@ import {
   Award,
   Activity,
   Sparkles,
+  ScanLine,
+  Mic,
+  Search as SearchIcon,
+  UserPlus,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -74,9 +79,12 @@ const navSections: NavSection[] = [
     title: 'OPERATIONS',
     items: [
       { label: 'Customers', href: '/dashboard/customers', icon: Users },
+      { label: 'AI Onboard', href: '/dashboard/customers/ai-onboard', icon: UserPlus },
       { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen },
       { label: 'Shipping', href: '/dashboard/shipping', icon: Truck },
       { label: 'Reconciliation', href: '/dashboard/reconciliation', icon: Scale },
+      { label: 'AI Bill Audit', href: '/dashboard/reconciliation/ai-audit', icon: ScanLine },
       { label: 'End of Day', href: '/dashboard/end-of-day', icon: Clock },
     ],
   },
