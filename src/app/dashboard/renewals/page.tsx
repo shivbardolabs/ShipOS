@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
-import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
+import { Card, CardContent, StatCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import {
   CalendarClock,
   Users,

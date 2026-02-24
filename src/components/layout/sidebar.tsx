@@ -39,9 +39,6 @@ import {
   DollarSign,
   CalendarClock,
   ClipboardList,
-  Palette,
-  Printer,
-  Database,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 

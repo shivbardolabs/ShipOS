@@ -12,10 +12,8 @@ import {
   Printer,
   Plus,
   Save,
-  Trash2,
   TestTube2,
   Loader2,
-  CheckCircle2,
   Wifi,
   WifiOff,
 } from 'lucide-react';
