@@ -26,7 +26,7 @@ export async function POST() {
 
   try {
     // Create demo tenant
-    const tenant = await prisma.tenant.upsert({
+    await prisma.tenant.upsert({
       where: { id: DEMO_TENANT_ID },
       update: {},
       create: {
