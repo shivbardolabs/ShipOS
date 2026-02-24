@@ -296,6 +296,57 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     category: 'business',
     defaultEnabled: false,
   },
+
+  // ── Batch 3 Features (Requirements Gaps) ─────────────────────────────────
+  {
+    key: 'automated_renewals',
+    name: 'Automated Renewal Processing',
+    description: 'Cron-based renewal pipeline with 30/15/7/1 day reminders, auto-invoicing, past-due tracking, and suspension',
+    category: 'business',
+    defaultEnabled: false,
+  },
+  {
+    key: 'sms_compliance',
+    name: 'SMS Compliance',
+    description: 'TCPA/CTIA SMS consent tracking, opt-in/out keywords (STOP/START/HELP), and consent audit trail',
+    category: 'compliance',
+    defaultEnabled: false,
+  },
+  {
+    key: 'account_provisioning',
+    name: 'Account Provisioning Wizard',
+    description: 'Multi-step customer onboarding: plan selection, ID verification, Form 1583, agreement signing, PMB assignment',
+    category: 'operations',
+    defaultEnabled: false,
+  },
+  {
+    key: 'white_label_branding',
+    name: 'White-Label Branding',
+    description: 'Tenant-level custom branding: logo, accent color, tagline, favicon, with email template support',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'email_update',
+    name: 'Email Address Update',
+    description: 'Verified email change flow with token-based confirmation and audit logging',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
+    key: 'zebra_zpl_printer',
+    name: 'Zebra ZPL Printer',
+    description: 'ZPL 4×6 package label generation with Code 128 barcodes, network print via IP:9100, and browser fallback',
+    category: 'operations',
+    defaultEnabled: false,
+  },
+  {
+    key: 'pmtools_migration',
+    name: 'PMTools CSV Migration',
+    description: 'CSV-based PMTools import with field mapping, dry-run validation, execute mode, and rollback support',
+    category: 'platform',
+    defaultEnabled: false,
+  },
 ];
 
 /** Category display metadata */

@@ -28,6 +28,11 @@ export interface Tenant {
   stripePriceId?: string | null;
   storageRate?: number;
   storageFreedays?: number;
+  // Branding (Batch 3)
+  brandLogo?: string | null;
+  brandAccentColor?: string | null;
+  brandTagline?: string | null;
+  brandFavicon?: string | null;
 }
 
 export interface LocalUser {
