@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * BAR-204: Offline fallback page
  * Shown when the user navigates to a page while offline and it's not cached.
