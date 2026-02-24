@@ -204,6 +204,12 @@ export default function CheckOutPage() {
   /* ---- Payment mode: post to A/P vs collect now ---- */
   const [paymentMode, setPaymentMode] = useState<'post_to_account' | 'pay_now'>('post_to_account');
 
+  /* ---- Pickup delegation state ---- */
+  const [showDelegate, setShowDelegate] = useState(false);
+  const [delegateName, setDelegateName] = useState('');
+  const [delegateIdType, setDelegateIdType] = useState('');
+  const [delegateIdNumber, setDelegateIdNumber] = useState('');
+
   /* ---- Success overlay ---- */
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -928,6 +934,67 @@ export default function CheckOutPage() {
                           </p>
                         )}
                       </div>
+                    </Card>
+
+                    {/* ── Pickup Delegation (Enhanced Checkout) ──────────────── */}
+                    <Card padding="md">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-semibold text-surface-100">Pickup Delegation</h3>
+                        <button
+                          onClick={() => setShowDelegate(!showDelegate)}
+                          className={cn(
+                            "relative flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer",
+                            showDelegate ? 'bg-primary-600' : 'bg-surface-700'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'h-4 w-4 rounded-full bg-white transition-transform shadow-sm',
+                              showDelegate ? 'translate-x-6' : 'translate-x-1'
+                            )}
+                          />
+                        </button>
+                      </div>
+                      {!showDelegate ? (
+                        <p className="text-xs text-surface-500">
+                          Enable if someone other than the customer is picking up the packages.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-xs text-surface-500 mb-3">
+                            Person picking up on behalf of {foundCustomer?.firstName} {foundCustomer?.lastName}:
+                          </p>
+                          <Input
+                            label="Delegate Name"
+                            value={delegateName}
+                            onChange={(e) => setDelegateName(e.target.value)}
+                            placeholder="Full name of person picking up"
+                          />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-surface-400 mb-1.5">ID Type</label>
+                              <select
+                                value={delegateIdType}
+                                onChange={(e) => setDelegateIdType(e.target.value)}
+                                className="w-full rounded-lg border border-surface-700 bg-surface-900 px-3 py-2 text-sm text-surface-200"
+                              >
+                                <option value="">Select...</option>
+                                <option value="drivers_license">Driver&apos;s License</option>
+                                <option value="passport">Passport</option>
+                                <option value="state_id">State ID</option>
+                                <option value="military_id">Military ID</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+                            <Input
+                              label="ID Number"
+                              value={delegateIdNumber}
+                              onChange={(e) => setDelegateIdNumber(e.target.value)}
+                              placeholder="Last 4 digits"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </Card>
 
                     {/* Signature — captures customer signature for package release */}

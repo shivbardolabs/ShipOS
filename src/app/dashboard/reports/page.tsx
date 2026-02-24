@@ -12,11 +12,17 @@ import {
   Package,
   Truck,
   TrendingUp,
+  TrendingDown,
   Calendar,
   BarChart3,
   PieChart as PieChartIcon,
   Users,
   Receipt,
+  FileText,
+  ArrowUpRight,
+  ArrowDownRight,
+  UserPlus,
+  UserMinus,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -128,9 +134,26 @@ export default function ReportsPage() {
         title="Reports & Analytics"
         description="Business insights and performance metrics"
         actions={
-          <Button variant="secondary" leftIcon={<Download className="h-4 w-4" />}>
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              leftIcon={<Download className="h-4 w-4" />}
+              onClick={() => {
+                window.open('/api/reports/export?type=packages&format=csv', '_blank');
+              }}
+            >
+              Export Packages CSV
+            </Button>
+            <Button
+              variant="secondary"
+              leftIcon={<FileText className="h-4 w-4" />}
+              onClick={() => {
+                window.open('/api/reports/export?type=customers&format=csv', '_blank');
+              }}
+            >
+              Export Customers CSV
+            </Button>
+          </div>
         }
       />
 
@@ -476,6 +499,187 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Advanced BI: Revenue by Service Type ──────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-primary-600" />
+            Revenue by Service Type
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Mailbox Rentals', amount: 8400, prev: 7800, icon: <Receipt className="h-5 w-5 text-primary-500" /> },
+              { label: 'Shipping Services', amount: 12847.50, prev: 11200, icon: <Truck className="h-5 w-5 text-indigo-500" /> },
+              { label: 'Storage Fees', amount: 2340, prev: 2100, icon: <Package className="h-5 w-5 text-amber-500" /> },
+              { label: 'Receiving Fees', amount: 4560, prev: 4200, icon: <BarChart3 className="h-5 w-5 text-emerald-500" /> },
+            ].map((service) => {
+              const change = service.prev > 0
+                ? Math.round(((service.amount - service.prev) / service.prev) * 100)
+                : 0;
+              const isUp = change >= 0;
+              return (
+                <div key={service.label} className="rounded-lg border border-surface-700 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    {service.icon}
+                    <span className="text-xs font-medium text-surface-400 uppercase tracking-wider">
+                      {service.label}
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-surface-100">
+                    {formatCurrency(service.amount)}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {isUp ? (
+                      <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                    )}
+                    <span className={`text-xs font-medium ${isUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {isUp ? '+' : ''}{change}%
+                    </span>
+                    <span className="text-xs text-surface-500">vs last month</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Advanced BI: Customer Growth Chart ────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary-600" />
+            Customer Growth (Last 6 Months)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+            const newCustomers = [12, 18, 15, 22, 20, 25];
+            const churned = [2, 3, 1, 4, 2, 3];
+            const maxVal = Math.max(...newCustomers);
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center gap-6 text-xs text-surface-400 mb-2">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    New Customers
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                    Churned
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {months.map((month, i) => (
+                    <div key={month} className="flex items-center gap-3">
+                      <span className="w-8 text-xs text-surface-500 text-right">{month}</span>
+                      <div className="flex-1 flex items-center gap-2">
+                        <div className="flex-1 h-6 rounded bg-surface-800 overflow-hidden relative">
+                          <div
+                            className="h-full bg-emerald-500/70 rounded transition-all"
+                            style={{ width: `${(newCustomers[i] / maxVal) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-emerald-400 w-6 text-right flex items-center gap-0.5">
+                          <UserPlus className="h-3 w-3" />
+                          {newCustomers[i]}
+                        </span>
+                        <span className="text-xs font-medium text-red-400 w-6 text-right flex items-center gap-0.5">
+                          <UserMinus className="h-3 w-3" />
+                          {churned[i]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-3 border-t border-surface-800 flex items-center justify-between">
+                  <span className="text-xs text-surface-500">Net growth this period</span>
+                  <span className="text-sm font-bold text-emerald-400">
+                    +{newCustomers.reduce((a, b) => a + b, 0) - churned.reduce((a, b) => a + b, 0)} customers
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+      {/* ── Advanced BI: Period Comparison ─────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary-600" />
+            This Month vs Last Month
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-700 text-left">
+                  <th className="py-2 pr-4 text-surface-400 font-medium">Metric</th>
+                  <th className="py-2 pr-4 text-surface-400 font-medium text-right">This Month</th>
+                  <th className="py-2 pr-4 text-surface-400 font-medium text-right">Last Month</th>
+                  <th className="py-2 text-surface-400 font-medium text-right">Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { metric: 'Revenue', current: 28147.50, previous: 25300 },
+                  { metric: 'Packages Received', current: 342, previous: 310 },
+                  { metric: 'Packages Released', current: 318, previous: 295 },
+                  { metric: 'New Customers', current: 25, previous: 20 },
+                  { metric: 'Active Customers', current: 156, previous: 148 },
+                  { metric: 'Shipments Created', current: 89, previous: 76 },
+                  { metric: 'Avg Storage Days', current: 4.2, previous: 4.8 },
+                ].map((row) => {
+                  const change = row.previous > 0
+                    ? ((row.current - row.previous) / row.previous) * 100
+                    : 0;
+                  const isUp = change >= 0;
+                  // For "Avg Storage Days", down is good
+                  const isPositive = row.metric === 'Avg Storage Days' ? !isUp : isUp;
+                  return (
+                    <tr key={row.metric} className="border-b border-surface-800">
+                      <td className="py-3 pr-4 text-surface-300 font-medium">{row.metric}</td>
+                      <td className="py-3 pr-4 text-right text-surface-100 font-semibold">
+                        {row.metric === 'Revenue'
+                          ? formatCurrency(row.current)
+                          : typeof row.current === 'number' && row.current % 1 !== 0
+                            ? row.current.toFixed(1)
+                            : row.current.toLocaleString()}
+                      </td>
+                      <td className="py-3 pr-4 text-right text-surface-400">
+                        {row.metric === 'Revenue'
+                          ? formatCurrency(row.previous)
+                          : typeof row.previous === 'number' && row.previous % 1 !== 0
+                            ? row.previous.toFixed(1)
+                            : row.previous.toLocaleString()}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {isUp ? (
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          ) : (
+                            <TrendingDown className="h-3.5 w-3.5" />
+                          )}
+                          {isUp ? '+' : ''}{change.toFixed(1)}%
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
