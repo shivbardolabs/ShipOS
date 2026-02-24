@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { sendSms, formatPhoneE164 } from '@/lib/notifications/twilio';
+import { formatPhoneE164 } from '@/lib/notifications/twilio';
 
 /**
  * POST /api/webhooks/twilio

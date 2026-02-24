@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import {
   UserPlus,
@@ -20,7 +19,6 @@ import {
   PenTool,
   Mailbox,
   CheckCircle2,
-  Loader2,
   Upload,
   AlertCircle,
 } from 'lucide-react';
