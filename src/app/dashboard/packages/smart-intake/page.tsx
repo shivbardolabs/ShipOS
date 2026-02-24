@@ -145,7 +145,7 @@ export default function SmartIntakePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchingForIdx, setSearchingForIdx] = useState<number | null>(null);
 
-  const { logAction } = useActivityLog();
+  const { log } = useActivityLog();
 
   /* ── Camera controls ───────────────────────────────────────────────── */
   const startCamera = useCallback(async () => {
@@ -263,7 +263,7 @@ export default function SmartIntakePage() {
       const effectiveResult = { ...pkg.result, ...pkg.overrides };
 
       if (pkg.customer) {
-        logAction({
+        log({
           action: 'package.check_in',
           entityType: 'package',
           entityId: `pkg_ai_${Date.now()}_${idx}`,
@@ -279,7 +279,7 @@ export default function SmartIntakePage() {
         });
       }
     },
-    [matchedPackages, logAction]
+    [matchedPackages, log]
   );
 
   const confirmAll = useCallback(() => {
