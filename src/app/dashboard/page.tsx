@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { PageHeader } from '@/components/layout/page-header';
 import { ExpandableStatCard } from '@/components/ui/expandable-stat-card';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   PackagePlus,
   Package,
@@ -38,6 +39,12 @@ import {
   Activity,
   Award,
   Shield,
+  Brain,
+  Lightbulb,
+  ArrowRight,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
 import {
   dashboardStats,
@@ -45,6 +52,7 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { useActivityLog } from '@/components/activity-log-provider';
 import type { ActionCategory } from '@/lib/activity-log';
+import type { Briefing, BriefingResponse } from '@/app/api/dashboard/briefing/route';
 
 /* -------------------------------------------------------------------------- */
 /*  Activity icon mapping — for both legacy recentActivity and activity log   */
@@ -270,6 +278,13 @@ export default function DashboardPage() {
   const [now, setNow] = useState<Date | null>(null);
   const { user } = useUser();
 
+  /* AI Morning Briefing state */
+  const [briefing, setBriefing] = useState<Briefing | null>(null);
+  const [briefingMode, setBriefingMode] = useState<'ai' | 'demo'>('demo');
+  const [briefingLoading, setBriefingLoading] = useState(true);
+  const [briefingDismissed, setBriefingDismissed] = useState(false);
+  const [briefingExpanded, setBriefingExpanded] = useState(true);
+
   // Use activity log entries for the feed (most recent 10)
   const feedItems = useMemo(() => activityEntries.slice(0, 10), [activityEntries]);
 
@@ -277,6 +292,27 @@ export default function DashboardPage() {
   useEffect(() => {
     setNow(new Date());
   }, []);
+
+  // Fetch AI Morning Briefing on mount
+  const fetchBriefing = useCallback(async () => {
+    try {
+      setBriefingLoading(true);
+      const res = await fetch('/api/dashboard/briefing');
+      const data: BriefingResponse = await res.json();
+      if (data.briefing) {
+        setBriefing(data.briefing);
+        setBriefingMode(data.mode);
+      }
+    } catch (err) {
+      console.error('Failed to fetch briefing:', err);
+    } finally {
+      setBriefingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBriefing();
+  }, [fetchBriefing]);
 
   const greeting = (() => {
     if (!now) return 'Welcome';
@@ -307,6 +343,189 @@ export default function DashboardPage() {
         title="Dashboard"
         description={`${greeting}, ${firstName}${dateString ? ` — ${dateString}` : ''}`}
       />
+
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  AI Morning Briefing                                                */}
+      {/* ------------------------------------------------------------------ */}
+      {!briefingDismissed && (
+        <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-surface-900 via-surface-900 to-violet-950/30">
+          {/* Decorative gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-transparent to-purple-600/5 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+
+          <div className="relative p-5">
+            {/* Header row */}
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 ring-1 ring-violet-500/20">
+                  <Sparkles className="h-5 w-5 text-violet-400" />
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-sm font-bold text-surface-100">
+                    AI Morning Briefing
+                  </h3>
+                  <Badge variant="default" dot={false} className="bg-violet-500/20 text-violet-400 border-violet-500/30 text-[10px] px-1.5 py-0">
+                    AI
+                  </Badge>
+                  {briefingMode === 'demo' && !briefingLoading && (
+                    <span className="text-[10px] text-surface-500 bg-surface-800 px-1.5 py-0.5 rounded font-medium">
+                      Demo
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setBriefingExpanded(!briefingExpanded)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-surface-300 hover:bg-surface-800/50 transition-colors"
+                >
+                  {briefingExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setBriefingDismissed(true)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-surface-300 hover:bg-surface-800/50 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Loading state */}
+            {briefingLoading && briefingExpanded && (
+              <div className="mt-4 space-y-3">
+                <div className="h-4 w-3/4 rounded bg-surface-800 animate-pulse" />
+                <div className="h-4 w-full rounded bg-surface-800 animate-pulse" />
+                <div className="h-4 w-5/6 rounded bg-surface-800 animate-pulse" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-16 rounded-lg bg-surface-800 animate-pulse" />
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-8 w-48 rounded-lg bg-surface-800 animate-pulse" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Briefing content */}
+            {!briefingLoading && briefing && briefingExpanded && (
+              <div className="mt-3 space-y-4">
+                {/* Greeting + Summary */}
+                <div>
+                  <p className="text-base font-semibold text-surface-100 mb-1.5">
+                    {briefing.greeting}
+                  </p>
+                  <p className="text-sm text-surface-300 leading-relaxed">
+                    {briefing.summary}
+                  </p>
+                </div>
+
+                {/* Key Metrics row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {briefing.metrics.map((metric) => {
+                    const TrendIcon =
+                      metric.trend === 'up'
+                        ? TrendingUp
+                        : metric.trend === 'down'
+                          ? TrendingDown
+                          : Minus;
+                    const trendColor =
+                      metric.trend === 'up'
+                        ? 'text-emerald-400'
+                        : metric.trend === 'down'
+                          ? 'text-rose-400'
+                          : 'text-surface-500';
+                    return (
+                      <div
+                        key={metric.label}
+                        className="rounded-lg border border-surface-700/60 bg-surface-800/40 px-3.5 py-3"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-medium text-surface-500 uppercase tracking-wide">
+                            {metric.label}
+                          </span>
+                          <TrendIcon className={`h-3.5 w-3.5 ${trendColor}`} />
+                        </div>
+                        <span className="text-lg font-bold text-surface-100">
+                          {metric.value}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Action Items */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Lightbulb className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs font-semibold text-surface-400 uppercase tracking-wide">
+                      Action Items
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {briefing.actionItems.map((item, idx) => {
+                      const priorityColors: Record<string, string> = {
+                        high: 'border-rose-500/30 bg-rose-500/5',
+                        medium: 'border-amber-500/20 bg-amber-500/5',
+                        low: 'border-surface-700/60 bg-surface-800/30',
+                      };
+                      const dotColors: Record<string, string> = {
+                        high: 'bg-rose-400',
+                        medium: 'bg-amber-400',
+                        low: 'bg-surface-500',
+                      };
+                      return (
+                        <Link
+                          key={idx}
+                          href={item.href}
+                          className={`group flex items-center gap-3 rounded-lg border px-3.5 py-2.5 transition-all duration-150 hover:scale-[1.005] ${priorityColors[item.priority]}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotColors[item.priority]}`}
+                          />
+                          <span className="flex-1 text-sm text-surface-200 group-hover:text-surface-100 transition-colors">
+                            {item.text}
+                          </span>
+                          <ArrowRight className="h-3.5 w-3.5 text-surface-600 group-hover:text-violet-400 transition-colors shrink-0" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Prediction */}
+                <div className="flex items-start gap-3 rounded-lg bg-violet-500/5 border border-violet-500/15 px-3.5 py-3">
+                  <Brain className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
+                  <p className="text-sm text-surface-300 leading-relaxed">
+                    {briefing.prediction}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] text-surface-600">
+                    Powered by AI {briefingMode === 'demo' ? ' · Demo mode' : ' · Updated just now'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Collapsed summary */}
+            {!briefingLoading && briefing && !briefingExpanded && (
+              <p className="mt-1 text-sm text-surface-400 line-clamp-1">
+                {briefing.summary}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/*  Quick Setup Onboarding Banner                                      */}
