@@ -101,6 +101,7 @@ export default function CheckInPage() {
   const [hazardous, setHazardous] = useState(false);
   const [perishable, setPerishable] = useState(false);
   const [condition, setCondition] = useState('good');
+  const [conditionOther, setConditionOther] = useState('');
   const [notes, setNotes] = useState('');
 
   // Step 4 — Notify
@@ -191,6 +192,7 @@ export default function CheckInPage() {
     setHazardous(false);
     setPerishable(false);
     setCondition('good');
+    setConditionOther('');
     setNotes('');
     setPrintLabel(true);
     setSendEmail(true);
@@ -499,15 +501,32 @@ export default function CheckInPage() {
               <Select
                 label="Condition"
                 value={condition}
-                onChange={(e) => setCondition(e.target.value)}
+                onChange={(e) => {
+                  setCondition(e.target.value);
+                  if (e.target.value !== 'other') setConditionOther('');
+                }}
                 options={[
                   { value: 'good', label: 'Good' },
                   { value: 'damaged', label: 'Damaged' },
                   { value: 'wet', label: 'Wet' },
+                  { value: 'opened', label: 'Opened' },
+                  { value: 'partially_opened', label: 'Partially Opened' },
                   { value: 'other', label: 'Other' },
                 ]}
               />
             </div>
+
+            {/* Other condition description */}
+            {condition === 'other' && (
+              <div className="max-w-lg">
+                <Input
+                  label="Describe Condition"
+                  placeholder="Describe the condition of the package..."
+                  value={conditionOther}
+                  onChange={(e) => setConditionOther(e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Notes */}
             <div className="max-w-lg">
@@ -584,7 +603,15 @@ export default function CheckInPage() {
                 />
                 <SummaryField
                   label="Condition"
-                  value={condition.charAt(0).toUpperCase() + condition.slice(1)}
+                  value={
+                    condition === 'other'
+                      ? conditionOther
+                        ? `Other — ${conditionOther}`
+                        : 'Other'
+                      : condition === 'partially_opened'
+                        ? 'Partially Opened'
+                        : condition.charAt(0).toUpperCase() + condition.slice(1)
+                  }
                 />
                 <SummaryField
                   label="Special"
