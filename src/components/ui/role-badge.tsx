@@ -87,7 +87,7 @@ interface RoleBadgeProps {
 }
 
 export function RoleBadge({ role, size = 'sm', showIcon = true, className }: RoleBadgeProps) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   const Icon = cfg.icon;
 
   const sizeClasses = {
@@ -123,7 +123,7 @@ export function RoleBadge({ role, size = 'sm', showIcon = true, className }: Rol
 /*  RoleDot — tiny colored indicator                                          */
 /* -------------------------------------------------------------------------- */
 export function RoleDot({ role, className }: { role: UserRole; className?: string }) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   return (
     <span className={cn('relative flex h-2 w-2', className)}>
       <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-40', cfg.dot)} />
@@ -136,7 +136,7 @@ export function RoleDot({ role, className }: { role: UserRole; className?: strin
 /*  RoleStrip — thin gradient bar at top of page                              */
 /* -------------------------------------------------------------------------- */
 export function RoleStrip({ role }: { role: UserRole }) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   return (
     <div
       className="h-[3px] w-full flex-shrink-0"
@@ -185,9 +185,9 @@ const permissionsByRole: Record<UserRole, string[]> = {
 };
 
 export function RoleCard({ role }: { role: UserRole }) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   const Icon = cfg.icon;
-  const perms = permissionsByRole[role];
+  const perms = permissionsByRole[role] ?? permissionsByRole.employee;
 
   return (
     <div className="glass-card overflow-hidden">
