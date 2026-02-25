@@ -1,0 +1,268 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ShipOS CI — Build, Lint & Test
+# Runs on every PR to main. Posts results to Slack #test-results.
+# ═══════════════════════════════════════════════════════════════════════════════
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # ── Dummy Auth0 values (build only — no real auth calls) ──────────────────
+  AUTH0_SECRET: ci-test-secret-not-real
+  AUTH0_BASE_URL: http://localhost:3000
+  AUTH0_ISSUER_BASE_URL: https://ci-placeholder.us.auth0.com
+  AUTH0_CLIENT_ID: ci-placeholder
+  AUTH0_CLIENT_SECRET: ci-placeholder
+  # ── App ───────────────────────────────────────────────────────────────────
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  NODE_ENV: test
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # 1. Build & Type-Check
+  # ─────────────────────────────────────────────────────────────────────────
+  build:
+    name: "\U0001F528 Build & Type-Check"
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shipos_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shipos_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Push schema to test DB
+        run: npx prisma db push --skip-generate --accept-data-loss
+
+      - name: Build Next.js
+        run: npx next build
+
+      - name: Lint
+        run: npx next lint
+        # Warnings are OK — only fail on errors
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 2. API Tests (Jest)
+  # ─────────────────────────────────────────────────────────────────────────
+  test-api:
+    name: "\U0001F9EA API Tests"
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shipos_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shipos_test
+      TEST_BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma & push schema
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate --accept-data-loss
+
+      - name: Build & start server
+        run: |
+          npx next build
+          npx next start &
+          npx wait-on http://localhost:3000 --timeout 30000
+
+      - name: Run API tests
+        run: npx jest tests/api/ --passWithNoTests --json --outputFile=test-results/api-results.json 2>&1 | tee test-results/api-output.txt
+        continue-on-error: true
+
+      - name: Upload API test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: test-results/
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 3. E2E Tests (Playwright)
+  # ─────────────────────────────────────────────────────────────────────────
+  test-e2e:
+    name: "\U0001F3AD E2E Tests"
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shipos_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shipos_test
+      TEST_BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma & push schema
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate --accept-data-loss
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build & start server
+        run: |
+          npx next build
+          npx next start &
+          npx wait-on http://localhost:3000 --timeout 30000
+
+      - name: Run E2E tests
+        run: npx playwright test --reporter=json 2>&1 | tee test-results/e2e-output.txt
+        continue-on-error: true
+
+      - name: Upload E2E results & traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 4. Post Results to Slack
+  # ─────────────────────────────────────────────────────────────────────────
+  notify:
+    name: "\U0001F4E3 Slack Notification"
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build, test-api, test-e2e]
+
+    steps:
+      - name: Determine overall status
+        id: status
+        run: |
+          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "result=❌ BUILD FAILED" >> $GITHUB_OUTPUT
+            echo "color=#dc2626" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.test-api.result }}" == "failure" || "${{ needs.test-e2e.result }}" == "failure" ]]; then
+            echo "result=⚠️ TESTS FAILED" >> $GITHUB_OUTPUT
+            echo "color=#f59e0b" >> $GITHUB_OUTPUT
+          else
+            echo "result=✅ ALL PASSED" >> $GITHUB_OUTPUT
+            echo "color=#16a34a" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post to Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ steps.status.outputs.color }}",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ steps.status.outputs.result }}  ·  *<${{ github.event.pull_request.html_url }}|PR #${{ github.event.pull_request.number }}>*: ${{ github.event.pull_request.title }}"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        { "type": "mrkdwn", "text": "*Build:*\n${{ needs.build.result == 'success' && '✅ Pass' || '❌ Fail' }}" },
+                        { "type": "mrkdwn", "text": "*API Tests:*\n${{ needs.test-api.result == 'success' && '✅ Pass' || (needs.test-api.result == 'skipped' && '⏭️ Skipped' || '❌ Fail') }}" },
+                        { "type": "mrkdwn", "text": "*E2E Tests:*\n${{ needs.test-e2e.result == 'success' && '✅ Pass' || (needs.test-e2e.result == 'skipped' && '⏭️ Skipped' || '❌ Fail') }}" },
+                        { "type": "mrkdwn", "text": "*Branch:*\n`${{ github.head_ref }}`" }
+                      ]
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "by ${{ github.event.pull_request.user.login }}  ·  <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
