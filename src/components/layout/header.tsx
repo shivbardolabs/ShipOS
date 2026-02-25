@@ -113,7 +113,7 @@ export function Header() {
   }, [handleGlobalKeyDown]);
 
   const role = localUser?.role as UserRole | undefined;
-  const roleCfg = role ? roleConfig[role] : null;
+  const roleCfg = role ? (roleConfig[role] ?? roleConfig.employee) : null;
 
   return (
     <>

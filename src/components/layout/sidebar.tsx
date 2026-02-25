@@ -129,7 +129,7 @@ const navSections: NavSection[] = [
 /*  Role Banner — full-width colored bar showing current role                 */
 /* -------------------------------------------------------------------------- */
 function RoleBanner({ role }: { role: UserRole }) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   const RoleIcon = cfg.icon;
   return (
     <div
@@ -181,7 +181,7 @@ export function Sidebar() {
 
   // Role-dependent styles (computed once, avoids inline lookups)
   const role = localUser?.role as UserRole | undefined;
-  const roleCfg = role ? roleConfig[role] : null;
+  const roleCfg = role ? (roleConfig[role] ?? roleConfig.employee) : null;
 
   const navContent = (
     <>

@@ -286,7 +286,7 @@ function EditUserModal({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.avatar}
-              alt={user.name}
+              alt={user.name || "User"}
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
               style={{ boxShadow: `0 0 0 2px ${rc.text}40` }}
             />
@@ -304,7 +304,7 @@ function EditUserModal({
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-base font-semibold text-surface-100 truncate">{user.name}</p>
+            <p className="text-base font-semibold text-surface-100 truncate">{user.name || "Unnamed"}</p>
             <p className="text-sm text-surface-400 truncate">{user.email}</p>
             <div className="flex items-center gap-2 mt-1">
               <RoleBadge role={user.role as UserRole} size="xs" />
@@ -416,13 +416,22 @@ export default function MasterAdminPage() {
         ]);
 
         if (usersRes.ok) {
-          setUsers(await usersRes.json());
+          try {
+            const data = await usersRes.json();
+            if (Array.isArray(data)) setUsers(data);
+          } catch { /* ignore malformed response */ }
         }
         if (sessionsRes.ok) {
-          setSessions(await sessionsRes.json());
+          try {
+            const data = await sessionsRes.json();
+            if (Array.isArray(data)) setSessions(data);
+          } catch { /* ignore malformed response */ }
         }
         if (tenantsRes.ok) {
-          setTenants(await tenantsRes.json());
+          try {
+            const data = await tenantsRes.json();
+            if (Array.isArray(data)) setTenants(data);
+          } catch { /* ignore malformed response */ }
         }
       } catch (err) {
         console.error('Failed to fetch admin data', err);
@@ -509,8 +518,8 @@ export default function MasterAdminPage() {
       const q = search.toLowerCase();
       result = result.filter(
         (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
+          (u.name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q) ||
           u.tenant?.name?.toLowerCase().includes(q)
       );
     }
@@ -526,8 +535,8 @@ export default function MasterAdminPage() {
     const q = search.toLowerCase();
     return sessions.filter(
       (s) =>
-        s.user.name.toLowerCase().includes(q) ||
-        s.user.email.toLowerCase().includes(q)
+        (s.user.name || '').toLowerCase().includes(q) ||
+        (s.user.email || '').toLowerCase().includes(q)
     );
   }, [sessions, search]);
 
@@ -800,7 +809,7 @@ function UsersTable({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatar}
-                    alt={user.name}
+                    alt={user.name || "User"}
                     className="h-9 w-9 rounded-full object-cover flex-shrink-0"
                     style={{ boxShadow: `0 0 0 2px ${rc.text}40` }}
                   />
@@ -1134,7 +1143,7 @@ function SessionsTable({ sessions }: { sessions: LoginSession[] }) {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={session.user.avatar}
-                        alt={session.user.name}
+                        alt={session.user.name || "User"}
                         className="h-8 w-8 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
