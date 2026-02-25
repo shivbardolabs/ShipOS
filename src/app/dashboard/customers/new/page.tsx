@@ -168,7 +168,7 @@ export default function NewCustomerPage() {
   });
 
   const [courtOrderFile, setCourtOrderFile] = useState<File | null>(null);
-  const [courtOrderPreview, setCourtOrderPreview] = useState<string | null>(null);
+  const [, setCourtOrderPreview] = useState<string | null>(null);
 
   const [agreementSigned, setAgreementSigned] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
