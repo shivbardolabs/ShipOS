@@ -510,7 +510,7 @@ export default function NewCustomerPage() {
                 <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} />
+                    <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => { setPrimaryIdType(e.target.value); if (e.target.value === 'drivers_license' && secondaryIdType === 'drivers_license') setSecondaryIdType(''); }} />
                     {primaryIdType && <p className="text-xs text-surface-500">{USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.description}</p>}
                     <Input label="ID Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} />
                     <div>
@@ -537,9 +537,7 @@ export default function NewCustomerPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <Select label="ID Type *" placeholder="Select secondary ID..." options={[
-                      { value: '', label: '── Primary (Photo) IDs ──', disabled: true },
-                      ...USPS_PRIMARY_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name })),
-                      { value: '', label: '── Secondary IDs ──', disabled: true },
+                      ...(primaryIdType !== 'drivers_license' ? [{ value: 'drivers_license', label: "Valid driver's license or state non-driver's ID card" }] : []),
                       ...USPS_SECONDARY_IDS.map((id) => ({ value: id.id, label: id.name })),
                     ]} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
                     {secondaryIdType && <p className="text-xs text-surface-500">{ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.description}</p>}
