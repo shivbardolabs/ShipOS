@@ -250,7 +250,14 @@ export default function NewCustomerPage() {
     if (stepNum === 0) {
       if (!customerForm.firstName.trim()) errors.firstName = 'Required';
       if (!customerForm.lastName.trim()) errors.lastName = 'Required';
-      if (customerForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
+      if (!customerForm.email.trim()) errors.email = 'Required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
+      if (!customerForm.phone.trim()) errors.phone = 'Required';
+      if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
+      if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
+      if (!customerForm.homeState.trim()) errors.homeState = 'Required';
+      if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
+      if (!customerForm.pmbNumber) errors.pmbNumber = 'Required';
     }
     if (stepNum === 1) {
       const idValid = validateIdPair(primaryIdType, secondaryIdType);
@@ -349,8 +356,8 @@ export default function NewCustomerPage() {
                       <Input label="Last Name *" placeholder="Doe" value={customerForm.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={formErrors.lastName} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <Input label="Email" type="email" placeholder="john@example.com" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} leftIcon={<Mail className="h-4 w-4" />} />
-                      <Input label="Phone" type="tel" placeholder="(555) 555-0100" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} leftIcon={<Phone className="h-4 w-4" />} />
+                      <Input label="Email *" type="email" placeholder="john@example.com" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} leftIcon={<Mail className="h-4 w-4" />} />
+                      <Input label="Phone *" type="tel" placeholder="(555) 555-0100" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} error={formErrors.phone} leftIcon={<Phone className="h-4 w-4" />} />
                     </div>
                     <Input label="Business Name (optional)" placeholder="Business LLC" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} leftIcon={<Building2 className="h-4 w-4" />} />
                     {isBusinessPmb && (
@@ -368,11 +375,11 @@ export default function NewCustomerPage() {
                     <div className="border-t border-surface-800 pt-4">
                       <p className="text-sm font-medium text-surface-300 mb-3 flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</p>
                       <div className="space-y-3">
-                        <Input label="Street Address" placeholder="123 Main St" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} />
+                        <Input label="Street Address *" placeholder="123 Main St" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} />
                         <div className="grid grid-cols-3 gap-3">
-                          <Input label="City" placeholder="Anytown" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} />
-                          <Input label="State" placeholder="CA" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} />
-                          <Input label="ZIP Code" placeholder="90210" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} />
+                          <Input label="City *" placeholder="Anytown" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
+                          <Input label="State *" placeholder="CA" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />
+                          <Input label="ZIP Code *" placeholder="90210" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} error={formErrors.homeZip} />
                         </div>
                       </div>
                     </div>
@@ -403,7 +410,7 @@ export default function NewCustomerPage() {
                     ]} value={customerForm.platform} onChange={(e) => { updateField('platform', e.target.value); updateField('pmbNumber', ''); }} />
 
                     <div className="relative">
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">PMB Number</label>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">PMB Number *</label>
                       <div className={cn('flex items-center gap-2 rounded-lg border bg-surface-900 px-3 py-2 cursor-pointer transition-colors', formErrors.pmbNumber ? 'border-red-500' : pmbDropdownOpen ? 'border-primary-500 ring-1 ring-primary-500/30' : 'border-surface-700 hover:border-surface-600')} onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)}>
                         {customerForm.pmbNumber ? (
                           <div className="flex items-center gap-2 flex-1">
