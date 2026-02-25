@@ -8,6 +8,7 @@
  */
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RotateCcw, LogOut } from 'lucide-react';
 
 export default function DashboardError({
@@ -63,13 +64,13 @@ export default function DashboardError({
           <RotateCcw className="h-4 w-4" />
           Try Again
         </button>
-        <a
+        <Link
           href="/api/auth/logout"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-surface-300 bg-surface-800 hover:bg-surface-700 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           Sign Out
-        </a>
+        </Link>
       </div>
     </div>
   );
