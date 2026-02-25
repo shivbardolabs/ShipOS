@@ -164,7 +164,11 @@ export default function NewCustomerPage() {
     cmraName: STORE_INFO.name, cmraAddress: STORE_INFO.address,
     cmraCity: STORE_INFO.city, cmraState: STORE_INFO.state, cmraZip: STORE_INFO.zip,
     notarized: false, crdUploaded: false,
+    courtOrderedProtected: false, courtOrderUploaded: false,
   });
+
+  const [courtOrderFile, setCourtOrderFile] = useState<File | null>(null);
+  const [courtOrderPreview, setCourtOrderPreview] = useState<string | null>(null);
 
   const [agreementSigned, setAgreementSigned] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
@@ -694,6 +698,36 @@ export default function NewCustomerPage() {
                     </div>
                   </CardContent>
                 </Card>
+                <Card padding="md">
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-4 w-4 text-primary-500" />Court-Ordered Protected Individual</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="glass-card p-3 flex items-start gap-3 border-l-4 border-purple-500">
+                        <Info className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                        <div><p className="text-xs text-surface-300">Check this box if the customer is a court-ordered protected individual per PS 1583 Section 4k. A copy of the court order must be uploaded.</p></div>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form1583.courtOrderedProtected || false} onChange={(e) => { setForm1583((p) => ({ ...p, courtOrderedProtected: e.target.checked, courtOrderUploaded: e.target.checked ? p.courtOrderUploaded : false })); if (!e.target.checked) { setCourtOrderFile(null); setCourtOrderPreview(null); } }} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" /><span className="text-sm text-surface-300">Court-Ordered Protected Individual (PS1583 4k)</span></label>
+                      {form1583.courtOrderedProtected && (
+                        <div className="ml-6 space-y-3 border-l-2 border-purple-500/30 pl-4">
+                          {courtOrderFile ? (
+                            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex items-center gap-3">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                              <div className="flex-1 min-w-0"><p className="text-sm text-emerald-400 font-medium truncate">{courtOrderFile.name}</p><p className="text-xs text-surface-500">{(courtOrderFile.size / 1024).toFixed(1)} KB</p></div>
+                              <Button variant="ghost" size="sm" onClick={() => { setCourtOrderFile(null); setCourtOrderPreview(null); setForm1583((p) => ({ ...p, courtOrderUploaded: false })); }}>Remove</Button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-surface-600 hover:border-purple-500/50 p-6 cursor-pointer transition-colors">
+                              <Upload className="h-6 w-6 text-surface-400" />
+                              <p className="text-sm text-surface-300">Upload Court Order</p>
+                              <p className="text-xs text-surface-500">PDF, JPG, or PNG — max 10 MB</p>
+                              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => { const file = e.target.files?.[0]; if (file) { setCourtOrderFile(file); setCourtOrderPreview(URL.createObjectURL(file)); setForm1583((p) => ({ ...p, courtOrderUploaded: true })); } }} />
+                            </label>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
@@ -768,6 +802,7 @@ export default function NewCustomerPage() {
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 2 },
                       { label: 'USPS CRD Upload', value: form1583.crdUploaded ? 'Uploaded' : 'Pending', ok: form1583.crdUploaded, warn: !form1583.crdUploaded, step: 2 },
                       { label: 'Form 1583 Notarized', value: form1583.notarized ? 'Yes' : 'Pending', ok: form1583.notarized, warn: !form1583.notarized, step: 2 },
+                      ...(form1583.courtOrderedProtected ? [{ label: 'Court Order (PS1583 4k)', value: form1583.courtOrderUploaded ? 'Uploaded' : 'Not uploaded', ok: form1583.courtOrderUploaded, warn: false, step: 2 }] : []),
                       { label: 'Service Agreement', value: agreementSigned ? 'Signed' : 'Not signed', ok: agreementSigned, step: 3 },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3 text-sm">

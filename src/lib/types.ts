@@ -278,6 +278,9 @@ export interface PS1583FormData {
   notarized: boolean;
   crdUploaded: boolean;
   crdUploadDate?: string;
+  // Court-ordered protected individual (PS1583 4k)
+  courtOrderedProtected: boolean;
+  courtOrderUploaded: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
