@@ -59,7 +59,7 @@ function useBreadcrumbs() {
 /*  Inline role pill — uses inline styles for guaranteed rendering            */
 /* -------------------------------------------------------------------------- */
 function HeaderRolePill({ role }: { role: UserRole }) {
-  const cfg = roleConfig[role];
+  const cfg = roleConfig[role] ?? roleConfig.employee;
   const RoleIcon = cfg.icon;
   return (
     <span
@@ -113,7 +113,7 @@ export function Header() {
   }, [handleGlobalKeyDown]);
 
   const role = localUser?.role as UserRole | undefined;
-  const roleCfg = role ? roleConfig[role] : null;
+  const roleCfg = role ? (roleConfig[role] ?? roleConfig.employee) : null;
 
   return (
     <>
