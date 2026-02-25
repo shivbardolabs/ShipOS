@@ -14,7 +14,7 @@ import type { Customer } from '@/lib/types';
 import {
   UserPlus, Package, Mail, Phone, ChevronLeft, ChevronRight, LayoutGrid, List,
   AlertTriangle, Upload, FileSpreadsheet, CheckCircle2, XCircle, ChevronDown,
-  User, Download, AlertCircle,
+  User, Download, AlertCircle, Calendar,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
@@ -27,6 +27,21 @@ const platformBadge: Record<string, { label: string; classes: string }> = {
 };
 
 const statusDot: Record<string, string> = { active: 'bg-emerald-400', suspended: 'bg-yellow-400', closed: 'bg-surface-500' };
+
+function formatClosedDate(dateStr?: string): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const now = new Date();
+  const days = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return '1 day ago';
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
+  }
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
 
 function getIdExpirationStatus(customer: Customer): { label: string; color: string } | null {
   if (!customer.idExpiration) return null;
@@ -327,7 +342,12 @@ export default function CustomersPage() {
                   {customer.email && <p className="text-xs text-surface-400 truncate"><Mail className="inline h-3 w-3 mr-1.5 -mt-0.5" />{customer.email}</p>}
                   {customer.phone && <p className="text-xs text-surface-400"><Phone className="inline h-3 w-3 mr-1.5 -mt-0.5" />{customer.phone}</p>}
                 </div>
-                <div className="mt-3 pt-3 border-t border-surface-800 flex items-center justify-between">
+                {customer.status === 'closed' && customer.dateClosed && (
+                  <div className="mt-3 pt-3 border-t border-surface-800">
+                    <span className="text-xs text-surface-500 flex items-center gap-1.5"><Calendar className="h-3 w-3 text-surface-600" />Closed {formatClosedDate(customer.dateClosed)}</span>
+                  </div>
+                )}
+                <div className={cn('pt-3 flex items-center justify-between', customer.status === 'closed' && customer.dateClosed ? 'mt-2' : 'mt-3 border-t border-surface-800')}>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-surface-500 flex items-center gap-1"><Package className="h-3 w-3" />{customer.packageCount ?? 0}</span>
                     <span className="text-xs text-surface-500 flex items-center gap-1"><Mail className="h-3 w-3" />{customer.mailCount ?? 0}</span>
@@ -357,6 +377,9 @@ export default function CustomersPage() {
                   <Badge dot={false} className="text-[10px]">{customer.pmbNumber}</Badge>
                   <span className={cn('status-badge text-[10px]', plat.classes)}>{plat.label}</span>
                   <span className="text-xs text-surface-400 hidden md:inline">{customer.email}</span>
+                  {customer.status === 'closed' && customer.dateClosed && (
+                    <span className="text-xs text-surface-500 flex items-center gap-1 hidden md:flex"><Calendar className="h-3 w-3 text-surface-600" />Closed {formatClosedDate(customer.dateClosed)}</span>
+                  )}
                   <div className="flex items-center gap-3 ml-auto">
                     <span className="text-xs text-surface-500 flex items-center gap-1"><Package className="h-3 w-3" /> {customer.packageCount ?? 0}</span>
                     {idStatus && <span className={cn('status-badge text-[10px]', idStatus.color)}>{idStatus.label}</span>}
