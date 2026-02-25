@@ -21,6 +21,305 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.23.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.23.0',
+    date: '2026-02-24',
+    title: 'Demo Mode, Legacy Migration, Offline PWA & QA Tests',
+    summary:
+      'Four operational-readiness features in one release: a one-click Demo Mode that seeds realistic sample data for store walkthroughs, a generic Legacy Data Migration engine supporting PostalMate and Mail Manager imports, a full Offline PWA mode with background sync so ShipOS keeps working when the internet drops, and a QA testing infrastructure with E2E, API, and load tests.',
+    highlights: ['Demo Mode', 'Legacy Migration', 'Offline PWA', 'QA Testing'],
+    changes: [
+      {
+        text: 'Demo Mode with one-click seed — creates a demo tenant with 12 customers and 8 packages for instant walkthroughs',
+        type: 'feature',
+      },
+      {
+        text: 'Interactive demo page at /dashboard/demo with guided walkthrough steps',
+        type: 'feature',
+      },
+      {
+        text: 'Generic Legacy Data Migration engine with configurable field mapping for PostalMate, Mail Manager, and generic CSV',
+        type: 'feature',
+      },
+      {
+        text: 'Migration UI with upload, validate, and import workflow including dry-run validation and dedup',
+        type: 'feature',
+      },
+      {
+        text: 'Offline Mode (PWA) with service worker — cache-first for static assets, network-first for API calls',
+        type: 'feature',
+      },
+      {
+        text: 'Offline mutation queue with automatic replay when connectivity is restored',
+        type: 'feature',
+      },
+      {
+        text: 'Offline fallback page and OfflineProvider component with status banner',
+        type: 'improvement',
+      },
+      {
+        text: 'QA infrastructure: Playwright E2E tests, API integration tests for 21 endpoints, and k6 load tests for 20 concurrent users',
+        type: 'feature',
+      },
+      {
+        text: 'New TOOLS sidebar section with Legacy Migration and Demo links',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.22.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.22.0',
+    date: '2026-02-24',
+    title: 'Renewals, SMS Compliance, Provisioning & More',
+    summary:
+      'Seven production-readiness features: automated renewal processing with dunning windows and suspension, SMS compliance (TCPA/CTIA) with opt-in/out keyword handling, a 7-step account provisioning wizard, white-label co-branding, email address changes with token verification, Zebra ZPL label printing, and a PMTools CSV migration engine.',
+    highlights: ['Auto Renewals', 'SMS Compliance', 'Provisioning Wizard', 'ZPL Printer', 'White-Label'],
+    changes: [
+      {
+        text: 'Automated Renewal Processing with 30/15/7/1 day dunning windows, auto-invoicing, and 15-day grace period before suspension',
+        type: 'feature',
+      },
+      {
+        text: 'Renewals dashboard at /dashboard/renewals with pipeline overview of upcoming and overdue renewals',
+        type: 'feature',
+      },
+      {
+        text: 'SMS Compliance (TCPA/CTIA) — Twilio webhook handling for STOP/START/HELP keywords with full consent audit trail',
+        type: 'feature',
+      },
+      {
+        text: '7-step Account Provisioning Wizard that creates Customer + Agreement + Invoice + PMB assignment in a single atomic transaction',
+        type: 'feature',
+      },
+      {
+        text: 'White-Label Co-Branding — upload logo, set accent color, tagline, and favicon with live preview. CSS custom properties applied globally',
+        type: 'feature',
+      },
+      {
+        text: 'Email Address Update flow with token-based verification (24h expiry) and audit logging',
+        type: 'feature',
+      },
+      {
+        text: 'Zebra ZPL Printer support — 4\u00d76 label generator with Code 128 barcode, network print via IP:9100 with browser fallback',
+        type: 'feature',
+      },
+      {
+        text: 'PMTools CSV Migration Engine supporting CUSTOMER, MBDETAIL, PACKAGES, and BILLING table imports',
+        type: 'feature',
+      },
+      {
+        text: 'All 7 features behind feature flags for safe rollout',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.21.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.21.0',
+    date: '2026-02-24',
+    title: 'Stripe, Billing, Multi-Store & Security',
+    summary:
+      'Seven enterprise features: Stripe payment integration for card payments and subscriptions, a subscription billing engine with plan management, multi-store support so one account manages multiple locations, auth security enhancements (rate limiting, 2FA prep), field-level encryption for PII, enhanced package check-out, and advanced BI reporting with CSV/PDF export.',
+    highlights: ['Stripe Payments', 'Subscription Billing', 'Multi-Store', 'BI Reports', 'Encryption'],
+    changes: [
+      {
+        text: 'Stripe Payment Integration — accept card payments for invoices and services with Stripe Elements',
+        type: 'feature',
+      },
+      {
+        text: 'Subscription Billing Engine with plan management, metered usage, and automatic invoicing',
+        type: 'feature',
+      },
+      {
+        text: 'Multi-Store Support — manage multiple store locations from a single account with location switching',
+        type: 'feature',
+      },
+      {
+        text: 'Auth Security Enhancements — rate limiting, session hardening, and 2FA preparation',
+        type: 'security',
+      },
+      {
+        text: 'Field-Level Encryption for sensitive PII fields (SSN, ID numbers) using AES-256',
+        type: 'security',
+      },
+      {
+        text: 'Enhanced Package Check-Out with improved ID verification flow and release confirmation',
+        type: 'improvement',
+      },
+      {
+        text: 'Advanced BI Reporting & Export — customizable reports with CSV and PDF export options',
+        type: 'feature',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.20.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.20.0',
+    date: '2026-02-24',
+    title: 'Legal, RBAC, Tenant Lifecycle & Audit Diffs',
+    summary:
+      'Seven foundational requirements-gap features: Terms of Service and Privacy Policy pages with mandatory agreement, full RBAC with 34 permissions across 4 roles, tenant lifecycle management (active/paused/disabled/trial), user status and soft delete, package storage location tracking, audit log before/after diff view, and signature capture in checkout.',
+    highlights: ['RBAC', 'Legal Pages', 'Tenant Lifecycle', 'Audit Diffs', 'Checkout Signature'],
+    changes: [
+      {
+        text: 'Legal pages — Terms of Service, Privacy Policy, and mandatory agreement gate with checkboxes before accessing the dashboard',
+        type: 'feature',
+      },
+      {
+        text: 'Full RBAC system with 34 actions across 4 roles (Super Admin, Admin, Manager, Employee) enforced on both client and server',
+        type: 'feature',
+      },
+      {
+        text: 'Tenant Lifecycle Management — activate, pause, or disable tenants from the admin panel with full-screen blocking for paused/disabled stores',
+        type: 'feature',
+      },
+      {
+        text: 'User Status & Soft Delete — activate/deactivate users, soft delete with audit trail, blocked login for inactive users',
+        type: 'feature',
+      },
+      {
+        text: 'Package Storage Location tracking — enter location during check-in, displayed in package list and detail views',
+        type: 'feature',
+      },
+      {
+        text: "Audit Log Before/After Diff View — expandable rows showing old\u2192new value changes for every tracked action",
+        type: 'feature',
+      },
+      {
+        text: 'Signature Capture in Checkout — integrated signature pad with clear/re-sign capability, stored in activity log',
+        type: 'feature',
+      },
+      {
+        text: 'All 7 features behind feature flags for granular rollout control',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.19.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.19.0',
+    date: '2026-02-24',
+    title: 'Action Pricing Dashboard',
+    summary:
+      'A new admin dashboard for managing per-action pricing across the store. Every action (mail handling, package check-in, shipping, notary, etc.) now has a configurable retail price, COGS, and margin calculation. Supports tiered pricing and a three-level override hierarchy: Universal \u2192 Segment \u2192 Individual Customer.',
+    highlights: ['Per-Action Pricing', 'Tiered Pricing', 'Override Hierarchy', 'Margin Tracking'],
+    changes: [
+      {
+        text: 'Action Pricing Dashboard at /dashboard/pricing with full CRUD for action prices',
+        type: 'feature',
+      },
+      {
+        text: 'Every action has retail price, COGS, and automatic margin calculation',
+        type: 'feature',
+      },
+      {
+        text: 'Tiered pricing support — first unit + additional unit pricing for volume actions',
+        type: 'feature',
+      },
+      {
+        text: 'Three-level override hierarchy: Universal \u2192 Segment (store type) \u2192 Individual Customer',
+        type: 'feature',
+      },
+      {
+        text: '6 action categories: Mail, Package, Shipping, Scanning, Notary, General',
+        type: 'feature',
+      },
+      {
+        text: 'Stats overview showing total actions, active count, override count, and average margin',
+        type: 'improvement',
+      },
+      {
+        text: 'Search and filter across action names, keys, and descriptions',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.18.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.18.0',
+    date: '2026-02-24',
+    title: 'AI-First Positioning & Marketing Refresh',
+    summary:
+      'A complete refresh of all public-facing pages with AI-first messaging. The homepage now leads with AI-powered capabilities, the features page spotlights the AI Intelligence category, and pricing plans are tiered around AI access — Starter gets Smart Intake, Pro unlocks the full AI suite, and Enterprise includes unlimited AI with custom models.',
+    highlights: ['AI Marketing', 'Tiered AI Plans', 'Refreshed Pages'],
+    changes: [
+      {
+        text: 'Homepage redesigned with AI-powered hero, intelligence capability section, and updated comparison table',
+        type: 'design',
+      },
+      {
+        text: 'Features page updated with AI Intelligence as the first category, showcasing all 6 AI features',
+        type: 'design',
+      },
+      {
+        text: 'Pricing plans restructured around AI access tiers — Starter, Pro, and Enterprise',
+        type: 'improvement',
+      },
+      {
+        text: 'Settings/Subscription page updated with AI features in plan comparison cards',
+        type: 'improvement',
+      },
+      {
+        text: 'AI-focused FAQ entries added to pricing page',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  /*  v0.17.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.17.0',
+    date: '2026-02-24',
+    title: 'Feature Flags & Admin Controls',
+    summary:
+      'A full feature flag management system for Super Admins. Control which features are enabled per-tenant or per-user with a real-time admin UI. Ships with 23 pre-configured flags across 6 categories. Super Admins bypass all flags and always see everything. Also adds tenant and role assignment in the Master Admin panel.',
+    highlights: ['Feature Flags', '23 Flags', 'Per-Tenant Overrides', 'Admin Assignments'],
+    changes: [
+      {
+        text: 'Feature Flag admin page with per-tenant and per-user override management',
+        type: 'feature',
+      },
+      {
+        text: '23 pre-seeded flags across 6 categories: AI, Packages, Operations, Compliance, Business, Platform',
+        type: 'feature',
+      },
+      {
+        text: 'FeatureFlagProvider context for client-side flag evaluation across the entire app',
+        type: 'feature',
+      },
+      {
+        text: "Sidebar navigation dynamically respects feature flags — hidden features don't show links",
+        type: 'improvement',
+      },
+      {
+        text: 'Super Admin bypasses all flags and always sees every feature',
+        type: 'improvement',
+      },
+      {
+        text: "Master Admin tenant & role assignment — change any user's role and tenant from the admin panel",
+        type: 'feature',
+      },
+      {
+        text: 'Tenant selector with user counts and unassigned option in assignment modal',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.16.0                                                            */
   /* ------------------------------------------------------------------ */
   {
