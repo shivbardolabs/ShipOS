@@ -48,6 +48,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function AnalyticsAdminPage() {
   const { localUser } = useTenant();
 
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+  // Group tracked events by category (must be called before any early return)
+  const grouped = useMemo(() => {
+    const map: Record<string, TrackedEventDefinition[]> = {};
+    for (const ev of TRACKED_EVENTS) {
+      (map[ev.category] ??= []).push(ev);
+    }
+    return map;
+  }, []);
+
   // ── Guard: superadmin only ──
   if (localUser && localUser.role !== 'superadmin') {
     return (
@@ -60,18 +72,6 @@ export default function AnalyticsAdminPage() {
       </div>
     );
   }
-
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
-
-  // Group tracked events by category
-  const grouped = useMemo(() => {
-    const map: Record<string, TrackedEventDefinition[]> = {};
-    for (const ev of TRACKED_EVENTS) {
-      (map[ev.category] ??= []).push(ev);
-    }
-    return map;
-  }, []);
 
   return (
     <div className="space-y-6">
