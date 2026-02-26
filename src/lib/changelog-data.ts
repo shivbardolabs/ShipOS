@@ -21,6 +21,34 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.24.0                                                            */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.24.0',
+    date: '2026-02-26',
+    title: 'Camera Fixes, Legal Management, Analytics & Deliverability',
+    summary:
+      'Fixed camera bugs on mobile, added admin-managed Terms & Privacy pages with versioning, integrated Google Tag Manager, enhanced PostHog analytics, and built email/SMS deliverability dashboards.',
+    changes: [
+      { text: 'Fixed camera black screen on Android/Chrome — fullscreen viewfinder with loading state', type: 'fix' },
+      { text: 'Upload Photo now opens gallery instead of camera on mobile', type: 'fix' },
+      { text: 'Added image validation to prevent MIME type errors on empty captures', type: 'fix' },
+      { text: 'Comprehensive Terms of Service content for CMRA/mail management', type: 'feature' },
+      { text: 'Comprehensive Privacy Policy content with third-party disclosures', type: 'feature' },
+      { text: 'Admin Legal Document Management — edit T&C/PP from dashboard, version history, auto re-acceptance', type: 'feature' },
+      { text: 'Google Tag Manager integration — deploy third-party scripts without deployments', type: 'feature' },
+      { text: 'Enhanced PostHog analytics wrapper with event catalogue and page tracking', type: 'feature' },
+      { text: 'Weekly analytics report cron endpoint', type: 'feature' },
+      { text: 'Email deliverability dashboard — SPF/DKIM/DMARC checklist, domain verification, warming guide', type: 'feature' },
+      { text: 'SMS deliverability dashboard — 10DLC registration guide, CTIA compliance, consent tracking', type: 'feature' },
+      { text: 'CRM deliverability overview — combined email + SMS health dashboard', type: 'feature' },
+      { text: 'Enhanced email sending with List-Unsubscribe headers and category tagging', type: 'improvement' },
+      { text: 'SMS compliance — automatic business name, opt-out handling (STOP/HELP/START)', type: 'improvement' },
+      { text: 'Professional HTML email templates (CAN-SPAM compliant)', type: 'improvement' },
+    ],
+    highlights: ['Camera Fix', 'Legal Admin', 'GTM', 'Deliverability'],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.23.0                                                            */
   /* ------------------------------------------------------------------ */
   {

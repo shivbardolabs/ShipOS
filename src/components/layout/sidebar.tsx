@@ -73,6 +73,9 @@ const navSections: NavSection[] = [
       { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
       { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
       { label: 'Legal Documents', href: '/dashboard/admin/legal', icon: ScrollText, flagKey: 'legal-management' },
+      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
+      { label: 'Tag Manager', href: '/dashboard/admin/tag-manager', icon: Flag },
+      { label: 'Deliverability', href: '/dashboard/admin/deliverability', icon: Activity },
     ],
   },
   {
@@ -170,6 +173,9 @@ export function Sidebar() {
     if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
     if (href === '/dashboard/admin/feature-flags') return pathname === '/dashboard/admin/feature-flags';
     if (href === '/dashboard/admin/legal') return pathname === '/dashboard/admin/legal';
+    if (href === '/dashboard/admin/analytics') return pathname === '/dashboard/admin/analytics';
+    if (href === '/dashboard/admin/tag-manager') return pathname === '/dashboard/admin/tag-manager';
+    if (href === '/dashboard/admin/deliverability') return pathname.startsWith('/dashboard/admin/deliverability') || pathname.startsWith('/dashboard/admin/email-deliverability') || pathname.startsWith('/dashboard/admin/sms-deliverability');
     return pathname.startsWith(href);
   };
 

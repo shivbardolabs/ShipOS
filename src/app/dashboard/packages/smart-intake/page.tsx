@@ -148,20 +148,46 @@ export default function SmartIntakePage() {
   const { log } = useActivityLog();
 
   /* ── Camera controls ───────────────────────────────────────────────── */
+  const [cameraReady, setCameraReady] = useState(false);
+
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-      });
+      setCameraReady(false);
+
+      // Use ideal (not exact) facingMode for broader device compatibility
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        // Wait for the video to actually have data before showing ready state
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setCameraReady(true);
+          }).catch(() => {
+            setCameraError('Could not start video playback.');
+          });
+        };
       }
       setCameraActive(true);
-    } catch {
-      setCameraError('Camera not available. Use photo upload instead.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      if (msg.includes('NotAllowed') || msg.includes('Permission')) {
+        setCameraError('Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
+        setCameraError('No camera found on this device. Use photo upload instead.');
+      } else {
+        setCameraError(`Camera not available: ${msg}. Use photo upload instead.`);
+      }
     }
   }, []);
 
@@ -169,11 +195,17 @@ export default function SmartIntakePage() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     setCameraActive(false);
+    setCameraReady(false);
   }, []);
 
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
+    // Ensure video has actual frame data (readyState >= HAVE_CURRENT_DATA)
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      setCameraError('Camera is still loading. Please wait a moment and try again.');
+      return;
+    }
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -181,6 +213,11 @@ export default function SmartIntakePage() {
     if (!ctx) return;
     ctx.drawImage(video, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    // Validate we got a real image (not an empty/tiny canvas)
+    if (!dataUrl || dataUrl.length < 1000) {
+      setCameraError('Could not capture image. Please try again.');
+      return;
+    }
     setCapturedImage(dataUrl);
     stopCamera();
   }, [stopCamera]);
@@ -431,37 +468,60 @@ export default function SmartIntakePage() {
               </div>
             )}
 
-            {/* Camera viewfinder */}
+            {/* Camera viewfinder — fullscreen overlay on mobile */}
             {cameraActive && (
-              <div className="relative rounded-xl overflow-hidden mb-4 bg-black max-w-lg mx-auto">
+              <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+                {/* Loading spinner while camera initializes */}
+                {!cameraReady && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 text-violet-400 animate-spin mx-auto mb-3" />
+                      <p className="text-surface-400 text-sm">Starting camera…</p>
+                    </div>
+                  </div>
+                )}
+
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full aspect-[4/3] object-cover"
+                  className="w-full h-full object-cover"
                 />
+
                 {/* Scanning frame overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-[80%] h-[60%] border-2 border-white/40 rounded-lg relative">
-                    <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-2 border-l-2 border-violet-400 rounded-tl-md" />
-                    <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-2 border-r-2 border-violet-400 rounded-tr-md" />
-                    <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-2 border-l-2 border-violet-400 rounded-bl-md" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-2 border-r-2 border-violet-400 rounded-br-md" />
-                    {/* Scanning line animation */}
+                  <div className="w-[85%] h-[50%] border-2 border-white/40 rounded-lg relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-3 border-l-3 border-violet-400 rounded-tl-md" />
+                    <div className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-3 border-r-3 border-violet-400 rounded-tr-md" />
+                    <div className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-3 border-l-3 border-violet-400 rounded-bl-md" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-3 border-r-3 border-violet-400 rounded-br-md" />
                     <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-400 to-transparent animate-pulse" />
                   </div>
                 </div>
-                <div className="absolute bottom-4 inset-x-0 flex justify-center gap-3">
-                  <Button variant="secondary" size="sm" onClick={stopCamera}>
-                    <X className="h-4 w-4 mr-1" /> Cancel
+
+                {/* Hint text at top */}
+                <div className="absolute top-12 inset-x-0 text-center pointer-events-none">
+                  <p className="text-white/70 text-sm font-medium">Position the shipping label inside the frame</p>
+                </div>
+
+                {/* Bottom controls */}
+                <div className="absolute bottom-8 inset-x-0 flex justify-center gap-4 px-6">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={stopCamera}
+                    className="bg-black/60 backdrop-blur border-white/20 text-white hover:bg-black/80 px-6"
+                  >
+                    <X className="h-5 w-5 mr-2" /> Cancel
                   </Button>
                   <Button
                     onClick={capturePhoto}
-                    className="bg-white text-black hover:bg-gray-100 font-bold px-6"
-                    size="sm"
+                    disabled={!cameraReady}
+                    className="bg-white text-black hover:bg-gray-100 font-bold px-8 rounded-full shadow-lg disabled:opacity-50"
+                    size="lg"
                   >
-                    <Camera className="h-4 w-4 mr-1" /> Capture
+                    <Camera className="h-5 w-5 mr-2" /> Capture
                   </Button>
                 </div>
               </div>
@@ -489,7 +549,6 @@ export default function SmartIntakePage() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   className="hidden"
                   onChange={handleFileUpload}
                 />

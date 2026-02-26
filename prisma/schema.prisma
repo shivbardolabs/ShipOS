@@ -729,3 +729,16 @@ model PrinterConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ── SMS Consent Tracking ─────────────────────────────────────────────────────
+
+model SmsConsent {
+  id          String    @id @default(cuid())
+  customerId  String
+  phone       String
+  consentedAt DateTime  @default(now())
+  method      String    // 'registration', 'checkbox', 'sms_reply'
+  ipAddress   String?
+  optedOutAt  DateTime?
+  createdAt   DateTime  @default(now())
+}

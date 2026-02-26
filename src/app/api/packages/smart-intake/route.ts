@@ -165,9 +165,31 @@ export async function POST(request: NextRequest) {
     }
 
     /* ── Real AI Vision call ───────────────────────────────────────────── */
-    const base64Data = image.startsWith('data:')
-      ? image
-      : `data:image/jpeg;base64,${image}`;
+    // Ensure valid image MIME type — only allow image types
+    let base64Data: string;
+    if (image.startsWith('data:')) {
+      // Validate MIME type prefix
+      const mimeMatch = image.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+      if (!mimeMatch) {
+        return NextResponse.json(
+          { success: false, mode: 'ai' as const, results: [], error: 'Invalid image format. Please upload a JPEG or PNG image.' },
+          { status: 400 }
+        );
+      }
+      base64Data = image;
+    } else {
+      // Assume raw base64 is JPEG
+      base64Data = `data:image/jpeg;base64,${image}`;
+    }
+
+    // Validate the base64 payload is not too small (likely empty/black frame)
+    const payload = base64Data.split(',')[1] || '';
+    if (payload.length < 500) {
+      return NextResponse.json(
+        { success: false, mode: 'ai' as const, results: [], error: 'Image appears to be empty or too small. Please capture again.' },
+        { status: 400 }
+      );
+    }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
