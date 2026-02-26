@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { TenantProvider } from '@/components/tenant-provider';
 import { FeatureFlagProvider } from '@/components/feature-flag-provider';
 import { PostHogAnalyticsProvider } from '@/components/posthog-provider';
+import { GTMProvider, GTMNoScript } from '@/components/gtm-provider';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -53,7 +54,9 @@ export default function RootLayout({
             <ThemeProvider>
               <Suspense fallback={null}>
                 <PostHogAnalyticsProvider>
+                  <GTMProvider />
                   <body className="min-h-screen bg-surface-950 font-sans antialiased">
+                    <GTMNoScript />
                     {children}
                   </body>
                 </PostHogAnalyticsProvider>
