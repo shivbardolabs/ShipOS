@@ -226,11 +226,12 @@ export async function listDomains(): Promise<{
       return { success: false, error: error.message };
     }
 
-    const domains: DomainVerification[] = (data?.data || []).map((d) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const domains: DomainVerification[] = (data?.data || []).map((d: any) => ({
       id: d.id,
       name: d.name,
       status: d.status,
-      records: (d.records || []).map((r) => ({
+      records: (d.records || []).map((r: any) => ({
         type: r.record,
         name: r.name,
         value: r.value,
