@@ -179,9 +179,10 @@ type ReceiptMethod = 'sms' | 'email' | 'print' | 'sms+print';
 /* -------------------------------------------------------------------------- */
 export default function CheckOutPage() {
   /* ---- Core state ---- */
-  const [searchMode, setSearchMode] = useState<'pmb' | 'name'>('pmb');
+  const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'tracking'>('pmb');
   const [pmbInput, setPmbInput] = useState('');
   const [nameInput, setNameInput] = useState('');
+  const [trackingInput, setTrackingInput] = useState('');
   const [nameResults, setNameResults] = useState<Customer[]>([]);
   const [showNameResults, setShowNameResults] = useState(false);
   const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
@@ -294,10 +295,57 @@ export default function CheckOutPage() {
     selectCustomer(customer);
   };
 
+  /* ---- Tracking number lookup (BAR-256) ---- */
+  const handleTrackingLookup = () => {
+    setLookupError('');
+    setFoundCustomer(null);
+    setCustomerPackages([]);
+    setSelectedIds(new Set());
+    setActiveTab('packages');
+    setEnabledAddOns(new Set());
+    setReceiptMethod('sms');
+    setReleaseSignature(null);
+
+    if (!trackingInput.trim()) {
+      setLookupError('Please enter a tracking number');
+      return;
+    }
+
+    const q = trackingInput.trim().toUpperCase();
+    // Find packages matching this tracking number
+    const matchingPkgs = packages.filter(
+      (p) => p.trackingNumber && p.trackingNumber.toUpperCase().includes(q) && p.status !== 'released' && p.status !== 'returned'
+    );
+
+    if (matchingPkgs.length === 0) {
+      setLookupError(`No unreleased package found with tracking "${trackingInput}"`);
+      return;
+    }
+
+    // Find the customer for the first matching package
+    const pkg = matchingPkgs[0];
+    const customer = customers.find((c) => c.id === pkg.customerId);
+    if (!customer) {
+      setLookupError('Package found but customer record is missing');
+      return;
+    }
+
+    // Load all unreleased packages for that customer (not just the matched one)
+    const allPkgs = packages.filter(
+      (p) => p.customerId === customer.id && p.status !== 'released' && p.status !== 'returned'
+    );
+    setFoundCustomer(customer);
+    setCustomerPackages(allPkgs);
+    // Pre-select only the tracked package
+    setSelectedIds(new Set(matchingPkgs.map((p) => p.id)));
+  };
+
   /* ---- Legacy wrapper ---- */
   const handleLookup = () => {
     if (searchMode === 'pmb') {
       handlePmbLookup();
+    } else if (searchMode === 'tracking') {
+      handleTrackingLookup();
     } else {
       if (nameInput.trim().length < 2) {
         setLookupError('Enter at least 2 characters');
@@ -491,12 +539,12 @@ export default function CheckOutPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-surface-100">Customer Lookup</h2>
-              <p className="text-sm text-surface-400">Find a customer by PMB number or name to release their packages</p>
+              <p className="text-sm text-surface-400">Find a customer by PMB number, name, or tracking number to release their packages</p>
             </div>
           </div>
 
           {/* Search mode toggle */}
-          <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl mb-4 max-w-xs">
+          <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl mb-4 max-w-md">
             <button
               onClick={() => { setSearchMode('pmb'); setLookupError(''); setShowNameResults(false); }}
               className={cn(
@@ -507,7 +555,7 @@ export default function CheckOutPage() {
               )}
             >
               <Hash className="h-4 w-4" />
-              PMB Number
+              PMB
             </button>
             <button
               onClick={() => { setSearchMode('name'); setLookupError(''); }}
@@ -520,6 +568,18 @@ export default function CheckOutPage() {
             >
               <User className="h-4 w-4" />
               Name
+            </button>
+            <button
+              onClick={() => { setSearchMode('tracking'); setLookupError(''); setShowNameResults(false); }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                searchMode === 'tracking'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
+              )}
+            >
+              <ScanLine className="h-4 w-4" />
+              Tracking #
             </button>
           </div>
 
@@ -636,6 +696,33 @@ export default function CheckOutPage() {
                   Start typing a name to search. Use PMB number for fastest lookup.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Tracking number input (BAR-256) */}
+          {searchMode === 'tracking' && (
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Enter or scan tracking number..."
+                  value={trackingInput}
+                  onChange={(e) => {
+                    setTrackingInput(e.target.value);
+                    setLookupError('');
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTrackingLookup()}
+                  error={lookupError || undefined}
+                  leftIcon={<ScanLine className="h-5 w-5" />}
+                  className="!py-3.5 !text-lg !rounded-xl"
+                />
+                <p className="text-xs text-surface-500 mt-2">
+                  Enter a full or partial tracking number to find the package and its owner
+                </p>
+              </div>
+              <Button size="lg" onClick={handleTrackingLookup} className="shrink-0 !px-8 !py-3.5 !rounded-xl">
+                <Search className="h-5 w-5 mr-2" />
+                Look Up
+              </Button>
             </div>
           )}
         </div>

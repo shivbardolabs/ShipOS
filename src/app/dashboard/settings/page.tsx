@@ -394,6 +394,16 @@ export default function SettingsPage() {
 
   // Printers
   const [printers, setPrinters] = useState(mockPrinters);
+  const [addingPrinter, setAddingPrinter] = useState(false);
+  const [printerTestResult, setPrinterTestResult] = useState<string | null>(null);
+
+  // Mailbox platform toggles (BAR-255)
+  const [platformEnabled, setPlatformEnabled] = useState<Record<string, boolean>>({
+    store: true,
+    anytime: true,
+    ipostal1: true,
+    postscan: true,
+  });
 
   const tabs = [
     { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" /> },
@@ -511,7 +521,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   {/* Physical / Store boxes */}
-                  <div className="glass-card p-4">
+                  <div className={`glass-card p-4 ${!platformEnabled.store ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-surface-600/30 flex items-center justify-center">
@@ -522,7 +532,15 @@ export default function SettingsPage() {
                           <p className="text-xs text-surface-500">Traditional in-store mailboxes</p>
                         </div>
                       </div>
-                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${platformEnabled.store ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {platformEnabled.store ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={platformEnabled.store}
+                          onChange={(val) => setPlatformEnabled(prev => ({ ...prev, store: val }))}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -537,7 +555,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Anytime Mailbox */}
-                  <div className="glass-card p-4">
+                  <div className={`glass-card p-4 ${!platformEnabled.anytime ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -548,7 +566,15 @@ export default function SettingsPage() {
                           <p className="text-xs text-surface-500">Digital mailbox platform</p>
                         </div>
                       </div>
-                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${platformEnabled.anytime ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {platformEnabled.anytime ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={platformEnabled.anytime}
+                          onChange={(val) => setPlatformEnabled(prev => ({ ...prev, anytime: val }))}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -563,7 +589,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* iPostal1 */}
-                  <div className="glass-card p-4">
+                  <div className={`glass-card p-4 ${!platformEnabled.ipostal1 ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -574,7 +600,15 @@ export default function SettingsPage() {
                           <p className="text-xs text-surface-500">Digital mailbox platform</p>
                         </div>
                       </div>
-                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${platformEnabled.ipostal1 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {platformEnabled.ipostal1 ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={platformEnabled.ipostal1}
+                          onChange={(val) => setPlatformEnabled(prev => ({ ...prev, ipostal1: val }))}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -589,7 +623,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* PostScan Mail */}
-                  <div className="glass-card p-4">
+                  <div className={`glass-card p-4 ${!platformEnabled.postscan ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
@@ -600,7 +634,15 @@ export default function SettingsPage() {
                           <p className="text-xs text-surface-500">Digital mailbox platform</p>
                         </div>
                       </div>
-                      <Badge dot={false} className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${platformEnabled.postscan ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {platformEnabled.postscan ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={platformEnabled.postscan}
+                          onChange={(val) => setPlatformEnabled(prev => ({ ...prev, postscan: val }))}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -974,12 +1016,69 @@ export default function SettingsPage() {
           <TabPanel active={activeTab === 'printers'}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-surface-200">Connected Printers</h2>
-              <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
+              <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setAddingPrinter(true)}>
                 Add Printer
               </Button>
             </div>
 
+            {/* Test Result Banner */}
+            {printerTestResult && (
+              <div className={`mb-4 p-3 rounded-lg text-sm ${
+                printerTestResult.startsWith('✅')
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+              }`}>
+                {printerTestResult}
+              </div>
+            )}
+
+            {/* Add Printer Form */}
+            {addingPrinter && (
+              <Card className="mb-4">
+                <div className="p-4 space-y-3">
+                  <h3 className="text-sm font-medium text-surface-200">Add New Printer</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-surface-500 mb-1 block">Printer Name</label>
+                      <input type="text" defaultValue="New Label Printer" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-name" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-surface-500 mb-1 block">Model</label>
+                      <input type="text" placeholder="e.g. Zebra ZD420" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-model" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => {
+                      const nameEl = document.getElementById('new-printer-name') as HTMLInputElement;
+                      const modelEl = document.getElementById('new-printer-model') as HTMLInputElement;
+                      const newPrinter = {
+                        id: `ptr_${Date.now()}`,
+                        name: nameEl?.value || 'New Printer',
+                        model: modelEl?.value || 'Unknown Model',
+                        status: 'offline' as const,
+                        autoPrint: false,
+                      };
+                      setPrinters(prev => [...prev, newPrinter]);
+                      setAddingPrinter(false);
+                    }} leftIcon={<Save className="h-3.5 w-3.5" />}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAddingPrinter(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             <div className="space-y-3">
+              {printers.length === 0 && (
+                <Card>
+                  <div className="text-center py-12">
+                    <Printer className="h-12 w-12 text-surface-600 mx-auto mb-3" />
+                    <p className="text-surface-400">No printers configured</p>
+                    <p className="text-sm text-surface-500 mt-1">Click &ldquo;Add Printer&rdquo; to set up a label printer</p>
+                  </div>
+                </Card>
+              )}
               {printers.map((printer) => (
                 <Card key={printer.id}>
                   <div className="flex items-center justify-between">
@@ -1027,10 +1126,22 @@ export default function SettingsPage() {
                         />
                       </div>
 
-                      <Button variant="outline" size="sm" leftIcon={<TestTube className="h-3.5 w-3.5" />}>
+                      <Button variant="outline" size="sm" leftIcon={<TestTube className="h-3.5 w-3.5" />} onClick={() => {
+                        setPrinterTestResult(null);
+                        if (printer.status === 'online') {
+                          setPrinterTestResult(`✅ Test label sent to ${printer.name} (${printer.model})`);
+                        } else {
+                          setPrinterTestResult(`❌ Cannot reach ${printer.name} — printer is offline`);
+                        }
+                        setTimeout(() => setPrinterTestResult(null), 5000);
+                      }}>
                         Test Print
                       </Button>
-                      <Button variant="ghost" size="sm" iconOnly>
+                      <Button variant="ghost" size="sm" iconOnly onClick={() => {
+                        if (confirm(`Delete printer "${printer.name}"?`)) {
+                          setPrinters(prev => prev.filter(p => p.id !== printer.id));
+                        }
+                      }}>
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>

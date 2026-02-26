@@ -161,7 +161,7 @@ export default function DemoPage() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h3 className="font-semibold text-surface-900">Demo Data</h3>
+              <h3 className="font-semibold text-foreground">Demo Data</h3>
               <p className="text-sm text-surface-500 mt-1">
                 Seed realistic demo data (1 tenant, 3 users, 15 customers, 30 packages) or clean it up.
               </p>
@@ -189,7 +189,7 @@ export default function DemoPage() {
       {/* Walkthrough */}
       {categories.map((category) => (
         <div key={category}>
-          <h2 className="text-lg font-semibold text-surface-800 mb-4">{category}</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">{category}</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {WALKTHROUGH.filter(s => s.category === category).map((step) => (
               <Card key={step.title} className="hover:shadow-md transition-shadow">
@@ -199,7 +199,7 @@ export default function DemoPage() {
                       {step.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-surface-900">{step.title}</h3>
+                      <h3 className="font-medium text-foreground">{step.title}</h3>
                       <p className="text-sm text-surface-500 mt-1">{step.description}</p>
                       <a
                         href={step.link}
@@ -219,7 +219,7 @@ export default function DemoPage() {
       {/* Demo Accounts */}
       <Card>
         <CardContent className="p-6">
-          <h3 className="font-semibold text-surface-900 mb-4">Demo Accounts</h3>
+          <h3 className="font-semibold text-foreground mb-4">Demo Accounts</h3>
           <div className="grid gap-3 md:grid-cols-3">
             {[
               { email: 'admin@demo.shipos.app', role: 'Admin', color: 'bg-purple-100 text-purple-700', desc: 'Full access to all features including Super Admin panel' },
@@ -230,7 +230,7 @@ export default function DemoPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className={account.color}>{account.role}</Badge>
                 </div>
-                <p className="font-mono text-sm text-surface-800">{account.email}</p>
+                <p className="font-mono text-sm text-foreground">{account.email}</p>
                 <p className="text-xs text-surface-500 mt-1">{account.desc}</p>
               </div>
             ))}

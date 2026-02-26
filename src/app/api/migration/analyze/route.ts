@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
       lineItems: Math.round(1516804 * sizeRatio),
       payments: Math.round(735412 * sizeRatio),
       mailboxes: Math.round(1606 * sizeRatio),
-      carriers: 52,
-      departments: 88,
+      carriers: Math.round(52 * sizeRatio),
+      departments: Math.round(88 * sizeRatio),
     };
 
     return NextResponse.json({

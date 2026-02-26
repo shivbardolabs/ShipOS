@@ -89,3 +89,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to save printer' }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/settings/printer
+ * Deletes a printer configuration.
+ */
+export async function DELETE(request: Request) {
+  try {
+    const user = await getOrProvisionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    if (!user.tenantId) {
+      return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
+    }
+    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Printer ID required' }, { status: 400 });
+    }
+
+    await prisma.printerConfig.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE /api/settings/printer]', err);
+    return NextResponse.json({ error: 'Failed to delete printer' }, { status: 500 });
+  }
+}

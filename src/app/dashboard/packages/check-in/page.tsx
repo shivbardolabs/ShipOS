@@ -87,23 +87,28 @@ const packageTypeOptions = [
 export default function CheckInPage() {
   const [step, setStep] = useState(1);
 
-  // Step 1 — Customer
+  // Step 1 — Customer (BAR-38: enhanced lookup)
   const [customerSearch, setCustomerSearch] = useState('');
+  const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'phone' | 'company'>('pmb');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isWalkIn, setIsWalkIn] = useState(false); // Walk-in customer who doesn't have a mailbox
+  const [walkInName, setWalkInName] = useState('');
 
-  // Step 2 — Carrier
+  // Step 2 — Carrier (BAR-239: tracking number moved here, auto-suggest carrier)
+  const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('');
   const [senderName, setSenderName] = useState('');
+  const [customCarrierName, setCustomCarrierName] = useState(''); // When "Other" is selected
 
-  // Step 3 — Package Details
+  // Step 3 — Package Details (BAR-245: conditional alerts)
   const [packageType, setPackageType] = useState('');
-  const [trackingNumber, setTrackingNumber] = useState('');
   const [hazardous, setHazardous] = useState(false);
   const [perishable, setPerishable] = useState(false);
   const [condition, setCondition] = useState('good');
   const [conditionOther, setConditionOther] = useState('');
   const [notes, setNotes] = useState('');
   const [storageLocation, setStorageLocation] = useState(''); // Physical shelf/bin location
+  const [requiresSignature, setRequiresSignature] = useState(false);
 
   // Step 4 — Notify
   const [printLabel, setPrintLabel] = useState(true);
@@ -131,15 +136,28 @@ export default function CheckInPage() {
       .slice(0, 10);
   }, [customerSearch]);
 
+  // Auto-suggest carrier from tracking number (BAR-239)
+  const suggestCarrierFromTracking = (tracking: string) => {
+    const t = tracking.trim().toUpperCase();
+    if (t.startsWith('1Z')) return 'ups';
+    if (/^TBA/.test(t)) return 'amazon';
+    if (/^(FX|[0-9]{12,15}$)/.test(t) && !t.startsWith('9')) return 'fedex';
+    if (/^(9[0-9]{15,})$/.test(t) || /^(94|92|93|94|70|71|72|73|74|75|76|77|78|79)/.test(t) && t.length > 18) return 'usps';
+    if (/^[0-9]{10}$/.test(t)) return 'dhl';
+    if (/^1LS/.test(t)) return 'lasership';
+    if (/^C[0-9]{8}/.test(t)) return 'ontrac';
+    return '';
+  };
+
   // Validation per step
   const canProceed = (() => {
     switch (step) {
       case 1:
-        return !!selectedCustomer;
+        return !!selectedCustomer || (isWalkIn && walkInName.trim().length > 0);
       case 2:
-        return !!selectedCarrier;
+        return !!selectedCarrier && !!trackingNumber.trim();
       case 3:
-        return !!packageType && !!trackingNumber.trim();
+        return !!packageType;
       case 4:
         return true;
       default:
@@ -160,8 +178,10 @@ export default function CheckInPage() {
   const lastCheckIn = lastActionByVerb('package.check_in');
 
   const handleSubmit = () => {
-    const carrierLabel = selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown';
-    const custLabel = selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})` : '';
+    const carrierLabel = selectedCarrier === 'other' ? (customCarrierName || 'Other') : (selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown');
+    const custLabel = isWalkIn
+      ? `Walk-in: ${walkInName}`
+      : selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})` : '';
     logActivity({
       action: 'package.check_in',
       entityType: 'package',
@@ -169,14 +189,17 @@ export default function CheckInPage() {
       entityLabel: trackingNumber || `${carrierLabel} package`,
       description: `Checked in ${carrierLabel} package for ${custLabel}`,
       metadata: {
-        carrier: selectedCarrier,
+        carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
         trackingNumber,
         packageType,
         customerId: selectedCustomer?.id,
         customerName: custLabel,
         hazardous,
         perishable,
+        requiresSignature,
         storageLocation: storageLocation || undefined,
+        isWalkIn,
+        walkInName: isWalkIn ? walkInName : undefined,
       },
     });
     setShowSuccess(true);
@@ -186,13 +209,18 @@ export default function CheckInPage() {
   const handleReset = () => {
     setStep(1);
     setCustomerSearch('');
+    setSearchMode('pmb');
     setSelectedCustomer(null);
+    setIsWalkIn(false);
+    setWalkInName('');
     setSelectedCarrier('');
+    setCustomCarrierName('');
     setSenderName('');
     setPackageType('');
     setTrackingNumber('');
     setHazardous(false);
     setPerishable(false);
+    setRequiresSignature(false);
     setCondition('good');
     setConditionOther('');
     setNotes('');
@@ -286,77 +314,140 @@ export default function CheckInPage() {
                 Identify Customer
               </h2>
               <p className="text-sm text-surface-400">
-                Search by PMB number, name, email, or phone
+                Search by PMB number, name, phone, or company — or check in for a walk-in customer
               </p>
             </div>
 
-            <SearchInput
-              placeholder="Search by PMB, name, email, or phone..."
-              value={customerSearch}
-              onSearch={setCustomerSearch}
-              className="max-w-lg"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredCustomers.map((cust) => {
-                const isSelected = selectedCustomer?.id === cust.id;
-                return (
-                  <button
-                    key={cust.id}
-                    onClick={() => setSelectedCustomer(cust)}
-                    className={cn(
-                      'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
-                      isSelected
-                        ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
-                        : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
-                    )}
-                  >
-                    {/* Avatar */}
-                    <CustomerAvatar
-                      firstName={cust.firstName}
-                      lastName={cust.lastName}
-                      photoUrl={cust.photoUrl}
-                      size="md"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-surface-200 text-sm truncate">
-                          {cust.firstName} {cust.lastName}
-                        </p>
-                        <Badge
-                          variant={
-                            (platformColors[cust.platform] as 'default' | 'info' | 'success' | 'warning') ||
-                            'default'
-                          }
-                          dot={false}
-                        >
-                          {cust.platform}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-xs font-mono text-primary-600">
-                          {cust.pmbNumber}
-                        </span>
-                        {cust.businessName && (
-                          <span className="text-xs text-surface-500 truncate">
-                            {cust.businessName}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-              {filteredCustomers.length === 0 && (
-                <div className="col-span-2 py-12 text-center text-surface-500">
-                  <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
-                  <p>No customers found matching your search</p>
-                </div>
-              )}
+            {/* Walk-in toggle */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/40 border border-surface-700/50 max-w-lg">
+              <input
+                type="checkbox"
+                checked={isWalkIn}
+                onChange={(e) => { setIsWalkIn(e.target.checked); if (!e.target.checked) setWalkInName(''); setSelectedCustomer(null); }}
+                className="h-4 w-4 rounded border-surface-600 text-primary-600 focus:ring-primary-500"
+                id="walk-in-toggle"
+              />
+              <label htmlFor="walk-in-toggle" className="text-sm text-surface-300 cursor-pointer">
+                Walk-in customer (no mailbox)
+              </label>
             </div>
+
+            {isWalkIn ? (
+              <div className="max-w-lg">
+                <label className="text-sm font-medium text-surface-300 mb-2 block">Walk-In Customer Name</label>
+                <Input
+                  placeholder="Enter customer name..."
+                  value={walkInName}
+                  onChange={(e) => setWalkInName(e.target.value)}
+                  className="!py-3"
+                />
+                {walkInName.trim() && (
+                  <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Package will be checked in for walk-in: {walkInName}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Search mode tabs (BAR-38) */}
+                <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl max-w-md">
+                  {([
+                    { id: 'pmb' as const, label: 'PMB #' },
+                    { id: 'name' as const, label: 'Name' },
+                    { id: 'phone' as const, label: 'Phone' },
+                    { id: 'company' as const, label: 'Company' },
+                  ]).map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => { setSearchMode(mode.id); setCustomerSearch(''); }}
+                      className={cn(
+                        'flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium transition-all',
+                        searchMode === mode.id
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
+                      )}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+
+                <SearchInput
+                  placeholder={
+                    searchMode === 'pmb' ? 'Enter PMB number (e.g. PMB-0003)...' :
+                    searchMode === 'name' ? 'Search by first or last name...' :
+                    searchMode === 'phone' ? 'Search by phone number...' :
+                    'Search by company/business name...'
+                  }
+                  value={customerSearch}
+                  onSearch={setCustomerSearch}
+                  className="max-w-lg"
+                />
+              </>
+            )}
+
+            {!isWalkIn && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {filteredCustomers.map((cust) => {
+                  const isSelected = selectedCustomer?.id === cust.id;
+                  return (
+                    <button
+                      key={cust.id}
+                      onClick={() => setSelectedCustomer(cust)}
+                      className={cn(
+                        'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                        isSelected
+                          ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
+                          : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
+                      )}
+                    >
+                      {/* Avatar */}
+                      <CustomerAvatar
+                        firstName={cust.firstName}
+                        lastName={cust.lastName}
+                        photoUrl={cust.photoUrl}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-surface-200 text-sm truncate">
+                            {cust.firstName} {cust.lastName}
+                          </p>
+                          <Badge
+                            variant={
+                              (platformColors[cust.platform] as 'default' | 'info' | 'success' | 'warning') ||
+                              'default'
+                            }
+                            dot={false}
+                          >
+                            {cust.platform}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-xs font-mono text-primary-600">
+                            {cust.pmbNumber}
+                          </span>
+                          {cust.businessName && (
+                            <span className="text-xs text-surface-500 truncate">
+                              {cust.businessName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+                {filteredCustomers.length === 0 && (
+                  <div className="col-span-2 py-12 text-center text-surface-500">
+                    <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
+                    <p>No customers found matching your search</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -370,14 +461,44 @@ export default function CheckInPage() {
                 Carrier & Sender
               </h2>
               <p className="text-sm text-surface-400">
-                Select the shipping carrier and enter sender information
+                Scan or enter the tracking number — carrier auto-detects. Then confirm sender.
               </p>
+            </div>
+
+            {/* Tracking Number — moved here from Step 3 (BAR-239) */}
+            <div className="max-w-lg">
+              <Input
+                label="Tracking Number"
+                placeholder="Enter or scan tracking number"
+                value={trackingNumber}
+                onChange={(e) => {
+                  setTrackingNumber(e.target.value);
+                  // Auto-suggest carrier from tracking prefix
+                  const suggested = suggestCarrierFromTracking(e.target.value);
+                  if (suggested && !selectedCarrier) {
+                    handleCarrierSelect(suggested);
+                  }
+                }}
+                leftIcon={<ScanBarcode className="h-5 w-5" />}
+                className="!py-3"
+              />
+              {trackingNumber.trim() && !selectedCarrier && (
+                <p className="mt-1 text-xs text-amber-400">
+                  <AlertTriangle className="h-3 w-3 inline mr-1" />
+                  Could not auto-detect carrier — please select below
+                </p>
+              )}
+              {trackingNumber.trim() && selectedCarrier && (
+                <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Carrier auto-detected: {selectedCarrier.toUpperCase()}
+                </p>
+              )}
             </div>
 
             {/* Carrier Grid */}
             <div>
               <label className="text-sm font-medium text-surface-300 mb-3 block">
-                Carrier
+                Carrier {selectedCarrier && <span className="text-xs text-surface-500 ml-2">(tap to change)</span>}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {carrierOptions.map((carrier) => {
@@ -400,6 +521,18 @@ export default function CheckInPage() {
                 })}
               </div>
             </div>
+
+            {/* Custom carrier name when "Other" is selected */}
+            {selectedCarrier === 'other' && (
+              <div className="max-w-md">
+                <Input
+                  label="Custom Carrier Name"
+                  placeholder="e.g. Veho, AxleHire, CDL..."
+                  value={customCarrierName}
+                  onChange={(e) => setCustomCarrierName(e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Sender Name */}
             <div className="max-w-md">
@@ -464,25 +597,6 @@ export default function CheckInPage() {
               </div>
             </div>
 
-            {/* Tracking Number */}
-            <div className="max-w-lg flex items-end gap-2">
-              <div className="flex-1">
-                <Input
-                  label="Tracking Number"
-                  placeholder="Enter or scan tracking number"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="secondary"
-                leftIcon={<ScanBarcode className="h-4 w-4" />}
-                className="shrink-0"
-              >
-                Scan
-              </Button>
-            </div>
-
             {/* Toggles */}
             <div className="flex flex-wrap gap-4">
               <ToggleSwitch
@@ -497,7 +611,36 @@ export default function CheckInPage() {
                 checked={perishable}
                 onChange={setPerishable}
               />
+              <ToggleSwitch
+                label="Requires Signature"
+                icon={<CheckCircle2 className="h-4 w-4 text-purple-500" />}
+                checked={requiresSignature}
+                onChange={setRequiresSignature}
+              />
             </div>
+
+            {/* Conditional alerts (BAR-245) */}
+            {(hazardous || perishable) && (
+              <div className={cn(
+                'p-4 rounded-xl border space-y-2',
+                hazardous
+                  ? 'bg-amber-500/5 border-amber-500/20'
+                  : 'bg-blue-500/5 border-blue-500/20'
+              )}>
+                {hazardous && (
+                  <div className="flex items-center gap-2 text-sm text-amber-400">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span><strong>Hazardous Materials:</strong> Package must be stored in hazmat-designated area. Notify manager on duty.</span>
+                  </div>
+                )}
+                {perishable && (
+                  <div className="flex items-center gap-2 text-sm text-blue-400">
+                    <Snowflake className="h-4 w-4 shrink-0" />
+                    <span><strong>Perishable:</strong> Customer will receive an urgent notification. Package should be released within 24 hours.</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Condition */}
             <div className="max-w-xs">
@@ -580,17 +723,17 @@ export default function CheckInPage() {
                   value={
                     selectedCustomer
                       ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-                      : '—'
+                      : isWalkIn ? walkInName : '—'
                   }
                 />
                 <SummaryField
                   label="PMB"
-                  value={selectedCustomer?.pmbNumber || '—'}
+                  value={isWalkIn ? 'Walk-In' : (selectedCustomer?.pmbNumber || '—')}
                   mono
                 />
                 <SummaryField
                   label="Store"
-                  value={selectedCustomer?.platform || '—'}
+                  value={isWalkIn ? '—' : (selectedCustomer?.platform || '—')}
                 />
                 <SummaryField
                   label="Carrier"
@@ -630,7 +773,7 @@ export default function CheckInPage() {
                 <SummaryField
                   label="Special"
                   value={
-                    [hazardous && 'Hazardous', perishable && 'Perishable']
+                    [hazardous && 'Hazardous', perishable && 'Perishable', requiresSignature && 'Signature Required']
                       .filter(Boolean)
                       .join(', ') || 'None'
                   }
