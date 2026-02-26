@@ -29,6 +29,8 @@ export interface LocalUser {
   lastLoginAt: string | null;
   loginCount: number;
   agreedToTermsAt: string | null;
+  termsVersionAccepted: number | null;
+  privacyVersionAccepted: number | null;
   tenant: {
     id: string;
     name: string;
@@ -215,6 +217,8 @@ function toLocalUser(user: any): LocalUser {
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     loginCount: user.loginCount ?? 0,
     agreedToTermsAt: user.agreedToTermsAt?.toISOString() ?? null,
+    termsVersionAccepted: user.termsVersionAccepted ?? null,
+    privacyVersionAccepted: user.privacyVersionAccepted ?? null,
     tenant: user.tenant
       ? {
           ...user.tenant,

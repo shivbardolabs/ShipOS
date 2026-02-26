@@ -47,6 +47,8 @@ export interface LocalUser {
   lastLoginAt: string | null;
   loginCount: number;
   agreedToTermsAt: string | null;
+  termsVersionAccepted: number | null;
+  privacyVersionAccepted: number | null;
   tenant: Tenant | null;
   mfaEnabled?: boolean;
   storeId?: string | null;
@@ -110,6 +112,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         loginCount: 0,
         status: 'active',
         agreedToTermsAt: new Date().toISOString(),
+        termsVersionAccepted: null,
+        privacyVersionAccepted: null,
         tenant: null,
       });
     }

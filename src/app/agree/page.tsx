@@ -3,19 +3,18 @@
 /**
  * Agreement Gate — /agree
  *
- * Shown to users who haven't agreed to Terms of Service & Privacy Policy yet.
- * After first login, if `agreedToTermsAt` is null, user is redirected here
- * before they can access the dashboard.
+ * Shown to users who haven't agreed to Terms of Service & Privacy Policy yet,
+ * or when a new version has been published that requires re-acceptance.
  *
- * On acceptance, calls POST /api/users/agree to set the timestamp, then
- * redirects to /dashboard.
+ * On acceptance, calls POST /api/users/agree with the current version numbers,
+ * then redirects to /dashboard.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '@/components/tenant-provider';
-import { Shield, FileText, Lock, Check, ArrowRight, Loader2 } from 'lucide-react';
+import { Shield, FileText, Lock, Check, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 
 export default function AgreePage() {
   const router = useRouter();
@@ -24,6 +23,34 @@ export default function AgreePage() {
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [latestVersions, setLatestVersions] = useState<{
+    termsVersion: number | null;
+    privacyVersion: number | null;
+  }>({ termsVersion: null, privacyVersion: null });
+  const [isReAccept, setIsReAccept] = useState(false);
+
+  // Fetch latest published legal document versions
+  useEffect(() => {
+    async function fetchVersions() {
+      try {
+        const [termsRes, privacyRes] = await Promise.all([
+          fetch('/api/legal?type=terms'),
+          fetch('/api/legal?type=privacy'),
+        ]);
+        const termsData = termsRes.ok ? await termsRes.json() : { doc: null };
+        const privacyData = privacyRes.ok ? await privacyRes.json() : { doc: null };
+
+        const tv = termsData.doc?.version ?? null;
+        const pv = privacyData.doc?.version ?? null;
+        setLatestVersions({ termsVersion: tv, privacyVersion: pv });
+        // If there are published versions, this might be a re-acceptance
+        setIsReAccept(tv != null || pv != null);
+      } catch {
+        // Silently fail — versions are optional
+      }
+    }
+    fetchVersions();
+  }, []);
 
   const canContinue = agreedTerms && agreedPrivacy;
 
@@ -33,7 +60,14 @@ export default function AgreePage() {
     setError('');
 
     try {
-      const res = await fetch('/api/users/agree', { method: 'POST' });
+      const res = await fetch('/api/users/agree', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          termsVersion: latestVersions.termsVersion,
+          privacyVersion: latestVersions.privacyVersion,
+        }),
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to record agreement');
@@ -65,12 +99,20 @@ export default function AgreePage() {
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50">
-                <Shield className="h-7 w-7 text-primary-600" />
+                {isReAccept ? (
+                  <RefreshCw className="h-7 w-7 text-primary-600" />
+                ) : (
+                  <Shield className="h-7 w-7 text-primary-600" />
+                )}
               </div>
             </div>
-            <h1 className="text-xl font-bold text-surface-100 mb-1">Welcome to ShipOS</h1>
+            <h1 className="text-xl font-bold text-surface-100 mb-1">
+              {isReAccept ? 'Updated Policies' : 'Welcome to ShipOS'}
+            </h1>
             <p className="text-sm text-surface-400">
-              Before you get started, please review and accept our policies.
+              {isReAccept
+                ? 'Our policies have been updated. Please review and accept the latest versions to continue.'
+                : 'Before you get started, please review and accept our policies.'}
             </p>
           </div>
 
@@ -98,6 +140,9 @@ export default function AgreePage() {
                     <FileText className="h-3 w-3" />
                     Terms of Service
                   </Link>
+                  {latestVersions.termsVersion && (
+                    <span className="text-xs text-surface-500 ml-1">(v{latestVersions.termsVersion})</span>
+                  )}
                 </span>
                 <span className="text-xs text-surface-500 block mt-0.5">
                   Covers acceptable use, account responsibilities, and service terms
@@ -127,6 +172,9 @@ export default function AgreePage() {
                     <Lock className="h-3 w-3" />
                     Privacy Policy
                   </Link>
+                  {latestVersions.privacyVersion && (
+                    <span className="text-xs text-surface-500 ml-1">(v{latestVersions.privacyVersion})</span>
+                  )}
                 </span>
                 <span className="text-xs text-surface-500 block mt-0.5">
                   How we collect, use, store, and protect your information
