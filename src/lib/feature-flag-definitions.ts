@@ -204,6 +204,13 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: true,
   },
   {
+    key: 'legal-management',
+    name: 'Legal Document Management',
+    description: 'Admin UI for managing Terms & Conditions and Privacy Policy versions without redeployment',
+    category: 'platform',
+    defaultEnabled: false,
+  },
+  {
     key: 'tenant-lifecycle',
     name: 'Tenant Lifecycle Management',
     description: 'Tenant status badges, activate/pause/disable toggles, and suspended tenant blocking in admin panel',

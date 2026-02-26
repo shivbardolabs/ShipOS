@@ -29,6 +29,7 @@ import {
   Menu,
   X,
   Scale,
+  ScrollText,
   LogOut,
   Award,
   Activity,
@@ -71,6 +72,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
       { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
+      { label: 'Legal Documents', href: '/dashboard/admin/legal', icon: ScrollText, flagKey: 'legal-management' },
     ],
   },
   {
@@ -167,6 +169,7 @@ export function Sidebar() {
     // Exact match for parent routes that have sub-pages (e.g. /dashboard/admin vs /dashboard/admin/feature-flags)
     if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
     if (href === '/dashboard/admin/feature-flags') return pathname === '/dashboard/admin/feature-flags';
+    if (href === '/dashboard/admin/legal') return pathname === '/dashboard/admin/legal';
     return pathname.startsWith(href);
   };
 
