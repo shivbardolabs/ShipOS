@@ -226,7 +226,7 @@ export async function listDomains(): Promise<{
       return { success: false, error: error.message };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const domains: DomainVerification[] = (data?.data || []).map((d: any) => ({
       id: d.id,
       name: d.name,
@@ -241,6 +241,7 @@ export async function listDomains(): Promise<{
       region: d.region,
       createdAt: d.createdAt,
     }));
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     return { success: true, domains };
   } catch (err) {
