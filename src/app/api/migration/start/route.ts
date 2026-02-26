@@ -119,14 +119,15 @@ async function executeMigration(
   tenantId: string,
   config: MigrationConfig,
   parsedData: Record<string, unknown[]> | null | undefined,
-  analysisData: Record<string, unknown> | null | undefined
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _analysisData: Record<string, unknown> | null | undefined
 ) {
   const BATCH_SIZE = 100;
   let migratedCustomers = 0;
   let migratedAddresses = 0;
   let migratedShipments = 0;
   let migratedPackages = 0;
-  let migratedInvoices = 0;
+  const migratedInvoices = 0;
   const errors: Array<{ entity: string; sourceId: string; message: string }> = [];
 
   // ── 1. Customers ──────────────────────────────────────────────────────
