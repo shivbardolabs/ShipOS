@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
@@ -58,12 +59,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clients = tenants.map((t: any) => {
-      const activeStores = t.stores.filter((s: any) => {
-        // Store model doesn't have status, so all stores belonging to active tenant are "active"
-        return true;
-      });
+      // Store model doesn't have status, so all stores belonging to active tenant are "active"
       const activeSub = t.subscriptions[0];
       const subscriptionFee = activeSub?.plan?.priceMonthly ?? 125;
       const monthlyRevenue = subscriptionFee * t.stores.length;
