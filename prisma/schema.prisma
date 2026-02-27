@@ -57,13 +57,14 @@ model Tenant {
   // Payment methods enabled for checkout
   paymentMethods String? // JSON: { manual: bool, text2pay: bool, tapToGlass: bool, nfcReader: bool, cash: bool, postToAccount: bool }
 
-  users         User[]
-  customers     Customer[]
-  invitations   Invitation[]
-  stores        Store[]
-  subscriptions Subscription[]
-  paymentRecords PaymentRecord[]
-  alerts         Alert[]
+  users              User[]
+  customers          Customer[]
+  invitations        Invitation[]
+  stores             Store[]
+  subscriptions      Subscription[]
+  paymentRecords     PaymentRecord[]
+  alerts             Alert[]
+  carrierEnrollments CarrierProgramEnrollment[]
 }
 
 // ── Users & Roles ────────────────────────────────────────────────────────────
@@ -229,6 +230,14 @@ model Package {
   delegateName String? // Name of person picking up on behalf of customer
   delegateIdType String? // Type of ID provided by delegate
   delegateIdNumber String? // ID number of delegate (encrypted)
+
+  // Carrier Program (FedEx HAL / UPS Access Point)
+  carrierProgram      String?  // fedex_hal, ups_access_point, null = regular PMB package
+  recipientName       String?  // For carrier program packages (general public, not PMB holder)
+  holdDeadline        DateTime? // Calculated hold period expiration (e.g. intake + 7 days)
+  carrierUploadStatus String?  // pending, uploaded, confirmed, failed
+  carrierUploadedAt   DateTime?
+  carrierConfirmation String?  // Confirmation ID from carrier portal
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -843,4 +852,83 @@ model Alert {
 
   @@index([tenantId, resolvedAt])
   @@index([tenantId, priority])
+}
+
+// ── Carrier Program Enrollment (BAR-280) ─────────────────────────────────────
+
+model CarrierProgramEnrollment {
+  id            String   @id @default(cuid())
+  tenantId      String
+  program       String   // fedex_hal, ups_access_point
+  enabled       Boolean  @default(false)
+
+  // Credentials (encrypted at rest)
+  locationId    String?  // Carrier-assigned location ID
+  portalUsername String? // Portal login username
+  portalPassword String? // Portal login password (encrypted)
+  apiKey         String? // API key if direct API integration
+
+  // Configuration
+  holdPeriodDays Int     @default(7)     // Default hold period
+  warningDaysBefore Int  @default(2)     // Alert N days before expiration
+  compensationRate Float @default(0)     // Per-package fee from carrier ($)
+  maxCapacity    Int     @default(0)     // Max packages to hold (0 = unlimited)
+
+  // Integration mode
+  integrationMode String @default("manual") // manual, portal_auto, api_direct
+
+  // Status tracking
+  enrollmentStatus String @default("pending") // pending, active, suspended, terminated
+  enrolledAt      DateTime?
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?  // success, failed, partial
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  checkouts CarrierProgramCheckout[]
+
+  @@unique([tenantId, program])
+  @@index([tenantId])
+}
+
+// ── Carrier Program Checkout Records (BAR-282, BAR-283) ──────────────────────
+
+model CarrierProgramCheckout {
+  id              String   @id @default(cuid())
+  enrollmentId    String
+  packageId       String
+  trackingNumber  String
+
+  // Recipient
+  recipientName   String
+  recipientIdType String   // drivers_license, passport, military_id, state_id, other
+  recipientIdVerified Boolean @default(false)
+  idVerifiedAt    DateTime?
+  idVerifiedBy    String?  // Employee who verified ID
+
+  // Checkout details
+  checkedOutAt    DateTime @default(now())
+  checkedOutById  String   // Employee who performed checkout
+  signatureData   String?  // Base64 signature
+
+  // Carrier upload status
+  uploadStatus    String   @default("pending") // pending, uploaded, confirmed, failed
+  uploadedAt      DateTime?
+  uploadAttempts  Int      @default(0)
+  uploadError     String?
+  carrierConfirmation String? // Confirmation ID from carrier
+
+  // Batch tracking
+  batchId         String?  // Groups checkouts uploaded together
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  enrollment CarrierProgramEnrollment @relation(fields: [enrollmentId], references: [id])
+
+  @@index([enrollmentId])
+  @@index([uploadStatus])
+  @@index([batchId])
 }

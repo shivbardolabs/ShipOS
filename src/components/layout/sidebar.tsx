@@ -97,6 +97,7 @@ const navSections: NavSection[] = [
       { label: 'Mail', href: '/dashboard/mail', icon: Mail, flagKey: 'mail-management' },
       { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen, flagKey: 'ai-mail-sort' },
       { label: 'Shipping', href: '/dashboard/shipping', icon: Truck, flagKey: 'shipping' },
+      { label: 'Carrier Program', href: '/dashboard/carrier-program', icon: Truck, flagKey: 'carrier-program' },
       { label: 'Reconciliation', href: '/dashboard/reconciliation', icon: Scale, flagKey: 'reconciliation' },
       { label: 'AI Bill Audit', href: '/dashboard/reconciliation/ai-audit', icon: ScanLine, flagKey: 'ai-bill-audit' },
       { label: 'End of Day', href: '/dashboard/end-of-day', icon: Clock, flagKey: 'end-of-day' },
