@@ -174,7 +174,7 @@ export default function LoyaltyDashboardPage() {
                   />
                 </div>
                 <div className="mt-3 space-y-1">
-                  {tier.benefits.slice(0, 3).map((b, i) => (
+                  {tier.benefits.slice(0, 3).map((b: string, i: number) => (
                     <p key={i} className="text-xs text-surface-400 flex items-center gap-1.5">
                       <Check className="h-3 w-3 text-emerald-400 flex-shrink-0" />
                       {b}
