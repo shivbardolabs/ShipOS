@@ -95,7 +95,6 @@ function countByField<T>(
 /* -------------------------------------------------------------------------- */
 
 function useMailStats(mailPieces: MailPiece[] = []) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now);
@@ -353,7 +352,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
           ? `${heldItems.length} piece${heldItems.length !== 1 ? 's' : ''} on hold \u00b7 Oldest: ${Math.round(Math.max(...heldItems.map((m) => (now.getTime() - new Date(m.receivedAt).getTime()) / 86400000)))} days`
           : 'No mail on hold',
     };
-  }, []);
+  }, [mailPieces]);
 }
 
 /* -------------------------------------------------------------------------- */

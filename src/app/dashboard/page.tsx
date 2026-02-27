@@ -303,7 +303,7 @@ export default function DashboardPage() {
 
   /* ── Live dashboard stats from Postgres ───────────────────────── */
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [_statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/dashboard/stats')

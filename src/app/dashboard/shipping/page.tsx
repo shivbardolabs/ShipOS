@@ -116,7 +116,7 @@ export default function ShippingPage() {
       default:
         return shipments;
     }
-  }, [activeTab]);
+  }, [activeTab, shipments]);
 
   const tabs = [
     { id: 'all', label: 'All Shipments', count: shipments.length },

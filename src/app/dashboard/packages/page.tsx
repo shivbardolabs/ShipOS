@@ -326,7 +326,7 @@ export default function PackagesPage() {
 function PackagesContent() {
   const searchParams = useSearchParams();
   const [allPackages, setAllPackages] = useState<InventoryPackage[]>([]);
-  const [packagesLoading, setPackagesLoading] = useState(true);
+  const [_packagesLoading, setPackagesLoading] = useState(true);
 
   /* ── Fetch packages from API ────────────────────────────────── */
   useEffect(() => {
