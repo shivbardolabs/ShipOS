@@ -52,6 +52,7 @@ model Tenant {
   stores        Store[]
   subscriptions Subscription[]
   paymentRecords PaymentRecord[]
+  alerts         Alert[]
 }
 
 // ── Users & Roles ────────────────────────────────────────────────────────────
@@ -741,4 +742,49 @@ model SmsConsent {
   ipAddress   String?
   optedOutAt  DateTime?
   createdAt   DateTime  @default(now())
+}
+
+// ── BAR-265: Alert System ──────────────────────────────────────────────────
+
+enum AlertType {
+  package
+  compliance
+  billing
+  system
+  carrier
+  rate
+  custom
+}
+
+enum AlertPriority {
+  urgent_important
+  urgent
+  important
+  completed
+}
+
+model Alert {
+  id                    String        @id @default(cuid())
+  tenantId              String
+  type                  AlertType
+  priority              AlertPriority
+  isTimeSensitive       Boolean       @default(false)
+  title                 String
+  message               String
+  actionUrl             String?       // link to related entity
+  relatedEntityType     String?       // 'customer', 'package', 'shipment', etc.
+  relatedEntityId       String?
+  createdAt             DateTime      @default(now())
+  expiresAt             DateTime?
+  acknowledgedAt        DateTime?
+  acknowledgedBy        String?
+  acknowledgementAction String?       // 'skip', 'snooze', 'resolve'
+  snoozedUntil          DateTime?
+  resolvedAt            DateTime?
+  metadata              Json?
+
+  tenant                Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, resolvedAt])
+  @@index([tenantId, priority])
 }
