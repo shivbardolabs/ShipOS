@@ -247,7 +247,7 @@ export default function CustomerDetailPage() {
 
   // Fee tracking data — placeholder until CustomerFee model is added
   const feeSummary = useMemo(
-    () => ({ totalFees: 0, unpaidFees: 0, paidFees: 0, waivedFees: 0, fees: [] }),
+    () => ({ totalFees: 0, unpaidFees: 0, paidFees: 0, waivedFees: 0, fees: [] as any[], feeCount: 0, totalOwed: 0, storageFees: 0, overageFees: 0, receivingFees: 0, forwardingFees: 0, otherFees: 0, paidAmount: 0, waivedAmount: 0 }),
     []
   );
 
