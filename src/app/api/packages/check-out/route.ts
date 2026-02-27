@@ -71,23 +71,33 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create audit log entry
-    await prisma.auditLog.create({
-      data: {
-        action: 'package.release',
-        entityType: 'package',
-        entityId: releasedIds.join(','),
-        description: `Released ${releasedIds.length} package(s) to ${customer.firstName} ${customer.lastName} (${customer.pmbNumber})${body.delegateName ? ` via delegate: ${body.delegateName}` : ''}`,
-        metadata: {
-          packageIds: releasedIds,
-          customerId: customer.id,
-          pmbNumber: customer.pmbNumber,
-          hasSignature: !!body.releaseSignature,
-          delegateName: body.delegateName || null,
-          receiptMethod: body.receiptMethod || 'none',
-        },
-      },
-    });
+    // Create audit log entry (best-effort — userId may not be available in API context)
+    try {
+      // Find a system/admin user for the audit log
+      const systemUser = await prisma.user.findFirst({ where: { role: 'admin' } });
+      if (systemUser) {
+        await prisma.auditLog.create({
+          data: {
+            action: 'package.release',
+            entityType: 'package',
+            entityId: releasedIds.join(','),
+            userId: systemUser.id,
+            details: JSON.stringify({
+              description: `Released ${releasedIds.length} package(s) to ${customer.firstName} ${customer.lastName} (${customer.pmbNumber})${body.delegateName ? ` via delegate: ${body.delegateName}` : ''}`,
+              packageIds: releasedIds,
+              customerId: customer.id,
+              pmbNumber: customer.pmbNumber,
+              hasSignature: !!body.releaseSignature,
+              delegateName: body.delegateName || null,
+              receiptMethod: body.receiptMethod || 'none',
+            }),
+          },
+        });
+      }
+    } catch {
+      // Audit log failure should not block the release
+      console.error('[check-out] Audit log write failed');
+    }
 
     return NextResponse.json({
       success: true,
