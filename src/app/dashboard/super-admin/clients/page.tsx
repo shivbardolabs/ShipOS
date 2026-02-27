@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,113 +63,8 @@ interface Client {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mock data                                                                 */
+/*  Data is fetched from /api/super-admin/clients                             */
 /* -------------------------------------------------------------------------- */
-const initialClients: Client[] = [
-  {
-    id: 'c1',
-    firstName: 'John',
-    lastName: 'Smith',
-    email: 'john@packshipplus.com',
-    phone: '(555) 123-4567',
-    companyName: 'Pack & Ship Plus',
-    status: 'active',
-    subscriptionFee: 125,
-    feeOverrideReason: null,
-    paymentMethod: 'Visa ending in 4242',
-    stores: [
-      { id: 's1', name: 'Downtown', address: '123 Main St', city: 'New York', state: 'NY', zipCode: '10001', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's2', name: 'Uptown', address: '456 Broadway', city: 'New York', state: 'NY', zipCode: '10025', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's3', name: 'Brooklyn', address: '789 Atlantic Ave', city: 'Brooklyn', state: 'NY', zipCode: '11217', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's4', name: 'Queens', address: '321 Queens Blvd', city: 'Queens', state: 'NY', zipCode: '11375', status: 'inactive', cmraProof: null },
-    ],
-    admins: [
-      { id: 'a1', firstName: 'John', lastName: 'Smith', email: 'john@packshipplus.com', status: 'active' },
-      { id: 'a2', firstName: 'Jane', lastName: 'Doe', email: 'jane@packshipplus.com', status: 'active' },
-    ],
-    createdAt: '2025-06-15T10:00:00Z',
-    updatedAt: '2026-02-20T14:30:00Z',
-  },
-  {
-    id: 'c2',
-    firstName: 'Maria',
-    lastName: 'Garcia',
-    email: 'maria@mailboxexpress.com',
-    phone: '(555) 234-5678',
-    companyName: 'MailBox Express',
-    status: 'active',
-    subscriptionFee: 110,
-    feeOverrideReason: 'Early adopter discount — approved by CEO 2025-05-01',
-    paymentMethod: 'Mastercard ending in 8888',
-    stores: [
-      { id: 's5', name: 'Central', address: '100 Market St', city: 'San Francisco', state: 'CA', zipCode: '94105', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's6', name: 'Mission', address: '200 Valencia St', city: 'San Francisco', state: 'CA', zipCode: '94103', status: 'active', cmraProof: 'form-1583a.pdf' },
-    ],
-    admins: [
-      { id: 'a3', firstName: 'Maria', lastName: 'Garcia', email: 'maria@mailboxexpress.com', status: 'active' },
-    ],
-    createdAt: '2025-05-01T09:00:00Z',
-    updatedAt: '2026-02-18T11:00:00Z',
-  },
-  {
-    id: 'c3',
-    firstName: 'Robert',
-    lastName: 'Johnson',
-    email: 'robert@metromailhub.com',
-    phone: '(555) 345-6789',
-    companyName: 'Metro Mail Hub',
-    status: 'active',
-    subscriptionFee: 125,
-    feeOverrideReason: null,
-    paymentMethod: 'Amex ending in 1234',
-    stores: [
-      { id: 's7', name: 'Midtown', address: '500 5th Ave', city: 'New York', state: 'NY', zipCode: '10036', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's8', name: 'Financial District', address: '60 Wall St', city: 'New York', state: 'NY', zipCode: '10005', status: 'active', cmraProof: 'form-1583a.pdf' },
-      { id: 's9', name: 'Harlem', address: '125 Malcolm X Blvd', city: 'New York', state: 'NY', zipCode: '10027', status: 'inactive', cmraProof: null },
-    ],
-    admins: [
-      { id: 'a4', firstName: 'Robert', lastName: 'Johnson', email: 'robert@metromailhub.com', status: 'active' },
-    ],
-    createdAt: '2025-08-10T08:00:00Z',
-    updatedAt: '2026-02-22T16:00:00Z',
-  },
-  {
-    id: 'c4',
-    firstName: 'Sarah',
-    lastName: 'Williams',
-    email: 'sarah@quickmailcenter.com',
-    phone: '(555) 456-7890',
-    companyName: 'Quick Mail Center',
-    status: 'paused',
-    subscriptionFee: 125,
-    feeOverrideReason: null,
-    paymentMethod: 'Visa ending in 5555',
-    stores: [
-      { id: 's10', name: 'Main Office', address: '800 Elm St', city: 'Dallas', state: 'TX', zipCode: '75201', status: 'inactive', cmraProof: 'form-1583a.pdf' },
-    ],
-    admins: [
-      { id: 'a5', firstName: 'Sarah', lastName: 'Williams', email: 'sarah@quickmailcenter.com', status: 'inactive' },
-    ],
-    createdAt: '2025-09-01T12:00:00Z',
-    updatedAt: '2026-01-15T10:00:00Z',
-  },
-  {
-    id: 'c5',
-    firstName: 'David',
-    lastName: 'Brown',
-    email: 'david@shipngo.com',
-    phone: '(555) 567-8901',
-    companyName: 'Ship N Go',
-    status: 'inactive',
-    subscriptionFee: 125,
-    feeOverrideReason: null,
-    paymentMethod: null,
-    stores: [],
-    admins: [],
-    createdAt: '2025-11-20T15:00:00Z',
-    updatedAt: '2026-02-01T09:00:00Z',
-  },
-];
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -189,7 +84,25 @@ const statusVariant = (s: string) => {
 /*  Client Provisioning Page (BAR-231)                                        */
 /* -------------------------------------------------------------------------- */
 export default function ClientProvisioningPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+
+  const fetchClients = useCallback((searchQuery?: string, statusQuery?: string) => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (statusQuery && statusQuery !== 'all') params.set('status', statusQuery);
+    fetch(`/api/super-admin/clients?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.clients) setClients(data.clients);
+      })
+      .catch((err) => console.error('Failed to fetch clients:', err))
+      .finally(() => setClientsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -245,6 +158,26 @@ export default function ClientProvisioningPage() {
       })
     );
   }, []);
+
+  if (clientsLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Client Provisioning"
+          description="Create, configure, and manage mailbox platform client accounts"
+          icon={<Building2 className="h-6 w-6" />}
+        />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-card p-4 animate-pulse">
+              <div className="h-7 w-12 rounded bg-surface-800" />
+              <div className="mt-1 h-4 w-20 rounded bg-surface-800" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
