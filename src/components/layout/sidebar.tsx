@@ -45,6 +45,8 @@ import {
   ScreenShare,
   Monitor,
   Printer,
+  Building2,
+  CreditCard,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -73,7 +75,11 @@ const navSections: NavSection[] = [
     title: 'PLATFORM',
     requiredRole: 'superadmin',
     items: [
-      { label: 'Master Admin', href: '/dashboard/admin', icon: ShieldCheck },
+      { label: 'Super Admin Console', href: '/dashboard/super-admin', icon: ShieldCheck },
+      { label: 'Client Provisioning', href: '/dashboard/super-admin/clients', icon: Building2 },
+      { label: 'Admin Users', href: '/dashboard/super-admin/users', icon: Users },
+      { label: 'Billing & Reports', href: '/dashboard/super-admin/billing', icon: CreditCard },
+      { label: 'Master Admin', href: '/dashboard/admin', icon: Shield },
       { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
       { label: 'Legal Documents', href: '/dashboard/admin/legal', icon: ScrollText, flagKey: 'legal-management' },
       { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
