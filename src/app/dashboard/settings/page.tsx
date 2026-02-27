@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { useTenant } from '@/components/tenant-provider';
 import { PageHeader } from '@/components/layout/page-header';
@@ -374,6 +374,11 @@ export default function SettingsPage() {
   const [receiptPreference, setReceiptPreference] = useState('sms');
   const [showReceiptOptions, setShowReceiptOptions] = useState(true);
 
+  // Receipt logo upload
+  const [receiptLogo, setReceiptLogo] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
 
   // ─── Billing & Payment state ────────────────────────────────────────────
   const [cardholderName, setCardholderName] = useState('');
@@ -405,6 +410,40 @@ export default function SettingsPage() {
     ipostal1: true,
     postscan: true,
   });
+
+  /* ──────────────────────────────────────────────────────────────────── */
+  /*  Receipt logo upload handler                                       */
+  /* ──────────────────────────────────────────────────────────────────── */
+  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      alert('Please upload a PNG or JPG image.');
+      return;
+    }
+    // Validate size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be under 2MB.');
+      return;
+    }
+
+    setLogoUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setReceiptLogo(reader.result as string);
+      setLogoUploading(false);
+    };
+    reader.onerror = () => {
+      alert('Failed to read file. Please try again.');
+      setLogoUploading(false);
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so re-uploading the same file triggers onChange
+    e.target.value = '';
+  }, []);
 
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
@@ -1047,13 +1086,59 @@ export default function SettingsPage() {
                     <label className="text-sm font-medium text-surface-300 mb-2 block">
                       Logo Upload
                     </label>
-                    <div className="flex items-center justify-center h-32 border-2 border-dashed border-surface-700 rounded-lg hover:border-surface-600 transition-colors cursor-pointer">
-                      <div className="text-center">
-                        <Upload className="h-6 w-6 text-surface-500 mx-auto mb-2" />
-                        <p className="text-sm text-surface-400">Click to upload logo</p>
-                        <p className="text-xs text-surface-600">PNG, JPG up to 2MB</p>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      className="hidden"
+                      onChange={handleLogoUpload}
+                    />
+                    {receiptLogo ? (
+                      <div className="relative h-32 border border-surface-700 rounded-lg bg-surface-800/50 flex items-center justify-center p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={receiptLogo}
+                          alt="Receipt logo"
+                          className="max-h-24 max-w-full object-contain"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            className="p-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 text-surface-300 hover:text-surface-100 transition-colors"
+                            title="Replace logo"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReceiptLogo(null)}
+                            className="p-1.5 rounded-lg bg-surface-700 hover:bg-red-600/80 text-surface-300 hover:text-white transition-colors"
+                            title="Remove logo"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => logoInputRef.current?.click()}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') logoInputRef.current?.click(); }}
+                        className="flex items-center justify-center h-32 border-2 border-dashed border-surface-700 rounded-lg hover:border-primary-500/50 hover:bg-primary-500/5 transition-colors cursor-pointer"
+                      >
+                        <div className="text-center">
+                          {logoUploading ? (
+                            <div className="h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          ) : (
+                            <Upload className="h-6 w-6 text-surface-500 mx-auto mb-2" />
+                          )}
+                          <p className="text-sm text-surface-400">{logoUploading ? 'Uploading…' : 'Click to upload logo'}</p>
+                          <p className="text-xs text-surface-600">PNG, JPG up to 2MB</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <ToggleSwitch
