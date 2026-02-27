@@ -340,7 +340,7 @@ export default function CheckOutPage() {
   };
 
   /* ---- Name search handler ---- */
-  const nameSearchRef = useRef<ReturnType<typeof setTimeout>>();
+  const nameSearchRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const handleNameSearch = (query: string) => {
     setNameInput(query);
     setLookupError('');

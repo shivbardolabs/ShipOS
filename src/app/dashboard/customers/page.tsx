@@ -159,7 +159,7 @@ export default function CustomersPage() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importedCount, setImportedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   /* ── Fetch customers from API ──────────────────────────────── */
   const fetchCustomers = useCallback(() => {

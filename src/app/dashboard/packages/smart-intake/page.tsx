@@ -267,7 +267,7 @@ export default function SmartIntakePage() {
 
       // Match each result to a customer (async lookups)
       const matched: MatchedPackage[] = await Promise.all(
-        data.results.map(async (r: { pmbNumber: string }) => ({
+        data.results.map(async (r: SmartIntakeResult) => ({
           result: r,
           customer: await findCustomerByPMB(r.pmbNumber),
           confirmed: false,

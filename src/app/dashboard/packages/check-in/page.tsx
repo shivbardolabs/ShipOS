@@ -159,7 +159,7 @@ export default function CheckInPage() {
 
   // Fetch customers from API with debounced search
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const customerDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const customerDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current);
