@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { useTenant } from '@/components/tenant-provider';
 import { PageHeader } from '@/components/layout/page-header';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Modal } from '@/components/ui/modal';
 import { carrierRates } from '@/lib/mock-data';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
@@ -406,6 +407,76 @@ export default function SettingsPage() {
     postscan: true,
   });
 
+  // ─── Service Agreement Template state ──────────────────────────────
+  const DEFAULT_TEMPLATE = `MAILBOX SERVICE AGREEMENT
+
+This Mailbox Service Agreement ("Agreement") is entered into between {storeName} ("Provider") and {customerName} ("Customer") for PMB #{pmbNumber}.
+
+1. SERVICES
+Provider agrees to receive and hold mail and packages on behalf of Customer at the address listed above. Customer agrees to comply with all USPS CMRA regulations, including completion of PS Form 1583.
+
+2. TERM
+This Agreement begins on {startDate} and renews automatically on a {billingCycle} basis unless terminated by either party with 30 days written notice.
+
+3. FEES
+Customer agrees to pay the applicable mailbox rental fee and any additional service charges (forwarding, scanning, storage beyond the free hold period, etc.) as listed in the current rate schedule.
+
+4. CUSTOMER RESPONSIBILITIES
+- Provide valid government-issued photo ID and proof of address per USPS requirements.
+- Pick up or arrange forwarding of mail/packages in a timely manner.
+- Notify Provider of any address or contact changes within 5 business days.
+
+5. PROVIDER RESPONSIBILITIES
+- Accept and securely store mail and packages during business hours.
+- Notify Customer of incoming items via the selected notification method.
+- Maintain USPS CMRA compliance and safeguard Customer information.
+
+6. LIMITATION OF LIABILITY
+Provider is not liable for loss or damage to items caused by carriers, acts of nature, or circumstances beyond reasonable control. Maximum liability shall not exceed the monthly service fee.
+
+7. GOVERNING LAW
+This Agreement is governed by the laws of the state in which the Provider operates.
+
+Customer Signature: _________________________  Date: ___________
+Provider Signature: _________________________  Date: ___________`;
+
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
+  const [templateContent, setTemplateContent] = useState(DEFAULT_TEMPLATE);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+  const [templateFileName, setTemplateFileName] = useState<string | null>(null);
+  const templateFileRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveTemplate = useCallback(() => {
+    setTemplateSaving(true);
+    // Simulate save (would be an API call in production)
+    setTimeout(() => {
+      setTemplateSaving(false);
+      setTemplateSaved(true);
+      setTimeout(() => {
+        setTemplateSaved(false);
+        setShowEditTemplateModal(false);
+      }, 1200);
+    }, 600);
+  }, []);
+
+  const handleUploadTemplate = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setTemplateFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text === 'string') {
+        setTemplateContent(text);
+        setTemplateSaved(false);
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input so the same file can be re-uploaded
+    e.target.value = '';
+  }, []);
+
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
   /*                                                                    */
@@ -764,15 +835,58 @@ export default function SettingsPage() {
                   Use placeholders like <code className="text-primary-400 text-xs">{'{'}customerName{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}pmbNumber{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}storeName{'}'}</code> for auto-population.
                 </p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-4 max-h-48 overflow-y-auto">
-                  <p className="text-xs text-surface-300 font-mono">Contract for Mailbox Service — using default template</p>
-                  <p className="text-xs text-surface-500 mt-1">Based on your uploaded agreement document with all USPS CMRA-compliant terms.</p>
+                  <pre className="text-xs text-surface-300 font-mono whitespace-pre-wrap">{templateContent.slice(0, 200)}…</pre>
+                  {templateFileName && (
+                    <p className="text-xs text-primary-400 mt-2 flex items-center gap-1.5">
+                      <FileText className="h-3 w-3" /> Loaded from: {templateFileName}
+                    </p>
+                  )}
                 </div>
                 <div className="mt-3 flex items-center gap-3">
-                  <Button variant="ghost" size="sm" leftIcon={<Edit3 className="h-3.5 w-3.5" />}>Edit Template</Button>
-                  <Button variant="ghost" size="sm" leftIcon={<Upload className="h-3.5 w-3.5" />}>Upload New Template</Button>
+                  <Button variant="ghost" size="sm" leftIcon={<Edit3 className="h-3.5 w-3.5" />} onClick={() => setShowEditTemplateModal(true)}>Edit Template</Button>
+                  <Button variant="ghost" size="sm" leftIcon={<Upload className="h-3.5 w-3.5" />} onClick={() => templateFileRef.current?.click()}>Upload New Template</Button>
+                  <input
+                    ref={templateFileRef}
+                    type="file"
+                    accept=".txt,.md,.html,.doc,.docx"
+                    className="hidden"
+                    onChange={handleUploadTemplate}
+                  />
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Template Modal */}
+            <Modal
+              open={showEditTemplateModal}
+              onClose={() => setShowEditTemplateModal(false)}
+              title="Edit Service Agreement Template"
+              description="Use placeholders like {customerName}, {pmbNumber}, {storeName}, {startDate}, {billingCycle} — they will be auto-filled during customer setup."
+              size="lg"
+              footer={
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setShowEditTemplateModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    leftIcon={templateSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                    onClick={handleSaveTemplate}
+                    loading={templateSaving}
+                    disabled={templateSaving}
+                  >
+                    {templateSaved ? 'Saved!' : 'Save Template'}
+                  </Button>
+                </>
+              }
+            >
+              <Textarea
+                value={templateContent}
+                onChange={(e) => setTemplateContent(e.target.value)}
+                className="min-h-[340px] font-mono text-xs leading-relaxed"
+                placeholder="Enter your service agreement template here…"
+              />
+            </Modal>
           </TabPanel>
 
           {/* ================================================================ */}
