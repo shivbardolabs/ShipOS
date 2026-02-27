@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/tenant-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
