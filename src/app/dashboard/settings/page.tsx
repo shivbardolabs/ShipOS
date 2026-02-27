@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { useTenant } from '@/components/tenant-provider';
 import { PageHeader } from '@/components/layout/page-header';
@@ -14,6 +14,7 @@ import { carrierRates } from '@/lib/mock-data';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
 import { formatCurrency } from '@/lib/utils';
+import type { UserRole } from '@/lib/permissions';
 import {
   Building2,
   DollarSign,
@@ -405,20 +406,81 @@ export default function SettingsPage() {
     postscan: true,
   });
 
-  const tabs = [
-    { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" /> },
-    { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" /> },
-    { id: 'rates', label: 'Rates & Pricing', icon: <DollarSign className="h-4 w-4" /> },
-    { id: 'dropoff', label: 'Drop-off Settings', icon: <Truck className="h-4 w-4" /> },
-    { id: 'receipts', label: 'Receipts', icon: <Receipt className="h-4 w-4" /> },
-    { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
-    { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" /> },
-    { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
-    { id: 'subscription', label: 'Subscription', icon: <Crown className="h-4 w-4" /> },
-    { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" /> },
-    { id: 'migration', label: 'Migration', icon: <Upload className="h-4 w-4" /> },
+  /* ──────────────────────────────────────────────────────────────────── */
+  /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
+  /*                                                                    */
+  /*  Settings Architecture (BAR-288):                                  */
+  /*    General → Store info, address, hours                            */
+  /*    Mailbox Config → PMB numbers, sizes, digital mail platforms     */
+  /*    Rates & Pricing → Rate management (view-only for employees)     */
+  /*    Drop-off → Carrier settings                                    */
+  /*    Receipts → Receipt templates                                   */
+  /*    Label Printers → Hardware config (admin+ only)                 */
+  /*    Notifications → Email, SMS, alert templates                    */
+  /*    Users & Roles → User management (admin+ only)                  */
+  /*    Billing → Billing & subscription (owner/admin only)            */
+  /*    Subscription → Plan management (owner/admin only)              */
+  /*    Appearance → Theme, branding                                   */
+  /*    Migration → Data import (admin+ only)                          */
+  /*                                                                    */
+  /*  Role Hierarchy:                                                   */
+  /*    OWNER (superadmin) → Full control including billing             */
+  /*    Admin → Full access minus billing/subscription                  */
+  /*    Manager → Operational: reports, CRM, pricing (view-only some)  */
+  /*    Employee/Clerk → Day-to-day operations only                    */
+  /* ──────────────────────────────────────────────────────────────────── */
+
+  type SettingsTabAccess = 'full' | 'view_only' | 'hidden';
+
+  const ROLE_TAB_ACCESS: Record<string, Record<string, SettingsTabAccess>> = {
+    superadmin: {
+      general: 'full', mailbox: 'full', rates: 'full', dropoff: 'full',
+      receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
+      billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
+    },
+    admin: {
+      general: 'full', mailbox: 'full', rates: 'full', dropoff: 'full',
+      receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
+      billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
+    },
+    manager: {
+      general: 'view_only', mailbox: 'view_only', rates: 'full', dropoff: 'full',
+      receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
+      billing: 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
+    },
+    employee: {
+      general: 'hidden', mailbox: 'hidden', rates: 'view_only', dropoff: 'hidden',
+      receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
+      billing: 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
+    },
+  };
+
+  const role = (localUser?.role as UserRole) || 'employee';
+  const roleAccess = ROLE_TAB_ACCESS[role] || ROLE_TAB_ACCESS.employee;
+
+  const allTabs = [
+    { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" />, section: 'General' },
+    { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" />, section: 'General' },
+    { id: 'rates', label: 'Rates & Pricing', icon: <DollarSign className="h-4 w-4" />, section: 'Operations' },
+    { id: 'dropoff', label: 'Drop-off Settings', icon: <Truck className="h-4 w-4" />, section: 'Operations' },
+    { id: 'receipts', label: 'Receipts', icon: <Receipt className="h-4 w-4" />, section: 'Operations' },
+    { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" />, section: 'Hardware' },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" />, section: 'Communications' },
+    { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" />, section: 'Administration' },
+    { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" />, section: 'Administration' },
+    { id: 'subscription', label: 'Subscription', icon: <Crown className="h-4 w-4" />, section: 'Administration' },
+    { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" />, section: 'General' },
+    { id: 'migration', label: 'Migration', icon: <Upload className="h-4 w-4" />, section: 'Administration' },
   ];
+
+  // BAR-286: Filter tabs by role — hidden tabs are removed entirely (not grayed out)
+  const tabs = useMemo(
+    () => allTabs.filter((tab) => roleAccess[tab.id] !== 'hidden'),
+    [role] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // Check if current tab is view-only for the role
+  const isViewOnly = roleAccess[activeTab] === 'view_only';
 
   const carrierTabs = [
     { id: 'ups', label: 'UPS' },
@@ -432,7 +494,13 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings"
-        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store, pricing, and preferences" />
+        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store, pricing, and preferences"
+        actions={
+          isViewOnly ? (
+            <Badge variant="warning" dot>View Only</Badge>
+          ) : undefined
+        }
+      />
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left sidebar navigation */}

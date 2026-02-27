@@ -42,6 +42,8 @@ import {
   ClipboardList,
   BookOpen,
   Database,
+  ScreenShare,
+  Monitor,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -119,7 +121,9 @@ const navSections: NavSection[] = [
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Pricing Dashboard', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
+      { label: 'Customer Display', href: '/dashboard/customer-display', icon: ScreenShare, flagKey: 'customer-display' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { label: 'Platform Config', href: '/dashboard/settings/platform-config', icon: Monitor, requiredRole: 'admin' },
     ],
   },
   {
