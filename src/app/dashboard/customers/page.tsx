@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { SearchInput, Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
-import { customers as mockCustomers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import {
@@ -140,7 +139,9 @@ function autoMapColumns(headers: string[]): Record<string, string> {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const [customers] = useState<Customer[]>(mockCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
@@ -157,26 +158,40 @@ export default function CustomersPage() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importedCount, setImportedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const filtered = useMemo(() => {
-    let result = customers;
-    if (statusFilter !== 'all') result = result.filter((c) => c.status === statusFilter);
-    if (platformFilter !== 'all') result = result.filter((c) => c.platform === platformFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((c) =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        c.pmbNumber.toLowerCase().includes(q) ||
-        (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.phone && c.phone.includes(q)) ||
-        (c.businessName && c.businessName.toLowerCase().includes(q))
-      );
-    }
-    return result;
-  }, [customers, search, statusFilter, platformFilter]);
+  /* ── Fetch customers from API ──────────────────────────────── */
+  const fetchCustomers = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set('page', String(page + 1));
+    params.set('limit', String(PAGE_SIZE));
+    if (search.trim()) params.set('search', search.trim());
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (platformFilter !== 'all') params.set('platform', platformFilter);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    fetch(`/api/customers?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setCustomers(data.customers ?? []);
+        setTotal(data.total ?? 0);
+      })
+      .catch((err) => console.error('Failed to fetch customers:', err))
+      .finally(() => setLoading(false));
+  }, [page, search, statusFilter, platformFilter]);
+
+  useEffect(() => {
+    // Debounce search, but fetch immediately for filter/page changes
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(fetchCustomers, search ? 300 : 0);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [fetchCustomers, search]);
+
+  // With server-side filtering, filtered = customers (already filtered by API)
+  const filtered = customers;
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const paged = filtered;
   const activeCount = customers.filter((c) => c.status === 'active').length;
 
   const handleFormChange = useCallback((field: string, value: string | boolean) => {

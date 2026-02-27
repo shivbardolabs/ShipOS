@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 import { QRCode } from '@/components/packages/qr-generator';
 import { PackageVerification } from '@/components/packages/package-verification';
 import { Modal } from '@/components/ui/modal';
-import { customers, packages } from '@/lib/mock-data';
+// customers and packages now fetched from API
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Customer, Package as PackageType, VerificationStatus, PutBackReason } from '@/lib/types';
 
@@ -240,32 +240,39 @@ export default function CheckOutPage() {
   /* ---- Success overlay ---- */
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* ---- Select customer (shared) ---- */
-  const selectCustomer = (customer: Customer) => {
-    const pkgs = packages.filter(
-      (p) => p.customerId === customer.id && p.status !== 'released' && p.status !== 'returned'
-    );
+  /* ---- Select customer (shared) — fetch packages from API ---- */
+  const selectCustomer = async (customer: Customer) => {
     setFoundCustomer(customer);
-    setCustomerPackages(pkgs);
     setShowNameResults(false);
     setNameResults([]);
-    if (pkgs.length > 0) {
-      setSelectedIds(new Set(pkgs.map((p) => p.id)));
+    try {
+      const res = await fetch(`/api/customers/${customer.id}`);
+      const data = await res.json();
+      const pkgs = (data.packages ?? []).filter(
+        (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
+      );
+      setCustomerPackages(pkgs);
+      if (pkgs.length > 0) setSelectedIds(new Set(pkgs.map((p: PackageType) => p.id)));
+    } catch (err) {
+      console.error('Failed to fetch customer packages:', err);
+      setCustomerPackages([]);
     }
   };
 
   /* ---- BAR-187: QR-code based customer lookup ---- */
-  const handleQrScan = (value: string) => {
-    // QR encodes PMB number e.g. "PMB-0003"
+  const handleQrScan = async (value: string) => {
     const cleaned = value.replace(/^PMB[-\s]*/i, '').trim();
-    const customer = customers.find((c) => {
-      const norm = c.pmbNumber.replace(/[^A-Z0-9]/gi, '');
-      return norm.endsWith(cleaned) || cleaned.endsWith(norm.replace(/PMB/i, ''));
-    });
-    if (customer) {
-      selectCustomer(customer);
-      setPmbInput(customer.pmbNumber);
-    } else {
+    try {
+      const res = await fetch(`/api/customers?search=${encodeURIComponent(cleaned)}&limit=1`);
+      const data = await res.json();
+      const customer = data.customers?.[0];
+      if (customer) {
+        selectCustomer(customer);
+        setPmbInput(customer.pmbNumber);
+      } else {
+        setLookupError(`No customer found for QR code "${value}"`);
+      }
+    } catch {
       setLookupError(`No customer found for QR code "${value}"`);
     }
   };
@@ -303,7 +310,7 @@ export default function CheckOutPage() {
   };
 
   /* ---- PMB Lookup handler ---- */
-  const handlePmbLookup = () => {
+  const handlePmbLookup = async () => {
     setLookupError('');
     setFoundCustomer(null);
     setCustomerPackages([]);
@@ -318,21 +325,22 @@ export default function CheckOutPage() {
       return;
     }
 
-    const q = pmbInput.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const customer = customers.find((c) => {
-      const norm = c.pmbNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      return norm === q || norm.endsWith(q) || q.endsWith(norm.replace('PMB', ''));
-    });
-
-    if (!customer) {
+    try {
+      const res = await fetch(`/api/customers?search=${encodeURIComponent(pmbInput.trim())}&limit=1`);
+      const data = await res.json();
+      const customer = data.customers?.[0];
+      if (!customer) {
+        setLookupError(`No customer found for "${pmbInput}"`);
+        return;
+      }
+      selectCustomer(customer);
+    } catch {
       setLookupError(`No customer found for "${pmbInput}"`);
-      return;
     }
-
-    selectCustomer(customer);
   };
 
   /* ---- Name search handler ---- */
+  const nameSearchRef = useRef<ReturnType<typeof setTimeout>>();
   const handleNameSearch = (query: string) => {
     setNameInput(query);
     setLookupError('');
@@ -343,14 +351,21 @@ export default function CheckOutPage() {
       return;
     }
 
-    const q = query.trim().toLowerCase();
-    const matches = customers.filter((c) => {
-      if (c.status === 'closed') return false;
-      const full = `${c.firstName} ${c.lastName}`.toLowerCase();
-      const biz = (c.businessName || '').toLowerCase();
-      const pmb = c.pmbNumber.toLowerCase();
-      return full.includes(q) || biz.includes(q) || c.firstName.toLowerCase().startsWith(q) || c.lastName.toLowerCase().startsWith(q) || pmb.includes(q);
-    });
+    if (nameSearchRef.current) clearTimeout(nameSearchRef.current);
+    nameSearchRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customers?search=${encodeURIComponent(query.trim())}&limit=8&status=active`);
+        const data = await res.json();
+        const matches: Customer[] = data.customers ?? [];
+        setNameResults(matches.slice(0, 8));
+        setShowNameResults(matches.length > 0);
+      } catch {
+        setNameResults([]);
+        setShowNameResults(false);
+      }
+    }, 300);
+    // Keep synchronous part — just set immediate results empty for now
+    const matches: Customer[] = [];
 
     setNameResults(matches.slice(0, 8));
     setShowNameResults(matches.length > 0);
@@ -370,7 +385,7 @@ export default function CheckOutPage() {
   };
 
   /* ---- Tracking number lookup (BAR-256) ---- */
-  const handleTrackingLookup = () => {
+  const handleTrackingLookup = async () => {
     setLookupError('');
     setFoundCustomer(null);
     setCustomerPackages([]);
@@ -385,33 +400,42 @@ export default function CheckOutPage() {
       return;
     }
 
-    const q = trackingInput.trim().toUpperCase();
-    // Find packages matching this tracking number
-    const matchingPkgs = packages.filter(
-      (p) => p.trackingNumber && p.trackingNumber.toUpperCase().includes(q) && p.status !== 'released' && p.status !== 'returned'
-    );
+    try {
+      // Search packages by tracking number
+      const pkgRes = await fetch(`/api/packages?search=${encodeURIComponent(trackingInput.trim())}&limit=10`);
+      const pkgData = await pkgRes.json();
+      const matchingPkgs = (pkgData.packages ?? []).filter(
+        (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
+      );
 
-    if (matchingPkgs.length === 0) {
-      setLookupError(`No unreleased package found with tracking "${trackingInput}"`);
-      return;
+      if (matchingPkgs.length === 0) {
+        setLookupError(`No unreleased package found with tracking "${trackingInput}"`);
+        return;
+      }
+
+      const pkg = matchingPkgs[0];
+      if (!pkg.customerId) {
+        setLookupError('Package found but customer record is missing');
+        return;
+      }
+
+      // Load the customer with all their packages
+      const custRes = await fetch(`/api/customers/${pkg.customerId}`);
+      const customer = await custRes.json();
+      if (!customer || customer.error) {
+        setLookupError('Package found but customer record is missing');
+        return;
+      }
+
+      const allPkgs = (customer.packages ?? []).filter(
+        (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
+      );
+      setFoundCustomer(customer);
+      setCustomerPackages(allPkgs);
+      setSelectedIds(new Set(matchingPkgs.map((p: PackageType) => p.id)));
+    } catch {
+      setLookupError(`Failed to look up tracking "${trackingInput}"`);
     }
-
-    // Find the customer for the first matching package
-    const pkg = matchingPkgs[0];
-    const customer = customers.find((c) => c.id === pkg.customerId);
-    if (!customer) {
-      setLookupError('Package found but customer record is missing');
-      return;
-    }
-
-    // Load all unreleased packages for that customer (not just the matched one)
-    const allPkgs = packages.filter(
-      (p) => p.customerId === customer.id && p.status !== 'released' && p.status !== 'returned'
-    );
-    setFoundCustomer(customer);
-    setCustomerPackages(allPkgs);
-    // Pre-select only the tracked package
-    setSelectedIds(new Set(matchingPkgs.map((p) => p.id)));
   };
 
   /* ---- Legacy wrapper ---- */
@@ -775,9 +799,7 @@ export default function CheckOutPage() {
                     </p>
                   </div>
                   {nameResults.map((c) => {
-                    const pendingPkgs = packages.filter(
-                      (p) => p.customerId === c.id && p.status !== 'released' && p.status !== 'returned'
-                    ).length;
+                    const pendingPkgs = (c as Customer & { packageCount?: number }).packageCount ?? 0;
                     return (
                       <button
                         key={c.id}

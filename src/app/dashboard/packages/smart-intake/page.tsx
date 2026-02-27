@@ -12,7 +12,7 @@ import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 
 import { useActivityLog } from '@/components/activity-log-provider';
-import { customers } from '@/lib/mock-data';
+// customers now fetched from API
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import type { SmartIntakeResult, SmartIntakeResponse } from '@/app/api/packages/smart-intake/route';
@@ -81,25 +81,28 @@ const packageSizeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Customer matcher                                                          */
 /* -------------------------------------------------------------------------- */
-function findCustomerByPMB(pmb: string): Customer | null {
+async function findCustomerByPMB(pmb: string): Promise<Customer | null> {
   if (!pmb) return null;
   const normalized = pmb.replace(/[^0-9]/g, '').padStart(4, '0');
   const search = `PMB-${normalized}`;
-  return customers.find((c) => c.pmbNumber === search && c.status === 'active') ?? null;
+  try {
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(search)}&limit=1&status=active`);
+    const data = await res.json();
+    return data.customers?.[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
-function searchCustomers(query: string): Customer[] {
+async function searchCustomers(query: string): Promise<Customer[]> {
   if (!query || query.length < 2) return [];
-  const q = query.toLowerCase();
-  return customers
-    .filter((c) =>
-      c.status === 'active' &&
-      (`${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        c.pmbNumber.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q) ||
-        c.businessName?.toLowerCase().includes(q))
-    )
-    .slice(0, 5);
+  try {
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(query)}&limit=5&status=active`);
+    const data = await res.json();
+    return data.customers ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -262,14 +265,16 @@ export default function SmartIntakePage() {
 
       setResponseMode(data.mode);
 
-      // Match each result to a customer
-      const matched: MatchedPackage[] = data.results.map((r) => ({
-        result: r,
-        customer: findCustomerByPMB(r.pmbNumber),
-        confirmed: false,
-        editing: false,
-        overrides: {},
-      }));
+      // Match each result to a customer (async lookups)
+      const matched: MatchedPackage[] = await Promise.all(
+        data.results.map(async (r: { pmbNumber: string }) => ({
+          result: r,
+          customer: await findCustomerByPMB(r.pmbNumber),
+          confirmed: false,
+          editing: false,
+          overrides: {},
+        }))
+      );
 
       setMatchedPackages(matched);
       setPhase('review');
@@ -387,7 +392,14 @@ export default function SmartIntakePage() {
     [matchedPackages]
   );
 
-  const customerResults = useMemo(() => searchCustomers(searchQuery), [searchQuery]);
+  const [customerResults, setCustomerResults] = useState<Customer[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    searchCustomers(searchQuery).then((results) => {
+      if (!cancelled) setCustomerResults(results);
+    });
+    return () => { cancelled = true; };
+  }, [searchQuery]);
 
   /* ==================================================================== */
   /*  RENDER                                                              */
