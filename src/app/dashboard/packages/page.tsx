@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * BAR-266: Comprehensive Inventory for PMB, Access Point, Hold At Location, and Kinek
+ * BAR-13:  Package Inventory Dashboard — aging indicators, filters, CSV export, summary
+ * BAR-259: Reprint Package Label Action — per-row and bulk reprint
+ *
+ * Unified Package Management Dashboard showing all packages in inventory across
+ * all program types (PMB, UPS AP, FedEx HAL, Kinek) with status/type filtering,
+ * aging indicators, and quick actions.
+ */
+
 import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
@@ -7,8 +17,18 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Tabs } from '@/components/ui/tabs';
 import { Modal } from '@/components/ui/modal';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { InventorySummary } from '@/components/packages/inventory-summary';
+import { ConditionTagBadges } from '@/components/packages/condition-notes';
+import { ConditionNotes } from '@/components/packages/condition-notes';
+import { PackageLabelReprintModal } from '@/components/packages/label-reprint-modal';
+import { VerificationBadge } from '@/components/packages/package-verification';
+import { packages as rawPackages } from '@/lib/mock-data';
+import { formatDate, formatCurrency, cn } from '@/lib/utils';
+import type { InventoryPackage, PackageProgramType, ConditionTag } from '@/lib/types';
 import {
   Package,
   Eye,
@@ -17,33 +37,34 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Plus } from 'lucide-react';
-import { CarrierLogo } from '@/components/carriers/carrier-logos';
-import { packages } from '@/lib/mock-data';
-import { formatDate, formatCurrency, cn } from '@/lib/utils';
-import type { Package as PackageType } from '@/lib/types';
+  Plus,
+  Printer,
+  CheckSquare,
+  LayoutGrid,
+} from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Carrier styling                                                           */
 /* -------------------------------------------------------------------------- */
-const carrierConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  ups: { label: 'UPS', bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
-  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
-  amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
-  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  lasership: { label: 'LaserShip', bg: 'bg-green-900/30', text: 'text-green-400', dot: 'bg-green-400' },
-  temu: { label: 'Temu', bg: 'bg-orange-900/30', text: 'text-orange-500', dot: 'bg-orange-500' },
-  ontrac: { label: 'OnTrac', bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
-  walmart: { label: 'Walmart', bg: 'bg-blue-900/30', text: 'text-blue-300', dot: 'bg-blue-400' },
-  target: { label: 'Target', bg: 'bg-red-900/30', text: 'text-red-400', dot: 'bg-red-400' } };
+const carrierConfig: Record<string, { label: string; bg: string; text: string }> = {
+  ups: { label: 'UPS', bg: 'bg-amber-900/30', text: 'text-amber-500' },
+  fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-600' },
+  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-600' },
+  amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-orange-400' },
+  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400' },
+  lasership: { label: 'LaserShip', bg: 'bg-green-900/30', text: 'text-green-400' },
+  temu: { label: 'Temu', bg: 'bg-orange-900/30', text: 'text-orange-500' },
+  ontrac: { label: 'OnTrac', bg: 'bg-blue-900/30', text: 'text-blue-400' },
+  walmart: { label: 'Walmart', bg: 'bg-blue-900/30', text: 'text-blue-300' },
+  target: { label: 'Target', bg: 'bg-red-900/30', text: 'text-red-400' },
+};
 
 function CarrierBadge({ carrier }: { carrier: string }) {
   const cfg = carrierConfig[carrier.toLowerCase()] || {
     label: carrier,
     bg: 'bg-surface-700/30',
     text: 'text-surface-400',
-    dot: 'bg-surface-400' };
+  };
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${cfg.bg} ${cfg.text}`}
@@ -55,18 +76,38 @@ function CarrierBadge({ carrier }: { carrier: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Status label helper                                                       */
+/*  Program type badge (BAR-266)                                              */
+/* -------------------------------------------------------------------------- */
+const programConfig: Record<
+  PackageProgramType,
+  { label: string; variant: 'default' | 'warning' | 'info' | 'muted'; emoji: string }
+> = {
+  pmb: { label: 'PMB', variant: 'default', emoji: '📬' },
+  ups_ap: { label: 'UPS AP', variant: 'warning', emoji: '🟤' },
+  fedex_hal: { label: 'FedEx HAL', variant: 'info', emoji: '🟣' },
+  kinek: { label: 'Kinek', variant: 'muted', emoji: '🔵' },
+};
+
+function ProgramBadge({ type }: { type: PackageProgramType }) {
+  const cfg = programConfig[type];
+  return (
+    <Badge variant={cfg.variant} className="text-[10px]">
+      {cfg.emoji} {cfg.label}
+    </Badge>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Status + label helpers                                                    */
 /* -------------------------------------------------------------------------- */
 const statusLabels: Record<string, string> = {
   checked_in: 'Checked In',
   notified: 'Notified',
   ready: 'Ready',
   released: 'Released',
-  returned: 'Returned' };
+  returned: 'Returned',
+};
 
-/* -------------------------------------------------------------------------- */
-/*  Package type display                                                      */
-/* -------------------------------------------------------------------------- */
 const packageTypeLabels: Record<string, string> = {
   letter: 'Letter',
   pack: 'Pack',
@@ -74,15 +115,198 @@ const packageTypeLabels: Record<string, string> = {
   medium: 'Medium',
   large: 'Large',
   xlarge: 'Extra Large',
-  oversized: 'Extra Large' };
+  oversized: 'Extra Large',
+};
 
 /* -------------------------------------------------------------------------- */
-/*  Days held calculator                                                      */
+/*  Days held + aging helpers (BAR-13)                                        */
 /* -------------------------------------------------------------------------- */
 function daysHeld(checkedInAt: string): number {
-  const now = new Date('2026-02-21T15:00:00');
+  const now = new Date();
   const checkedIn = new Date(checkedInAt);
   return Math.max(0, Math.floor((now.getTime() - checkedIn.getTime()) / 86400000));
+}
+
+type AgingColor = 'green' | 'yellow' | 'red';
+
+function getAgingColor(days: number): AgingColor {
+  if (days < 7) return 'green';
+  if (days < 14) return 'yellow';
+  return 'red';
+}
+
+const agingStyles: Record<AgingColor, string> = {
+  green: 'bg-emerald-500/20 text-emerald-400',
+  yellow: 'bg-amber-500/20 text-amber-400',
+  red: 'bg-red-500/20 text-red-400',
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Mock data: Extend packages with inventory fields                          */
+/* -------------------------------------------------------------------------- */
+const CONDITION_TAGS: ConditionTag[] = [
+  'damaged',
+  'open_resealed',
+  'wet',
+  'leaking',
+  'oversized',
+  'perishable',
+  'fragile',
+  'must_pickup_asap',
+];
+
+function buildInventoryPackages(): InventoryPackage[] {
+  // Extend existing mock packages with program type + notes
+  const extended: InventoryPackage[] = rawPackages.map((pkg, i) => ({
+    ...pkg,
+    programType: 'pmb' as PackageProgramType,
+    conditionTags: i % 7 === 0 ? [CONDITION_TAGS[i % CONDITION_TAGS.length]] : [],
+    customerNote: i % 5 === 0 ? 'Package slightly dented on one corner' : '',
+    internalNote: i % 9 === 0 ? 'Customer called about this — handle with care' : '',
+    conditionPhotos: [],
+    verificationStatus: 'unverified' as const,
+    putBackCount: 0,
+  }));
+
+  // Add carrier program packages (BAR-266)
+  const carrierPackages: InventoryPackage[] = [
+    {
+      id: 'pkg_ap_1',
+      trackingNumber: '1Z999AA100000001',
+      carrier: 'ups',
+      senderName: 'Amazon.com',
+      packageType: 'medium',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'ups_ap',
+      recipientName: 'Carlos Mendez',
+      holdDeadline: new Date(Date.now() + 5 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_ap_2',
+      trackingNumber: '1Z999AA100000002',
+      carrier: 'ups',
+      senderName: 'Best Buy',
+      packageType: 'large',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'ups_ap',
+      recipientName: 'Angela Foster',
+      holdDeadline: new Date(Date.now() - 1 * 86400000).toISOString(),
+      conditionTags: ['damaged'],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_hal_1',
+      trackingNumber: '748912345678901',
+      carrier: 'fedex',
+      senderName: 'Wayfair',
+      packageType: 'large',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'fedex_hal',
+      recipientName: 'David Chen',
+      holdDeadline: new Date(Date.now() + 6 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_hal_2',
+      trackingNumber: '748998765432109',
+      carrier: 'fedex',
+      senderName: 'Home Depot',
+      packageType: 'xlarge',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'fedex_hal',
+      recipientName: 'Sarah Phillips',
+      holdDeadline: new Date(Date.now() - 5 * 86400000).toISOString(),
+      conditionTags: ['oversized'],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_kinek_1',
+      trackingNumber: 'TBA934857263001',
+      carrier: 'amazon',
+      senderName: 'Amazon.com',
+      packageType: 'small',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 5.0,
+      receivingFee: 3.0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'kinek',
+      recipientName: 'Tom Rogers',
+      kinekNumber: '4829371',
+      holdDeadline: new Date(Date.now() + 4 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_kinek_2',
+      trackingNumber: '1Z888BB200000003',
+      carrier: 'ups',
+      senderName: 'Nike',
+      packageType: 'medium',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 8.0,
+      receivingFee: 3.0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'kinek',
+      recipientName: 'Lisa Wang',
+      kinekNumber: '5938271',
+      holdDeadline: new Date(Date.now() - 3 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+  ];
+
+  return [...extended, ...carrierPackages];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -100,28 +324,45 @@ export default function PackagesPage() {
 
 function PackagesContent() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState('all');
+  const [allPackages] = useState<InventoryPackage[]>(buildInventoryPackages);
+
+  // Filters
+  const [statusTab, setStatusTab] = useState('all');
+  const [programFilter, setProgramFilter] = useState<string>('all');
+  const [carrierFilter, setCarrierFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
 
-  // Auto-open detail modal when navigated with ?highlight={id}
+  // Selection (for bulk reprint)
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
+  // Modals
+  const [selectedPackage, setSelectedPackage] = useState<InventoryPackage | null>(null);
+  const [reprintPackages, setReprintPackages] = useState<InventoryPackage[]>([]);
+  const [showReprintModal, setShowReprintModal] = useState(false);
+
+  // Auto-open from URL param
   useEffect(() => {
     const highlightId = searchParams.get('highlight');
     if (highlightId) {
-      const target = packages.find((p) => p.id === highlightId);
+      const target = allPackages.find((p) => p.id === highlightId);
       if (target) setSelectedPackage(target);
     }
-  }, [searchParams]);
+  }, [searchParams, allPackages]);
 
-  // Tab definitions with counts
-  const tabs = useMemo(() => {
+  /* ── Status Tabs ── */
+  const statusTabs = useMemo(() => {
+    const inInventory = allPackages.filter(
+      (p) => programFilter === 'all' || p.programType === programFilter
+    );
     const counts = {
-      all: packages.length,
-      checked_in: packages.filter((p) => p.status === 'checked_in').length,
-      notified: packages.filter((p) => p.status === 'notified').length,
-      ready: packages.filter((p) => p.status === 'ready').length,
-      released: packages.filter((p) => p.status === 'released').length };
+      all: inInventory.length,
+      checked_in: inInventory.filter((p) => p.status === 'checked_in').length,
+      notified: inInventory.filter((p) => p.status === 'notified').length,
+      ready: inInventory.filter((p) => p.status === 'ready').length,
+      released: inInventory.filter((p) => p.status === 'released').length,
+    };
     return [
       { id: 'all', label: 'All', count: counts.all },
       { id: 'checked_in', label: 'Checked In', count: counts.checked_in },
@@ -129,40 +370,52 @@ function PackagesContent() {
       { id: 'ready', label: 'Ready', count: counts.ready },
       { id: 'released', label: 'Released', count: counts.released },
     ];
-  }, []);
+  }, [allPackages, programFilter]);
 
-  // Filtered data
+  /* ── Filtered Data ── */
   const filtered = useMemo(() => {
-    let data = packages;
+    let data = allPackages;
 
-    // Tab filter
-    if (activeTab !== 'all') {
-      data = data.filter((p) => p.status === activeTab);
+    // Program filter (BAR-266)
+    if (programFilter !== 'all') {
+      data = data.filter((p) => p.programType === programFilter);
     }
 
-    // Search filter
+    // Status tab
+    if (statusTab !== 'all') {
+      data = data.filter((p) => p.status === statusTab);
+    }
+
+    // Carrier filter
+    if (carrierFilter !== 'all') {
+      data = data.filter((p) => p.carrier.toLowerCase() === carrierFilter);
+    }
+
+    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       data = data.filter(
         (p) =>
-          (p.trackingNumber?.toLowerCase().includes(q)) ||
-          (p.customer?.firstName.toLowerCase().includes(q)) ||
-          (p.customer?.lastName.toLowerCase().includes(q)) ||
-          (p.customer?.pmbNumber.toLowerCase().includes(q)) ||
-          (p.carrier.toLowerCase().includes(q)) ||
-          (p.senderName?.toLowerCase().includes(q))
+          p.trackingNumber?.toLowerCase().includes(q) ||
+          p.customer?.firstName.toLowerCase().includes(q) ||
+          p.customer?.lastName.toLowerCase().includes(q) ||
+          p.customer?.pmbNumber.toLowerCase().includes(q) ||
+          p.carrier.toLowerCase().includes(q) ||
+          p.senderName?.toLowerCase().includes(q) ||
+          p.recipientName?.toLowerCase().includes(q) ||
+          p.kinekNumber?.includes(q)
       );
     }
 
     return data;
-  }, [activeTab, search]);
+  }, [allPackages, statusTab, programFilter, carrierFilter, search]);
 
-  // Pagination
+  /* ── Pagination ── */
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleTabChange = useCallback((tabId: string) => {
-    setActiveTab(tabId);
+    setStatusTab(tabId);
     setPage(0);
   }, []);
 
@@ -171,36 +424,230 @@ function PackagesContent() {
     setPage(0);
   }, []);
 
+  /* ── Selection ── */
+  const toggleSelect = useCallback((pkgId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(pkgId)) next.delete(pkgId);
+      else next.add(pkgId);
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setSelected(new Set(paged.map((p) => p.id)));
+  }, [paged]);
+
+  const deselectAll = useCallback(() => {
+    setSelected(new Set());
+  }, []);
+
+  /* ── Bulk Reprint (BAR-259) ── */
+  const handleBulkReprint = useCallback(() => {
+    const selectedPkgs = allPackages.filter((p) => selected.has(p.id));
+    setReprintPackages(selectedPkgs);
+    setShowReprintModal(true);
+  }, [allPackages, selected]);
+
+  const handleSingleReprint = useCallback(
+    (pkg: InventoryPackage) => {
+      setReprintPackages([pkg]);
+      setShowReprintModal(true);
+    },
+    []
+  );
+
+  /* ── CSV Export (BAR-13) ── */
+  const handleExport = useCallback(() => {
+    const headers = [
+      'Status',
+      'Type',
+      'Tracking #',
+      'Carrier',
+      'Customer/Recipient',
+      'PMB/ID',
+      'Package Size',
+      'Location',
+      'Checked In',
+      'Days Held',
+      'Condition Tags',
+      'Notes',
+    ];
+    const rows = filtered.map((pkg) => [
+      statusLabels[pkg.status] || pkg.status,
+      programConfig[pkg.programType]?.label || pkg.programType,
+      pkg.trackingNumber || '',
+      pkg.carrier,
+      pkg.customer
+        ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
+        : pkg.recipientName || '',
+      pkg.customer?.pmbNumber || pkg.kinekNumber || '',
+      packageTypeLabels[pkg.packageType] || pkg.packageType,
+      pkg.storageLocation || '',
+      pkg.checkedInAt,
+      String(daysHeld(pkg.checkedInAt)),
+      (pkg.conditionTags || []).join('; '),
+      pkg.customerNote || '',
+    ]);
+
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `package-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filtered]);
+
+  /* ── Program type filter tabs (BAR-266) ── */
+  const programTabs = useMemo(
+    () => [
+      { id: 'all', label: 'All Types', count: allPackages.length },
+      {
+        id: 'pmb',
+        label: '📬 PMB',
+        count: allPackages.filter((p) => p.programType === 'pmb').length,
+      },
+      {
+        id: 'ups_ap',
+        label: '🟤 UPS AP',
+        count: allPackages.filter((p) => p.programType === 'ups_ap').length,
+      },
+      {
+        id: 'fedex_hal',
+        label: '🟣 FedEx HAL',
+        count: allPackages.filter((p) => p.programType === 'fedex_hal').length,
+      },
+      {
+        id: 'kinek',
+        label: '🔵 Kinek',
+        count: allPackages.filter((p) => p.programType === 'kinek').length,
+      },
+    ],
+    [allPackages]
+  );
+
+  /* ── Unique carriers for filter ── */
+  const uniqueCarriers = useMemo(
+    () =>
+      Array.from(new Set(allPackages.map((p) => p.carrier.toLowerCase()))).sort(),
+    [allPackages]
+  );
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <PageHeader
         title="Package Management"
-        description={`${packages.length} total packages · ${packages.filter((p) => p.status !== 'released').length} in inventory`}
+        description={`${allPackages.length} total · ${allPackages.filter((p) => p.status !== 'released').length} in inventory`}
         actions={
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={() => (window.location.href = '/dashboard/packages/check-in')}
-          >
-            Check In Package
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectMode && selected.size > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<Printer className="h-4 w-4" />}
+                onClick={handleBulkReprint}
+              >
+                Reprint ({selected.size})
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={
+                selectMode ? (
+                  <LayoutGrid className="h-4 w-4" />
+                ) : (
+                  <CheckSquare className="h-4 w-4" />
+                )
+              }
+              onClick={() => {
+                setSelectMode(!selectMode);
+                setSelected(new Set());
+              }}
+            >
+              {selectMode ? 'Done' : 'Select'}
+            </Button>
+            <Button
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={() => (window.location.href = '/dashboard/packages/check-in')}
+            >
+              Check In
+            </Button>
+          </div>
         }
       />
 
-      {/* Tabs + Search */}
+      {/* Inventory Summary (BAR-13) */}
+      <InventorySummary packages={allPackages} />
+
+      {/* Program Type Tabs (BAR-266) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {programTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              setProgramFilter(tab.id);
+              setPage(0);
+            }}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap',
+              programFilter === tab.id
+                ? 'bg-primary-500/20 text-primary-400 ring-1 ring-primary-500/30'
+                : 'bg-surface-800/50 text-surface-400 hover:bg-surface-700/50 hover:text-surface-300'
+            )}
+          >
+            {tab.label}
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[10px]',
+                programFilter === tab.id
+                  ? 'bg-primary-500/30 text-primary-300'
+                  : 'bg-surface-700 text-surface-500'
+              )}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Status Tabs + Search + Filters */}
       <div className="space-y-4">
-        <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
+        <Tabs tabs={statusTabs} activeTab={statusTab} onChange={handleTabChange} />
 
         <div className="flex items-center gap-3 flex-wrap">
           <SearchInput
-            placeholder="Search by tracking #, customer, PMB, carrier..."
+            placeholder="Search tracking #, customer, PMB, Kinek #..."
             value={search}
             onSearch={handleSearch}
             className="w-80"
           />
+          <Select
+            value={carrierFilter}
+            onChange={(e) => {
+              setCarrierFilter(e.target.value);
+              setPage(0);
+            }}
+            options={[
+              { value: 'all', label: 'All Carriers' },
+              ...uniqueCarriers.map((c) => ({
+                value: c,
+                label: carrierConfig[c]?.label || c,
+              })),
+            ]}
+            className="w-40"
+          />
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" leftIcon={<Download className="h-4 w-4" />}>
-              Export
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<Download className="h-4 w-4" />}
+              onClick={handleExport}
+            >
+              Export CSV
             </Button>
           </div>
         </div>
@@ -212,8 +659,23 @@ function PackagesContent() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-800 bg-surface-900/80">
+                {selectMode && (
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.size === paged.length && paged.length > 0}
+                      onChange={() =>
+                        selected.size === paged.length ? deselectAll() : selectAll()
+                      }
+                      className="rounded border-surface-600"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
                   Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
+                  Type
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
                   Tracking #
@@ -222,10 +684,10 @@ function PackagesContent() {
                   Carrier
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Customer
+                  Customer / Recipient
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Type
+                  Size
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
                   Location
@@ -245,7 +707,7 @@ function PackagesContent() {
               {paged.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={selectMode ? 11 : 10}
                     className="px-4 py-16 text-center text-surface-500"
                   >
                     <Package className="mx-auto h-8 w-8 text-surface-600 mb-3" />
@@ -255,17 +717,36 @@ function PackagesContent() {
               ) : (
                 paged.map((pkg) => {
                   const held = daysHeld(pkg.checkedInAt);
-                  const isOverdue = held > 7 && pkg.status !== 'released';
+                  const aging = getAgingColor(held);
+                  const isNonPmb = pkg.programType !== 'pmb';
                   return (
                     <tr
                       key={pkg.id}
-                      onClick={() => setSelectedPackage(pkg)}
-                      className="border-b border-surface-700/60 table-row-hover cursor-pointer"
+                      onClick={() =>
+                        selectMode ? toggleSelect(pkg.id) : setSelectedPackage(pkg)
+                      }
+                      className={cn(
+                        'border-b border-surface-700/60 table-row-hover cursor-pointer',
+                        selectMode && selected.has(pkg.id) && 'bg-primary-500/5'
+                      )}
                     >
+                      {selectMode && (
+                        <td className="w-10 px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(pkg.id)}
+                            onChange={() => toggleSelect(pkg.id)}
+                            className="rounded border-surface-600"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <Badge status={pkg.status}>
                           {statusLabels[pkg.status] || pkg.status}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <ProgramBadge type={pkg.programType} />
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs text-surface-300">
@@ -278,17 +759,28 @@ function PackagesContent() {
                       <td className="px-4 py-3">
                         <div>
                           <p className="text-surface-200 font-medium text-sm">
-                            {pkg.customer
-                              ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
-                              : '—'}
+                            {isNonPmb
+                              ? pkg.recipientName || '—'
+                              : pkg.customer
+                                ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
+                                : '—'}
                           </p>
                           <p className="text-xs text-surface-500">
-                            {pkg.customer?.pmbNumber}
+                            {isNonPmb
+                              ? pkg.kinekNumber
+                                ? `Kinek #${pkg.kinekNumber}`
+                                : programConfig[pkg.programType].label
+                              : pkg.customer?.pmbNumber}
                           </p>
+                          {(pkg.conditionTags?.length ?? 0) > 0 && (
+                            <div className="mt-1">
+                              <ConditionTagBadges tags={pkg.conditionTags || []} />
+                            </div>
+                          )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-surface-300">
-                        {packageTypeLabels[pkg.packageType]}
+                      <td className="px-4 py-3 text-surface-300 text-xs">
+                        {packageTypeLabels[pkg.packageType] || pkg.packageType}
                       </td>
                       <td className="px-4 py-3">
                         {pkg.storageLocation ? (
@@ -306,36 +798,40 @@ function PackagesContent() {
                         <span
                           className={cn(
                             'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold',
-                            isOverdue
-                              ? 'bg-red-100 text-red-600'
-                              : held > 3
-                                ? 'bg-yellow-500/20 text-yellow-400'
-                                : 'bg-surface-700/50 text-surface-400'
+                            agingStyles[aging]
                           )}
                         >
                           {held}d
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                        <div
+                          className="flex items-center justify-end gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Button
                             variant="ghost"
                             size="sm"
                             iconOnly
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedPackage(pkg);
-                            }}
+                            onClick={() => setSelectedPackage(pkg)}
                             title="View"
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            iconOnly
+                            onClick={() => handleSingleReprint(pkg)}
+                            title="Reprint Label"
+                          >
+                            <Printer className="h-4 w-4 text-surface-400" />
                           </Button>
                           {pkg.status === 'checked_in' && (
                             <Button
                               variant="ghost"
                               size="sm"
                               iconOnly
-                              onClick={(e) => e.stopPropagation()}
                               title="Notify"
                             >
                               <Bell className="h-4 w-4 text-amber-600" />
@@ -346,7 +842,6 @@ function PackagesContent() {
                               variant="ghost"
                               size="sm"
                               iconOnly
-                              onClick={(e) => e.stopPropagation()}
                               title="Release"
                             >
                               <PackageCheck className="h-4 w-4 text-emerald-600" />
@@ -397,125 +892,174 @@ function PackagesContent() {
         )}
       </Card>
 
-      {/* Package Detail Modal */}
+      {/* Package Detail Modal (BAR-266: type-specific views) */}
       {selectedPackage && (
-        <Modal
-          open={!!selectedPackage}
+        <PackageDetailModal
+          pkg={selectedPackage}
           onClose={() => setSelectedPackage(null)}
-          title="Package Details"
-          size="lg"
-          footer={
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedPackage(null)}
-              >
-                Close
-              </Button>
-              {selectedPackage.status !== 'released' && (
-                <>
-                  <Button
-                    variant="secondary"
-                    leftIcon={<Bell className="h-4 w-4" />}
-                  >
-                    Send Notification
-                  </Button>
-                  <Button leftIcon={<PackageCheck className="h-4 w-4" />}>
-                    Release Package
-                  </Button>
-                </>
-              )}
-            </>
-          }
-        >
-          <div className="space-y-6">
-            {/* Status & Tracking */}
-            <div className="flex items-center gap-3">
-              <Badge status={selectedPackage.status}>
-                {statusLabels[selectedPackage.status]}
-              </Badge>
-              {selectedPackage.hazardous && (
-                <Badge variant="danger">⚠️ Hazardous</Badge>
-              )}
-              {selectedPackage.perishable && (
-                <Badge variant="warning">🧊 Perishable</Badge>
-              )}
-            </div>
-
-            {/* Info Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <InfoField
-                label="Tracking Number"
-                value={selectedPackage.trackingNumber || '—'}
-                mono
-              />
-              <InfoField
-                label="Carrier"
-                value={
-                  carrierConfig[selectedPackage.carrier.toLowerCase()]?.label ||
-                  selectedPackage.carrier
-                }
-              />
-              <InfoField
-                label="Customer"
-                value={
-                  selectedPackage.customer
-                    ? `${selectedPackage.customer.firstName} ${selectedPackage.customer.lastName}`
-                    : '—'
-                }
-              />
-              <InfoField
-                label="PMB"
-                value={selectedPackage.customer?.pmbNumber || '—'}
-              />
-              <InfoField label="Sender" value={selectedPackage.senderName || '—'} />
-              <InfoField
-                label="Package Type"
-                value={packageTypeLabels[selectedPackage.packageType]}
-              />
-              <InfoField
-                label="Checked In"
-                value={formatDate(selectedPackage.checkedInAt)}
-              />
-              <InfoField
-                label="Days Held"
-                value={`${daysHeld(selectedPackage.checkedInAt)} days`}
-              />
-              <InfoField
-                label="Receiving Fee"
-                value={formatCurrency(selectedPackage.receivingFee)}
-              />
-              <InfoField
-                label="Storage Fee"
-                value={formatCurrency(selectedPackage.storageFee)}
-              />
-            </div>
-
-            {/* Notes & Condition */}
-            {(selectedPackage.notes || selectedPackage.condition) && (
-              <div className="space-y-3 pt-2 border-t border-surface-800">
-                {selectedPackage.condition && (
-                  <InfoField label="Condition" value={selectedPackage.condition} />
-                )}
-                {selectedPackage.notes && (
-                  <InfoField label="Notes" value={selectedPackage.notes} />
-                )}
-              </div>
-            )}
-          </div>
-        </Modal>
+          onReprint={() => handleSingleReprint(selectedPackage)}
+        />
       )}
+
+      {/* Reprint Modal (BAR-259) */}
+      <PackageLabelReprintModal
+        open={showReprintModal}
+        onClose={() => {
+          setShowReprintModal(false);
+          setReprintPackages([]);
+        }}
+        packages={reprintPackages}
+        storeName="ShipOS Store"
+      />
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Helper components                                                         */
+/*  Package Detail Modal                                                      */
 /* -------------------------------------------------------------------------- */
-function InfoField({
+
+function PackageDetailModal({
+  pkg,
+  onClose,
+  onReprint,
+}: {
+  pkg: InventoryPackage;
+  onClose: () => void;
+  onReprint: () => void;
+}) {
+  const held = daysHeld(pkg.checkedInAt);
+  const aging = getAgingColor(held);
+  const isNonPmb = pkg.programType !== 'pmb';
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Package Details"
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Close</Button>
+          <Button
+            variant="secondary"
+            leftIcon={<Printer className="h-4 w-4" />}
+            onClick={onReprint}
+          >
+            Reprint Label
+          </Button>
+          {pkg.status !== 'released' && (
+            <>
+              <Button
+                variant="secondary"
+                leftIcon={<Bell className="h-4 w-4" />}
+              >
+                Send Notification
+              </Button>
+              <Button leftIcon={<PackageCheck className="h-4 w-4" />}>
+                Release Package
+              </Button>
+            </>
+          )}
+        </>
+      }
+    >
+      <div className="space-y-6">
+        {/* Status Row */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Badge status={pkg.status}>{statusLabels[pkg.status]}</Badge>
+          <ProgramBadge type={pkg.programType} />
+          {pkg.hazardous && <Badge variant="danger">⚠️ Hazardous</Badge>}
+          {pkg.perishable && <Badge variant="warning">🧊 Perishable</Badge>}
+          {pkg.verificationStatus && (
+            <VerificationBadge status={pkg.verificationStatus} />
+          )}
+          <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', agingStyles[aging])}>
+            {held} days held
+          </span>
+        </div>
+
+        {/* Info Grid — adapts to package type (BAR-266) */}
+        <div className="grid grid-cols-2 gap-4">
+          {isNonPmb ? (
+            <>
+              <DetailField label="Recipient Name" value={pkg.recipientName || '—'} />
+              {pkg.kinekNumber && (
+                <DetailField label="Kinek Number" value={pkg.kinekNumber} mono />
+              )}
+            </>
+          ) : (
+            <>
+              <DetailField
+                label="Customer"
+                value={
+                  pkg.customer
+                    ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
+                    : '—'
+                }
+              />
+              <DetailField label="PMB" value={pkg.customer?.pmbNumber || '—'} />
+            </>
+          )}
+          <DetailField label="Tracking Number" value={pkg.trackingNumber || '—'} mono />
+          <DetailField
+            label="Carrier"
+            value={carrierConfig[pkg.carrier.toLowerCase()]?.label || pkg.carrier}
+          />
+          <DetailField label="Sender" value={pkg.senderName || '—'} />
+          <DetailField
+            label="Package Type"
+            value={packageTypeLabels[pkg.packageType] || pkg.packageType}
+          />
+          <DetailField label="Checked In" value={formatDate(pkg.checkedInAt)} />
+          {pkg.holdDeadline && (
+            <DetailField label="Hold Deadline" value={formatDate(pkg.holdDeadline)} />
+          )}
+          <DetailField label="Storage Location" value={pkg.storageLocation || '—'} />
+          <DetailField label="Receiving Fee" value={formatCurrency(pkg.receivingFee)} />
+          <DetailField label="Storage Fee" value={formatCurrency(pkg.storageFee)} />
+          {pkg.programType === 'kinek' && (
+            <DetailField
+              label="Fee Owed"
+              value={formatCurrency(pkg.storageFee + pkg.receivingFee)}
+            />
+          )}
+        </div>
+
+        {/* Condition Notes (BAR-39 — read-only view) */}
+        {((pkg.conditionTags?.length ?? 0) > 0 ||
+          pkg.customerNote ||
+          pkg.internalNote ||
+          (pkg.conditionPhotos?.length ?? 0) > 0) && (
+          <div className="pt-2 border-t border-surface-800">
+            <ConditionNotes
+              selectedTags={pkg.conditionTags || []}
+              customerNote={pkg.customerNote || ''}
+              internalNote={pkg.internalNote || ''}
+              photos={pkg.conditionPhotos || []}
+              onTagsChange={() => {}}
+              onCustomerNoteChange={() => {}}
+              onInternalNoteChange={() => {}}
+              onPhotosChange={() => {}}
+              readOnly
+              compact
+            />
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+
+function DetailField({
   label,
   value,
-  mono }: {
+  mono,
+}: {
   label: string;
   value: string;
   mono?: boolean;
@@ -523,12 +1067,7 @@ function InfoField({
   return (
     <div>
       <p className="text-xs text-surface-500 mb-0.5">{label}</p>
-      <p
-        className={cn(
-          'text-sm text-surface-200',
-          mono && 'font-mono text-xs'
-        )}
-      >
+      <p className={cn('text-sm text-surface-200', mono && 'font-mono text-xs')}>
         {value}
       </p>
     </div>

@@ -24,15 +24,24 @@ import {
   User,
   X,
   BookOpen,
+  QrCode,
+  Undo2,
+  Clock,
+  ShieldCheck,
+  IdCard,
 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
+import { BarcodeScanner } from '@/components/ui/barcode-scanner';
+import { QRCode } from '@/components/packages/qr-generator';
+import { PackageVerification } from '@/components/packages/package-verification';
+import { Modal } from '@/components/ui/modal';
 import { customers, packages } from '@/lib/mock-data';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
-import type { Customer, Package as PackageType } from '@/lib/types';
+import type { Customer, Package as PackageType, VerificationStatus, PutBackReason } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
 /*  Carrier badge                                                             */
@@ -211,6 +220,16 @@ export default function CheckOutPage() {
   const [delegateIdType, setDelegateIdType] = useState('');
   const [delegateIdNumber, setDelegateIdNumber] = useState('');
 
+  /* ---- BAR-187: QR Scan & Put-Back state ---- */
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [putBackPkg, setPutBackPkg] = useState<PackageType | null>(null);
+  const [putBackReason, setPutBackReason] = useState<PutBackReason | ''>('');
+  const [showPutBackModal, setShowPutBackModal] = useState(false);
+
+  /* ---- BAR-246: Label Verification Scan state ---- */
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
+  const [showVerification, setShowVerification] = useState(false);
+
   /* ---- Success overlay ---- */
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -225,6 +244,54 @@ export default function CheckOutPage() {
     setNameResults([]);
     if (pkgs.length > 0) {
       setSelectedIds(new Set(pkgs.map((p) => p.id)));
+    }
+  };
+
+  /* ---- BAR-187: QR-code based customer lookup ---- */
+  const handleQrScan = (value: string) => {
+    // QR encodes PMB number e.g. "PMB-0003"
+    const cleaned = value.replace(/^PMB[-\s]*/i, '').trim();
+    const customer = customers.find((c) => {
+      const norm = c.pmbNumber.replace(/[^A-Z0-9]/gi, '');
+      return norm.endsWith(cleaned) || cleaned.endsWith(norm.replace(/PMB/i, ''));
+    });
+    if (customer) {
+      selectCustomer(customer);
+      setPmbInput(customer.pmbNumber);
+    } else {
+      setLookupError(`No customer found for QR code "${value}"`);
+    }
+  };
+
+  /* ---- BAR-187: Put-Back handler (preserves checkedInAt/storage timer) ---- */
+  const handlePutBack = async (pkg: PackageType, reason: PutBackReason) => {
+    try {
+      await fetch('/api/packages/put-back', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packageId: pkg.id, reason }),
+      });
+      logActivity({
+        action: 'package.check_in',
+        entityType: 'package',
+        entityId: pkg.id,
+        entityLabel: pkg.trackingNumber || pkg.id,
+        description: `Put back package for ${foundCustomer?.firstName} ${foundCustomer?.lastName} — reason: ${reason}`,
+        metadata: { putBack: true, reason },
+      });
+      // Remove from selected & packages list
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(pkg.id);
+        return next;
+      });
+      setCustomerPackages((prev) => prev.filter((p) => p.id !== pkg.id));
+    } catch {
+      // Silent — optimistic UI update
+    } finally {
+      setShowPutBackModal(false);
+      setPutBackPkg(null);
+      setPutBackReason('');
     }
   };
 
@@ -620,6 +687,22 @@ export default function CheckOutPage() {
             </button>
           </div>
 
+          {/* BAR-187: QR code scanner for customer lookup */}
+          <div className="flex items-center gap-3 mb-4">
+            <BarcodeScanner onScan={handleQrScan} />
+            <span className="text-xs text-surface-500">Scan customer QR code for instant lookup</span>
+            {foundCustomer && (
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<QrCode className="h-4 w-4" />}
+                onClick={() => setShowQrModal(true)}
+              >
+                Show QR
+              </Button>
+            )}
+          </div>
+
           {/* PMB input */}
           {searchMode === 'pmb' && (
             <div className="flex items-start gap-3">
@@ -912,6 +995,14 @@ export default function CheckOutPage() {
                           </span>
                         </div>
 
+                        {/* BAR-187: Storage duration */}
+                        <div className="shrink-0 text-center min-w-[60px]">
+                          <div className="flex items-center gap-1 text-xs text-surface-500">
+                            <Clock className="h-3 w-3" />
+                            <span>{held}d stored</span>
+                          </div>
+                        </div>
+
                         {/* Fees */}
                         <div className="shrink-0 text-right min-w-[80px]">
                           <p className="text-sm font-semibold text-surface-200">{formatCurrency(pkg.receivingFee)}</p>
@@ -919,10 +1010,85 @@ export default function CheckOutPage() {
                             <p className="text-xs text-yellow-400">+{formatCurrency(storageFee)} storage</p>
                           )}
                         </div>
+
+                        {/* BAR-187: Put-back action */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPutBackPkg(pkg);
+                            setShowPutBackModal(true);
+                          }}
+                          className="shrink-0 p-1.5 rounded-lg text-surface-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                          title="Put Back"
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </button>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* BAR-246: Label Verification Scan */}
+                {selectedIds.size > 0 && (
+                  <Card padding="md" className="mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ShieldCheck className="h-4 w-4 text-surface-400" />
+                      <h4 className="text-sm font-semibold text-surface-200">
+                        Label Verification Scan
+                      </h4>
+                      <button
+                        onClick={() => setShowVerification(!showVerification)}
+                        className="ml-auto text-xs text-primary-400 hover:text-primary-300"
+                      >
+                        {showVerification ? 'Hide' : 'Verify Package Labels'}
+                      </button>
+                    </div>
+                    {showVerification && foundCustomer && (
+                      <PackageVerification
+                        expectedPmb={foundCustomer.pmbNumber}
+                        onVerify={(result) => setVerificationStatus(result.status)}
+                        status={verificationStatus}
+                        onOverride={() => setVerificationStatus('verified')}
+                      />
+                    )}
+                    {!showVerification && (
+                      <p className="text-xs text-surface-500">
+                        Optional: scan package labels to verify they match this customer before release.
+                      </p>
+                    )}
+                  </Card>
+                )}
+
+                {/* BAR-187: Photo ID display during verification */}
+                {foundCustomer?.photoUrl && selectedIds.size > 0 && (
+                  <Card padding="md" className="mt-4">
+                    <div className="flex items-center gap-3">
+                      <IdCard className="h-4 w-4 text-surface-400" />
+                      <h4 className="text-sm font-semibold text-surface-200">
+                        Customer Photo ID
+                      </h4>
+                    </div>
+                    <div className="mt-3 flex items-center gap-4">
+                      <CustomerAvatar
+                        firstName={foundCustomer.firstName}
+                        lastName={foundCustomer.lastName}
+                        photoUrl={foundCustomer.photoUrl}
+                        size="lg"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-surface-200">
+                          {foundCustomer.firstName} {foundCustomer.lastName}
+                        </p>
+                        <p className="text-xs text-surface-500 font-mono">
+                          {foundCustomer.pmbNumber}
+                        </p>
+                        <p className="text-xs text-surface-500 mt-1">
+                          Verify the person matches the photo before release.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                )}
 
                 {/* Continue button */}
                 <div className="flex justify-end mt-6">
@@ -1234,6 +1400,102 @@ export default function CheckOutPage() {
           )}
         </>
       )}
+      {/* BAR-187: Customer QR Code Modal */}
+      {foundCustomer && (
+        <Modal
+          open={showQrModal}
+          onClose={() => setShowQrModal(false)}
+          title="Customer QR Code"
+          size="sm"
+        >
+          <div className="flex flex-col items-center py-4">
+            <QRCode value={foundCustomer.pmbNumber} size={200} modules={21} />
+            <p className="text-sm font-semibold text-surface-200 mt-3">
+              {foundCustomer.firstName} {foundCustomer.lastName}
+            </p>
+            <p className="text-xs text-surface-500 font-mono">{foundCustomer.pmbNumber}</p>
+            <p className="text-xs text-surface-600 mt-3">
+              Show this QR at pickup for instant identification
+            </p>
+          </div>
+        </Modal>
+      )}
+
+      {/* BAR-187: Put-Back Modal */}
+      <Modal
+        open={showPutBackModal}
+        onClose={() => {
+          setShowPutBackModal(false);
+          setPutBackPkg(null);
+          setPutBackReason('');
+        }}
+        title="Put Back Package"
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowPutBackModal(false);
+                setPutBackPkg(null);
+                setPutBackReason('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={!putBackReason}
+              onClick={() => {
+                if (putBackPkg && putBackReason) {
+                  handlePutBack(putBackPkg, putBackReason as PutBackReason);
+                }
+              }}
+              leftIcon={<Undo2 className="h-4 w-4" />}
+            >
+              Put Back
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-surface-400">
+            Return this package to inventory. The <strong className="text-surface-300">storage timer will
+            be preserved</strong> (checkedInAt stays the same).
+          </p>
+          {putBackPkg && (
+            <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700 text-sm">
+              <p className="text-surface-200 font-mono">{putBackPkg.trackingNumber || 'N/A'}</p>
+              <p className="text-xs text-surface-500">{putBackPkg.carrier}</p>
+            </div>
+          )}
+          <div>
+            <label className="text-xs font-semibold text-surface-400 mb-2 block">Reason for Put-Back</label>
+            <div className="space-y-2">
+              {([
+                { id: 'customer_not_present' as const, label: 'Customer not present' },
+                { id: 'wrong_package' as const, label: 'Wrong package selected' },
+                { id: 'id_mismatch' as const, label: 'ID mismatch' },
+                { id: 'customer_declined' as const, label: 'Customer declined pickup' },
+                { id: 'other' as const, label: 'Other reason' },
+              ]).map((reason) => (
+                <button
+                  key={reason.id}
+                  onClick={() => setPutBackReason(reason.id)}
+                  className={cn(
+                    'w-full text-left px-3 py-2 rounded-lg border text-sm transition-all',
+                    putBackReason === reason.id
+                      ? 'border-primary-500/50 bg-primary-500/10 text-primary-400'
+                      : 'border-surface-700 bg-surface-800/30 text-surface-400 hover:bg-surface-700/30'
+                  )}
+                >
+                  {reason.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
