@@ -117,7 +117,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Renewals', href: '/dashboard/renewals', icon: CalendarClock, flagKey: 'automated_renewals' },
       { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award, flagKey: 'loyalty-program' },
-      { label: 'Reports', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
+      { label: 'Report Hub', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Pricing Dashboard', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
