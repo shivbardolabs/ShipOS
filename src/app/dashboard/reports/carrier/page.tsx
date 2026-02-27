@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, generateDailySeries, formatNumber } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments } from '@/lib/mock-data';
 import {
   Truck,
   Package,
@@ -37,7 +37,7 @@ interface CarrierData {
   color: string;
 }
 
-function useCarrierData() {
+function useCarrierData(shipments: any[]) {
   return useMemo(() => {
     const byCarrier: Record<string, { count: number; revenue: number; cost: number }> = {};
     shipments.forEach((s) => {
@@ -137,13 +137,23 @@ function useCarrierData() {
     const avgOnTime = Math.round(carriers.reduce((s, c) => s + c.onTimePickupPct, 0) / carriers.length);
 
     return { carriers, totalVolume, totalRevenue, totalCost, avgMargin, avgOnTime };
-  }, []);
+  }, [shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Carrier Report Page — BAR-274                                              */
 /* -------------------------------------------------------------------------- */
 export default function CarrierReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -151,7 +161,7 @@ export default function CarrierReportPage() {
     program: 'all',
   });
   const [activeTab, setActiveTab] = useState('overview');
-  const data = useCarrierData();
+  const data = useCarrierData(shipments);
 
   const tabs = [
     { id: 'overview', label: 'Carrier Overview', icon: <Truck className="h-4 w-4" /> },

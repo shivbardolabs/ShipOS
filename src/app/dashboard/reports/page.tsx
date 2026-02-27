@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
@@ -12,7 +13,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { Sparkline } from '@/components/reports/mini-bar-chart';
 import { reportCategories, formatNumber, generateDailySeries } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments, packages, customers } from '@/lib/mock-data';
 import {
   BarChart3,
   Activity,
@@ -56,7 +56,7 @@ const iconMap: Record<string, React.ElementType> = {
 /* -------------------------------------------------------------------------- */
 /*  Quick-stat derivations from mock data                                     */
 /* -------------------------------------------------------------------------- */
-function useQuickStats() {
+function useQuickStats(customers: any[], packages: any[], shipments: any[]) {
   return useMemo(() => {
     const activeCustomers = customers.filter((c) => c.status === 'active').length;
     const totalPackages = packages.length;
@@ -66,13 +66,29 @@ function useQuickStats() {
     const totalProfit = totalRevenue - totalCost;
     const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
     return { activeCustomers, totalPackages, inSystem, totalRevenue, totalProfit, margin };
-  }, []);
+  }, [customers, packages, shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Report Hub Page                                                           */
 /* -------------------------------------------------------------------------- */
 export default function ReportsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -80,7 +96,7 @@ export default function ReportsPage() {
     program: 'all',
   });
   const [activeTab, setActiveTab] = useState('overview');
-  const stats = useQuickStats();
+  const stats = useQuickStats(customers, packages, shipments);
 
   const revenueTrend = useMemo(() => generateDailySeries(14, 42, 800, 1800).map((d) => d.value), []);
   const packageTrend = useMemo(() => generateDailySeries(14, 77, 8, 25).map((d) => d.value), []);

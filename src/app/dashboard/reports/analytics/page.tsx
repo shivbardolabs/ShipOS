@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, generateDailySeries, formatNumber } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments, packages, customers } from '@/lib/mock-data';
 import {
   BarChart3,
   LineChart,
@@ -48,7 +48,7 @@ interface HeatmapCell {
   value: number;
 }
 
-function useAnalyticsData() {
+function useAnalyticsData(customers: any[], packages: any[], shipments: any[]) {
   return useMemo(() => {
     const totalRevenue = shipments.reduce((s, sh) => s + sh.retailPrice, 0);
     const totalPkgs = packages.length;
@@ -131,7 +131,7 @@ function useAnalyticsData() {
       days,
       hours,
     };
-  }, []);
+  }, [customers, packages, shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -231,13 +231,29 @@ function StackedBarChart({ data }: { data: { month: string; shipping: number; ma
 /*  Interactive Charts Page — BAR-279                                           */
 /* -------------------------------------------------------------------------- */
 export default function AnalyticsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [activeTab, setActiveTab] = useState('charts');
   const [selectedChart, setSelectedChart] = useState<string>('line');
   const [drillPeriod, setDrillPeriod] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('v1');
   const [newViewName, setNewViewName] = useState('');
   const [showLegend, setShowLegend] = useState(true);
-  const data = useAnalyticsData();
+  const data = useAnalyticsData(customers, packages, shipments);
 
   const handleDrillDown = useCallback((period: string) => {
     setDrillPeriod(period);

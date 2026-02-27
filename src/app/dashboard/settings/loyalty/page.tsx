@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { loyaltyProgram, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
+
 import type { LoyaltyTier, LoyaltyReward } from '@/lib/types';
 import {
   Save,
@@ -34,15 +34,37 @@ function tierIcon(name: string) {
 /* ── Page ─────────────────────────────────────────────────────── */
 
 export default function LoyaltySettingsPage() {
-  const [programName, setProgramName] = useState(loyaltyProgram.name);
-  const [isActive, setIsActive] = useState(loyaltyProgram.isActive);
-  const [pointsPerDollar, setPointsPerDollar] = useState(loyaltyProgram.pointsPerDollar);
-  const [redemptionRate, setRedemptionRate] = useState(loyaltyProgram.redemptionRate * 100);
-  const [referralEnabled, setReferralEnabled] = useState(loyaltyProgram.referralEnabled);
-  const [referrerBonus, setReferrerBonus] = useState(loyaltyProgram.referrerBonusPoints);
-  const [refereeBonus, setRefereeBonus] = useState(loyaltyProgram.refereeBonusPoints);
-  const [tiers, setTiers] = useState<LoyaltyTier[]>(loyaltyTiers);
-  const [rewards, setRewards] = useState<LoyaltyReward[]>(loyaltyRewards);
+  const [programName, setProgramName] = useState('ShipOS Rewards');
+  const [isActive, setIsActive] = useState(false);
+  const [pointsPerDollar, setPointsPerDollar] = useState(1);
+  const [redemptionRate, setRedemptionRate] = useState(5);
+  const [referralEnabled, setReferralEnabled] = useState(true);
+  const [referrerBonus, setReferrerBonus] = useState(200);
+  const [refereeBonus, setRefereeBonus] = useState(100);
+  const [tiers, setTiers] = useState<LoyaltyTier[]>([]);
+  const [rewards, setRewards] = useState<LoyaltyReward[]>([]);
+
+  useEffect(() => {
+    fetch('/api/loyalty')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.program) {
+          setProgramName(d.program.name);
+          setIsActive(d.program.isActive);
+          setPointsPerDollar(d.program.pointsPerDollar);
+          setRedemptionRate(d.program.redemptionRate * 100);
+          setReferralEnabled(d.program.referralEnabled);
+          setReferrerBonus(d.program.referrerBonusPoints);
+          setRefereeBonus(d.program.refereeBonusPoints);
+        }
+        if (d.tiers) setTiers(d.tiers.map((t: LoyaltyTier) => ({
+          ...t,
+          benefits: Array.isArray(t.benefits) ? t.benefits : typeof t.benefits === 'string' ? (() => { try { return JSON.parse(t.benefits as string); } catch { return []; } })() : [],
+        })));
+        if (d.rewards) setRewards(d.rewards);
+      })
+      .catch(() => {});
+  }, []);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {

@@ -26,7 +26,7 @@ import { ConditionTagBadges } from '@/components/packages/condition-notes';
 import { ConditionNotes } from '@/components/packages/condition-notes';
 import { PackageLabelReprintModal } from '@/components/packages/label-reprint-modal';
 import { VerificationBadge } from '@/components/packages/package-verification';
-import { packages as rawPackages } from '@/lib/mock-data';
+// Packages now fetched from API (mock-data removed)
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { InventoryPackage, PackageProgramType, ConditionTag } from '@/lib/types';
 import {
@@ -155,8 +155,9 @@ const CONDITION_TAGS: ConditionTag[] = [
   'must_pickup_asap',
 ];
 
-function buildInventoryPackages(): InventoryPackage[] {
-  // Extend existing mock packages with program type + notes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
+  // Extend existing packages with program type + notes
   const extended: InventoryPackage[] = rawPackages.map((pkg, i) => ({
     ...pkg,
     programType: 'pmb' as PackageProgramType,
@@ -324,7 +325,22 @@ export default function PackagesPage() {
 
 function PackagesContent() {
   const searchParams = useSearchParams();
-  const [allPackages] = useState<InventoryPackage[]>(buildInventoryPackages);
+  const [allPackages, setAllPackages] = useState<InventoryPackage[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [packagesLoading, setPackagesLoading] = useState(true);
+
+  /* ── Fetch packages from API ────────────────────────────────── */
+  useEffect(() => {
+    setPackagesLoading(true);
+    fetch('/api/packages?limit=100')
+      .then((r) => r.json())
+      .then((data) => {
+        const built = buildInventoryPackages(data.packages ?? []);
+        setAllPackages(built);
+      })
+      .catch((err) => console.error('Failed to fetch packages:', err))
+      .finally(() => setPackagesLoading(false));
+  }, []);
 
   // Filters
   const [statusTab, setStatusTab] = useState('all');

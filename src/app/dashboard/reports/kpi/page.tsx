@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { formatNumber, seededRandom } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments, packages, customers } from '@/lib/mock-data';
 import {
   Activity,
   Package,
@@ -47,7 +47,7 @@ interface KpiDef {
   enabled: boolean;
 }
 
-function useKpiDefinitions(): KpiDef[] {
+function useKpiDefinitions(customers: any[], packages: any[], shipments: any[]): KpiDef[] {
   return useMemo(() => {
     const activeCustomers = customers.filter((c) => c.status === 'active').length;
     const totalPkgs = packages.length;
@@ -74,7 +74,7 @@ function useKpiDefinitions(): KpiDef[] {
       { id: 'active_customers', label: 'Active Customers', category: 'Customers', icon: <Users className="h-5 w-5" />, getValue: () => activeCustomers, format: 'number', change: 6.4, sparkData: mkSpark(10), enabled: true },
       { id: 'cost', label: 'Total COGS', category: 'Financial', icon: <DollarSign className="h-5 w-5" />, getValue: () => totalCost, format: 'currency', change: 4.5, sparkData: mkSpark(11), enabled: false },
     ];
-  }, []);
+  }, [customers, packages, shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -92,7 +92,23 @@ function formatKpiValue(value: number, format: 'number' | 'currency' | 'percent'
 /*  KPI Dashboard Page                                                        */
 /* -------------------------------------------------------------------------- */
 export default function KpiDashboardPage() {
-  const allKpis = useKpiDefinitions();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const allKpis = useKpiDefinitions(customers, packages, shipments);
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',

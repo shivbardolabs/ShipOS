@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
-import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
+
 import {
   ArrowLeft,
   Edit,
@@ -150,11 +150,41 @@ export default function CustomerDetailPage() {
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [form1583Override, setForm1583Override] = useState<string | null>(null);
 
-  const customer = customers.find((c) => c.id === params.id);
+  /* ── Fetch customer + relations from API ───────────────────── */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customerData, setCustomerData] = useState<any>(null);
+  const [customerLoading, setCustomerLoading] = useState(true);
+  const [loyaltyAccounts, setLoyaltyAccounts] = useState<any[]>([]);
+  const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
+  const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!params.id) return;
+    setCustomerLoading(true);
+    fetch(`/api/customers/${params.id}`)
+      .then((r) => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then((data) => setCustomerData(data))
+      .catch((err) => console.error('Failed to fetch customer:', err))
+      .finally(() => setCustomerLoading(false));
+  }, [params.id]);
+
+  // Fetch loyalty data
+  useEffect(() => {
+    fetch('/api/loyalty')
+      .then((r) => r.json())
+      .then((d) => {
+        setLoyaltyAccounts(d.accounts || []);
+        setLoyaltyTiers(d.tiers || []);
+        setLoyaltyRewards(d.rewards || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  const customer = customerData;
 
   const customerPackages = useMemo(
-    () => packages.filter((p) => p.customerId === customer?.id) as (PackageType & Record<string, unknown>)[],
-    [customer?.id]
+    () => (customer?.packages ?? []) as (PackageType & Record<string, unknown>)[],
+    [customer?.packages]
   );
   const inCustodyCount = useMemo(
     () => customerPackages.filter((p) => p.status !== 'released' && p.status !== 'returned').length,
@@ -190,16 +220,16 @@ export default function CustomerDetailPage() {
   ], [expandedPackageId]);
 
   const customerMail = useMemo(
-    () => mailPieces.filter((m) => m.customerId === customer?.id) as (MailPiece & Record<string, unknown>)[],
-    [customer?.id]
+    () => (customer?.mailPieces ?? []) as (MailPiece & Record<string, unknown>)[],
+    [customer?.mailPieces]
   );
   const customerShipments = useMemo(
-    () => shipments.filter((s) => s.customerId === customer?.id) as (Shipment & Record<string, unknown>)[],
-    [customer?.id]
+    () => (customer?.shipments ?? []) as (Shipment & Record<string, unknown>)[],
+    [customer?.shipments]
   );
   const customerNotifications = useMemo(
-    () => notifications.filter((n) => n.customerId === customer?.id) as (Notification & Record<string, unknown>)[],
-    [customer?.id]
+    () => (customer?.notifications ?? []) as (Notification & Record<string, unknown>)[],
+    [customer?.notifications]
   );
   // Use activity log for customer activity
   const { entries: allActivity, lastActionFor } = useActivityLog();
@@ -209,15 +239,29 @@ export default function CustomerDetailPage() {
   );
   const lastCustomerUpdate = lastActionFor('customer', customer?.id ?? '');
   const customerActivity = useMemo(
-    () => auditLog.slice(0, 10) as (AuditLogEntry & Record<string, unknown>)[],
+    () => customerActivityLog as (AuditLogEntry & Record<string, unknown>)[],
+    [customerActivityLog]
+  );
+
+  // Fee tracking data — placeholder until CustomerFee model is added
+  const feeSummary = useMemo(
+    () => ({ totalFees: 0, unpaidFees: 0, paidFees: 0, waivedFees: 0, fees: [] }),
     []
   );
 
-  // Fee tracking data for this customer
-  const feeSummary = useMemo(
-    () => getCustomerFeeSummary(customer?.id ?? ''),
-    [customer?.id]
-  );
+  if (customerLoading) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => router.push('/dashboard/customers')} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          Back to Customers
+        </Button>
+        <div className="glass-card p-12 text-center">
+          <div className="h-6 w-48 mx-auto rounded bg-surface-800 animate-pulse mb-3" />
+          <div className="h-4 w-64 mx-auto rounded bg-surface-800 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!customer) {
     return (
@@ -1079,7 +1123,7 @@ export default function CustomerDetailPage() {
             <CardContent>
               {customer.authorizedPickupPersons && customer.authorizedPickupPersons.length > 0 ? (
                 <div className="space-y-3">
-                  {customer.authorizedPickupPersons.map((person) => (
+                  {customer.authorizedPickupPersons.map((person: { id: string; name: string; relationship?: string; phone?: string }) => (
                     <div key={person.id} className="flex items-center gap-3 rounded-lg bg-surface-800/50 px-3 py-2.5">
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600/10 text-primary-500 text-xs font-semibold">
                         {person.name.split(' ').map(n => n[0]).join('')}

@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, formatNumber } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { customers } from '@/lib/mock-data';
 import {
   Users,
   Package,
@@ -44,7 +44,7 @@ interface CustomerAnalytics {
   tier: string;
 }
 
-function useCustomerData() {
+function useCustomerData(customers: any[]) {
   return useMemo(() => {
     const analytics: CustomerAnalytics[] = customers.map((c, i) => {
       const pkgCount = c.packageCount ?? seededRandom(i + 700, 5, 60);
@@ -125,13 +125,23 @@ function useCustomerData() {
       byPlatform,
       byTier,
     };
-  }, []);
+  }, [customers]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Customer Analytics Report Page — BAR-277                                   */
 /* -------------------------------------------------------------------------- */
 export default function CustomersReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -141,7 +151,7 @@ export default function CustomersReportPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [inactiveThreshold, setInactiveThreshold] = useState('30');
-  const data = useCustomerData();
+  const data = useCustomerData(customers);
 
   const inactiveCustomers = data.analytics.filter(
     (c) => c.lastActivity >= parseInt(inactiveThreshold)

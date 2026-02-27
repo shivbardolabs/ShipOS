@@ -1,13 +1,13 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
-import { shipments } from '@/lib/mock-data';
 import {
   RotateCcw,
   CheckCircle2,
@@ -66,6 +66,16 @@ function buildCarrierPickups(): CarrierPickup[] {
 /*  End of Day Page                                                           */
 /* -------------------------------------------------------------------------- */
 export default function EndOfDayPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [carriers, setCarriers] = useState<CarrierPickup[]>(buildCarrierPickups);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showManifest, setShowManifest] = useState<string | null>(null);

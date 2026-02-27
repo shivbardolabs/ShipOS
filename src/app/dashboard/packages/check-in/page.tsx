@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ import { useActivityLog } from '@/components/activity-log-provider';
 import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
-import { customers } from '@/lib/mock-data';
+// customers now fetched from API
 import { cn } from '@/lib/utils';
 import type { Customer, ConditionTag } from '@/lib/types';
 import type { QueuedLabel, PrintMode } from '@/components/packages/label-print-queue';
@@ -157,23 +157,24 @@ export default function CheckInPage() {
   // Success state
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Filtered customers
-  const filteredCustomers = useMemo(() => {
-    if (!customerSearch.trim()) return customers.filter((c) => c.status === 'active').slice(0, 8);
-    const q = customerSearch.toLowerCase();
-    return customers
-      .filter(
-        (c) =>
-          c.status === 'active' &&
-          (c.firstName.toLowerCase().includes(q) ||
-            c.lastName.toLowerCase().includes(q) ||
-            c.pmbNumber.toLowerCase().includes(q) ||
-            c.email?.toLowerCase().includes(q) ||
-            c.phone?.includes(q) ||
-            c.businessName?.toLowerCase().includes(q))
-      )
-      .slice(0, 10);
+  // Fetch customers from API with debounced search
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const customerDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current);
+    customerDebounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams({ limit: '10', status: 'active' });
+      if (customerSearch.trim()) params.set('search', customerSearch.trim());
+      fetch(`/api/customers?${params}`)
+        .then((r) => r.json())
+        .then((data) => setCustomers(data.customers ?? []))
+        .catch((err) => console.error('Failed to fetch customers:', err));
+    }, customerSearch ? 300 : 0);
+    return () => { if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current); };
   }, [customerSearch]);
+
+  const filteredCustomers = customers;
 
   /* ── BAR-37: Enhanced carrier detection from tracking number ─────────── */
   const handleTrackingNumberChange = useCallback(

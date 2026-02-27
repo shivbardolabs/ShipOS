@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
@@ -9,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { useActivityLog } from '@/components/activity-log-provider';
-import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import type { MailSortResult, MailSortResponse } from '@/app/api/mail/ai-sort/route';
@@ -187,6 +187,16 @@ function ScanningAnimation() {
 /*  Main Component                                                            */
 /* -------------------------------------------------------------------------- */
 export default function AIMailSortPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [phase, setPhase] = useState<SortPhase>('capture');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [sortedMail, setSortedMail] = useState<SortedMailPiece[]>([]);

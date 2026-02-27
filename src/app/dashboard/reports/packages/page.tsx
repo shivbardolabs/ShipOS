@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 
@@ -11,7 +12,6 @@ import { ReportFilters, type ReportFilterValues } from '@/components/reports/rep
 import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, DonutChart } from '@/components/reports/mini-bar-chart';
 import { formatNumber, seededRandom } from '@/lib/report-utils';
-import { packages, customers } from '@/lib/mock-data';
 import {
   Package,
   Clock,
@@ -39,7 +39,7 @@ type PackageRow = {
   [key: string]: unknown;
 };
 
-function usePackageData() {
+function usePackageData(customers: any[], packages: any[]) {
   return useMemo(() => {
     /* Status counts */
     const statusCounts: Record<string, number> = {};
@@ -102,7 +102,7 @@ function usePackageData() {
       .map(([name, count]) => ({ label: name, value: count }));
 
     return { rows, statusCounts, agingBuckets, carrierCounts, platformCounts, inSystem, overdue, topCustomers };
-  }, []);
+  }, [customers, packages]);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -123,6 +123,19 @@ function StatusBadge({ status }: { status: string }) {
 /*  Package Inventory Report                                                  */
 /* -------------------------------------------------------------------------- */
 export default function PackageReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -130,7 +143,7 @@ export default function PackageReportPage() {
     program: 'all',
   });
   const [activeTab, setActiveTab] = useState('snapshot');
-  const data = usePackageData();
+  const data = usePackageData(customers, packages);
 
   const columns: Column<PackageRow>[] = [
     { key: 'tracking', label: 'Tracking #', render: (r) => <span className="font-mono text-xs">{r.tracking}</span> },

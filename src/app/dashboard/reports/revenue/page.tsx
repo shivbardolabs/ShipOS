@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, generateDailySeries } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments, customers } from '@/lib/mock-data';
 import {
   DollarSign,
   TrendingUp,
@@ -25,7 +25,7 @@ import {
 /* -------------------------------------------------------------------------- */
 /*  Revenue data computations                                                  */
 /* -------------------------------------------------------------------------- */
-function useRevenueData() {
+function useRevenueData(customers: any[], shipments: any[]) {
   return useMemo(() => {
     const totalRevenue = shipments.reduce((s, sh) => s + sh.retailPrice, 0);
     const totalCost = shipments.reduce((s, sh) => s + sh.wholesaleCost, 0);
@@ -94,13 +94,26 @@ function useRevenueData() {
       revenueTrend,
       profitTrend,
     };
-  }, []);
+  }, [customers, shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Revenue Report Page                                                        */
 /* -------------------------------------------------------------------------- */
 export default function RevenueReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -108,7 +121,7 @@ export default function RevenueReportPage() {
     program: 'all',
   });
   const [activeTab, setActiveTab] = useState('summary');
-  const data = useRevenueData();
+  const data = useRevenueData(customers, shipments);
 
   const tabs = [
     { id: 'summary', label: 'Revenue Summary', icon: <DollarSign className="h-4 w-4" /> },

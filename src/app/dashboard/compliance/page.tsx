@@ -1,13 +1,13 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect} from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatCard, Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { customers } from '@/lib/mock-data';
 import { formatDate, cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import {
@@ -42,6 +42,16 @@ type ComplianceRow = Customer & { daysRemaining: number | null } & Record<string
 /* -------------------------------------------------------------------------- */
 
 export default function CompliancePage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const router = useRouter();
   const [filter, setFilter] = useState<'all' | 'expired' | 'critical' | 'warning' | 'ok'>('all');
 

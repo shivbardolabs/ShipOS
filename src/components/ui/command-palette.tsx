@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { customers, packages } from '@/lib/mock-data';
+
 import {
   Search,
   Users,
@@ -101,6 +101,17 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Fetch data when palette opens
+    fetch('/api/customers?limit=200').then((r) => r.json()).then((d) => setCustomers(d.customers || [])).catch(() => {});
+    fetch('/api/packages?limit=200').then((r) => r.json()).then((d) => setPackages(d.packages || [])).catch(() => {});
+  }, [open]);
 
   // Build search results
   const results = useMemo<SearchResult[]>(() => {
@@ -206,7 +217,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     // Sort by score descending, cap at 12
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, 12).map((s) => s.result);
-  }, [query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, customers, packages]);
 
   // Group results by type
   const grouped = useMemo(() => {

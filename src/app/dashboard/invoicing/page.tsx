@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/card';
@@ -10,7 +11,6 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { customers } from '@/lib/mock-data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   Plus,
@@ -120,6 +120,16 @@ const totalRevenue = invoices.reduce((s, i) => s + i.total, 0);
 /*  Invoicing Page                                                            */
 /* -------------------------------------------------------------------------- */
 export default function InvoicingPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [activeTab, setActiveTab] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
   const [actionRow, setActionRow] = useState<string | null>(null);

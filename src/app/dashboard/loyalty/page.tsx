@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import {
   Award,
@@ -16,13 +16,7 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
-import {
-  loyaltyProgram,
-  loyaltyTiers,
-  loyaltyAccounts,
-  loyaltyRewards,
-  loyaltyDashboardStats,
-} from '@/lib/mock-data';
+
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -58,6 +52,28 @@ function formatNumber(n: number) {
 /*  Page                                                                      */
 /* -------------------------------------------------------------------------- */
 export default function LoyaltyDashboardPage() {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const [loyaltyProgram, setLoyaltyProgram] = useState<any>(null);
+  const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
+  const [loyaltyAccounts, setLoyaltyAccounts] = useState<any[]>([]);
+  const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
+  const [loyaltyDashboardStats, setLoyaltyDashboardStats] = useState<any>({ totalMembers: 0, activeMembers: 0, totalPointsInCirculation: 0, lifetimePointsEarned: 0, tierDistribution: [], pointsIssuedThisMonth: 0, redemptionsThisMonth: 0, topCustomers: [], recentActivity: [] });
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  useEffect(() => {
+    fetch('/api/loyalty')
+      .then((r) => r.json())
+      .then((d) => {
+        setLoyaltyProgram(d.program ?? { name: 'ShipOS Rewards', isActive: false, pointsPerDollar: 1 });
+        setLoyaltyTiers(d.tiers || []);
+        setLoyaltyAccounts(d.accounts || []);
+        setLoyaltyRewards(d.rewards || []);
+        setLoyaltyDashboardStats(d.stats ?? loyaltyDashboardStats);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const stats = loyaltyDashboardStats;
 
@@ -69,7 +85,7 @@ export default function LoyaltyDashboardPage() {
 
   // Calculate additional stats
   const totalLifetimePoints = loyaltyAccounts.reduce((s, a) => s + a.lifetimePoints, 0);
-  const avgPointsPerMember = Math.round(totalLifetimePoints / loyaltyAccounts.length);
+  const avgPointsPerMember = loyaltyAccounts.length > 0 ? Math.round(totalLifetimePoints / loyaltyAccounts.length) : 0;
   const goldMembers = loyaltyAccounts.filter(a => a.currentTier?.name === 'Gold').length;
   const silverMembers = loyaltyAccounts.filter(a => a.currentTier?.name === 'Silver').length;
   const bronzeMembers = loyaltyAccounts.filter(a => a.currentTier?.name === 'Bronze').length;
@@ -79,14 +95,14 @@ export default function LoyaltyDashboardPage() {
       <PageHeader
         title="Loyalty Program"
         description={
-          loyaltyProgram.isActive
+          loyaltyProgram?.isActive
             ? `${loyaltyProgram.name} — ${stats.totalMembers} active members`
             : 'Program is currently inactive'
         }
       />
 
       {/* ── Status banner ─────────────────────────────────────────────── */}
-      {loyaltyProgram.isActive && (
+      {loyaltyProgram?.isActive && (
         <div className="relative overflow-hidden rounded-xl border layout-border bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-transparent p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -94,9 +110,9 @@ export default function LoyaltyDashboardPage() {
                 <Sparkles className="h-5 w-5 text-primary-500" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-surface-100">{loyaltyProgram.name}</h3>
+                <h3 className="text-sm font-bold text-surface-100">{loyaltyProgram?.name}</h3>
                 <p className="text-xs text-surface-400">
-                  {loyaltyProgram.pointsPerDollar} pt per $1 · {loyaltyTiers.length} tiers · {loyaltyRewards.length} rewards
+                  {loyaltyProgram?.pointsPerDollar ?? 1} pt per $1 · {loyaltyTiers.length} tiers · {loyaltyRewards.length} rewards
                 </p>
               </div>
             </div>
@@ -132,7 +148,14 @@ export default function LoyaltyDashboardPage() {
       <div className="grid lg:grid-cols-3 gap-4">
         {loyaltyTiers.map((tier) => {
           const count = tier.name === 'Gold' ? goldMembers : tier.name === 'Silver' ? silverMembers : bronzeMembers;
-          const pct = Math.round((count / stats.totalMembers) * 100);
+          const pct = stats.totalMembers > 0 ? Math.round((count / stats.totalMembers) * 100) : 0;
+          // Parse benefits from JSON string if needed
+          const benefits: string[] = Array.isArray(tier.benefits)
+            ? tier.benefits
+            : typeof tier.benefits === 'string'
+              ? (() => { try { return JSON.parse(tier.benefits); } catch { return []; } })()
+              : [];
+          tier = { ...tier, benefits };
           return (
             <div key={tier.id} className="rounded-xl border layout-border layout-card p-5">
               <div className="flex items-center justify-between mb-4">
