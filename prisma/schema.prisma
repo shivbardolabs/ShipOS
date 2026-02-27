@@ -43,8 +43,19 @@ model Tenant {
   stripePriceId        String?
 
   // Storage rate for package checkout (default $1/day after 30 days)
-  storageRate     Float @default(1.0)
-  storageFreedays Int   @default(30)
+  storageRate          Float   @default(1.0)
+  storageFreedays      Int     @default(30)
+  storageCountWeekends Boolean @default(true) // Whether to count Sat/Sun in storage days
+
+  // Receiving fee per package
+  receivingFeeRate Float @default(3.0)
+
+  // Package quota (monthly) — overage fee charged when exceeded
+  packageQuota        Int   @default(0) // 0 = unlimited
+  packageQuotaOverage Float @default(2.0) // Per-package overage fee
+
+  // Payment methods enabled for checkout
+  paymentMethods String? // JSON: { manual: bool, text2pay: bool, tapToGlass: bool, nfcReader: bool, cash: bool, postToAccount: bool }
 
   users         User[]
   customers     Customer[]
@@ -688,6 +699,51 @@ model PaymentRecord {
   stripePaymentId String?
   invoiceUrl  String?
   createdAt   DateTime @default(now())
+}
+
+// ── Checkout Transactions ────────────────────────────────────────────────────
+
+model CheckoutTransaction {
+  id            String   @id @default(cuid())
+  customerId    String
+  employeeId    String   // Staff who performed checkout
+  invoiceNumber String   @unique
+
+  // Fee breakdown
+  storageFees   Float    @default(0)
+  receivingFees Float    @default(0)
+  quotaFees     Float    @default(0)
+  addOnFees     Float    @default(0)
+  subtotal      Float    @default(0)
+  taxRate       Float    @default(0)
+  taxAmount     Float    @default(0)
+  total         Float    @default(0)
+
+  // Payment
+  paymentMethod String   @default("post_to_account") // post_to_account, cash, manual_card, text2pay, tap_to_glass, nfc_reader
+  paymentStatus String   @default("pending") // pending, completed, failed, refunded
+  paymentRef    String?  // External payment reference ID
+
+  // Packages released in this transaction
+  packageIds    String   // JSON array of package IDs
+  packageCount  Int      @default(0)
+
+  // Recipient info
+  recipientName String?  // If delegate pickup
+  recipientIdType   String?
+  signatureData String?  // Base64 signature
+
+  // Receipt delivery
+  receiptMethod String   @default("none") // email, sms, print, sms+print, none
+  receiptSentAt DateTime?
+
+  // Line items detail
+  lineItems     String?  // JSON: [{ description, qty, unitPrice, total }]
+
+  createdAt     DateTime @default(now())
+
+  @@index([customerId])
+  @@index([employeeId])
 }
 
 // ── Legal Documents ──────────────────────────────────────────────────────────
