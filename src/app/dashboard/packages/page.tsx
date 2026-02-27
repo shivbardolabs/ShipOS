@@ -326,7 +326,8 @@ export default function PackagesPage() {
 function PackagesContent() {
   const searchParams = useSearchParams();
   const [allPackages, setAllPackages] = useState<InventoryPackage[]>([]);
-  const [_packagesLoading, setPackagesLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [packagesLoading, setPackagesLoading] = useState(true);
 
   /* ── Fetch packages from API ────────────────────────────────── */
   useEffect(() => {

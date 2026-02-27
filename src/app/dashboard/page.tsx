@@ -303,7 +303,8 @@ export default function DashboardPage() {
 
   /* ── Live dashboard stats from Postgres ───────────────────────── */
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [_statsLoading, setStatsLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/dashboard/stats')
