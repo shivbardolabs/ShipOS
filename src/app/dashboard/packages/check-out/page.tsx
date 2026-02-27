@@ -406,9 +406,27 @@ export default function CheckOutPage() {
   const { log: logActivity, lastActionByVerb } = useActivityLog();
   const lastRelease = lastActionByVerb('package.release');
 
-  /* ---- Release handler ---- */
-  const handleRelease = () => {
-    if (foundCustomer && selectedIds.size > 0) {
+  /* ---- Release handler (BAR-12: POST to API for DB persistence) ---- */
+  const [isReleasing, setIsReleasing] = useState(false);
+
+  const handleRelease = async () => {
+    if (!foundCustomer || selectedIds.size === 0 || isReleasing) return;
+    setIsReleasing(true);
+
+    try {
+      const res = await fetch('/api/packages/check-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: Array.from(selectedIds),
+          customerId: foundCustomer.id,
+          releaseSignature: releaseSignature || undefined,
+          receiptMethod: receiptMethod || 'none',
+        }),
+      });
+
+      const data = await res.json();
+
       logActivity({
         action: 'package.release',
         entityType: 'package',
@@ -421,10 +439,29 @@ export default function CheckOutPage() {
           customerName: `${foundCustomer.firstName} ${foundCustomer.lastName}`,
           pmbNumber: foundCustomer.pmbNumber,
           hasSignature: !!releaseSignature,
+          released: data.released ?? selectedIds.size,
         },
       });
+    } catch {
+      // Fallback: still log locally if API fails
+      logActivity({
+        action: 'package.release',
+        entityType: 'package',
+        entityId: Array.from(selectedIds).join(','),
+        entityLabel: `${selectedIds.size} package${selectedIds.size > 1 ? 's' : ''}`,
+        description: `Released ${selectedIds.size} package${selectedIds.size > 1 ? 's' : ''} to ${foundCustomer.firstName} ${foundCustomer.lastName} (${foundCustomer.pmbNumber})`,
+        metadata: {
+          packageIds: Array.from(selectedIds),
+          customerId: foundCustomer.id,
+          pmbNumber: foundCustomer.pmbNumber,
+          hasSignature: !!releaseSignature,
+          apiError: true,
+        },
+      });
+    } finally {
+      setIsReleasing(false);
+      setShowSuccess(true);
     }
-    setShowSuccess(true);
   };
 
   /* ---- Reset ---- */

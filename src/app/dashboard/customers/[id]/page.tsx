@@ -272,8 +272,54 @@ export default function CustomerDetailPage() {
     ? Math.min(100, ((loyaltyAccount.lifetimePoints - loyaltyAccount.currentTier!.minPoints) / (nextTier.minPoints - loyaltyAccount.currentTier!.minPoints)) * 100)
     : loyaltyAccount ? 100 : 0;
 
+  // BAR-18: ID expiration warning banner
+  const idExpirationWarning = (() => {
+    const warnings: { idType: string; days: number }[] = [];
+    if (idDays !== null && idDays <= 90) {
+      warnings.push({ idType: customer.idType === 'drivers_license' ? "Driver's License" : 'Primary ID', days: idDays });
+    }
+    if (passportDays !== null && passportDays <= 90) {
+      warnings.push({ idType: 'Passport', days: passportDays });
+    }
+    return warnings;
+  })();
+
   return (
     <div className="space-y-6">
+      {/* BAR-18: ID Expiration Alert Banner */}
+      {idExpirationWarning.length > 0 && (
+        <div className={cn(
+          'rounded-xl border p-4 flex items-start gap-3',
+          idExpirationWarning.some((w) => w.days <= 0)
+            ? 'border-red-500/40 bg-red-500/10'
+            : idExpirationWarning.some((w) => w.days <= 30)
+              ? 'border-red-500/30 bg-red-500/5'
+              : 'border-yellow-500/30 bg-yellow-500/5',
+        )}>
+          <AlertTriangle className={cn(
+            'h-5 w-5 mt-0.5 flex-shrink-0',
+            idExpirationWarning.some((w) => w.days <= 0) ? 'text-red-400' : 'text-yellow-400',
+          )} />
+          <div>
+            <p className={cn(
+              'text-sm font-medium',
+              idExpirationWarning.some((w) => w.days <= 0) ? 'text-red-300' : 'text-yellow-300',
+            )}>
+              {idExpirationWarning.some((w) => w.days <= 0) ? 'Expired ID on File' : 'ID Expiring Soon'}
+            </p>
+            <div className="mt-1 space-y-0.5">
+              {idExpirationWarning.map((w) => (
+                <p key={w.idType} className="text-xs text-surface-400">
+                  {w.idType}: {w.days <= 0
+                    ? `expired ${Math.abs(w.days)} day${Math.abs(w.days) !== 1 ? 's' : ''} ago — CMRA compliance at risk`
+                    : `expires in ${w.days} day${w.days !== 1 ? 's' : ''} — customer should bring updated ID`}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back */}
       <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/customers')} leftIcon={<ArrowLeft className="h-4 w-4" />}>
         Back to Customers

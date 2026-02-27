@@ -106,6 +106,24 @@ function margin(price: number, cost: number): string {
   return `${(((price - cost) / price) * 100).toFixed(1)}%`;
 }
 
+/* BAR-47: Detect below-wholesale pricing (retail < cost) */
+function isBelowWholesale(price: number, cost: number | null): boolean {
+  if (cost === null || cost === 0) return false;
+  return price < cost;
+}
+
+/* BAR-47: Detect stale rates (not updated in 90+ days) */
+function isStaleRate(updatedAt: Date | string): boolean {
+  const updated = new Date(updatedAt);
+  const daysSinceUpdate = Math.floor((Date.now() - updated.getTime()) / 86400000);
+  return daysSinceUpdate >= 90;
+}
+
+function staleDays(updatedAt: Date | string): number {
+  const updated = new Date(updatedAt);
+  return Math.floor((Date.now() - updated.getTime()) / 86400000);
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Form types                                                                */
 /* -------------------------------------------------------------------------- */
@@ -412,11 +430,31 @@ function ActionRow({
           </div>
           <div className="w-16">
             <p className="text-xs text-surface-500">Margin</p>
-            <p className="text-sm font-medium text-emerald-400">
+            <p className={cn('text-sm font-medium', (() => {
+              const belowCost = action.has_tiered_pricing
+                ? isBelowWholesale(action.first_unit_price ?? 0, action.cogs_first_unit)
+                : isBelowWholesale(action.retail_price, action.cogs);
+              return belowCost ? 'text-red-400' : 'text-emerald-400';
+            })())}>
               {action.has_tiered_pricing
                 ? margin(action.first_unit_price ?? 0, action.cogs_first_unit ?? 0)
                 : margin(action.retail_price, action.cogs)}
             </p>
+          </div>
+          {/* BAR-47: Below-wholesale & stale rate warnings */}
+          <div className="w-6 flex flex-col items-center gap-1 flex-shrink-0">
+            {(action.has_tiered_pricing
+              ? isBelowWholesale(action.first_unit_price ?? 0, action.cogs_first_unit)
+              : isBelowWholesale(action.retail_price, action.cogs)) && (
+              <span title="Retail price is below wholesale cost — you are losing money on this service" className="text-red-400">
+                <AlertCircle className="h-4 w-4" />
+              </span>
+            )}
+            {isStaleRate(action.updated_at) && (
+              <span title={`Rate not updated in ${staleDays(action.updated_at)} days — may be outdated`} className="text-yellow-400">
+                <AlertCircle className="h-3.5 w-3.5" />
+              </span>
+            )}
           </div>
         </div>
 

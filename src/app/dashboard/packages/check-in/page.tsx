@@ -24,6 +24,7 @@ import {
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
+import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
@@ -173,36 +174,90 @@ export default function CheckInPage() {
     else setSenderName('');
   };
 
-  // Handle submit — log the action
+  // Handle submit — save to DB + trigger notifications (BAR-35 + BAR-10)
   const { log: logActivity, lastActionByVerb } = useActivityLog();
   const lastCheckIn = lastActionByVerb('package.check_in');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     const carrierLabel = selectedCarrier === 'other' ? (customCarrierName || 'Other') : (selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown');
     const custLabel = isWalkIn
       ? `Walk-in: ${walkInName}`
       : selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})` : '';
-    logActivity({
-      action: 'package.check_in',
-      entityType: 'package',
-      entityId: `pkg_${Date.now()}`,
-      entityLabel: trackingNumber || `${carrierLabel} package`,
-      description: `Checked in ${carrierLabel} package for ${custLabel}`,
-      metadata: {
-        carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
-        trackingNumber,
-        packageType,
-        customerId: selectedCustomer?.id,
-        customerName: custLabel,
-        hazardous,
-        perishable,
-        requiresSignature,
-        storageLocation: storageLocation || undefined,
-        isWalkIn,
-        walkInName: isWalkIn ? walkInName : undefined,
-      },
-    });
-    setShowSuccess(true);
+
+    try {
+      // POST to API — saves package + sends notifications
+      const res = await fetch('/api/packages/check-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: selectedCustomer?.id || undefined,
+          trackingNumber: trackingNumber || undefined,
+          carrier: selectedCarrier === 'other' ? (customCarrierName || 'other') : selectedCarrier,
+          senderName: senderName || undefined,
+          packageType,
+          condition,
+          hazardous,
+          perishable,
+          requiresSignature,
+          storageLocation: storageLocation || undefined,
+          notes: notes || undefined,
+          isWalkIn,
+          walkInName: isWalkIn ? walkInName : undefined,
+          sendEmail,
+          sendSms,
+          printLabel,
+        }),
+      });
+
+      const data = await res.json();
+      const entityId = data.package?.id || `pkg_${Date.now()}`;
+
+      logActivity({
+        action: 'package.check_in',
+        entityType: 'package',
+        entityId,
+        entityLabel: trackingNumber || `${carrierLabel} package`,
+        description: `Checked in ${carrierLabel} package for ${custLabel}`,
+        metadata: {
+          carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
+          trackingNumber,
+          packageType,
+          customerId: selectedCustomer?.id,
+          customerName: custLabel,
+          hazardous,
+          perishable,
+          requiresSignature,
+          storageLocation: storageLocation || undefined,
+          isWalkIn,
+          walkInName: isWalkIn ? walkInName : undefined,
+          notificationSent: data.notification?.sent ?? false,
+        },
+      });
+    } catch {
+      // Fallback: still log locally even if API fails
+      logActivity({
+        action: 'package.check_in',
+        entityType: 'package',
+        entityId: `pkg_${Date.now()}`,
+        entityLabel: trackingNumber || `${carrierLabel} package`,
+        description: `Checked in ${carrierLabel} package for ${custLabel}`,
+        metadata: {
+          carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
+          trackingNumber,
+          packageType,
+          customerId: selectedCustomer?.id,
+          customerName: custLabel,
+          apiError: true,
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+      setShowSuccess(true);
+    }
   };
 
   // Reset for new check-in
@@ -467,21 +522,32 @@ export default function CheckInPage() {
 
             {/* Tracking Number — moved here from Step 3 (BAR-239) */}
             <div className="max-w-lg">
-              <Input
-                label="Tracking Number"
-                placeholder="Enter or scan tracking number"
-                value={trackingNumber}
-                onChange={(e) => {
-                  setTrackingNumber(e.target.value);
-                  // Auto-suggest carrier from tracking prefix
-                  const suggested = suggestCarrierFromTracking(e.target.value);
-                  if (suggested && !selectedCarrier) {
-                    handleCarrierSelect(suggested);
-                  }
-                }}
-                leftIcon={<ScanBarcode className="h-5 w-5" />}
-                className="!py-3"
-              />
+              {/* BAR-36: Barcode scanner for tracking numbers */}
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Input
+                    label="Tracking Number"
+                    placeholder="Enter or scan tracking number"
+                    value={trackingNumber}
+                    onChange={(e) => {
+                      setTrackingNumber(e.target.value);
+                      const suggested = suggestCarrierFromTracking(e.target.value);
+                      if (suggested && !selectedCarrier) {
+                        handleCarrierSelect(suggested);
+                      }
+                    }}
+                    leftIcon={<ScanBarcode className="h-5 w-5" />}
+                    className="!py-3"
+                  />
+                </div>
+                <BarcodeScanner
+                  onScan={(value) => {
+                    setTrackingNumber(value);
+                    const suggested = suggestCarrierFromTracking(value);
+                    if (suggested) handleCarrierSelect(suggested);
+                  }}
+                />
+              </div>
               {trackingNumber.trim() && !selectedCarrier && (
                 <p className="mt-1 text-xs text-amber-400">
                   <AlertTriangle className="h-3 w-3 inline mr-1" />
