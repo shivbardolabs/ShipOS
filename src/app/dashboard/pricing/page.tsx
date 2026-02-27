@@ -113,18 +113,6 @@ function isBelowWholesale(price: number, cost: number | null): boolean {
   return price < cost;
 }
 
-/* BAR-47: Detect stale rates (not updated in 90+ days) */
-function isStaleRate(updatedAt: Date | string): boolean {
-  const updated = new Date(updatedAt);
-  const daysSinceUpdate = Math.floor((Date.now() - updated.getTime()) / 86400000);
-  return daysSinceUpdate >= 90;
-}
-
-function staleDays(updatedAt: Date | string): number {
-  const updated = new Date(updatedAt);
-  return Math.floor((Date.now() - updated.getTime()) / 86400000);
-}
-
 /* -------------------------------------------------------------------------- */
 /*  Form types                                                                */
 /* -------------------------------------------------------------------------- */
@@ -442,18 +430,13 @@ function ActionRow({
                 : margin(action.retail_price, action.cogs)}
             </p>
           </div>
-          {/* BAR-47: Below-wholesale & stale rate warnings */}
-          <div className="w-6 flex flex-col items-center gap-1 flex-shrink-0">
+          {/* BAR-47: Below-wholesale price warning */}
+          <div className="w-6 flex items-center justify-center flex-shrink-0">
             {(action.has_tiered_pricing
               ? isBelowWholesale(action.first_unit_price ?? 0, action.cogs_first_unit)
               : isBelowWholesale(action.retail_price, action.cogs)) && (
               <span title="Retail price is below wholesale cost — you are losing money on this service" className="text-red-400">
                 <AlertCircle className="h-4 w-4" />
-              </span>
-            )}
-            {isStaleRate(action.updated_at) && (
-              <span title={`Rate not updated in ${staleDays(action.updated_at)} days — may be outdated`} className="text-yellow-400">
-                <AlertCircle className="h-3.5 w-3.5" />
               </span>
             )}
           </div>
