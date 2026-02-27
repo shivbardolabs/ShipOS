@@ -492,3 +492,71 @@ export interface CustomerFeeSummary {
   feeCount: number;
   fees: CustomerFee[];
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Package Management — BAR-266/13/39/187/246/259                            */
+/* -------------------------------------------------------------------------- */
+
+/** Package program type for inventory categorization (BAR-266) */
+export type PackageProgramType = 'pmb' | 'ups_ap' | 'fedex_hal' | 'kinek';
+
+/** Condition quick-note tags (BAR-39) */
+export type ConditionTag =
+  | 'damaged'
+  | 'open_resealed'
+  | 'wet'
+  | 'leaking'
+  | 'oversized'
+  | 'perishable'
+  | 'fragile'
+  | 'must_pickup_asap';
+
+/** Put-back reason (BAR-187) */
+export type PutBackReason =
+  | 'customer_not_present'
+  | 'wrong_package'
+  | 'id_mismatch'
+  | 'customer_declined'
+  | 'other';
+
+/** Label verification status (BAR-246) */
+export type VerificationStatus = 'unverified' | 'verified' | 'mismatch';
+
+/** Extended package fields for the inventory system */
+export interface InventoryPackage extends Package {
+  /** Package program type (BAR-266) */
+  programType: PackageProgramType;
+  /** Kinek 7-digit number (BAR-266) */
+  kinekNumber?: string;
+  /** Recipient name for non-PMB packages (AP/HAL/Kinek) */
+  recipientName?: string;
+  /** Hold deadline for carrier program packages */
+  holdDeadline?: string;
+  /** Customer-facing condition notes (BAR-39) */
+  customerNote?: string;
+  /** Internal/staff-only notes (BAR-39) */
+  internalNote?: string;
+  /** Quick condition tags (BAR-39) */
+  conditionTags?: ConditionTag[];
+  /** Photo URLs for damage documentation (BAR-39) */
+  conditionPhotos?: string[];
+  /** Label verification status (BAR-246) */
+  verificationStatus?: VerificationStatus;
+  /** Put-back count */
+  putBackCount?: number;
+  /** Last put-back reason (BAR-187) */
+  lastPutBackReason?: PutBackReason;
+  [key: string]: unknown;
+}
+
+/** Carrier label reprint record (BAR-84) */
+export interface CarrierLabelRecord {
+  id: string;
+  trackingNumber: string;
+  carrier: string;
+  service: string;
+  labelHtml: string;
+  printedAt: string;
+  shipmentId: string;
+  customerName: string;
+}

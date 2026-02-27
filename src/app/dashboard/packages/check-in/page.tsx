@@ -25,10 +25,11 @@ import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { BarcodeScanner } from '@/components/ui/barcode-scanner';
+import { ConditionNotes } from '@/components/packages/condition-notes';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { customers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import type { Customer } from '@/lib/types';
+import type { Customer, ConditionTag } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
 /*  Step Config                                                               */
@@ -110,6 +111,12 @@ export default function CheckInPage() {
   const [notes, setNotes] = useState('');
   const [storageLocation, setStorageLocation] = useState(''); // Physical shelf/bin location
   const [requiresSignature, setRequiresSignature] = useState(false);
+
+  // BAR-39: Condition Notes & Annotations
+  const [conditionTags, setConditionTags] = useState<ConditionTag[]>([]);
+  const [customerNote, setCustomerNote] = useState('');
+  const [internalNote, setInternalNote] = useState('');
+  const [conditionPhotos, setConditionPhotos] = useState<string[]>([]);
 
   // Step 4 — Notify
   const [printLabel, setPrintLabel] = useState(true);
@@ -207,6 +214,10 @@ export default function CheckInPage() {
           notes: notes || undefined,
           isWalkIn,
           walkInName: isWalkIn ? walkInName : undefined,
+          conditionTags: conditionTags.length > 0 ? conditionTags : undefined,
+          customerNote: customerNote || undefined,
+          internalNote: internalNote || undefined,
+          conditionPhotos: conditionPhotos.length > 0 ? conditionPhotos : undefined,
           sendEmail,
           sendSms,
           printLabel,
@@ -280,6 +291,10 @@ export default function CheckInPage() {
     setConditionOther('');
     setNotes('');
     setStorageLocation('');
+    setConditionTags([]);
+    setCustomerNote('');
+    setInternalNote('');
+    setConditionPhotos([]);
     setPrintLabel(true);
     setSendEmail(true);
     setSendSms(true);
@@ -740,6 +755,20 @@ export default function CheckInPage() {
               </div>
             )}
 
+            {/* BAR-39: Package Condition Notes & Annotations */}
+            <div className="border-t border-surface-800 pt-4">
+              <ConditionNotes
+                selectedTags={conditionTags}
+                customerNote={customerNote}
+                internalNote={internalNote}
+                photos={conditionPhotos}
+                onTagsChange={setConditionTags}
+                onCustomerNoteChange={setCustomerNote}
+                onInternalNoteChange={setInternalNote}
+                onPhotosChange={setConditionPhotos}
+              />
+            </div>
+
             {/* Storage Location — where the package will be physically stored */}
             <div className="max-w-lg">
               <Input
@@ -754,7 +783,7 @@ export default function CheckInPage() {
             {/* Notes */}
             <div className="max-w-lg">
               <Textarea
-                label="Notes"
+                label="General Notes"
                 placeholder="Any special handling instructions..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -851,6 +880,22 @@ export default function CheckInPage() {
                   />
                 )}
               </div>
+              {(conditionTags.length > 0 || customerNote || internalNote) && (
+                <div className="pt-3 border-t border-surface-800 space-y-2">
+                  {conditionTags.length > 0 && (
+                    <SummaryField label="Condition Tags" value={conditionTags.join(', ')} />
+                  )}
+                  {customerNote && (
+                    <SummaryField label="Customer Note" value={customerNote} />
+                  )}
+                  {internalNote && (
+                    <SummaryField label="Internal Note (Staff Only)" value={internalNote} />
+                  )}
+                  {conditionPhotos.length > 0 && (
+                    <SummaryField label="Condition Photos" value={`${conditionPhotos.length} photo(s) attached`} />
+                  )}
+                </div>
+              )}
               {notes && (
                 <div className="pt-3 border-t border-surface-800">
                   <SummaryField label="Notes" value={notes} />
