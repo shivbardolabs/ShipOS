@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   AlertOctagon,
@@ -97,6 +98,7 @@ export function AlertBadge({
 
   return (
     <span
+      data-priority={priority}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border',
         token.bgLight,
@@ -142,17 +144,48 @@ export function AlertCard({
   const token = ALERT_TOKENS[priority];
   const Icon = token.Icon;
 
+  /* BAR-264: Auto-stop animation on interaction (click or hover 2s) */
+  const [interacted, setInteracted] = useState(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (!timeSensitive || interacted) return;
+    hoverTimerRef.current = setTimeout(() => setInteracted(true), 2000);
+  }, [timeSensitive, interacted]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
+
+  const handleClick = useCallback(() => {
+    if (timeSensitive) setInteracted(true);
+    onClick?.();
+  }, [timeSensitive, onClick]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
   return (
     <div
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onClick={onClick}
-      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      data-priority={priority}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && handleClick() : undefined}
       className={cn(
         'relative overflow-hidden rounded-lg border',
         token.bgLight,
         token.border,
         timeSensitive && 'alert-time-sensitive',
+        timeSensitive && interacted && 'alert-interacted',
         onClick && 'cursor-pointer hover:brightness-95 transition-all',
         className
       )}

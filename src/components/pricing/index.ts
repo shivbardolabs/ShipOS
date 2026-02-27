@@ -5,3 +5,4 @@ export { SubscriptionsTab } from './subscriptions-tab';
 export { CustomerBillingTab } from './customer-billing-tab';
 export { CarrierIncentivesTab } from './carrier-incentives-tab';
 export { ReportsAuditTab } from './reports-audit-tab';
+export { DigitalMailCostsTab } from './digital-mail-costs-tab';

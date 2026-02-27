@@ -14,6 +14,7 @@ import {
   Truck,
   BarChart3,
   ShieldCheck,
+  Mail,
 } from 'lucide-react';
 import {
   PriceListTab,
@@ -23,6 +24,7 @@ import {
   CustomerBillingTab,
   CarrierIncentivesTab,
   ReportsAuditTab,
+  DigitalMailCostsTab,
 } from '@/components/pricing';
 
 /* -------------------------------------------------------------------------- */
@@ -36,6 +38,7 @@ const TABS = [
   { id: 'billing', label: 'Customer Billing', icon: <CreditCard className="h-3.5 w-3.5" /> },
   { id: 'carrier-incentives', label: 'Carrier Incentives', icon: <Truck className="h-3.5 w-3.5" /> },
   { id: 'reports', label: 'Reports & Audit', icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { id: 'digital-mail', label: 'Digital Mail Costs', icon: <Mail className="h-3.5 w-3.5" /> },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -111,6 +114,10 @@ export default function PricingDashboardPage() {
 
       <TabPanel active={activeTab === 'reports'}>
         <ReportsAuditTab />
+      </TabPanel>
+
+      <TabPanel active={activeTab === 'digital-mail'}>
+        <DigitalMailCostsTab />
       </TabPanel>
     </div>
   );

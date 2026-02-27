@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { AlertCard, ALERT_TOKENS } from './alert-badge';
@@ -124,7 +124,22 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
 
   // Count by priority for header
   const urgentCount = alerts.filter((a) => a.priority === 'urgent_important').length;
+  const hasTimeSensitive = alerts.some((a) => a.isTimeSensitive);
   const totalCount = alerts.length;
+
+  /* BAR-264: Sort time-sensitive alerts above non-time-sensitive of same priority */
+  const sortedAlerts = useMemo(() => {
+    const priorityOrder: Record<string, number> = { urgent_important: 0, urgent: 1, important: 2, completed: 3 };
+    return [...alerts].sort((a, b) => {
+      const pa = priorityOrder[a.priority] ?? 9;
+      const pb = priorityOrder[b.priority] ?? 9;
+      if (pa !== pb) return pa - pb;
+      // Same priority: time-sensitive first
+      if (a.isTimeSensitive !== b.isTimeSensitive) return a.isTimeSensitive ? -1 : 1;
+      // Same priority & sensitivity: newest first
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [alerts]);
 
   if (loading) return null;
   if (totalCount === 0) {
@@ -146,7 +161,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
         className="flex items-center justify-between w-full px-5 py-3 hover:bg-surface-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="relative">
+          <div className={cn('relative', hasTimeSensitive && 'bell-pulse')}>
             <Bell className="h-5 w-5 text-surface-300" />
             {totalCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -182,7 +197,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
       {/* Alert list */}
       {expanded && (
         <div className="px-4 pb-3 space-y-2">
-          {alerts.map((alert) => (
+          {sortedAlerts.map((alert) => (
             <AlertCard
               key={alert.id}
               priority={alert.priority}

@@ -56,6 +56,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useActivityLog } from '@/components/activity-log-provider';
 import type { ActionCategory } from '@/lib/activity-log';
 import type { Briefing, BriefingResponse } from '@/app/api/dashboard/briefing/route';
+import { CarrierStatusSection } from '@/components/dashboard/carrier-status-section';
 
 /* -------------------------------------------------------------------------- */
 /*  Activity icon mapping — for both legacy recentActivity and activity log   */
@@ -379,6 +380,11 @@ export default function DashboardPage() {
       {/*  BAR-262: Alert Summary Panel                                       */}
       {/* ------------------------------------------------------------------ */}
       <AlertSummaryPanel tenantId="default" />
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  BAR-258: Carrier Status — Daily Drop-off & Pickup Tracker         */}
+      {/* ------------------------------------------------------------------ */}
+      <CarrierStatusSection />
 
       {/* ------------------------------------------------------------------ */}
       {/*  AI Morning Briefing                                                */}
