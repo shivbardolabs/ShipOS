@@ -636,7 +636,7 @@ export default function CustomerDetailPage() {
                       {loyaltyAccount.currentTier.name} Tier Benefits
                     </h4>
                     <ul className="space-y-2">
-                      {loyaltyAccount.currentTier.benefits.map((b, i) => (
+                      {(Array.isArray(loyaltyAccount.currentTier.benefits) ? loyaltyAccount.currentTier.benefits : (() => { try { return JSON.parse(loyaltyAccount.currentTier.benefits || '[]'); } catch { return []; } })()).map((b: string, i: number) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-surface-300">
                           <Star className="h-3.5 w-3.5 flex-shrink-0" style={{ color: loyaltyAccount.currentTier!.color }} />
                           {b}
