@@ -118,7 +118,7 @@ const navSections: NavSection[] = [
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
-      { label: 'Action Pricing', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
+      { label: 'Pricing Dashboard', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
