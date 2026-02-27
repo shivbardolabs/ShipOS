@@ -161,7 +161,7 @@ Guidelines:
 
 /* ── Demo briefing ──────────────────────────────────────────────────────── */
 
-function getDemoBriefing(): Briefing {
+async function getDemoBriefing(): Promise<Briefing> {
   const data = await aggregateStoreData();
 
   return {
@@ -247,7 +247,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
       } satisfies BriefingResponse);
     }
 
@@ -291,7 +291,7 @@ export async function GET() {
         {
           success: false,
           mode: 'ai' as const,
-          briefing: getDemoBriefing(),
+          briefing: await getDemoBriefing(),
           error: `AI API error: ${detail}`,
         } satisfies BriefingResponse,
         { status: 502 }
@@ -314,7 +314,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
         error: 'Failed to parse AI response, using demo briefing',
       } satisfies BriefingResponse);
     }
@@ -330,7 +330,7 @@ export async function GET() {
       {
         success: false,
         mode: 'demo' as const,
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
         error: 'Internal server error',
       } satisfies BriefingResponse,
       { status: 500 }

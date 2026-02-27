@@ -167,7 +167,7 @@ function getLedgerBalance(entries: AccountLedgerEntry[]): number {
 /* -------------------------------------------------------------------------- */
 /*  Monthly Package Stats                                                     */
 /* -------------------------------------------------------------------------- */
-function getMonthlyPackageStats(customerId: string, allPackages: typeof packages) {
+function getMonthlyPackageStats(customerId: string, allPackages: PackageType[]) {
   const now = new Date('2026-02-21T15:00:00');
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const custPkgs = allPackages.filter((p) => p.customerId === customerId);
@@ -494,11 +494,11 @@ export default function CheckOutPage() {
   /* ---- Account stats for selected customer ---- */
   const accountStats = useMemo(() => {
     if (!foundCustomer) return null;
-    const stats = getMonthlyPackageStats(foundCustomer.id, packages);
+    const stats = getMonthlyPackageStats(foundCustomer.id, customerPackages);
     const ledger = getCustomerLedger(foundCustomer.id);
     const runningBalance = getLedgerBalance(ledger);
     return { ...stats, ledger, runningBalance };
-  }, [foundCustomer]);
+  }, [foundCustomer, customerPackages]);
 
   /* ---- Activity log ---- */
   const { log: logActivity, lastActionByVerb } = useActivityLog();
