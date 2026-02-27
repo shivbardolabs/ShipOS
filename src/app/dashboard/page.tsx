@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { PageHeader } from '@/components/layout/page-header';
+import { AlertSummaryPanel } from '@/components/ui/alert-summary-panel';
 import { ExpandableStatCard } from '@/components/ui/expandable-stat-card';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -373,6 +374,11 @@ export default function DashboardPage() {
         description={`${greeting}, ${firstName}${dateString ? ` — ${dateString}` : ''}`}
       />
 
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  BAR-262: Alert Summary Panel                                       */}
+      {/* ------------------------------------------------------------------ */}
+      <AlertSummaryPanel tenantId="default" />
 
       {/* ------------------------------------------------------------------ */}
       {/*  AI Morning Briefing                                                */}
