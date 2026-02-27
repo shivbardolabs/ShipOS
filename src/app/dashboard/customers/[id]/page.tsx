@@ -1108,7 +1108,7 @@ export default function CustomerDetailPage() {
             <CardContent>
               {customer.authorizedPickupPersons && customer.authorizedPickupPersons.length > 0 ? (
                 <div className="space-y-3">
-                  {customer.authorizedPickupPersons.map((person) => (
+                  {customer.authorizedPickupPersons.map((person: { id: string; name: string; relationship: string; idType?: string; idExpires?: string }) => (
                     <div key={person.id} className="flex items-center gap-3 rounded-lg bg-surface-800/50 px-3 py-2.5">
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600/10 text-primary-500 text-xs font-semibold">
                         {person.name.split(' ').map(n => n[0]).join('')}
