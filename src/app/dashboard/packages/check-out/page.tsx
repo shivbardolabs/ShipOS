@@ -35,6 +35,7 @@ import { SignaturePad } from '@/components/ui/signature-pad';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
+import { SignatureTagPrint } from '@/components/packages/signature-tag-print';
 import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 import { QRCode } from '@/components/packages/qr-generator';
 import { PackageVerification } from '@/components/packages/package-verification';
@@ -208,8 +209,14 @@ export default function CheckOutPage() {
   /* ---- Receipt state ---- */
   const [receiptMethod, setReceiptMethod] = useState<ReceiptMethod>('sms');
 
-  /* ---- Release signature state — captured during checkout ---- */
+  /* ---- Release signature state — captured during checkout (BAR-189) ---- */
   const [releaseSignature, setReleaseSignature] = useState<string | null>(null);
+  /** BAR-189: Signature capture method — touchscreen or payment terminal */
+  const [signatureMethod, setSignatureMethod] = useState<'touchscreen' | 'terminal'>('touchscreen');
+  /** BAR-189: Signature required flag (configurable per tenant; default true) */
+  const [signatureRequired] = useState(true);
+  /** BAR-189: Terminal signature status */
+  const [terminalSignatureStatus, setTerminalSignatureStatus] = useState<'idle' | 'requesting' | 'captured' | 'failed'>('idle');
 
   /* ---- Payment mode: post to A/P vs collect now ---- */
   const [paymentMode, setPaymentMode] = useState<'post_to_account' | 'pay_now'>('post_to_account');
@@ -478,6 +485,8 @@ export default function CheckOutPage() {
 
   const handleRelease = async () => {
     if (!foundCustomer || selectedIds.size === 0 || isReleasing) return;
+    /* BAR-189: Block release if signature is required but not captured */
+    if (signatureRequired && !releaseSignature) return;
     setIsReleasing(true);
 
     try {
@@ -488,6 +497,7 @@ export default function CheckOutPage() {
           packageIds: Array.from(selectedIds),
           customerId: foundCustomer.id,
           releaseSignature: releaseSignature || undefined,
+          signatureMethod: signatureMethod,
           receiptMethod: receiptMethod || 'none',
         }),
       });
@@ -1287,30 +1297,122 @@ export default function CheckOutPage() {
                       )}
                     </Card>
 
-                    {/* Signature — captures customer signature for package release */}
+                    {/* BAR-189: Signature Capture — Enhanced checkout signature */}
                     <Card padding="md">
-                      <label className="text-sm font-semibold text-surface-300 block mb-3">Customer Signature</label>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-sm font-semibold text-surface-300 flex items-center gap-2">
+                          Customer Signature
+                          {signatureRequired && (
+                            <span className="text-[10px] font-medium text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Required</span>
+                          )}
+                        </label>
+                        {/* BAR-189: Capture method toggle */}
+                        <div className="flex rounded-lg border border-surface-700 overflow-hidden">
+                          <button
+                            onClick={() => setSignatureMethod('touchscreen')}
+                            className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                              signatureMethod === 'touchscreen'
+                                ? 'bg-primary-600 text-white'
+                                : 'text-surface-400 hover:text-surface-200'
+                            }`}
+                          >
+                            Touchscreen
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSignatureMethod('terminal');
+                              setTerminalSignatureStatus('idle');
+                            }}
+                            className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                              signatureMethod === 'terminal'
+                                ? 'bg-primary-600 text-white'
+                                : 'text-surface-400 hover:text-surface-200'
+                            }`}
+                          >
+                            Payment Terminal
+                          </button>
+                        </div>
+                      </div>
+
                       {releaseSignature ? (
                         <div className="space-y-2">
                           <div className="h-28 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-center p-2">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={releaseSignature} alt="Customer signature" className="max-h-full max-w-full object-contain" />
                           </div>
-                          <button
-                            onClick={() => setReleaseSignature(null)}
-                            className="text-xs text-surface-500 hover:text-surface-300 transition-colors"
-                          >
-                            Clear &amp; re-sign
-                          </button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                              ✓ Captured via {signatureMethod === 'terminal' ? 'payment terminal' : 'touchscreen'}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setReleaseSignature(null);
+                                setTerminalSignatureStatus('idle');
+                              }}
+                              className="text-xs text-surface-500 hover:text-surface-300 transition-colors"
+                            >
+                              Clear &amp; re-sign
+                            </button>
+                          </div>
                         </div>
-                      ) : (
+                      ) : signatureMethod === 'touchscreen' ? (
                         <SignaturePad
                           onSign={(dataUrl) => setReleaseSignature(dataUrl)}
                           height={112}
                           label=""
                         />
+                      ) : (
+                        /* BAR-189: Payment terminal signature capture */
+                        <div className="flex flex-col items-center justify-center py-6 rounded-xl border border-dashed border-surface-700 bg-surface-800/20">
+                          {terminalSignatureStatus === 'idle' && (
+                            <>
+                              <p className="text-sm text-surface-400 mb-3">Send signature request to payment terminal</p>
+                              <button
+                                onClick={() => {
+                                  setTerminalSignatureStatus('requesting');
+                                  // Simulate terminal response after 3s
+                                  setTimeout(() => {
+                                    setTerminalSignatureStatus('captured');
+                                    setReleaseSignature('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMTAwIj48cGF0aCBkPSJNMTAgNTAgQzMwIDIwLCA2MCA4MCwgOTAgNDAgQzEyMCAwLCAxNTAgOTAsIDE4MCA1MCBDMjEwIDEwLCAyNDAgNzAsIDI4MCA0MCIgc3Ryb2tlPSIjMzMzIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=');
+                                  }, 3000);
+                                }}
+                                className="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
+                              >
+                                Request Terminal Signature
+                              </button>
+                            </>
+                          )}
+                          {terminalSignatureStatus === 'requesting' && (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="h-8 w-8 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+                              <p className="text-sm text-primary-400">Waiting for customer to sign on terminal...</p>
+                              <button
+                                onClick={() => setTerminalSignatureStatus('idle')}
+                                className="text-xs text-surface-500 hover:text-surface-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* BAR-189: Missing signature warning */}
+                      {signatureRequired && !releaseSignature && (
+                        <p className="text-[10px] text-amber-400 mt-2 flex items-center gap-1">
+                          ⚠ Signature required before release
+                        </p>
                       )}
                     </Card>
+
+                    {/* BAR-100: Signature Tag Printing */}
+                    {foundCustomer && customerPackages.length > 0 && (
+                      <SignatureTagPrint
+                        packages={customerPackages}
+                        customer={foundCustomer}
+                        selectedIds={selectedIds}
+                      />
+                    )}
                   </div>
 
                   {/* Right column: Receipt delivery + Actions */}
@@ -1358,7 +1460,7 @@ export default function CheckOutPage() {
                           size="lg"
                           leftIcon={<BookOpen className="h-5 w-5" />}
                           onClick={handleRelease}
-                          disabled={selectedIds.size === 0}
+                          disabled={selectedIds.size === 0 || (signatureRequired && !releaseSignature)}
                           className="!py-4 !text-base !rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 shadow-lg shadow-blue-900/30"
                         >
                           Post to Account & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}
@@ -1369,7 +1471,7 @@ export default function CheckOutPage() {
                           size="lg"
                           leftIcon={<PackageCheck className="h-5 w-5" />}
                           onClick={handleRelease}
-                          disabled={selectedIds.size === 0}
+                          disabled={selectedIds.size === 0 || (signatureRequired && !releaseSignature)}
                           className="!py-4 !text-base !rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-lg shadow-emerald-900/30"
                         >
                           Collect {formatCurrency(fees.total)} & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}

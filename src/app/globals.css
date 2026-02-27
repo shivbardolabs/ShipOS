@@ -306,15 +306,46 @@ body {
 }
 
 /* ================================================================
-   BAR-261: Alert System — Time-Sensitive Flashing Animation
+   BAR-261 / BAR-264: Alert System — Time-Sensitive Flashing Animation
+   Priority-aware pulsing with glow effect. Uses CSS custom property
+   --alert-color (set inline on each AlertCard) so the glow matches
+   the alert's priority color.  GPU-composited: only opacity + box-shadow.
    ================================================================ */
 .alert-time-sensitive {
-  animation: alert-pulse 2s ease-in-out infinite;
+  --alert-color: 239, 68, 68; /* default red — overridden per priority */
+  animation: alert-pulse 1s ease-in-out infinite;
+  will-change: opacity, box-shadow;
+}
+/* Stop animation on interaction (hover 2s handled via JS .alert-interacted) */
+.alert-time-sensitive.alert-interacted,
+.alert-time-sensitive:active {
+  animation: none;
 }
 
 @keyframes alert-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  50%      { opacity: 0.85; box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.25); }
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(var(--alert-color), 0);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 12px 4px rgba(var(--alert-color), 0.3);
+  }
+}
+
+/* Priority color overrides — set via data attribute */
+.alert-time-sensitive[data-priority="urgent_important"] { --alert-color: 239, 68, 68; }
+.alert-time-sensitive[data-priority="urgent"]           { --alert-color: 249, 115, 22; }
+.alert-time-sensitive[data-priority="important"]        { --alert-color: 234, 179, 8; }
+.alert-time-sensitive[data-priority="completed"]        { --alert-color: 34, 197, 94; }
+
+/* Notification bell pulse when time-sensitive alerts are active */
+.bell-pulse {
+  animation: bell-pulse 1.5s ease-in-out infinite;
+}
+@keyframes bell-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
 }
 
 /* Accessibility: disable flashing for users who prefer reduced motion */
@@ -322,6 +353,10 @@ body {
   .alert-time-sensitive {
     animation: none;
     border-width: 2px;
+    border-style: dashed;
     font-weight: 700;
+  }
+  .bell-pulse {
+    animation: none;
   }
 }
