@@ -28,6 +28,10 @@ import {
   Users,
   Clock,
   FileText,
+  Monitor,
+  Truck,
+  Layers,
+  RotateCcw,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -41,6 +45,12 @@ const iconMap: Record<string, React.ElementType> = {
   Mail,
   Building2,
   Download,
+  Monitor,
+  Truck,
+  Layers,
+  RotateCcw,
+  Users,
+  BarChart3,
 };
 
 /* -------------------------------------------------------------------------- */
