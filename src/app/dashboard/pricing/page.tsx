@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { useTenant } from '@/components/tenant-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -104,6 +105,12 @@ function fmt(v: number | null | undefined): string {
 function margin(price: number, cost: number): string {
   if (price === 0) return '\u2014';
   return `${(((price - cost) / price) * 100).toFixed(1)}%`;
+}
+
+/* BAR-47: Detect below-wholesale pricing (retail < cost) */
+function isBelowWholesale(price: number, cost: number | null): boolean {
+  if (cost === null || cost === 0) return false;
+  return price < cost;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -412,11 +419,26 @@ function ActionRow({
           </div>
           <div className="w-16">
             <p className="text-xs text-surface-500">Margin</p>
-            <p className="text-sm font-medium text-emerald-400">
+            <p className={cn('text-sm font-medium', (() => {
+              const belowCost = action.has_tiered_pricing
+                ? isBelowWholesale(action.first_unit_price ?? 0, action.cogs_first_unit)
+                : isBelowWholesale(action.retail_price, action.cogs);
+              return belowCost ? 'text-red-400' : 'text-emerald-400';
+            })())}>
               {action.has_tiered_pricing
                 ? margin(action.first_unit_price ?? 0, action.cogs_first_unit ?? 0)
                 : margin(action.retail_price, action.cogs)}
             </p>
+          </div>
+          {/* BAR-47: Below-wholesale price warning */}
+          <div className="w-6 flex items-center justify-center flex-shrink-0">
+            {(action.has_tiered_pricing
+              ? isBelowWholesale(action.first_unit_price ?? 0, action.cogs_first_unit)
+              : isBelowWholesale(action.retail_price, action.cogs)) && (
+              <span title="Retail price is below wholesale cost — you are losing money on this service" className="text-red-400">
+                <AlertCircle className="h-4 w-4" />
+              </span>
+            )}
           </div>
         </div>
 
