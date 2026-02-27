@@ -49,7 +49,7 @@ function useBreadcrumbs() {
   const parts = pathname.split('/').filter(Boolean);
 
   return parts.map((part, i) => ({
-    label: labelMap[part] || part.charAt(0).toUpperCase() + part.slice(1),
+    label: labelMap[part] || (part.startsWith('cust_') || part.startsWith('demo_cust_') ? 'Customer Details' : part.charAt(0).toUpperCase() + part.slice(1)),
     href: '/' + parts.slice(0, i + 1).join('/'),
     isLast: i === parts.length - 1,
   }));
@@ -128,12 +128,13 @@ export function Header() {
         className="sticky top-[3px] z-20 flex h-16 items-center justify-between px-6 layout-header"
       >
         {/* Left – Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-sm">
+        <nav className="flex items-center gap-1.5 text-sm min-w-0 overflow-hidden">
           {crumbs.map((crumb, i) => (
-            <span key={crumb.href} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-surface-600" />}
+            <span key={crumb.href} className="flex items-center gap-1.5 min-w-0">
+              {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-surface-600 flex-shrink-0" />}
               <span
                 className={cn(
+                  'truncate',
                   crumb.isLast
                     ? 'font-medium text-surface-200'
                     : 'text-surface-500 hover:text-surface-300 transition-colors'

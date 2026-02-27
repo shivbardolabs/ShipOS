@@ -71,7 +71,7 @@ export default function EndOfDayPage() {
   const [showManifest, setShowManifest] = useState<string | null>(null);
   const [dayClosed, setDayClosed] = useState(false);
 
-  const todayStr = new Date('2026-02-21').toLocaleDateString('en-US', {
+  const todayStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
