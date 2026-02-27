@@ -241,7 +241,7 @@ export default function CustomerDetailPage() {
   );
   const lastCustomerUpdate = lastActionFor('customer', customer?.id ?? '');
   const customerActivity = useMemo(
-    () => customerActivityLog as (AuditLogEntry & Record<string, unknown>)[],
+    () => customerActivityLog as unknown as (AuditLogEntry & Record<string, unknown>)[],
     [customerActivityLog]
   );
 
