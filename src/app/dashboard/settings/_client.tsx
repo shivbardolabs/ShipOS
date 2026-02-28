@@ -58,6 +58,7 @@ import {
   Loader2,
   ChevronUp,
   ChevronDown } from 'lucide-react';
+  Layers } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -713,25 +714,25 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     superadmin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
-      billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
+      billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
     },
     admin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
-      billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
+      billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
     },
     manager: {
       general: 'view_only', mailbox: 'view_only', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
-      billing: 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
+      billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
     },
     employee: {
       general: 'hidden', mailbox: 'hidden', rates: 'view_only', 'storage-locations': 'view_only', dropoff: 'hidden',
       receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
-      billing: 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
+      billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
       'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
     },
   };
@@ -750,6 +751,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" />, section: 'Communications' },
     { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" />, section: 'Administration' },
     { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" />, section: 'Administration' },
+    { id: 'billing-models', label: 'Billing Models', icon: <Layers className="h-4 w-4" />, section: 'Administration' },
     { id: 'subscription', label: 'Subscription', icon: <Crown className="h-4 w-4" />, section: 'Administration' },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" />, section: 'General' },
     { id: 'migration', label: 'Migration', icon: <Upload className="h-4 w-4" />, section: 'Administration' },
@@ -2710,6 +2712,35 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                 >
                   {billingSaving ? 'Saving…' : 'Save Billing Info'}
                 </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* ================================================================ */}
+          {/*  BILLING MODELS (BAR-305)                                        */}
+          {/* ================================================================ */}
+          <TabPanel active={activeTab === 'billing-models'}>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-primary-500/10">
+                  <Layers className="h-5 w-5 text-primary-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-surface-100">Billing Model Configuration</h3>
+                  <p className="text-sm text-surface-400">
+                    Configure subscription, usage-based, and time-of-service billing models for your customers.
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-surface-700 bg-surface-900/50 p-5">
+                <p className="text-sm text-surface-300 mb-4">
+                  The full billing model configuration interface is available on a dedicated page with expanded controls for rate tiers, usage meters, and customer billing profiles.
+                </p>
+                <Link href="/dashboard/settings/billing-models">
+                  <Button leftIcon={<ArrowRight className="h-4 w-4" />}>
+                    Open Billing Model Settings
+                  </Button>
+                </Link>
               </div>
             </div>
           </TabPanel>

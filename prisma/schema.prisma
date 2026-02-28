@@ -65,6 +65,7 @@ model Tenant {
   paymentRecords     PaymentRecord[]
   alerts             Alert[]
   carrierEnrollments CarrierProgramEnrollment[]
+  billingModelConfig BillingModelConfig?
 }
 
 // ── Users & Roles ────────────────────────────────────────────────────────────
@@ -185,6 +186,7 @@ model Customer {
   shipToAddresses ShipToAddress[]
   loyaltyAccount  LoyaltyAccount?
   chargeEvents    ChargeEvent[]
+  billingProfile  CustomerBillingProfile?
 
   // Migration reference
   sourceId    String? // Original PostalMate CUSTOMERID
@@ -1028,10 +1030,166 @@ model StorageLocation {
   sortOrder Int     @default(0) // For drag-to-reorder
   isDefault Boolean @default(false) // Default location for new packages
   isActive  Boolean @default(true)  // Soft-delete / deactivate
+// ── BAR-305: Billing Model Configuration ─────────────────────────────────────
+
+/// Per-tenant billing model configuration.
+/// Defines which billing models are enabled and their global settings.
+model BillingModelConfig {
+  id       String @id @default(cuid())
+  tenantId String @unique
+
+  // Which models are enabled (can combine all three)
+  subscriptionEnabled  Boolean @default(true)
+  usageBasedEnabled    Boolean @default(false)
+  timeOfServiceEnabled Boolean @default(false)
+
+  // Subscription defaults
+  defaultBillingCycle      String  @default("monthly") // monthly, quarterly, yearly
+  allowMidCycleChanges     Boolean @default(true)
+  prorateUpgrades          Boolean @default(true)
+  prorateDowngrades        Boolean @default(true)
+  autoRenew                Boolean @default(true)
+  gracePeriodDays          Int     @default(7) // Days after failed payment before suspension
+
+  // Usage-based defaults
+  usageResetCycle       String  @default("monthly") // monthly, weekly, daily
+  usageAlertThreshold   Int     @default(80) // % of quota to trigger alert
+  overage               String  @default("charge") // charge, block, alert_only
+  usageInvoiceCycle     String  @default("monthly") // When to invoice usage: monthly, weekly, realtime
+
+  // Time-of-service defaults
+  tosDefaultMode        String  @default("immediate") // immediate, deferred
+  tosPaymentWindow      Int     @default(30) // Days to pay if deferred
+  tosAutoInvoice        Boolean @default(true) // Auto-generate invoice at time of service
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([tenantId, isActive])
   @@index([tenantId, sortOrder])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+/// Defines a metered usage type with rate tiers.
+/// E.g. "Package Scans", "SMS Notifications", "AI Requests"
+model UsageMeter {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String  // Human-readable name: "Package Scans", "SMS Notifications"
+  slug        String  // URL-safe key: "package_scans", "sms_notifications"
+  unit        String  @default("unit") // unit, scan, message, request, gb, hour
+  description String?
+
+  // Rate tiers (JSON array, evaluated in order):
+  // [{ "upTo": 100, "rate": 0 }, { "upTo": 500, "rate": 0.10 }, { "upTo": null, "rate": 0.05 }]
+  rateTiers String @default("[]")
+
+  // Quota & alerts
+  includedQuantity Int     @default(0) // Free units included in subscription
+  hardLimit        Int     @default(0) // 0 = unlimited
+  isActive         Boolean @default(true)
+  sortOrder        Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records UsageRecord[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+/// Individual usage event / record for metered billing.
+model UsageRecord {
+  id       String @id @default(cuid())
+  meterId  String
+  tenantId String
+
+  customerId String? // Null for tenant-level usage (e.g. AI scans)
+  quantity   Float   @default(1)
+  unitCost   Float   @default(0) // Calculated cost at time of recording
+  metadata   String? // JSON: extra context (e.g. { "packageId": "..." })
+
+  // Billing period for aggregation
+  period    String // YYYY-MM or YYYY-WW
+  invoiced  Boolean  @default(false) // Whether this has been invoiced
+  invoiceId String?
+
+  recordedAt DateTime @default(now())
+
+  meter UsageMeter @relation(fields: [meterId], references: [id])
+
+  @@index([meterId, period])
+  @@index([tenantId, period])
+  @@index([customerId, period])
+}
+
+/// Per-customer billing profile with model overrides.
+/// Allows different customers to be on different billing models.
+model CustomerBillingProfile {
+  id         String @id @default(cuid())
+  customerId String @unique
+
+  // Which billing models apply to THIS customer (overrides tenant default)
+  billingModel String @default("subscription") // subscription, usage, tos, subscription+usage, subscription+tos, all
+
+  // Subscription overrides
+  customPlanId  String? // Override tenant's default plan
+  customRate    Float?  // Custom monthly rate (overrides plan price)
+  billingCycle  String? // Override: monthly, quarterly, yearly
+
+  // Usage overrides
+  customUsageCap Int? // Override meter hard limits
+  usageDiscount  Float? // % discount on usage charges
+
+  // Time-of-service overrides
+  tosMode         String? // Override: immediate, deferred
+  creditLimit     Float   @default(0) // Max deferred balance allowed
+  accountBalance  Float   @default(0) // Current outstanding balance
+  paymentTermDays Int?    // Override tenant's default payment window
+
+  // Auto-pay
+  autoPayEnabled Boolean @default(false)
+  autoPayDay     Int?    // Day of month for auto-pay (1-28)
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+}
+
+/// Time-of-service charge / transaction
+model TosCharge {
+  id         String @id @default(cuid())
+  tenantId   String
+  customerId String
+
+  description  String  // "Package Storage Fee", "Shipping Label", etc.
+  amount       Float
+  tax          Float   @default(0)
+  total        Float   // amount + tax
+  status       String  @default("pending") // pending, paid, invoiced, void, refunded
+  mode         String  @default("immediate") // immediate, deferred
+
+  // Payment info (if immediate)
+  paymentMethod String? // stripe, cash, card, post_to_account
+  paymentRef    String? // External payment reference
+  paidAt        DateTime?
+
+  // Invoice info (if deferred)
+  invoiceId String?
+  dueDate   DateTime?
+
+  // Reference to what generated this charge
+  referenceType String? // package, shipment, service, custom
+  referenceId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, customerId])
+  @@index([customerId, status])
+  @@index([tenantId, status])
 }
