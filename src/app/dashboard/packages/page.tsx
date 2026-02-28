@@ -30,6 +30,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useActivityLog } from '@/components/activity-log-provider';
+import { PrintQueueIndicator } from '@/components/packages/print-queue-indicator';
 import type { Package as PackageType } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -511,6 +512,9 @@ function PackagesContent() {
           </Button>
         }
       />
+
+      {/* BAR-329: Print Queue Indicator — shows when labels are pending */}
+      <PrintQueueIndicator />
 
       {/* Tabs + Search */}
       <div className="space-y-4">

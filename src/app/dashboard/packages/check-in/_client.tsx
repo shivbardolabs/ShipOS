@@ -31,6 +31,9 @@ import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
+import { usePrintQueue } from '@/components/packages/print-queue-provider';
+import type { QueuedLabel } from '@/components/packages/label-print-queue';
+import type { StagingPackage } from '@/components/packages/queue-jump-modal';
 import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
@@ -217,6 +220,20 @@ const packageProgramOptions: {
 /* -------------------------------------------------------------------------- */
 export default function CheckInPage() {
   const { log: logActivity } = useActivityLog();
+  const {
+    queue: labelQueue,
+    printMode,
+    syncQueue,
+    clearQueue: clearPrintQueue,
+  } = usePrintQueue();
+  const setLabelQueue = useCallback(
+    (updater: QueuedLabel[] | ((prev: QueuedLabel[]) => QueuedLabel[])) => {
+      const next = typeof updater === 'function' ? updater(labelQueue) : updater;
+      syncQueue(next, printMode);
+    },
+    [labelQueue, printMode, syncQueue]
+  );
+  const setStagingQueue = useState<StagingPackage[]>([])[1];
   const [step, setStep] = useState(1);
 
   // Step 1 — Package Program (BAR-266)
