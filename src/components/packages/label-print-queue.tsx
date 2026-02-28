@@ -34,6 +34,12 @@ export interface QueuedLabel {
   carrier: string;
   checkedInAt: string;
   storeName: string;
+  /** BAR-266: Program type label (e.g. Store, iPostal, UPS Access Point) */
+  programType?: string;
+  /** BAR-266: Package condition from Step 3 */
+  condition?: string;
+  /** BAR-266: Perishable flag */
+  perishable?: boolean;
   /** Pre-rendered label HTML (if already generated) */
   labelHtml?: string;
 }
@@ -76,6 +82,9 @@ export function LabelPrintQueue({
       checkedInAt: label.checkedInAt,
       packageId: label.packageId,
       storeName: label.storeName,
+      programType: label.programType,
+      condition: label.condition,
+      perishable: label.perishable,
     };
     return renderPackageLabel(data);
   }, []);

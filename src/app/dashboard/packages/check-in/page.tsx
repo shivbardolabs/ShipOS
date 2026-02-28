@@ -376,6 +376,26 @@ export default function CheckInPage() {
     };
   }, [packageProgram, recipientName, kinekNumber, isWalkIn, walkInName, selectedCustomer]);
 
+  /* ── BAR-266: Resolve program type label for label printing ─────────── */
+  const resolveProgramType = useCallback((): string => {
+    if (packageProgram === 'pmb') {
+      if (isWalkIn) return 'Walk-In';
+      return selectedCustomer?.platform || 'Store';
+    }
+    if (packageProgram === 'ups_ap') return 'UPS Access Point';
+    if (packageProgram === 'fedex_hal') return 'FedEx HAL';
+    if (packageProgram === 'kinek') return 'KINEK';
+    if (packageProgram === 'amazon') return 'Amazon Hub';
+    return '';
+  }, [packageProgram, isWalkIn, selectedCustomer]);
+
+  /* ── BAR-266: Resolve condition display for label ───────────────────── */
+  const resolveConditionLabel = useCallback((): string => {
+    if (condition === 'other') return conditionOther || 'Other';
+    if (condition === 'partially_opened') return 'Partially Opened';
+    return condition.charAt(0).toUpperCase() + condition.slice(1);
+  }, [condition, conditionOther]);
+
   /* ── BAR-41: Label printing ──────────────────────────────────────────── */
   const addToLabelQueue = useCallback(
     (pkgId: string) => {
@@ -392,12 +412,15 @@ export default function CheckInPage() {
           : (selectedCarrier || 'Unknown'),
         checkedInAt: new Date().toISOString(),
         storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
       };
 
       setLabelQueue((prev) => [...prev, newLabel]);
       return newLabel;
     },
-    [resolveRecipient, trackingNumber, selectedCarrier, customCarrierName]
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, trackingNumber, selectedCarrier, customCarrierName]
   );
 
   const handleAutoprint = useCallback(
@@ -415,10 +438,13 @@ export default function CheckInPage() {
         checkedInAt: new Date().toISOString(),
         packageId: pkgId,
         storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
       });
       printLabel(html);
     },
-    [resolveRecipient, trackingNumber, selectedCarrier, customCarrierName]
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, trackingNumber, selectedCarrier, customCarrierName]
   );
 
   /* ── BAR-241: Staging / queue jump ───────────────────────────────────── */
@@ -457,10 +483,13 @@ export default function CheckInPage() {
         checkedInAt: new Date().toISOString(),
         packageId: pkg.id,
         storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
       });
       printLabel(html);
     },
-    []
+    [resolveProgramType, resolveConditionLabel, perishable]
   );
 
   const handleQuickRelease = useCallback(
