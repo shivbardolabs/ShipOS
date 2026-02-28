@@ -211,6 +211,18 @@ export default function CheckInPage() {
   const [showSenderSuggestions, setShowSenderSuggestions] = useState(false);
   const senderRef = useRef<HTMLDivElement>(null);
 
+  // BAR-327: Carrier detection result & API data state (were previously missing,
+  // causing undeclared variable references in handleSubmit)
+  const [carrierDetectionResult, setCarrierDetectionResult] = useState<{
+    confidence: 'high' | 'medium' | 'low';
+    rule: string;
+  } | null>(null);
+  const [carrierApiData, setCarrierApiData] = useState<{
+    sender?: { name?: string; address?: string };
+    recipient?: { name?: string; address?: string };
+    serviceType?: string;
+  } | null>(null);
+
   // Step 3 — Package Details (BAR-245: conditional popups, duplicate tracking)
   const [packageType, setPackageType] = useState('');
   const [hazardous, setHazardous] = useState(false);
@@ -268,6 +280,10 @@ export default function CheckInPage() {
     console.log('[CheckIn] Carrier API data fetch:', { tracking, carrierId });
   }, []);
 
+  // BAR-327: Rewritten to properly persist detected carrier through wizard.
+  // Previously this callback was defined but never wired to the tracking input,
+  // which used a simpler inline handler with a !selectedCarrier guard that
+  // prevented re-detection when the tracking number changed.
   const handleTrackingNumberChange = useCallback(
     (value: string) => {
       setTrackingNumber(value);
@@ -283,7 +299,13 @@ export default function CheckInPage() {
           confidence: result.confidence,
           rule: result.matchedRule,
         });
+        // BAR-327: Always update carrier from detection — no !selectedCarrier guard.
+        // The detected carrier should always reflect the current tracking number.
         setSelectedCarrier(result.carrierId);
+        setCarrierAutoSuggested(true);
+        // Auto-fill sender name from carrier map
+        const autoSender = carrierSenderMap[result.carrierId];
+        if (autoSender) setSenderName(autoSender);
       } else {
         setCarrierDetectionResult(null);
       }
@@ -326,18 +348,10 @@ export default function CheckInPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // Auto-suggest carrier from tracking number (BAR-239)
-  const suggestCarrierFromTracking = (tracking: string) => {
-    const t = tracking.trim().toUpperCase();
-    if (t.startsWith('1Z')) return 'ups';
-    if (/^TBA/.test(t)) return 'amazon';
-    if (/^(FX|[0-9]{12,15}$)/.test(t) && !t.startsWith('9')) return 'fedex';
-    if (/^(9[0-9]{15,})$/.test(t) || /^(94|92|93|94|70|71|72|73|74|75|76|77|78|79)/.test(t) && t.length > 18) return 'usps';
-    if (/^[0-9]{10}$/.test(t)) return 'dhl';
-    if (/^1LS/.test(t)) return 'lasership';
-    if (/^C[0-9]{8}/.test(t)) return 'ontrac';
-    return '';
-  };
+  // BAR-327: Removed old suggestCarrierFromTracking() — now using detectCarrier()
+  // from carrier-detection.ts via handleTrackingNumberChange for all carrier
+  // detection. This ensures consistent detection between the input handler
+  // and the carrier-detection module.
 
   /* ======================================================================== */
   /*  Step 3: Duplicate tracking check (BAR-245)                              */
@@ -751,6 +765,8 @@ export default function CheckInPage() {
     setKinekNumber('');
     setSelectedCarrier('');
     setCarrierAutoSuggested(false);
+    setCarrierDetectionResult(null);
+    setCarrierApiData(null);
     setCustomCarrierName('');
     setSenderName('');
     setSenderSuggestions([]);
@@ -1145,16 +1161,7 @@ export default function CheckInPage() {
                 label="Tracking Number"
                 placeholder="Enter or scan tracking number"
                 value={trackingNumber}
-                onChange={(e) => {
-                  setTrackingNumber(e.target.value);
-                  const suggested = suggestCarrierFromTracking(e.target.value);
-                  if (suggested && !selectedCarrier) {
-                    setSelectedCarrier(suggested);
-                    setCarrierAutoSuggested(true);
-                    const autoSender = carrierSenderMap[suggested];
-                    if (autoSender) setSenderName(autoSender);
-                  }
-                }}
+                onChange={(e) => handleTrackingNumberChange(e.target.value)}
                 leftIcon={<ScanBarcode className="h-5 w-5" />}
                 className="!py-3"
               />
