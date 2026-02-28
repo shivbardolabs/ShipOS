@@ -242,9 +242,17 @@ model Package {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Duplicate override (BAR-328)
+  duplicateOverride          Boolean  @default(false) // True if user overrode duplicate warning
+  duplicateOverrideReason    String?  // Reason for override (e.g. "Re-delivery", "Replacement")
+  duplicateOriginalPackageId String?  // ID of the original package record
+
   // Migration reference
   sourceId    String? // Original PostalMate PKGRECVXNID
   migrationId String? // Links to MigrationRun
+
+  // BAR-328: Index for fast duplicate tracking number lookups (< 500ms)
+  @@index([trackingNumber])
 }
 
 model MailPiece {

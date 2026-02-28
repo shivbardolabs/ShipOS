@@ -40,6 +40,10 @@ export async function POST(req: NextRequest) {
       sendEmail,
       sendSms,
       // printLabel is handled client-side only
+      // BAR-328: Duplicate override fields
+      duplicateOverride,
+      duplicateOverrideReason,
+      duplicateOriginalPackageId,
     } = body;
 
     // --- Validation ---
@@ -108,6 +112,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // --- BAR-328: Server-side duplicate tracking number check ---
+    if (trackingNumber?.trim()) {
+      const existingPackage = await prisma.package.findFirst({
+        where: {
+          trackingNumber: trackingNumber.trim(),
+          customer: { tenantId: user.tenantId },
+          status: { notIn: ['released', 'returned'] },
+        },
+        select: {
+          id: true,
+          trackingNumber: true,
+          carrier: true,
+          status: true,
+          checkedInAt: true,
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              pmbNumber: true,
+            },
+          },
+        },
+      });
+
+      if (existingPackage && !duplicateOverride) {
+        return NextResponse.json(
+          {
+            error: 'Duplicate tracking number',
+            code: 'DUPLICATE_TRACKING',
+            existingPackage: {
+              id: existingPackage.id,
+              trackingNumber: existingPackage.trackingNumber,
+              carrier: existingPackage.carrier,
+              status: existingPackage.status,
+              checkedInAt: existingPackage.checkedInAt.toISOString(),
+              customerName: `${existingPackage.customer.firstName} ${existingPackage.customer.lastName}`,
+              customerPmb: existingPackage.customer.pmbNumber,
+            },
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     // Build the resolved carrier name
     const resolvedCarrier = carrier === 'other' ? (customCarrierName || 'other') : carrier;
 
@@ -138,6 +186,10 @@ export async function POST(req: NextRequest) {
         storageLocation: storageLocation?.trim() || null,
         customerId: customer.id,
         checkedInById: user.id,
+        // BAR-328: Duplicate override tracking
+        duplicateOverride: !!duplicateOverride,
+        duplicateOverrideReason: duplicateOverride ? (duplicateOverrideReason || null) : null,
+        duplicateOriginalPackageId: duplicateOverride ? (duplicateOriginalPackageId || null) : null,
         storeId: user.tenantId
           ? (
               await prisma.store.findFirst({
@@ -179,6 +231,12 @@ export async function POST(req: NextRequest) {
           perishable: pkg.perishable,
           storageLocation: pkg.storageLocation,
           isWalkIn: !!isWalkIn,
+          // BAR-328: Log duplicate override details
+          ...(duplicateOverride && {
+            duplicateOverride: true,
+            duplicateOverrideReason: duplicateOverrideReason || 'No reason provided',
+            duplicateOriginalPackageId: duplicateOriginalPackageId || null,
+          }),
         }),
         userId: user.id,
       },
