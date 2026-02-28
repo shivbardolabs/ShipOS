@@ -19,6 +19,7 @@ import {
   CreditCard,
   Tag,
   Send,
+  UserPlus,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -27,6 +28,7 @@ import {
 const navItems = [
   { label: 'Dashboard', href: '/dashboard/super-admin', icon: LayoutDashboard },
   { label: 'Client Provisioning', href: '/dashboard/super-admin/clients', icon: Building2 },
+  { label: 'Provision Account', href: '/dashboard/super-admin/provision', icon: UserPlus },
   { label: 'Admin Users', href: '/dashboard/super-admin/users', icon: Users },
   { label: 'Billing & Reports', href: '/dashboard/super-admin/billing', icon: CreditCard },
   { label: 'Master Admin', href: '/dashboard/super-admin/master-admin', icon: Shield },
