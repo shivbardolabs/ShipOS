@@ -1,7 +1,10 @@
 import type { Config } from "jest";
 
 const config: Config = {
-  testMatch: ["<rootDir>/tests/api/**/*.test.ts"],
+  testMatch: [
+    "<rootDir>/tests/api/**/*.test.ts",
+    "<rootDir>/tests/unit/**/*.test.ts",
+  ],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
@@ -14,6 +17,9 @@ const config: Config = {
         },
       },
     ],
+  },
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   testEnvironment: "node",
   // Don't pick up Next.js app code

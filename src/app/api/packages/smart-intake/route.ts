@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  processExtractionResults,
+  generateValidationReport,
+  ENHANCED_SYSTEM_PROMPT,
+} from '@/lib/smart-intake';
+import type {
+  RawVisionResult,
+  ExtractionResult,
+  ServiceType,
+  FieldValidation,
+} from '@/lib/smart-intake';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake                                           */
 /*  Accepts a base64 image of a package label and returns structured data     */
-/*  extracted via AI vision (OpenAI GPT-4o).                                  */
+/*  extracted via AI vision (OpenAI GPT-4o) + post-processing extraction      */
+/*  rules (BAR-331).                                                          */
 /* -------------------------------------------------------------------------- */
 
 export interface SmartIntakeResult {
@@ -15,6 +27,20 @@ export interface SmartIntakeResult {
   pmbNumber: string;
   packageSize: string;
   confidence: number;
+
+  // ── BAR-331: New extraction fields ─────────────────────────────────────
+  /** Whether tracking number passes carrier-specific validation */
+  trackingNumberValid?: boolean;
+  /** Carrier detection confidence level */
+  carrierConfidence?: 'high' | 'medium' | 'low';
+  /** Whether recipient appears to be a business */
+  recipientIsBusiness?: boolean;
+  /** Detected service type / program */
+  serviceType?: ServiceType;
+  /** Service type human-readable label */
+  serviceTypeLabel?: string;
+  /** Validation report for each field */
+  validationReport?: FieldValidation[];
 }
 
 export interface SmartIntakeResponse {
@@ -36,6 +62,10 @@ const DEMO_RESULTS: SmartIntakeResult[][] = [
       pmbNumber: 'PMB-0001',
       packageSize: 'medium',
       confidence: 0.96,
+      trackingNumberValid: true,
+      carrierConfidence: 'high',
+      recipientIsBusiness: false,
+      serviceType: 'pmb_customer',
     },
   ],
   [
@@ -48,6 +78,10 @@ const DEMO_RESULTS: SmartIntakeResult[][] = [
       pmbNumber: 'PMB-0005',
       packageSize: 'large',
       confidence: 0.94,
+      trackingNumberValid: true,
+      carrierConfidence: 'high',
+      recipientIsBusiness: false,
+      serviceType: 'pmb_customer',
     },
   ],
   [
@@ -60,6 +94,10 @@ const DEMO_RESULTS: SmartIntakeResult[][] = [
       pmbNumber: 'PMB-0002',
       packageSize: 'large',
       confidence: 0.97,
+      trackingNumberValid: true,
+      carrierConfidence: 'medium',
+      recipientIsBusiness: false,
+      serviceType: 'pmb_customer',
     },
   ],
   [
@@ -72,6 +110,10 @@ const DEMO_RESULTS: SmartIntakeResult[][] = [
       pmbNumber: 'PMB-0012',
       packageSize: 'small',
       confidence: 0.92,
+      trackingNumberValid: true,
+      carrierConfidence: 'high',
+      recipientIsBusiness: false,
+      serviceType: 'pmb_customer',
     },
   ],
 ];
@@ -86,6 +128,10 @@ const DEMO_BATCH: SmartIntakeResult[] = [
     pmbNumber: 'PMB-0001',
     packageSize: 'medium',
     confidence: 0.96,
+    trackingNumberValid: true,
+    carrierConfidence: 'high',
+    recipientIsBusiness: false,
+    serviceType: 'pmb_customer',
   },
   {
     carrier: 'fedex',
@@ -96,6 +142,10 @@ const DEMO_BATCH: SmartIntakeResult[] = [
     pmbNumber: 'PMB-0002',
     packageSize: 'large',
     confidence: 0.97,
+    trackingNumberValid: true,
+    carrierConfidence: 'medium',
+    recipientIsBusiness: false,
+    serviceType: 'pmb_customer',
   },
   {
     carrier: 'ups',
@@ -106,27 +156,14 @@ const DEMO_BATCH: SmartIntakeResult[] = [
     pmbNumber: 'PMB-0003',
     packageSize: 'small',
     confidence: 0.91,
+    trackingNumberValid: true,
+    carrierConfidence: 'high',
+    recipientIsBusiness: false,
+    serviceType: 'pmb_customer',
   },
 ];
 
 let demoIndex = 0;
-
-/* ── Vision AI prompt ──────────────────────────────────────────────────── */
-const SYSTEM_PROMPT = `You are a shipping label analysis AI for a postal mailbox store (CMRA). 
-Analyze the package label image and extract the following fields as JSON.
-
-Return a JSON array of objects (one per visible label). Each object must have:
-- carrier: lowercase carrier id (one of: amazon, ups, fedex, usps, dhl, lasership, temu, ontrac, walmart, target, other)
-- trackingNumber: the tracking/barcode number visible on the label
-- senderName: the sender/shipper name
-- senderAddress: the sender/return address
-- recipientName: the recipient name
-- pmbNumber: the PMB, Suite, Unit, Box, or Apt number from the delivery address (format as "PMB-XXXX" if it's a number)
-- packageSize: estimated size (one of: letter, pack, small, medium, large, xlarge)
-- confidence: your confidence score from 0 to 1
-
-If a field is not visible or unclear, use an empty string. 
-Always return valid JSON array only, no markdown, no explanation.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -200,7 +237,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: ENHANCED_SYSTEM_PROMPT },
           {
             role: 'user',
             content: [
@@ -250,11 +287,11 @@ export async function POST(request: NextRequest) {
     const content: string = data.choices?.[0]?.message?.content ?? '[]';
 
     // Parse the JSON from the AI response
-    let results: SmartIntakeResult[];
+    let rawResults: RawVisionResult[];
     try {
       const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      results = JSON.parse(cleaned);
-      if (!Array.isArray(results)) results = [results];
+      rawResults = JSON.parse(cleaned);
+      if (!Array.isArray(rawResults)) rawResults = [rawResults];
     } catch {
       console.error('Failed to parse AI response:', content);
       return NextResponse.json(
@@ -267,6 +304,33 @@ export async function POST(request: NextRequest) {
         { status: 422 }
       );
     }
+
+    /* ── BAR-331: Post-process through extraction rules ────────────────── */
+    const processed = processExtractionResults(rawResults);
+
+    // Map processed results to the SmartIntakeResult format
+    const results: SmartIntakeResult[] = processed.map((ext: ExtractionResult, i: number) => {
+      const raw = rawResults[i];
+      const report = generateValidationReport(raw, ext);
+
+      return {
+        carrier: ext.carrier,
+        trackingNumber: ext.trackingNumber,
+        senderName: ext.senderName,
+        senderAddress: ext.senderAddress,
+        recipientName: ext.recipientName,
+        pmbNumber: ext.pmbNumber,
+        packageSize: ext.packageSize,
+        confidence: ext.confidence,
+
+        // BAR-331 enrichment fields
+        trackingNumberValid: ext.trackingNumberValid,
+        carrierConfidence: ext.carrierConfidence,
+        recipientIsBusiness: ext.recipientIsBusiness,
+        serviceType: ext.serviceType,
+        validationReport: report,
+      };
+    });
 
     return NextResponse.json({
       success: true,
