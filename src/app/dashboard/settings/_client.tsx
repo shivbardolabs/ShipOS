@@ -57,7 +57,7 @@ import {
   GripVertical,
   Loader2,
   ChevronUp,
-  ChevronDown } from 'lucide-react';
+  ChevronDown,
   Layers } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
