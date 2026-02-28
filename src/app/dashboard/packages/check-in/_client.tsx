@@ -283,10 +283,13 @@ export default function CheckInPage() {
   const [sizeWarningAcked, setSizeWarningAcked] = useState(false);
   const [perishableWarningAcked, setPerishableWarningAcked] = useState(false);
 
-  // BAR-245: Duplicate tracking number detection
+  // BAR-328: Duplicate tracking number detection & override
   const [duplicatePackage, setDuplicatePackage] = useState<DuplicatePackage | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [checkingTracking, setCheckingTracking] = useState(false);
+  const [duplicateAcknowledged, setDuplicateAcknowledged] = useState(false);
+  const [duplicateOverrideReason, setDuplicateOverrideReason] = useState('');
+  const trackingCheckDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Step 4 — Notify
   const [printLabel, setPrintLabel] = useState(true);
@@ -413,10 +416,15 @@ export default function CheckInPage() {
   // and the carrier-detection module.
 
   /* ======================================================================== */
-  /*  Step 3: Duplicate tracking check (BAR-245)                              */
+  /*  BAR-328: Duplicate tracking check (scan + manual entry, Steps 2 & 3)   */
   /* ======================================================================== */
   const checkDuplicateTracking = useCallback(async (tracking: string) => {
-    if (!tracking.trim()) { setDuplicatePackage(null); return; }
+    if (!tracking.trim()) {
+      setDuplicatePackage(null);
+      setDuplicateAcknowledged(false);
+      setDuplicateOverrideReason('');
+      return;
+    }
     setCheckingTracking(true);
     try {
       const res = await fetch(`/api/packages/check-tracking?tracking=${encodeURIComponent(tracking.trim())}`);
@@ -424,24 +432,45 @@ export default function CheckInPage() {
         const data = await res.json();
         if (data.exists) {
           setDuplicatePackage(data.package);
+          setDuplicateAcknowledged(false);
+          setDuplicateOverrideReason('');
           setShowDuplicateModal(true);
         } else {
           setDuplicatePackage(null);
+          setDuplicateAcknowledged(false);
+          setDuplicateOverrideReason('');
         }
       }
     } catch {
-      // Fail silently
+      // Fail silently — don't block check-in if the check itself errors
     } finally {
       setCheckingTracking(false);
     }
   }, []);
 
-  // Check tracking when moving to Step 3
+  // BAR-328: Debounced duplicate check on tracking number change in Step 2
   useEffect(() => {
-    if (step === 3 && trackingNumber.trim()) {
+    if (step === 2 && trackingNumber.trim().length >= 6) {
+      if (trackingCheckDebounceRef.current) clearTimeout(trackingCheckDebounceRef.current);
+      trackingCheckDebounceRef.current = setTimeout(() => {
+        checkDuplicateTracking(trackingNumber);
+      }, 400);
+    } else if (!trackingNumber.trim()) {
+      setDuplicatePackage(null);
+      setDuplicateAcknowledged(false);
+      setDuplicateOverrideReason('');
+    }
+    return () => {
+      if (trackingCheckDebounceRef.current) clearTimeout(trackingCheckDebounceRef.current);
+    };
+  }, [trackingNumber, step, checkDuplicateTracking]);
+
+  // Also re-check when entering Step 3 (in case tracking was entered via scan)
+  useEffect(() => {
+    if (step === 3 && trackingNumber.trim() && !duplicatePackage && !duplicateAcknowledged) {
       checkDuplicateTracking(trackingNumber);
     }
-  }, [step, trackingNumber, checkDuplicateTracking]);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // BAR-245: Show popup when Large/XL selected
   useEffect(() => {
@@ -472,6 +501,8 @@ export default function CheckInPage() {
         // ups_ap, fedex_hal, amazon — just need recipient name
         return recipientName.trim().length > 0;
       case 2:
+        // BAR-328: Block proceeding if duplicate detected and not acknowledged
+        if (duplicatePackage && !duplicateAcknowledged) return false;
         return !!selectedCarrier && !!trackingNumber.trim();
       case 3:
         return !!packageType;
@@ -514,7 +545,7 @@ export default function CheckInPage() {
     else setSenderName('');
   };
 
-  // Handle barcode scan (BAR-37 + BAR-240)
+  // Handle barcode scan (BAR-37 + BAR-240 + BAR-328: immediate duplicate check)
   const handleBarcodeScan = useCallback(
     (value: string) => {
       setTrackingNumber(value);
@@ -528,8 +559,12 @@ export default function CheckInPage() {
         // Trigger carrier API enrichment
         fetchCarrierApiData(value, result.carrierId);
       }
+      // BAR-328: Immediately check for duplicates on scan (no debounce)
+      if (value.trim()) {
+        checkDuplicateTracking(value);
+      }
     },
-    [fetchCarrierApiData] // eslint-disable-line react-hooks/exhaustive-deps
+    [fetchCarrierApiData, checkDuplicateTracking] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   /* ── Resolve display name & PMB for current recipient ──────────────── */
@@ -757,6 +792,10 @@ export default function CheckInPage() {
             recipientAddress: carrierApiData.recipient?.address,
             serviceType: carrierApiData.serviceType,
           } : undefined,
+          // BAR-328: Duplicate override data
+          duplicateOverride: duplicateAcknowledged && !!duplicatePackage,
+          duplicateOverrideReason: duplicateAcknowledged ? duplicateOverrideReason : undefined,
+          duplicateOriginalPackageId: duplicateAcknowledged ? duplicatePackage?.id : undefined,
         }),
       });
 
@@ -868,16 +907,20 @@ export default function CheckInPage() {
     setSubmitError(null);
     setCheckedInPackageId(null);
     setDuplicatePackage(null);
+    setDuplicateAcknowledged(false);
+    setDuplicateOverrideReason('');
     setSizeWarningAcked(false);
     setPerishableWarningAcked(false);
   };
 
-  // Generate a unique tracking number (BAR-245)
+  // Generate a unique tracking number (BAR-245 + BAR-328)
   const handleGenerateTracking = () => {
     const prefix = selectedCarrier ? selectedCarrier.toUpperCase().slice(0, 3) : 'PKG';
     const generated = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     setTrackingNumber(generated);
     setDuplicatePackage(null);
+    setDuplicateAcknowledged(false);
+    setDuplicateOverrideReason('');
     setShowDuplicateModal(false);
   };
 
@@ -1273,6 +1316,35 @@ export default function CheckInPage() {
                   <Loader2 className="h-3 w-3 animate-spin" /> Checking tracking number...
                 </p>
               )}
+              {/* BAR-328: Inline duplicate warning in Step 2 */}
+              {duplicatePackage && !checkingTracking && (
+                <div className="mt-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-amber-300">
+                        Duplicate tracking number detected
+                      </p>
+                      <p className="text-xs text-surface-400 mt-0.5">
+                        Already checked in for {duplicatePackage.customerName} ({duplicatePackage.customerPmb}) — {duplicatePackage.status.replace('_', ' ')} since {new Date(duplicatePackage.checkedInAt).toLocaleDateString()}
+                      </p>
+                      {duplicateAcknowledged ? (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Override acknowledged{duplicateOverrideReason ? `: ${duplicateOverrideReason}` : ''}
+                        </div>
+                      ) : (
+                        <button
+                          className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
+                          onClick={() => setShowDuplicateModal(true)}
+                        >
+                          Review &amp; override
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Carrier Grid */}
@@ -1365,15 +1437,42 @@ export default function CheckInPage() {
               </p>
             </div>
 
-            {/* Duplicate tracking warning (BAR-245) */}
+            {/* BAR-328: Duplicate tracking warning with override status */}
             {duplicatePackage && !showDuplicateModal && (
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className={cn(
+                'p-4 rounded-xl border flex items-start gap-3',
+                duplicateAcknowledged
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-amber-500/30 bg-amber-500/5'
+              )}>
+                {duplicateAcknowledged ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                )}
                 <div>
-                  <p className="text-sm font-medium text-amber-300">Duplicate tracking number detected</p>
-                  <p className="text-xs text-surface-400 mt-1">
-                    This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
-                  </p>
+                  {duplicateAcknowledged ? (
+                    <>
+                      <p className="text-sm font-medium text-emerald-300">Duplicate override active</p>
+                      <p className="text-xs text-surface-400 mt-1">
+                        Proceeding with re-check-in for tracking number already assigned to {duplicatePackage.customerName} ({duplicatePackage.customerPmb}).
+                        {duplicateOverrideReason && <> Reason: {duplicateOverrideReason}</>}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-amber-300">Duplicate tracking number detected</p>
+                      <p className="text-xs text-surface-400 mt-1">
+                        This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
+                      </p>
+                      <button
+                        className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
+                        onClick={() => setShowDuplicateModal(true)}
+                      >
+                        Review &amp; override
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1610,6 +1709,26 @@ export default function CheckInPage() {
                   <SummaryField label="Notes" value={notes} />
                 </div>
               )}
+
+              {/* BAR-328: Duplicate override notice in summary */}
+              {duplicatePackage && duplicateAcknowledged && (
+                <div className="pt-3 border-t border-amber-500/20">
+                  <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-amber-300 font-medium mb-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Duplicate Override Active
+                    </div>
+                    <div className="flex justify-between text-surface-400">
+                      <span>Original Package:</span>
+                      <span className="text-surface-300">{duplicatePackage.customerName} — {duplicatePackage.status.replace('_', ' ')}</span>
+                    </div>
+                    <div className="flex justify-between text-surface-400">
+                      <span>Override Reason:</span>
+                      <span className="text-surface-300">{duplicateOverrideReason}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Notification Preview */}
@@ -1776,13 +1895,13 @@ export default function CheckInPage() {
       </Modal>
 
       {/* ================================================================== */}
-      {/*  BAR-245: Duplicate Tracking Number Modal                           */}
+      {/*  BAR-328: Duplicate Tracking Number Modal (enhanced)                */}
       {/* ================================================================== */}
       <Modal
         open={showDuplicateModal}
         onClose={() => setShowDuplicateModal(false)}
-        title="Tracking Number Already Exists"
-        size="sm"
+        title="Duplicate Tracking Number"
+        size="md"
         footer={
           <div className="flex flex-wrap gap-2 justify-end">
             <Button
@@ -1793,7 +1912,7 @@ export default function CheckInPage() {
                 window.open(`/dashboard/packages?id=${duplicatePackage?.id}`, '_blank');
               }}
             >
-              View Package
+              View Existing
             </Button>
             <Button
               variant="secondary"
@@ -1802,28 +1921,52 @@ export default function CheckInPage() {
                 setShowDuplicateModal(false);
                 setTrackingNumber('');
                 setDuplicatePackage(null);
+                setDuplicateAcknowledged(false);
+                setDuplicateOverrideReason('');
               }}
             >
-              Try Again
+              Clear &amp; Re-enter
             </Button>
             <Button
+              variant="secondary"
               leftIcon={<Hash className="h-4 w-4" />}
               onClick={handleGenerateTracking}
             >
-              Generate Tracking Number
+              Generate New
+            </Button>
+            <Button
+              leftIcon={<AlertTriangle className="h-4 w-4" />}
+              disabled={!duplicateOverrideReason.trim()}
+              onClick={() => {
+                setDuplicateAcknowledged(true);
+                setShowDuplicateModal(false);
+              }}
+              className="!bg-amber-600 hover:!bg-amber-700 !text-white"
+            >
+              Override &amp; Continue
             </Button>
           </div>
         }
       >
-        <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
-            <AlertTriangle className="h-7 w-7 text-amber-600" />
+        <div className="py-2">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-surface-200">
+                This tracking number is already in the system
+              </p>
+              <p className="text-xs text-surface-400 mt-1">
+                Check-in is blocked by default. If this is a legitimate re-delivery (e.g., returned package, replacement), enter a reason below to override.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-surface-300 mb-2">
-            This package already exists in inventory
-          </p>
+
+          {/* Existing package details */}
           {duplicatePackage && (
-            <div className="bg-surface-800/60 rounded-lg p-3 w-full text-left text-xs space-y-1 mt-2">
+            <div className="bg-surface-800/60 rounded-lg p-3 text-xs space-y-1.5 mb-4">
+              <p className="text-xs font-medium text-surface-300 mb-2">Existing Package</p>
               <div className="flex justify-between">
                 <span className="text-surface-500">Tracking:</span>
                 <span className="font-mono text-surface-300">{duplicatePackage.trackingNumber}</span>
@@ -1842,6 +1985,28 @@ export default function CheckInPage() {
               </div>
             </div>
           )}
+
+          {/* Override reason */}
+          <div>
+            <label className="text-sm font-medium text-surface-300 mb-1.5 block">
+              Override Reason <span className="text-red-400">*</span>
+            </label>
+            <Select
+              value={duplicateOverrideReason}
+              onChange={(e) => setDuplicateOverrideReason(e.target.value)}
+              options={[
+                { value: '', label: 'Select a reason...' },
+                { value: 'Re-delivery', label: 'Re-delivery — package was returned and re-sent' },
+                { value: 'Replacement', label: 'Replacement — carrier sent a replacement' },
+                { value: 'Split shipment', label: 'Split shipment — same tracking, multiple boxes' },
+                { value: 'Carrier reused tracking', label: 'Carrier reused tracking number' },
+                { value: 'Other', label: 'Other' },
+              ]}
+            />
+            <p className="mt-1.5 text-[11px] text-surface-500">
+              This reason will be logged in the audit trail and linked to the original package.
+            </p>
+          </div>
         </div>
       </Modal>
 
