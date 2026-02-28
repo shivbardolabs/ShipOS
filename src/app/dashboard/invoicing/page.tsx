@@ -296,7 +296,7 @@ export default function InvoicingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Invoicing"
-        description="Create, manage, and track customer invoices"
+        description="Create and track invoices."
         actions={
           <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setShowCreate(true)}>
             Create Invoice
@@ -352,7 +352,7 @@ export default function InvoicingPage() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
         title="Create Invoice"
-        description="Generate a new invoice for a customer"
+        description="Create a new invoice."
         size="lg"
         footer={
           <>

@@ -972,7 +972,10 @@ function PackageDetailModal({
               >
                 Send Notification
               </Button>
-              <Button leftIcon={<PackageCheck className="h-4 w-4" />}>
+              <Button
+                leftIcon={<PackageCheck className="h-4 w-4" />}
+                onClick={() => (window.location.href = '/dashboard/packages/check-out')}
+              >
                 Release Package
               </Button>
             </>

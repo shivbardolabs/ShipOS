@@ -152,7 +152,7 @@ export default function PlatformReportPage() {
       <PageHeader
         title="Platform Dimension"
         icon={<Monitor className="h-6 w-6" />}
-        description="Filter and compare performance across In-Store Physical and Digital Mail platforms"
+        description="Compare platform performance."
         actions={<ExportToolbar reportName="Platform_Report" />}
       />
 

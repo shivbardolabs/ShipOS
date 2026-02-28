@@ -653,7 +653,7 @@ export default function CheckOutPage() {
     <div className="space-y-6">
       <PageHeader
         title="Package Check-Out"
-        description="Release packages to customers"
+        description="Release packages to customers."
         badge={lastRelease ? <PerformedBy entry={lastRelease} showAction className="ml-2" /> : undefined}
         actions={
           <Button

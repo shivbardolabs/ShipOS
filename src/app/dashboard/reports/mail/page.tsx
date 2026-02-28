@@ -154,7 +154,7 @@ export default function MailReportPage() {
       <PageHeader
         title="Mail & Parcel Statistics"
         icon={<Mail className="h-6 w-6" />}
-        description="Volume statistics with time-period granularity — mail, parcels, and function breakdowns"
+        description="Mail and parcel volume stats."
         actions={<ExportToolbar reportName="Mail_Parcel_Stats" />}
       />
 

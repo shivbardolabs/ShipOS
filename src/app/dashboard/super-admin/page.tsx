@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Building2,
@@ -89,7 +88,7 @@ export default function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin Dashboard"
+        title="Platform Console"
         description="Platform overview — clients, stores, revenue, and system health"
         icon={<LayoutDashboard className="h-6 w-6" />}
       />

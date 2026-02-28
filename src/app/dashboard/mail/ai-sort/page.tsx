@@ -490,7 +490,7 @@ export default function AIMailSortPage() {
     <div className="space-y-6">
       <PageHeader
         title="AI Mail Sort"
-        description="Photograph a batch of mail — AI identifies recipients and routes to mailboxes"
+        description="Snap mail, AI sorts it."
         badge={
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />
@@ -624,7 +624,6 @@ export default function AIMailSortPage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={handleFileUpload}
             />
@@ -950,7 +949,7 @@ export default function AIMailSortPage() {
         open={editingIdx !== null}
         onClose={() => setEditingIdx(null)}
         title="Edit Mail Piece"
-        description="Correct any details the AI may have misread"
+        description="Fix any AI misreads."
         footer={
           <Button onClick={() => setEditingIdx(null)}>
             <Check className="h-4 w-4" />

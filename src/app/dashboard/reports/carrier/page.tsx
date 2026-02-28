@@ -174,7 +174,7 @@ export default function CarrierReportPage() {
       <PageHeader
         title="Carrier Dimension"
         icon={<Truck className="h-6 w-6" />}
-        description="Carrier-level reporting with FedEx HAL and UPS Access Point program tracking"
+        description="Track carrier performance."
         actions={<ExportToolbar reportName="Carrier_Report" />}
       />
 

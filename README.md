@@ -1,5 +1,7 @@
 # ShipOS 📦
 
+[![CI](https://github.com/shivbardolabs/ShipOS/actions/workflows/ci.yml/badge.svg)](https://github.com/shivbardolabs/ShipOS/actions/workflows/ci.yml)
+
 **The modern operating system for postal retail stores.**
 
 ShipOS is an all-in-one management platform for postal stores, mailbox rental businesses, and shipping centers. It replaces fragmented workflows with a unified system for package tracking, customer management, shipping operations, and USPS CMRA compliance.

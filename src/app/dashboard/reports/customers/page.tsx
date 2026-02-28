@@ -178,7 +178,7 @@ export default function CustomersReportPage() {
       <PageHeader
         title="Customer / PMB Holder Analytics"
         icon={<Users className="h-6 w-6" />}
-        description="Per-customer insights — activity, revenue contribution, PMB status, and segmentation"
+        description="See per-customer insights."
         actions={<ExportToolbar reportName="Customer_Analytics" />}
       />
 
