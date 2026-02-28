@@ -40,6 +40,7 @@ import {
   BookOpen,
   Printer,
   Palette,
+  Receipt,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -110,6 +111,7 @@ const navSections: NavSection[] = [
       { label: 'Renewals', href: '/dashboard/renewals', icon: CalendarClock, flagKey: 'automated_renewals' },
       { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award, flagKey: 'loyalty-program' },
       { label: 'Report Hub', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
+      { label: 'Charge Events', href: '/dashboard/charge-events', icon: Receipt, flagKey: 'charge_events' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },

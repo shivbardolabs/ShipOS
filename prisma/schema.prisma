@@ -184,6 +184,7 @@ model Customer {
   notifications   Notification[]
   shipToAddresses ShipToAddress[]
   loyaltyAccount  LoyaltyAccount?
+  chargeEvents    ChargeEvent[]
 
   // Migration reference
   sourceId    String? // Original PostalMate CUSTOMERID
@@ -724,6 +725,75 @@ model PaymentRecord {
   @@unique([tenantId, billingPeriod], name: "unique_tenant_billing_period")
   @@index([tenantId])
   @@index([billingPeriod])
+}
+
+// ── Charge Events (BAR-309) ──────────────────────────────────────────────────
+
+enum ChargeServiceType {
+  receiving
+  storage
+  forwarding
+  scanning
+  pickup
+  disposal
+  shipping
+  custom
+}
+
+enum ChargeEventStatus {
+  pending
+  posted
+  invoiced
+  paid
+  void
+  disputed
+}
+
+model ChargeEvent {
+  id          String              @id @default(cuid())
+  tenantId    String
+  customerId  String
+  pmbNumber   String              // Denormalized PMB for fast queries & audit trail
+
+  // Service details
+  serviceType ChargeServiceType
+  description String
+  quantity    Float               @default(1)
+  unitRate    Float               @default(0)
+
+  // Financial breakdown: costBasis + markup = totalCharge
+  costBasis   Float               @default(0) // Actual cost to CLIENT (COGS)
+  markup      Float               @default(0) // Margin applied
+  totalCharge Float               @default(0) // Final customer-facing amount
+
+  // Status & lifecycle
+  status      ChargeEventStatus   @default(pending)
+
+  // Optional references to source entities
+  packageId   String?             // FK → Package that triggered this charge
+  shipmentId  String?             // FK → Shipment that triggered this charge
+  mailPieceId String?             // FK → MailPiece that triggered this charge
+  invoiceId   String?             // FK → Invoice once invoiced
+
+  // Audit trail
+  createdById String?             // User who created this charge
+  voidedById  String?             // User who voided this charge
+  voidedAt    DateTime?
+  voidReason  String?
+  notes       String?
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  customer    Customer            @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([pmbNumber])
+  @@index([status])
+  @@index([serviceType])
+  @@index([createdAt])
 }
 
 // ── Checkout Transactions ────────────────────────────────────────────────────
