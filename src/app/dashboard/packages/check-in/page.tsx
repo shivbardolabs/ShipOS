@@ -704,7 +704,8 @@ export default function CheckInPage() {
           carrierApiEnriched: !!carrierApiData,
         },
       });
-    } catch {
+    } catch (err) {
+      // Log activity with error flag as fallback
       logActivity({
         action: 'package.check_in',
         entityType: 'package',
@@ -723,9 +724,6 @@ export default function CheckInPage() {
           apiError: true,
         },
       });
-
-      setShowSuccess(true);
-    } catch (err) {
       const message = err instanceof Error ? err.message : 'Unexpected error';
       setSubmitError(message);
       console.error('[CheckIn] Submit failed:', err);
