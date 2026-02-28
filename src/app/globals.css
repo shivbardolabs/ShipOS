@@ -401,3 +401,12 @@ button > svg, [role="button"] > svg {
     animation: none;
   }
 }
+
+/* Hide scrollbar for horizontal tab overflow */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
