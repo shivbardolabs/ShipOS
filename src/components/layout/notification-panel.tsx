@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { notifications } from '@/lib/mock-data';
+
 import { Badge } from '@/components/ui/badge';
 import {
   getNotificationTargetUrl,
@@ -57,13 +57,22 @@ export function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/notifications?limit=20')
+      .then((r) => r.json())
+      .then((d) => setNotifications(d.notifications || []))
+      .catch(() => {});
+  }, []);
 
   // Show recent 8 notifications, sorted by createdAt (newest first)
   const recent = useMemo(() => {
     return [...notifications]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 8);
-  }, []);
+  }, [notifications]);
 
   const unreadCount = useMemo(() => {
     return recent.filter((n) => !readIds.has(n.id)).length;

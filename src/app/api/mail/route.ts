@@ -3,9 +3,9 @@ import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 /**
- * GET /api/notifications
- * List notifications with search, filtering, and pagination.
- * Query params: type?, status?, channel?, page?, limit?
+ * GET /api/mail
+ * List mail pieces with search, filtering, and pagination.
+ * Query params: search?, type?, status?, page?, limit?
  */
 export async function GET(request: NextRequest) {
   try {
@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search');
     const type = searchParams.get('type');
     const status = searchParams.get('status');
-    const channel = searchParams.get('channel');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
     const skip = (page - 1) * limit;
@@ -28,12 +28,16 @@ export async function GET(request: NextRequest) {
     const where: Record<string, any> = { ...tenantScope };
     if (type) where.type = type;
     if (status) where.status = status;
-    if (channel) where.channel = channel;
+    if (search) {
+      where.OR = [
+        { sender: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    const [notifications, total] = await Promise.all([
-      prisma.notification.findMany({
+    const [mailPieces, total] = await Promise.all([
+      prisma.mailPiece.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { receivedAt: 'desc' },
         skip,
         take: limit,
         include: {
@@ -42,20 +46,21 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.notification.count({ where }),
+      prisma.mailPiece.count({ where }),
     ]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serialized = notifications.map((n: any) => ({
-      ...n,
-      sentAt: n.sentAt?.toISOString() ?? null,
-      deliveredAt: n.deliveredAt?.toISOString() ?? null,
-      createdAt: n.createdAt.toISOString(),
+    const serialized = mailPieces.map((m: any) => ({
+      ...m,
+      receivedAt: m.receivedAt?.toISOString() ?? null,
+      actionAt: m.actionAt?.toISOString() ?? null,
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({ notifications: serialized, total, page, limit });
+    return NextResponse.json({ mailPieces: serialized, total, page, limit });
   } catch (err) {
-    console.error('[GET /api/notifications]', err);
-    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
+    console.error('[GET /api/mail]', err);
+    return NextResponse.json({ error: 'Failed to fetch mail' }, { status: 500 });
   }
 }

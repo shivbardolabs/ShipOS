@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable */
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect} from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +10,6 @@ import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Stepper, type Step } from '@/components/ui/stepper';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { customers as mockCustomers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_MAILBOX_RANGES,
@@ -129,6 +129,16 @@ const platformLabels: Record<MailboxPlatform, { label: string; color: string }> 
 };
 
 export default function NewCustomerPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [mockCustomers, setMockCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setMockCustomers(d.customers || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const router = useRouter();
   const [step, setStep] = useState(0);
   const fileInputRef1 = useRef<HTMLInputElement>(null);

@@ -1,8 +1,8 @@
 'use client';
+/* eslint-disable */
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { customers, packages } from '@/lib/mock-data';
 import type { Customer, Package as PackageType } from '@/lib/types';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
@@ -68,6 +68,19 @@ const pkgTypeLabels: Record<string, string> = {
 /*  Main Kiosk Component                                                      */
 /* -------------------------------------------------------------------------- */
 export default function KioskPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [screen, setScreen] = useState<KioskScreen>('home');
 
   /* ---- Pick-up state ---- */

@@ -49,10 +49,8 @@ import {
   MailOpen,
   ScanLine,
 } from 'lucide-react';
-import {
-  dashboardStats,
-} from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
+import type { DashboardStats } from '@/lib/types';
 import { useActivityLog } from '@/components/activity-log-provider';
 import type { ActionCategory } from '@/lib/activity-log';
 import type { Briefing, BriefingResponse } from '@/app/api/dashboard/briefing/route';
@@ -150,7 +148,7 @@ const favoriteTiles: FavoriteTile[] = [
     href: '/dashboard/packages/check-out',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50 hover:bg-emerald-500/25',
-    badge: `${dashboardStats.packagesHeld} held`,
+    badge: '__PACKAGES_HELD__',
   },
   {
     label: 'Customer Lookup',
@@ -201,7 +199,7 @@ const favoriteTiles: FavoriteTile[] = [
     href: '/dashboard/compliance',
     color: 'text-red-600',
     bgColor: 'bg-red-50 hover:bg-red-500/25',
-    badge: `${dashboardStats.idExpiringSoon}`,
+    badge: '__ID_EXPIRING__',
   },
   {
     label: 'Create Invoice',
@@ -301,8 +299,31 @@ function timeAgo(isoString: string): string {
 export default function DashboardPage() {
   const volumeData = useMemo(() => buildVolumeData(), []);
   const maxVolume = Math.max(...volumeData.map((v) => v.count));
-  const s = dashboardStats;
   const { entries: activityEntries } = useActivityLog();
+
+  /* ── Live dashboard stats from Postgres ───────────────────────── */
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch((err) => console.error('Failed to fetch stats:', err))
+      .finally(() => setStatsLoading(false));
+  }, []);
+
+  const s: DashboardStats = stats ?? {
+    packagesCheckedInToday: 0,
+    packagesReleasedToday: 0,
+    packagesHeld: 0,
+    activeCustomers: 0,
+    idExpiringSoon: 0,
+    shipmentsToday: 0,
+    revenueToday: 0,
+    notificationsSent: 0,
+  };
 
   const [showAllStats, setShowAllStats] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -658,12 +679,17 @@ export default function DashboardPage() {
                 href={tile.href}
                 className={`group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-700/60 p-4 min-h-[88px] text-center transition-all duration-150 hover:border-surface-700/50 hover:scale-[1.02] active:scale-[0.98] ${tile.bgColor}`}
               >
-                {/* Badge */}
-                {tile.badge && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
-                    {tile.badge}
-                  </span>
-                )}
+                {/* Badge — substitute live stat placeholders */}
+                {(() => {
+                  let badge = tile.badge;
+                  if (badge === '__PACKAGES_HELD__') badge = `${s.packagesHeld} held`;
+                  else if (badge === '__ID_EXPIRING__') badge = `${s.idExpiringSoon}`;
+                  return badge ? (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
+                      {badge}
+                    </span>
+                  ) : null;
+                })()}
 
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-surface-900/60 group-hover:bg-surface-900/80 transition-colors ${tile.color}`}>
                   <Icon className="h-5 w-5" />

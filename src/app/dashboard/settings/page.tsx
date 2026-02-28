@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Modal } from '@/components/ui/modal';
-import { carrierRates } from '@/lib/mock-data';
+
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
 import { formatCurrency } from '@/lib/utils';
@@ -133,6 +132,16 @@ export default function SettingsPage() {
   const [closeTime, setCloseTime] = useState('18:00');
   const [savingTenant, setSavingTenant] = useState(false);
   const [tenantSaved, setTenantSaved] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [carrierRates, setCarrierRates] = useState<any[]>([]);
+
+  // Fetch carrier rates from API
+  useEffect(() => {
+    fetch('/api/carrier-rates')
+      .then((r) => r.json())
+      .then((d) => setCarrierRates(d.carrierRates || []))
+      .catch(() => {});
+  }, []);
 
   // Hydrate from tenant context
   useEffect(() => {

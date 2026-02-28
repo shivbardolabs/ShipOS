@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { shipments, customers } from '@/lib/mock-data';
+// shipments and customers now fetched from API
 import { useActivityLog } from '@/components/activity-log-provider';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -29,27 +29,6 @@ import {
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 
 /* -------------------------------------------------------------------------- */
-/*  Computed stats                                                            */
-/* -------------------------------------------------------------------------- */
-const shipmentsToday = shipments.filter(
-  (s) => new Date(s.createdAt).toDateString() === new Date('2026-02-21').toDateString()
-).length || 6;
-
-const revenueToday = shipments
-  .filter((s) => new Date(s.createdAt).toDateString() === new Date('2026-02-21').toDateString())
-  .reduce((sum, s) => sum + s.retailPrice, 0) || 847.5;
-
-const avgMargin =
-  shipments.reduce((sum, s) => {
-    if (s.wholesaleCost === 0) return sum;
-    return sum + ((s.retailPrice - s.wholesaleCost) / s.retailPrice) * 100;
-  }, 0) / shipments.length;
-
-const pendingCount = shipments.filter(
-  (s) => s.status === 'pending' || s.status === 'label_created'
-).length;
-
-/* -------------------------------------------------------------------------- */
 /*  Shipping Page                                                             */
 /* -------------------------------------------------------------------------- */
 export default function ShippingPage() {
@@ -57,6 +36,49 @@ export default function ShippingPage() {
   const [showNewShipment, setShowNewShipment] = useState(false);
   const { lastActionByVerb } = useActivityLog();
   const lastShipment = lastActionByVerb('shipment.create');
+
+  /* ── Fetch shipments + customers from API ───────────────────── */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/shipments?limit=100')
+      .then((r) => r.json())
+      .then((data) => setShipments(data.shipments ?? []))
+      .catch((err) => console.error('Failed to fetch shipments:', err));
+    fetch('/api/customers?limit=200&status=active')
+      .then((r) => r.json())
+      .then((data) => setCustomers(data.customers ?? []))
+      .catch((err) => console.error('Failed to fetch customers:', err));
+  }, []);
+
+  /* Computed stats */
+  const shipmentsToday = useMemo(() => {
+    const today = new Date().toDateString();
+    return shipments.filter((s) => new Date(s.createdAt).toDateString() === today).length;
+  }, [shipments]);
+
+  const revenueToday = useMemo(() => {
+    const today = new Date().toDateString();
+    return shipments
+      .filter((s) => new Date(s.createdAt).toDateString() === today)
+      .reduce((sum, s) => sum + (s.retailPrice || 0), 0);
+  }, [shipments]);
+
+  const avgMargin = useMemo(() => {
+    if (shipments.length === 0) return 0;
+    return shipments.reduce((sum, s) => {
+      if (s.wholesaleCost === 0) return sum;
+      return sum + ((s.retailPrice - s.wholesaleCost) / s.retailPrice) * 100;
+    }, 0) / shipments.length;
+  }, [shipments]);
+
+  const pendingCount = useMemo(
+    () => shipments.filter((s) => s.status === 'pending' || s.status === 'label_created').length,
+    [shipments]
+  );
   
 
   const [actionRow, setActionRow] = useState<string | null>(null);
@@ -94,7 +116,7 @@ export default function ShippingPage() {
       default:
         return shipments;
     }
-  }, [activeTab]);
+  }, [activeTab, shipments]);
 
   const tabs = [
     { id: 'all', label: 'All Shipments', count: shipments.length },
