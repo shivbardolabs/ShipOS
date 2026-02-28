@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/modal';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
-import { mailPieces, customers } from '@/lib/mock-data';
+// mailPieces and customers now fetched from API
 import { useActivityLog } from '@/components/activity-log-provider';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { formatDate, formatDateTime } from '@/lib/utils';
@@ -94,7 +94,7 @@ function countByField<T>(
 /*  Stats + detail breakdowns                                                 */
 /* -------------------------------------------------------------------------- */
 
-function useMailStats() {
+function useMailStats(mailPieces: MailPiece[] = []) {
   return useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now);
@@ -352,7 +352,7 @@ function useMailStats() {
           ? `${heldItems.length} piece${heldItems.length !== 1 ? 's' : ''} on hold \u00b7 Oldest: ${Math.round(Math.max(...heldItems.map((m) => (now.getTime() - new Date(m.receivedAt).getTime()) / 86400000)))} days`
           : 'No mail on hold',
     };
-  }, []);
+  }, [mailPieces]);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -527,6 +527,22 @@ function MailContent() {
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
 
+  /* ── Fetch mail + customers from API ────────────────────────── */
+  const [mailPieces, setMailPieces] = useState<MailPiece[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/mail?limit=100')
+      .then((r) => r.json())
+      .then((data) => setMailPieces(data.mailPieces ?? []))
+      .catch((err) => console.error('Failed to fetch mail:', err));
+    fetch('/api/customers?limit=200&status=active')
+      .then((r) => r.json())
+      .then((data) => setCustomers(data.customers ?? []))
+      .catch((err) => console.error('Failed to fetch customers:', err));
+  }, []);
+
   // Auto-open detail modal when navigated with ?highlight={id}
   useEffect(() => {
     const highlightId = searchParams.get('highlight');
@@ -534,13 +550,13 @@ function MailContent() {
       const target = mailPieces.find((m) => m.id === highlightId);
       if (target) setDetailModal(target);
     }
-  }, [searchParams]);
-  const stats = useMailStats();
+  }, [searchParams, mailPieces]);
+  const stats = useMailStats(mailPieces);
 
   const filtered = useMemo<MailRow[]>(() => {
     if (activeTab === 'all') return mailPieces as MailRow[];
     return mailPieces.filter((m) => m.status === activeTab) as MailRow[];
-  }, [activeTab]);
+  }, [activeTab, mailPieces]);
 
   const columns = useColumns((mail) => setDetailModal(mail));
 
@@ -615,7 +631,7 @@ function MailContent() {
             <PerformedBy entry={lastMailAction} showAction className="ml-2" />
           ) : undefined
         }
-        description="Process, scan, and manage incoming mail for all customers"
+        description="Process and route incoming mail."
         actions={
           <Button
             leftIcon={<Plus className="h-4 w-4" />}

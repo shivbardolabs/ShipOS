@@ -19,10 +19,6 @@ import type {
   LoyaltyTransaction,
   LoyaltyReward,
   LoyaltyDashboardStats,
-  CustomerFee,
-  CustomerFeeSummary,
-  FeeCategory,
-  FeeStatus,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -52,36 +48,36 @@ export const currentUser: User = {
 // ---------------------------------------------------------------------------
 
 export const customers: Customer[] = [
-  { id: 'cust_001', firstName: 'James', lastName: 'Morrison', email: 'james.morrison@email.com', phone: '(555) 234-5001', businessName: 'Morrison Consulting LLC', pmbNumber: 'PMB-0001', platform: 'iPostal', status: 'active', dateOpened: daysAgo(420), renewalDate: daysFromNow(45), billingTerms: 'Monthly', idType: 'both', idExpiration: daysFromNow(180), passportExpiration: daysFromNow(400), form1583Status: 'approved', form1583Date: daysAgo(380), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_001', address: '742 Evergreen Terrace, Suite 200, Springfield, IL 62704', forwardingAddress: '1200 Lake Shore Dr, Apt 14B, Chicago, IL 60610', authorizedPickupPersons: [{ id: 'ap_001', name: 'Karen Morrison', phone: '(555) 234-5099', relationship: 'Spouse' }, { id: 'ap_002', name: 'Tom Reid', phone: '(555) 234-5098', relationship: 'Assistant' }], packageCount: 12, mailCount: 34 },
-  { id: 'cust_002', firstName: 'Linda', lastName: 'Nakamura', email: 'linda.nak@proton.me', phone: '(555) 234-5002', pmbNumber: 'PMB-0002', platform: 'iPostal', status: 'active', dateOpened: daysAgo(310), renewalDate: daysFromNow(55), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(12), form1583Status: 'approved', form1583Date: daysAgo(290), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_002', address: '88 Sakura Lane, San Francisco, CA 94102', forwardingAddress: '320 Oak Park Blvd, Berkeley, CA 94704', authorizedPickupPersons: [{ id: 'ap_003', name: 'Yuki Nakamura', phone: '(555) 234-5097', relationship: 'Sister' }], packageCount: 5, mailCount: 18 },
-  { id: 'cust_003', firstName: 'Robert', lastName: 'Singh', email: 'robert.s@gmail.com', phone: '(555) 234-5003', businessName: 'Singh Import/Export', pmbNumber: 'PMB-0003', platform: 'postscan', status: 'active', dateOpened: daysAgo(550), renewalDate: daysFromNow(10), billingTerms: 'Annual', idType: 'passport', idExpiration: daysFromNow(90), form1583Status: 'approved', form1583Date: daysAgo(500), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_003', address: '450 Commerce Blvd, Houston, TX 77001', forwardingAddress: '12 Harbor View Rd, Galveston, TX 77550', authorizedPickupPersons: [{ id: 'ap_004', name: 'Priya Singh', phone: '(555) 234-5096', relationship: 'Business Partner' }, { id: 'ap_005', name: 'Raj Patel', phone: '(555) 234-5095', relationship: 'Employee' }, { id: 'ap_006', name: 'Deepak Sharma', phone: '(555) 234-5094', relationship: 'Employee' }], packageCount: 28, mailCount: 67 },
-  { id: 'cust_004', firstName: 'Maria', lastName: 'Gonzalez', email: 'mgonzalez@outlook.com', phone: '(555) 234-5004', pmbNumber: 'PMB-0004', platform: 'physical', status: 'active', dateOpened: daysAgo(200), renewalDate: daysFromNow(165), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(300), form1583Status: 'approved', form1583Date: daysAgo(180), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_004', address: '1503 Elm St, Apt 4A, Miami, FL 33101', packageCount: 8, mailCount: 12 },
-  { id: 'cust_005', firstName: 'David', lastName: 'Kim', email: 'dkim@techstartup.io', phone: '(555) 234-5005', businessName: 'TechStartup Inc', pmbNumber: 'PMB-0005', platform: 'postscan', status: 'active', dateOpened: daysAgo(150), renewalDate: daysFromNow(215), billingTerms: 'Monthly', idType: 'both', idExpiration: daysFromNow(5), passportExpiration: daysFromNow(600), form1583Status: 'submitted', form1583Date: daysAgo(10), proofOfAddressStatus: 'pending', notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_005', address: '900 Innovation Way, Austin, TX 78701', forwardingAddress: '2200 Sunset Blvd, Los Angeles, CA 90028', authorizedPickupPersons: [{ id: 'ap_007', name: 'Lisa Park', phone: '(555) 234-5093', relationship: 'Office Manager' }], packageCount: 15, mailCount: 42 },
-  { id: 'cust_006', firstName: 'Patricia', lastName: 'Williams', email: 'pat.w@yahoo.com', phone: '(555) 234-5006', pmbNumber: 'PMB-0006', platform: 'anytime', status: 'active', dateOpened: daysAgo(365), renewalDate: daysFromNow(0), billingTerms: 'Semiannual', idType: 'drivers_license', idExpiration: daysFromNow(450), form1583Status: 'approved', form1583Date: daysAgo(340), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_006', packageCount: 3, mailCount: 89 },
-  { id: 'cust_007', firstName: 'Michael', lastName: 'Brown', email: 'mbrown@proton.me', phone: '(555) 234-5007', businessName: 'Brown & Associates', pmbNumber: 'PMB-0007', platform: 'iPostal', status: 'active', dateOpened: daysAgo(280), renewalDate: daysFromNow(85), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysAgo(15), form1583Status: 'expired', form1583Date: daysAgo(400), proofOfAddressStatus: 'expired', notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_007', packageCount: 6, mailCount: 22 },
-  { id: 'cust_008', firstName: 'Jennifer', lastName: 'Lee', email: 'jlee@fastmail.com', phone: '(555) 234-5008', pmbNumber: 'PMB-0008', platform: 'anytime', status: 'active', dateOpened: daysAgo(90), renewalDate: daysFromNow(275), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(700), form1583Status: 'approved', form1583Date: daysAgo(85), proofOfAddressStatus: 'approved', notifyEmail: false, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_008', packageCount: 2, mailCount: 5 },
-  { id: 'cust_009', firstName: 'William', lastName: 'Davis', email: 'wdavis@email.com', phone: '(555) 234-5009', pmbNumber: 'PMB-0009', platform: 'physical', status: 'closed', dateOpened: daysAgo(600), dateClosed: daysAgo(30), billingTerms: 'Custom', idType: 'drivers_license', idExpiration: daysAgo(60), form1583Status: 'expired', form1583Date: daysAgo(580), proofOfAddressStatus: 'expired', notifyEmail: true, notifySms: false, packageCount: 0, mailCount: 0 },
-  { id: 'cust_010', firstName: 'Elizabeth', lastName: 'Martinez', email: 'emartinez@gmail.com', phone: '(555) 234-5010', businessName: 'Martinez Legal Services', pmbNumber: 'PMB-0010', platform: 'postscan', status: 'active', dateOpened: daysAgo(400), renewalDate: daysFromNow(30), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(200), passportExpiration: daysFromNow(350), form1583Status: 'approved', form1583Date: daysAgo(370), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 19, mailCount: 55 },
-  { id: 'cust_011', firstName: 'Thomas', lastName: 'Anderson', email: 'tanderson@neo.io', phone: '(555) 234-5011', pmbNumber: 'PMB-0011', platform: 'physical', status: 'active', dateOpened: daysAgo(180), renewalDate: daysFromNow(185), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(120), form1583Status: 'approved', form1583Date: daysAgo(170), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 7, mailCount: 15 },
-  { id: 'cust_012', firstName: 'Sarah', lastName: 'Taylor', email: 'staylor@outlook.com', phone: '(555) 234-5012', businessName: 'Taylor Designs', pmbNumber: 'PMB-0012', platform: 'iPostal', status: 'active', dateOpened: daysAgo(250), renewalDate: daysFromNow(115), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(30), form1583Status: 'approved', form1583Date: daysAgo(230), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, packageCount: 11, mailCount: 28 },
-  { id: 'cust_013', firstName: 'Christopher', lastName: 'Jackson', email: 'cjackson@email.com', phone: '(555) 234-5013', pmbNumber: 'PMB-0013', platform: 'anytime', status: 'suspended', dateOpened: daysAgo(320), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(500), form1583Status: 'pending', proofOfAddressStatus: 'pending', notifyEmail: false, notifySms: false, packageCount: 1, mailCount: 3 },
-  { id: 'cust_014', firstName: 'Jessica', lastName: 'White', email: 'jwhite@gmail.com', phone: '(555) 234-5014', businessName: 'White Photography', pmbNumber: 'PMB-0014', platform: 'postscan', status: 'active', dateOpened: daysAgo(500), renewalDate: daysFromNow(60), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(250), passportExpiration: daysFromNow(100), form1583Status: 'approved', form1583Date: daysAgo(460), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 22, mailCount: 47 },
-  { id: 'cust_015', firstName: 'Daniel', lastName: 'Harris', email: 'dharris@proton.me', phone: '(555) 234-5015', pmbNumber: 'PMB-0015', platform: 'postscan', status: 'active', dateOpened: daysAgo(70), renewalDate: daysFromNow(295), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(400), form1583Status: 'approved', form1583Date: daysAgo(60), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 4, mailCount: 8 },
-  { id: 'cust_016', firstName: 'Karen', lastName: 'Thompson', email: 'kthompson@fastmail.com', phone: '(555) 234-5016', pmbNumber: 'PMB-0016', platform: 'anytime', status: 'active', dateOpened: daysAgo(440), renewalDate: daysFromNow(25), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(150), form1583Status: 'approved', form1583Date: daysAgo(410), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, packageCount: 9, mailCount: 31 },
-  { id: 'cust_017', firstName: 'Matthew', lastName: 'Garcia', email: 'mgarcia@yahoo.com', phone: '(555) 234-5017', businessName: 'Garcia Imports', pmbNumber: 'PMB-0017', platform: 'iPostal', status: 'active', dateOpened: daysAgo(190), renewalDate: daysFromNow(175), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(800), form1583Status: 'submitted', form1583Date: daysAgo(5), proofOfAddressStatus: 'submitted', notifyEmail: true, notifySms: true, packageCount: 14, mailCount: 20 },
-  { id: 'cust_018', firstName: 'Nancy', lastName: 'Robinson', email: 'nrobinson@email.com', phone: '(555) 234-5018', pmbNumber: 'PMB-0018', platform: 'anytime', status: 'closed', dateOpened: daysAgo(700), dateClosed: daysAgo(90), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysAgo(200), form1583Status: 'expired', form1583Date: daysAgo(680), proofOfAddressStatus: 'expired', notifyEmail: false, notifySms: false, packageCount: 0, mailCount: 0 },
-  { id: 'cust_019', firstName: 'Anthony', lastName: 'Clark', email: 'aclark@gmail.com', phone: '(555) 234-5019', businessName: 'Clark Ventures', pmbNumber: 'PMB-0019', platform: 'iPostal', status: 'active', dateOpened: daysAgo(130), renewalDate: daysFromNow(235), billingTerms: 'Semiannual', idType: 'both', idExpiration: daysFromNow(100), passportExpiration: daysFromNow(300), form1583Status: 'approved', form1583Date: daysAgo(120), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 10, mailCount: 19 },
-  { id: 'cust_020', firstName: 'Lisa', lastName: 'Lewis', email: 'llwis@proton.me', phone: '(555) 234-5020', pmbNumber: 'PMB-0020', platform: 'postscan', status: 'active', dateOpened: daysAgo(45), renewalDate: daysFromNow(320), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(500), form1583Status: 'approved', form1583Date: daysAgo(40), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, packageCount: 3, mailCount: 6 },
-  { id: 'cust_021', firstName: 'Mark', lastName: 'Walker', email: 'mwalker@outlook.com', phone: '(555) 234-5021', businessName: 'Walker Tech Solutions', pmbNumber: 'PMB-0021', platform: 'physical', status: 'active', dateOpened: daysAgo(350), renewalDate: daysFromNow(15), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(60), form1583Status: 'approved', form1583Date: daysAgo(330), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 16, mailCount: 44 },
-  { id: 'cust_022', firstName: 'Amanda', lastName: 'Hall', email: 'ahall@yahoo.com', phone: '(555) 234-5022', pmbNumber: 'PMB-0022', platform: 'iPostal', status: 'active', dateOpened: daysAgo(210), renewalDate: daysFromNow(155), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(900), form1583Status: 'approved', form1583Date: daysAgo(200), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 6, mailCount: 14 },
-  { id: 'cust_023', firstName: 'Steven', lastName: 'Allen', email: 'sallen@fastmail.com', phone: '(555) 234-5023', pmbNumber: 'PMB-0023', platform: 'anytime', status: 'active', dateOpened: daysAgo(160), renewalDate: daysFromNow(205), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(3), form1583Status: 'approved', form1583Date: daysAgo(150), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, packageCount: 5, mailCount: 9 },
-  { id: 'cust_024', firstName: 'Donna', lastName: 'Young', email: 'dyoung@email.com', phone: '(555) 234-5024', businessName: 'Young Realty Group', pmbNumber: 'PMB-0024', platform: 'postscan', status: 'active', dateOpened: daysAgo(480), renewalDate: daysFromNow(50), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(350), passportExpiration: daysFromNow(200), form1583Status: 'approved', form1583Date: daysAgo(450), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 20, mailCount: 60 },
-  { id: 'cust_025', firstName: 'Paul', lastName: 'King', email: 'pking@gmail.com', phone: '(555) 234-5025', pmbNumber: 'PMB-0025', platform: 'postscan', status: 'suspended', dateOpened: daysAgo(300), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysAgo(45), form1583Status: 'expired', form1583Date: daysAgo(400), proofOfAddressStatus: 'expired', notifyEmail: false, notifySms: false, packageCount: 2, mailCount: 0 },
-  { id: 'cust_026', firstName: 'Emily', lastName: 'Wright', email: 'ewright@proton.me', phone: '(555) 234-5026', businessName: 'Wright & Reed Attorneys', pmbNumber: 'PMB-0026', platform: 'anytime', status: 'active', dateOpened: daysAgo(260), renewalDate: daysFromNow(105), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(220), form1583Status: 'approved', form1583Date: daysAgo(240), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 8, mailCount: 36 },
-  { id: 'cust_027', firstName: 'Andrew', lastName: 'Lopez', email: 'alopez@outlook.com', phone: '(555) 234-5027', pmbNumber: 'PMB-0027', platform: 'iPostal', status: 'active', dateOpened: daysAgo(110), renewalDate: daysFromNow(255), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(650), form1583Status: 'approved', form1583Date: daysAgo(100), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: false, packageCount: 4, mailCount: 11 },
-  { id: 'cust_028', firstName: 'Michelle', lastName: 'Hill', email: 'mhill@yahoo.com', phone: '(555) 234-5028', pmbNumber: 'PMB-0028', platform: 'physical', status: 'active', dateOpened: daysAgo(80), renewalDate: daysFromNow(285), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(380), form1583Status: 'approved', form1583Date: daysAgo(75), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 3, mailCount: 7 },
-  { id: 'cust_029', firstName: 'Kevin', lastName: 'Scott', email: 'kscott@fastmail.com', phone: '(555) 234-5029', businessName: 'Scott Digital Media', pmbNumber: 'PMB-0029', platform: 'iPostal', status: 'active', dateOpened: daysAgo(230), renewalDate: daysFromNow(135), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(170), passportExpiration: daysFromNow(500), form1583Status: 'approved', form1583Date: daysAgo(210), proofOfAddressStatus: 'approved', notifyEmail: true, notifySms: true, packageCount: 13, mailCount: 29 },
-  { id: 'cust_030', firstName: 'Rachel', lastName: 'Green', email: 'rgreen@email.com', phone: '(555) 234-5030', pmbNumber: 'PMB-0030', platform: 'postscan', status: 'active', dateOpened: daysAgo(25), renewalDate: daysFromNow(340), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(600), form1583Status: 'pending', form1583Date: daysAgo(20), proofOfAddressStatus: 'pending', notifyEmail: true, notifySms: true, packageCount: 1, mailCount: 2 },
+  { id: 'cust_001', firstName: 'James', lastName: 'Morrison', email: 'james.morrison@email.com', phone: '(555) 234-5001', businessName: 'Morrison Consulting LLC', pmbNumber: 'PMB-0001', platform: 'physical', status: 'active', dateOpened: daysAgo(420), renewalDate: daysFromNow(45), billingTerms: 'Monthly', idType: 'both', idExpiration: daysFromNow(180), passportExpiration: daysFromNow(400), form1583Status: 'approved', form1583Date: daysAgo(380), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_001', packageCount: 12, mailCount: 34 },
+  { id: 'cust_002', firstName: 'Linda', lastName: 'Nakamura', email: 'linda.nak@proton.me', phone: '(555) 234-5002', pmbNumber: 'PMB-0002', platform: 'iPostal', status: 'active', dateOpened: daysAgo(310), renewalDate: daysFromNow(55), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(12), form1583Status: 'approved', form1583Date: daysAgo(290), notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_002', packageCount: 5, mailCount: 18 },
+  { id: 'cust_003', firstName: 'Robert', lastName: 'Singh', email: 'robert.s@gmail.com', phone: '(555) 234-5003', businessName: 'Singh Import/Export', pmbNumber: 'PMB-0003', platform: 'physical', status: 'active', dateOpened: daysAgo(550), renewalDate: daysFromNow(10), billingTerms: 'Annual', idType: 'passport', idExpiration: daysFromNow(90), form1583Status: 'approved', form1583Date: daysAgo(500), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_003', packageCount: 28, mailCount: 67 },
+  { id: 'cust_004', firstName: 'Maria', lastName: 'Gonzalez', email: 'mgonzalez@outlook.com', phone: '(555) 234-5004', pmbNumber: 'PMB-0004', platform: 'anytime', status: 'active', dateOpened: daysAgo(200), renewalDate: daysFromNow(165), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(300), form1583Status: 'approved', form1583Date: daysAgo(180), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_004', packageCount: 8, mailCount: 12 },
+  { id: 'cust_005', firstName: 'David', lastName: 'Kim', email: 'dkim@techstartup.io', phone: '(555) 234-5005', businessName: 'TechStartup Inc', pmbNumber: 'PMB-0005', platform: 'postscan', status: 'active', dateOpened: daysAgo(150), renewalDate: daysFromNow(215), billingTerms: 'Monthly', idType: 'both', idExpiration: daysFromNow(5), passportExpiration: daysFromNow(600), form1583Status: 'submitted', form1583Date: daysAgo(10), notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_005', packageCount: 15, mailCount: 42 },
+  { id: 'cust_006', firstName: 'Patricia', lastName: 'Williams', email: 'pat.w@yahoo.com', phone: '(555) 234-5006', pmbNumber: 'PMB-0006', platform: 'physical', status: 'active', dateOpened: daysAgo(365), renewalDate: daysFromNow(0), billingTerms: 'Annual', idType: 'drivers_license', idExpiration: daysFromNow(450), form1583Status: 'approved', form1583Date: daysAgo(340), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_006', packageCount: 3, mailCount: 89 },
+  { id: 'cust_007', firstName: 'Michael', lastName: 'Brown', email: 'mbrown@proton.me', phone: '(555) 234-5007', businessName: 'Brown & Associates', pmbNumber: 'PMB-0007', platform: 'iPostal', status: 'active', dateOpened: daysAgo(280), renewalDate: daysFromNow(85), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysAgo(15), form1583Status: 'expired', form1583Date: daysAgo(400), notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_007', packageCount: 6, mailCount: 22 },
+  { id: 'cust_008', firstName: 'Jennifer', lastName: 'Lee', email: 'jlee@fastmail.com', phone: '(555) 234-5008', pmbNumber: 'PMB-0008', platform: 'anytime', status: 'active', dateOpened: daysAgo(90), renewalDate: daysFromNow(275), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(700), form1583Status: 'approved', form1583Date: daysAgo(85), notifyEmail: false, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_008', packageCount: 2, mailCount: 5 },
+  { id: 'cust_009', firstName: 'William', lastName: 'Davis', email: 'wdavis@email.com', phone: '(555) 234-5009', pmbNumber: 'PMB-0009', platform: 'physical', status: 'closed', dateOpened: daysAgo(600), dateClosed: daysAgo(30), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysAgo(60), form1583Status: 'expired', form1583Date: daysAgo(580), notifyEmail: true, notifySms: false, packageCount: 0, mailCount: 0 },
+  { id: 'cust_010', firstName: 'Elizabeth', lastName: 'Martinez', email: 'emartinez@gmail.com', phone: '(555) 234-5010', businessName: 'Martinez Legal Services', pmbNumber: 'PMB-0010', platform: 'postscan', status: 'active', dateOpened: daysAgo(400), renewalDate: daysFromNow(30), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(200), passportExpiration: daysFromNow(350), form1583Status: 'approved', form1583Date: daysAgo(370), notifyEmail: true, notifySms: true, packageCount: 19, mailCount: 55 },
+  { id: 'cust_011', firstName: 'Thomas', lastName: 'Anderson', email: 'tanderson@neo.io', phone: '(555) 234-5011', pmbNumber: 'PMB-0011', platform: 'physical', status: 'active', dateOpened: daysAgo(180), renewalDate: daysFromNow(185), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(120), form1583Status: 'approved', form1583Date: daysAgo(170), notifyEmail: true, notifySms: true, packageCount: 7, mailCount: 15 },
+  { id: 'cust_012', firstName: 'Sarah', lastName: 'Taylor', email: 'staylor@outlook.com', phone: '(555) 234-5012', businessName: 'Taylor Designs', pmbNumber: 'PMB-0012', platform: 'iPostal', status: 'active', dateOpened: daysAgo(250), renewalDate: daysFromNow(115), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(30), form1583Status: 'approved', form1583Date: daysAgo(230), notifyEmail: true, notifySms: false, packageCount: 11, mailCount: 28 },
+  { id: 'cust_013', firstName: 'Christopher', lastName: 'Jackson', email: 'cjackson@email.com', phone: '(555) 234-5013', pmbNumber: 'PMB-0013', platform: 'anytime', status: 'suspended', dateOpened: daysAgo(320), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(500), form1583Status: 'pending', notifyEmail: false, notifySms: false, packageCount: 1, mailCount: 3 },
+  { id: 'cust_014', firstName: 'Jessica', lastName: 'White', email: 'jwhite@gmail.com', phone: '(555) 234-5014', businessName: 'White Photography', pmbNumber: 'PMB-0014', platform: 'physical', status: 'active', dateOpened: daysAgo(500), renewalDate: daysFromNow(60), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(250), passportExpiration: daysFromNow(100), form1583Status: 'approved', form1583Date: daysAgo(460), notifyEmail: true, notifySms: true, packageCount: 22, mailCount: 47 },
+  { id: 'cust_015', firstName: 'Daniel', lastName: 'Harris', email: 'dharris@proton.me', phone: '(555) 234-5015', pmbNumber: 'PMB-0015', platform: 'postscan', status: 'active', dateOpened: daysAgo(70), renewalDate: daysFromNow(295), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(400), form1583Status: 'approved', form1583Date: daysAgo(60), notifyEmail: true, notifySms: true, packageCount: 4, mailCount: 8 },
+  { id: 'cust_016', firstName: 'Karen', lastName: 'Thompson', email: 'kthompson@fastmail.com', phone: '(555) 234-5016', pmbNumber: 'PMB-0016', platform: 'physical', status: 'active', dateOpened: daysAgo(440), renewalDate: daysFromNow(25), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(150), form1583Status: 'approved', form1583Date: daysAgo(410), notifyEmail: true, notifySms: false, packageCount: 9, mailCount: 31 },
+  { id: 'cust_017', firstName: 'Matthew', lastName: 'Garcia', email: 'mgarcia@yahoo.com', phone: '(555) 234-5017', businessName: 'Garcia Imports', pmbNumber: 'PMB-0017', platform: 'iPostal', status: 'active', dateOpened: daysAgo(190), renewalDate: daysFromNow(175), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(800), form1583Status: 'submitted', form1583Date: daysAgo(5), notifyEmail: true, notifySms: true, packageCount: 14, mailCount: 20 },
+  { id: 'cust_018', firstName: 'Nancy', lastName: 'Robinson', email: 'nrobinson@email.com', phone: '(555) 234-5018', pmbNumber: 'PMB-0018', platform: 'anytime', status: 'closed', dateOpened: daysAgo(700), dateClosed: daysAgo(90), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysAgo(200), form1583Status: 'expired', form1583Date: daysAgo(680), notifyEmail: false, notifySms: false, packageCount: 0, mailCount: 0 },
+  { id: 'cust_019', firstName: 'Anthony', lastName: 'Clark', email: 'aclark@gmail.com', phone: '(555) 234-5019', businessName: 'Clark Ventures', pmbNumber: 'PMB-0019', platform: 'physical', status: 'active', dateOpened: daysAgo(130), renewalDate: daysFromNow(235), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(100), passportExpiration: daysFromNow(300), form1583Status: 'approved', form1583Date: daysAgo(120), notifyEmail: true, notifySms: true, packageCount: 10, mailCount: 19 },
+  { id: 'cust_020', firstName: 'Lisa', lastName: 'Lewis', email: 'llwis@proton.me', phone: '(555) 234-5020', pmbNumber: 'PMB-0020', platform: 'postscan', status: 'active', dateOpened: daysAgo(45), renewalDate: daysFromNow(320), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(500), form1583Status: 'approved', form1583Date: daysAgo(40), notifyEmail: true, notifySms: false, packageCount: 3, mailCount: 6 },
+  { id: 'cust_021', firstName: 'Mark', lastName: 'Walker', email: 'mwalker@outlook.com', phone: '(555) 234-5021', businessName: 'Walker Tech Solutions', pmbNumber: 'PMB-0021', platform: 'physical', status: 'active', dateOpened: daysAgo(350), renewalDate: daysFromNow(15), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(60), form1583Status: 'approved', form1583Date: daysAgo(330), notifyEmail: true, notifySms: true, packageCount: 16, mailCount: 44 },
+  { id: 'cust_022', firstName: 'Amanda', lastName: 'Hall', email: 'ahall@yahoo.com', phone: '(555) 234-5022', pmbNumber: 'PMB-0022', platform: 'iPostal', status: 'active', dateOpened: daysAgo(210), renewalDate: daysFromNow(155), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(900), form1583Status: 'approved', form1583Date: daysAgo(200), notifyEmail: true, notifySms: true, packageCount: 6, mailCount: 14 },
+  { id: 'cust_023', firstName: 'Steven', lastName: 'Allen', email: 'sallen@fastmail.com', phone: '(555) 234-5023', pmbNumber: 'PMB-0023', platform: 'anytime', status: 'active', dateOpened: daysAgo(160), renewalDate: daysFromNow(205), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(3), form1583Status: 'approved', form1583Date: daysAgo(150), notifyEmail: true, notifySms: false, packageCount: 5, mailCount: 9 },
+  { id: 'cust_024', firstName: 'Donna', lastName: 'Young', email: 'dyoung@email.com', phone: '(555) 234-5024', businessName: 'Young Realty Group', pmbNumber: 'PMB-0024', platform: 'physical', status: 'active', dateOpened: daysAgo(480), renewalDate: daysFromNow(50), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(350), passportExpiration: daysFromNow(200), form1583Status: 'approved', form1583Date: daysAgo(450), notifyEmail: true, notifySms: true, packageCount: 20, mailCount: 60 },
+  { id: 'cust_025', firstName: 'Paul', lastName: 'King', email: 'pking@gmail.com', phone: '(555) 234-5025', pmbNumber: 'PMB-0025', platform: 'postscan', status: 'suspended', dateOpened: daysAgo(300), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysAgo(45), form1583Status: 'expired', form1583Date: daysAgo(400), notifyEmail: false, notifySms: false, packageCount: 2, mailCount: 0 },
+  { id: 'cust_026', firstName: 'Emily', lastName: 'Wright', email: 'ewright@proton.me', phone: '(555) 234-5026', businessName: 'Wright & Reed Attorneys', pmbNumber: 'PMB-0026', platform: 'physical', status: 'active', dateOpened: daysAgo(260), renewalDate: daysFromNow(105), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(220), form1583Status: 'approved', form1583Date: daysAgo(240), notifyEmail: true, notifySms: true, packageCount: 8, mailCount: 36 },
+  { id: 'cust_027', firstName: 'Andrew', lastName: 'Lopez', email: 'alopez@outlook.com', phone: '(555) 234-5027', pmbNumber: 'PMB-0027', platform: 'iPostal', status: 'active', dateOpened: daysAgo(110), renewalDate: daysFromNow(255), billingTerms: 'Monthly', idType: 'passport', idExpiration: daysFromNow(650), form1583Status: 'approved', form1583Date: daysAgo(100), notifyEmail: true, notifySms: false, packageCount: 4, mailCount: 11 },
+  { id: 'cust_028', firstName: 'Michelle', lastName: 'Hill', email: 'mhill@yahoo.com', phone: '(555) 234-5028', pmbNumber: 'PMB-0028', platform: 'anytime', status: 'active', dateOpened: daysAgo(80), renewalDate: daysFromNow(285), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(380), form1583Status: 'approved', form1583Date: daysAgo(75), notifyEmail: true, notifySms: true, packageCount: 3, mailCount: 7 },
+  { id: 'cust_029', firstName: 'Kevin', lastName: 'Scott', email: 'kscott@fastmail.com', phone: '(555) 234-5029', businessName: 'Scott Digital Media', pmbNumber: 'PMB-0029', platform: 'physical', status: 'active', dateOpened: daysAgo(230), renewalDate: daysFromNow(135), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(170), passportExpiration: daysFromNow(500), form1583Status: 'approved', form1583Date: daysAgo(210), notifyEmail: true, notifySms: true, packageCount: 13, mailCount: 29 },
+  { id: 'cust_030', firstName: 'Rachel', lastName: 'Green', email: 'rgreen@email.com', phone: '(555) 234-5030', pmbNumber: 'PMB-0030', platform: 'postscan', status: 'active', dateOpened: daysAgo(25), renewalDate: daysFromNow(340), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(600), form1583Status: 'pending', form1583Date: daysAgo(20), notifyEmail: true, notifySms: true, packageCount: 1, mailCount: 2 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -144,12 +140,6 @@ const mailTypes: MailPiece['type'][] = ['letter', 'letter', 'magazine', 'catalog
 const mailStatuses: MailPiece['status'][] = ['received', 'scanned', 'notified', 'held', 'forwarded', 'discarded'];
 const mailSenders = ['IRS', 'State of California', 'Chase Bank', 'Wells Fargo', 'GEICO Insurance', 'AT&T', 'Verizon', 'Comcast', 'Time Magazine', 'Wall Street Journal', 'County Tax Assessor', 'Social Security Admin', 'DMV', 'Blue Cross', 'Fidelity Investments'];
 
-/** Generate a deterministic mail code for mock data (format: ML-XXXXXX) */
-function generateMailCode(index: number): string {
-  const code = String(100000 + index * 7331).slice(-6);
-  return `ML-${code}`;
-}
-
 export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
   const custIdx = i % 26;
   const status = mailStatuses[i % mailStatuses.length];
@@ -164,7 +154,6 @@ export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
     customerId: customers[custIdx].id,
     customer: customers[custIdx],
     receivedAt: hoursAgo((i % 7) * 24 + i * 2),
-    mailCode: generateMailCode(i + 1),
   };
 });
 
@@ -217,54 +206,15 @@ export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) =
   const type = notifTypes[i % notifTypes.length];
   const status = notifStatuses[i % notifStatuses.length];
   const custIdx = i % 28;
-  const cust = customers[custIdx];
   const subjectMap: Record<string, string> = {
     package_arrival: 'You have a new package!',
     package_reminder: 'Package pickup reminder',
     mail_received: 'New mail received at your PMB',
-    id_expiring: 'Action required: Your ID is expiring soon',
+    id_expiring: 'Action Required: Your ID Is Expiring Soon',
     renewal_reminder: 'Mailbox renewal reminder',
     shipment_update: 'Shipment tracking update',
     welcome: 'Welcome to ShipOS!',
   };
-
-  // Link each notification to a related entity so it can navigate on click
-  let linkedEntityId: string | undefined;
-  let linkedEntityType: Notification['linkedEntityType'];
-  let carrier: string | undefined;
-  let trackingNumber: string | undefined;
-
-  switch (type) {
-    case 'package_arrival':
-    case 'package_reminder': {
-      const pkg = packages[i % packages.length];
-      linkedEntityId = pkg.id;
-      linkedEntityType = 'package';
-      carrier = pkg.carrier;
-      trackingNumber = pkg.trackingNumber;
-      break;
-    }
-    case 'shipment_update': {
-      const ship = shipments[i % shipments.length];
-      linkedEntityId = ship.id;
-      linkedEntityType = 'shipment';
-      carrier = ship.carrier;
-      trackingNumber = ship.trackingNumber;
-      break;
-    }
-    case 'mail_received': {
-      const mail = mailPieces[i % mailPieces.length];
-      linkedEntityId = mail.id;
-      linkedEntityType = 'mail';
-      break;
-    }
-    case 'id_expiring':
-    case 'renewal_reminder':
-    case 'welcome':
-      linkedEntityId = cust.id;
-      linkedEntityType = 'customer';
-      break;
-  }
 
   return {
     id: `notif_${String(i + 1).padStart(3, '0')}`,
@@ -272,13 +222,9 @@ export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) =
     channel: notifChannels[i % notifChannels.length],
     status,
     subject: subjectMap[type] || 'Notification',
-    body: `Notification body for ${type} sent to ${cust.firstName} ${cust.lastName}`,
-    customerId: cust.id,
-    customer: cust,
-    linkedEntityId,
-    linkedEntityType,
-    carrier,
-    trackingNumber,
+    body: `Notification body for ${type} sent to ${customers[custIdx].firstName} ${customers[custIdx].lastName}`,
+    customerId: customers[custIdx].id,
+    customer: customers[custIdx],
     sentAt: status !== 'pending' ? hoursAgo(i * 3 + 1) : undefined,
     createdAt: hoursAgo(i * 3),
   };
@@ -357,7 +303,7 @@ export const recentActivity = [
   { id: 'act_05', type: 'mail' as const, description: 'Mail scanned and filed for PMB-0014', time: hoursAgo(2.5), icon: 'mail' as const },
   { id: 'act_06', type: 'customer' as const, description: 'New customer Rachel Green (PMB-0030) registered', time: hoursAgo(3), icon: 'user' as const },
   { id: 'act_07', type: 'package_checkin' as const, description: 'Oversized UPS package checked in for PMB-0001', time: hoursAgo(3.5), icon: 'package' as const },
-  { id: 'act_08', type: 'alert' as const, description: 'ID expiring in 3 days for Steven Allen (PMB-0023)', time: hoursAgo(4), icon: 'alert' as const },
+  { id: 'act_08', type: 'alert' as const, description: 'ID Expiring in 3 days for Steven Allen (PMB-0023)', time: hoursAgo(4), icon: 'alert' as const },
   { id: 'act_09', type: 'shipment' as const, description: 'DHL International shipment delivered - PMB-0019', time: hoursAgo(5), icon: 'truck' as const },
   { id: 'act_10', type: 'notification' as const, description: 'Renewal reminder sent to Patricia Williams', time: hoursAgo(6), icon: 'bell' as const },
 ];
@@ -662,162 +608,3 @@ export const loyaltyDashboardStats: LoyaltyDashboardStats = {
       tier: a.currentTier!.name,
     })),
 };
-
-// ---------------------------------------------------------------------------
-// Customer Fee Tracking
-// ---------------------------------------------------------------------------
-
-const feeCategories: FeeCategory[] = ['storage', 'overage', 'receiving', 'forwarding', 'late_pickup', 'other'];
-
-// Build realistic fee entries for active customers
-const feeDescriptions: Record<FeeCategory, string[]> = {
-  storage: [
-    'Package storage beyond 5-day free period',
-    'Oversized package extended storage',
-    'Long-term package hold (customer request)',
-  ],
-  overage: [
-    'Monthly package allowance exceeded (10/mo plan)',
-    'Mail scan allowance exceeded',
-    'Additional mailbox slot usage',
-  ],
-  receiving: [
-    'Oversized package receiving surcharge',
-    'Hazardous material handling fee',
-    'Multi-package delivery receiving',
-  ],
-  forwarding: [
-    'Mail forwarding — Priority Mail',
-    'Package consolidation & forward',
-    'International mail forwarding',
-  ],
-  late_pickup: [
-    'Package not picked up within 14-day window',
-    'Return-to-sender processing fee',
-  ],
-  other: [
-    'Notarization service fee',
-    'Copy/print service',
-    'Key replacement fee',
-  ],
-};
-
-const feeAmounts: Record<FeeCategory, { min: number; max: number }> = {
-  storage:     { min: 1.50, max: 25.00 },
-  overage:     { min: 2.00, max: 15.00 },
-  receiving:   { min: 3.00, max: 10.00 },
-  forwarding:  { min: 5.00, max: 35.00 },
-  late_pickup: { min: 5.00, max: 20.00 },
-  other:       { min: 2.00, max: 25.00 },
-};
-
-// Generate fees for each active customer for current month (Feb 2026)
-let feeId = 0;
-function nextFeeId(): string {
-  feeId += 1;
-  return `fee_${String(feeId).padStart(4, '0')}`;
-}
-
-function roundTo(n: number, d: number): number {
-  return Math.round(n * 10 ** d) / 10 ** d;
-}
-
-// Deterministic-ish fee generation using customer index as seed
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed * 9301 + 49297) * 49297;
-  return x - Math.floor(x);
-}
-
-export const customerFees: CustomerFee[] = [];
-
-const activeCustomerIds = customers
-  .filter((c) => c.status === 'active')
-  .map((c) => c.id);
-
-activeCustomerIds.forEach((custId, custIdx) => {
-  const seed = custIdx + 1;
-  const numFees = Math.floor(seededRandom(seed) * 6) + 1; // 1–6 fees per customer
-
-  for (let f = 0; f < numFees; f++) {
-    const catSeed = seededRandom(seed * 100 + f);
-    const category = feeCategories[Math.floor(catSeed * feeCategories.length)];
-    const descs = feeDescriptions[category];
-    const description = descs[Math.floor(seededRandom(seed * 200 + f) * descs.length)];
-    const range = feeAmounts[category];
-
-    const statusSeed = seededRandom(seed * 300 + f);
-    let status: FeeStatus;
-    if (statusSeed < 0.35) status = 'accruing';
-    else if (statusSeed < 0.55) status = 'finalized';
-    else if (statusSeed < 0.7) status = 'invoiced';
-    else if (statusSeed < 0.9) status = 'paid';
-    else status = 'waived';
-
-    const isDaily = category === 'storage' || category === 'late_pickup';
-    const daysAccrued = isDaily ? Math.floor(seededRandom(seed * 400 + f) * 20) + 1 : undefined;
-    const dailyRate = isDaily ? roundTo(range.min + seededRandom(seed * 500 + f) * (range.max - range.min) * 0.15, 2) : undefined;
-    const amount = isDaily && dailyRate && daysAccrued
-      ? roundTo(dailyRate * daysAccrued, 2)
-      : roundTo(range.min + seededRandom(seed * 600 + f) * (range.max - range.min), 2);
-
-    // Link some fees to existing packages
-    const custPackages = packages.filter((p) => p.customerId === custId);
-    const linkedPkg = (category === 'storage' || category === 'receiving' || category === 'late_pickup') && custPackages.length > 0
-      ? custPackages[Math.floor(seededRandom(seed * 700 + f) * custPackages.length)]
-      : undefined;
-
-    const dayOfMonth = Math.floor(seededRandom(seed * 800 + f) * 21) + 1; // Feb 1–21
-    const dateStr = `2026-02-${String(dayOfMonth).padStart(2, '0')}T${String(8 + Math.floor(seededRandom(seed * 900 + f) * 10)).padStart(2, '0')}:${String(Math.floor(seededRandom(seed * 1000 + f) * 60)).padStart(2, '0')}:00.000Z`;
-
-    customerFees.push({
-      id: nextFeeId(),
-      customerId: custId,
-      category,
-      description,
-      amount,
-      status,
-      linkedEntityId: linkedPkg?.id,
-      linkedEntityType: linkedPkg ? 'package' : undefined,
-      linkedEntityLabel: linkedPkg ? `${linkedPkg.carrier.toUpperCase()} — ${linkedPkg.trackingNumber?.slice(-8) ?? 'N/A'}` : undefined,
-      accrualType: isDaily ? 'daily' : category === 'overage' ? 'per_item' : 'one_time',
-      dailyRate,
-      daysAccrued,
-      accrualStartDate: dateStr,
-      accrualEndDate: status !== 'accruing' ? daysFromNow(0) : undefined,
-      createdAt: dateStr,
-    });
-  }
-});
-
-// Build monthly summaries per customer
-export function getCustomerFeeSummary(customerId: string, month = '2026-02'): CustomerFeeSummary {
-  const fees = customerFees.filter(
-    (f) => f.customerId === customerId && f.createdAt.startsWith(month)
-  );
-  const sumByCategory = (cat: FeeCategory) =>
-    fees.filter((f) => f.category === cat && f.status !== 'waived' && f.status !== 'paid').reduce((s, f) => s + f.amount, 0);
-
-  const paidAmount = fees.filter((f) => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
-  const waivedAmount = fees.filter((f) => f.status === 'waived').reduce((s, f) => s + f.amount, 0);
-
-  const storageFees = sumByCategory('storage');
-  const overageFees = sumByCategory('overage');
-  const receivingFees = sumByCategory('receiving');
-  const forwardingFees = sumByCategory('forwarding');
-  const otherFees = sumByCategory('late_pickup') + sumByCategory('other');
-
-  return {
-    customerId,
-    month,
-    totalOwed: roundTo(storageFees + overageFees + receivingFees + forwardingFees + otherFees, 2),
-    storageFees: roundTo(storageFees, 2),
-    overageFees: roundTo(overageFees, 2),
-    receivingFees: roundTo(receivingFees, 2),
-    forwardingFees: roundTo(forwardingFees, 2),
-    otherFees: roundTo(otherFees, 2),
-    paidAmount: roundTo(paidAmount, 2),
-    waivedAmount: roundTo(waivedAmount, 2),
-    feeCount: fees.length,
-    fees: fees.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-  };
-}

@@ -1,55 +1,61 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { getOrProvisionUser } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/notifications
- *
- * List notifications with optional filters.
- *
- * Query params:
- *   status?:     'pending' | 'sent' | 'delivered' | 'failed' | 'bounced'
- *   channel?:    'email' | 'sms' | 'both'
- *   type?:       notification type
- *   customerId?: filter by customer
- *   limit?:      number (default 50)
- *   offset?:     number (default 0)
+ * List notifications with search, filtering, and pagination.
+ * Query params: type?, status?, channel?, page?, limit?
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const user = await getOrProvisionUser();
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
     const status = searchParams.get('status');
     const channel = searchParams.get('channel');
-    const type = searchParams.get('type');
-    const customerId = searchParams.get('customerId');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
+    const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const tenantScope = user.role !== 'superadmin' && user.tenantId
+      ? { customer: { tenantId: user.tenantId } }
+      : {};
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: Record<string, any> = { ...tenantScope };
+    if (type) where.type = type;
     if (status) where.status = status;
     if (channel) where.channel = channel;
-    if (type) where.type = type;
-    if (customerId) where.customerId = customerId;
 
     const [notifications, total] = await Promise.all([
       prisma.notification.findMany({
         where,
-        include: { customer: true },
         orderBy: { createdAt: 'desc' },
+        skip,
         take: limit,
-        skip: offset,
+        include: {
+          customer: {
+            select: { id: true, firstName: true, lastName: true, pmbNumber: true },
+          },
+        },
       }),
       prisma.notification.count({ where }),
     ]);
 
-    return NextResponse.json({
-      notifications,
-      total,
-      limit,
-      offset,
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serialized = notifications.map((n: any) => ({
+      ...n,
+      sentAt: n.sentAt?.toISOString() ?? null,
+      deliveredAt: n.deliveredAt?.toISOString() ?? null,
+      createdAt: n.createdAt.toISOString(),
+    }));
+
+    return NextResponse.json({ notifications: serialized, total, page, limit });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[API] Notifications list error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[GET /api/notifications]', err);
+    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
   }
 }

@@ -268,7 +268,7 @@ export default function ActivityLogPage() {
     <div className="space-y-6">
       <PageHeader
         title="Activity Log"
-        description="Track all user actions across ShipOS"
+        description="Track every action in one place."
         icon={<Activity className="h-5 w-5" />}
       />
 

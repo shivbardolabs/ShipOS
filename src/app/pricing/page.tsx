@@ -4,17 +4,13 @@ import { useState } from "react";
 import {
   Package,
   ArrowRight,
+  LogIn,
   Check,
-  X,
   Star,
   Building2,
   ChevronDown,
   ChevronUp,
-  Cloud,
-  Monitor,
 } from "lucide-react";
-import { PublicHeader } from "@/components/layout/public-header";
-import { PublicFooter } from "@/components/layout/public-footer";
 
 /* Auth0 routes require full-page redirects — <a> is intentional */
 /* eslint-disable @next/next/no-html-link-for-pages */
@@ -26,14 +22,13 @@ const tiers = [
     monthly: 99,
     annual: 79,
     description:
-      "Everything you need to manage packages and mailboxes — with AI Smart Intake included.",
+      "Everything you need to manage packages and mailboxes in one place.",
     cta: "Get Started for Free",
     ctaHref: "/api/auth/signup",
     featured: false,
     icon: Package,
     features: [
       "Package receiving & tracking",
-      "AI Smart Intake (photo → check-in)",
       "4×6 label printing",
       "Auto carrier detection",
       "Customer notifications (email)",
@@ -47,7 +42,7 @@ const tiers = [
     monthly: 179,
     annual: 143,
     description:
-      "Full AI suite — voice commands, carrier auditing, ID scan onboarding, and more.",
+      "Advanced tools to optimize your store and maximize revenue.",
     cta: "Get Started for Free",
     ctaHref: "/api/auth/signup",
     featured: true,
@@ -55,15 +50,12 @@ const tiers = [
     icon: Star,
     features: [
       "Everything in Starter, plus:",
-      "AI Morning Briefing",
-      "AI Carrier Bill Auditor",
-      "AI ID Scan Onboarding",
-      "AI Mail Sorting (Snap & Route)",
-      "Voice AI Assistant (Hey ShipOS)",
       "Carrier bill reconciliation",
       "Loyalty rewards program",
+      "Add-on rate management",
       "SMS & email notifications",
       "Advanced analytics dashboard",
+      "Priority email & chat support",
       "Unlimited packages",
     ],
   },
@@ -72,40 +64,26 @@ const tiers = [
     monthly: 299,
     annual: 239,
     description:
-      "Full AI suite plus multi-location, API access, and dedicated support.",
+      "Full power for multi-location operators and growing businesses.",
     cta: "Contact Sales",
     ctaHref: "mailto:hello@bardolabs.ai?subject=ShipOS Enterprise",
     featured: false,
     icon: Building2,
     features: [
       "Everything in Pro, plus:",
-      "Custom AI model training",
-      "Unlimited AI scans & commands",
       "Multi-location dashboard",
       "API access & webhooks",
       "Custom integrations",
       "White-label options",
       "Dedicated account manager",
       "Custom onboarding & training",
+      "Unlimited everything",
     ],
   },
 ];
 
 /* ── Comparison table data ───────────────────────────── */
 const compareCategories = [
-  {
-    name: "AI Features",
-    rows: [
-      { feature: "AI Smart Intake (photo → check-in)", starter: true, pro: true, enterprise: true },
-      { feature: "AI ID Scan Onboarding", starter: false, pro: true, enterprise: true },
-      { feature: "AI Morning Briefing", starter: false, pro: true, enterprise: true },
-      { feature: "AI Carrier Bill Auditor", starter: false, pro: true, enterprise: true },
-      { feature: "AI Mail Sorting (Snap & Route)", starter: false, pro: true, enterprise: true },
-      { feature: "Voice AI Assistant", starter: false, pro: true, enterprise: true },
-      { feature: "Custom AI model training", starter: false, pro: false, enterprise: true },
-      { feature: "AI scans per month", starter: "100", pro: "2,000", enterprise: "Unlimited" },
-    ],
-  },
   {
     name: "Core Platform",
     rows: [
@@ -166,19 +144,15 @@ const compareCategories = [
 const faqs = [
   {
     q: "Is there a free trial?",
-    a: "Yes! Every plan includes a 30-day free trial with full access to all features, including AI. No credit card required to start.",
-  },
-  {
-    q: "How does the AI work? Is it accurate?",
-    a: "ShipOS AI is powered by GPT-4o Vision — the same model behind ChatGPT. It reads packages, IDs, mail, and invoices with high accuracy. All AI features include a review step so you can verify before confirming. When no API key is configured, features run in demo mode with sample data.",
-  },
-  {
-    q: "What AI features are included on each plan?",
-    a: "Starter includes AI Smart Intake (photo → package check-in) with 100 AI scans/month. Pro unlocks the full AI suite: ID Scan Onboarding, Morning Briefing, Carrier Bill Auditor, Mail Sorting, and Voice AI with 2,000 scans/month. Enterprise gets unlimited scans and custom AI model training.",
+    a: "Yes! Every plan includes a 30-day free trial with full access. No credit card required to start.",
   },
   {
     q: "Can I switch plans anytime?",
     a: "Absolutely. Upgrade or downgrade at any time. Changes take effect on your next billing cycle, and we'll prorate accordingly.",
+  },
+  {
+    q: "What happens if I exceed 500 packages?",
+    a: "On the Starter plan, you can still process packages beyond 500 — we'll just nudge you to upgrade to Pro for the best experience.",
   },
   {
     q: "Do you offer migration from PostalMate?",
@@ -186,83 +160,22 @@ const faqs = [
   },
   {
     q: "Is my data secure?",
-    a: "ShipOS uses enterprise-grade Auth0 authentication, encrypted data storage, and SOC 2–aligned practices. AI processing happens via secure API calls — your images and data are never stored by the AI provider.",
+    a: "ShipOS uses enterprise-grade Auth0 authentication, encrypted data storage, and SOC 2–aligned practices. Your data is safe with us.",
   },
   {
     q: "Do you offer discounts for multiple locations?",
-    a: "Yes — the Enterprise plan supports multi-location management with unlimited AI. Contact our sales team for custom volume pricing.",
+    a: "Yes — the Enterprise plan supports multi-location management. Contact our sales team for custom volume pricing.",
   },
 ];
 
 
-/* ── Competitor comparison data ───────────────────────── */
-const competitorRows = [
-  { feature: "Built-in AI (GPT-4o Vision)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "AI package intake (photo → check-in)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "AI carrier bill auditing", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Voice AI assistant", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "AI customer onboarding (ID scan)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Cloud-based (access anywhere)", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Starting price", shipOS: "$99/mo", postalMate: "$90/mo + $295 setup", shipRite: "$1,000+ upfront" },
-  { feature: "Auto carrier detection", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "SMS notifications", shipOS: true, postalMate: false, shipRite: "Partial" },
-  { feature: "Loyalty rewards program", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Multi-location support", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Advanced analytics dashboard", shipOS: true, postalMate: "Basic", shipRite: "Basic" },
-  { feature: "Mobile-friendly access", shipOS: true, postalMate: false, shipRite: false },
-  { feature: "Built-in migration tools", shipOS: true, postalMate: "N/A", shipRite: "N/A" },
-  { feature: "Automatic updates (SaaS)", shipOS: true, postalMate: false, shipRite: false },
-];
-
-/* ── Cell renderers ──────────────────────────────────── */
+/* ── Cell renderer ───────────────────────────────────── */
 function CellValue({ value }: { value: boolean | string }) {
   if (value === true)
     return <Check className="w-4 h-4 text-accent-emerald mx-auto" />;
   if (value === false)
     return <span className="text-surface-600">—</span>;
   return <span className="text-surface-400 text-sm">{value}</span>;
-}
-
-function CompetitorCell({
-  value,
-  winning = false,
-}: {
-  value: boolean | string;
-  winning?: boolean;
-}) {
-  if (value === true)
-    return (
-      <span
-        className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${
-          winning
-            ? "bg-accent-emerald/15"
-            : "bg-accent-emerald/10"
-        }`}
-      >
-        <Check
-          className={`w-3 h-3 ${
-            winning ? "text-accent-emerald" : "text-accent-emerald/70"
-          }`}
-        />
-      </span>
-    );
-  if (value === false)
-    return (
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500/10">
-        <X className="w-3 h-3 text-red-400/80" />
-      </span>
-    );
-  if (value === "N/A")
-    return <span className="text-surface-600 text-xs">N/A</span>;
-  return (
-    <span
-      className={`text-xs font-medium ${
-        winning ? "text-accent-emerald" : "text-surface-400"
-      }`}
-    >
-      {value}
-    </span>
-  );
 }
 
 
@@ -285,7 +198,58 @@ export default function PricingPage() {
         style={{ background: "rgba(99,102,241,0.05)", filter: "blur(80px)" }}
       />
 
-      <PublicHeader />
+      {/* ── Header ── */}
+      <header
+        className="relative z-10 px-6 py-4"
+        style={{ borderBottom: "1px solid var(--color-surface-700)" }}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <a href="/" className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/shipos-logo-mark.svg"
+              alt="ShipOS"
+              width={40}
+              height={40}
+            />
+            <div>
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-xl font-bold text-surface-100">Ship</span>
+                <span className="text-xl font-bold text-primary-500">OS</span>
+              </div>
+              <p className="text-xs text-surface-500">by Bardo Labs</p>
+            </div>
+          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/pricing"
+              className="px-4 py-2 text-surface-100 rounded-lg text-sm font-medium transition-colors"
+            >
+              Pricing
+            </a>
+            <a
+              href="/support"
+              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
+            >
+              Support
+            </a>
+            <a
+              href="/api/auth/login"
+              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Log In
+            </a>
+            <a
+              href="/api/auth/signup"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
+            >
+              Sign Up Free
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </header>
 
       {/* ── Main ── */}
       <main className="relative z-10 flex-1 px-6 py-16">
@@ -297,7 +261,7 @@ export default function PricingPage() {
               Pricing
             </p>
             <h1 className="text-4xl md:text-5xl font-extrabold text-surface-100 mb-4">
-              AI-powered plans,{" "}
+              Simple pricing,{" "}
               <em
                 className="not-italic"
                 style={{
@@ -306,12 +270,12 @@ export default function PricingPage() {
                   color: "var(--color-primary-600)",
                 }}
               >
-                simple pricing
+                powerful tools
               </em>
             </h1>
             <p className="text-lg text-surface-400 max-w-xl mx-auto">
-              Every plan includes AI. Start with Smart Intake on Starter, or unlock
-              the full AI suite on Pro. No contracts, no hidden fees.
+              Start shipping smarter today. No contracts, no hidden fees.
+              Cancel anytime.
             </p>
 
             {/* Billing toggle */}
@@ -560,96 +524,6 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* ── Competitor Comparison ── */}
-          <div className="mb-24">
-            <h2 className="text-3xl md:text-4xl font-bold text-surface-100 text-center mb-2">
-              See how ShipOS{" "}
-              <em
-                className="not-italic"
-                style={{
-                  fontFamily: "'Instrument Serif', Georgia, serif",
-                  fontStyle: "italic",
-                  color: "var(--color-primary-600)",
-                }}
-              >
-                compares
-              </em>
-            </h2>
-            <p className="text-center text-surface-500 mb-10 max-w-xl mx-auto">
-              Still using legacy desktop software? See why modern shipping stores are switching to ShipOS.
-            </p>
-
-            <div className="glass-card overflow-hidden overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--color-surface-700)" }}>
-                    <th className="text-left text-sm font-medium text-surface-500 px-6 py-4 w-[40%]" />
-                    <th className="text-center px-4 py-4 bg-primary-600/[0.03] dark:bg-primary-600/[0.06]">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-600/10">
-                          <Cloud className="w-4 h-4 text-primary-500" />
-                        </span>
-                        <span className="text-sm font-bold text-primary-500">ShipOS</span>
-                      </div>
-                    </th>
-                    <th className="text-center px-4 py-4">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-800">
-                          <Monitor className="w-4 h-4 text-surface-500" />
-                        </span>
-                        <span className="text-sm font-bold text-surface-400">PostalMate</span>
-                      </div>
-                    </th>
-                    <th className="text-center px-4 py-4">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-800">
-                          <Monitor className="w-4 h-4 text-surface-500" />
-                        </span>
-                        <span className="text-sm font-bold text-surface-400">ShipRite</span>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competitorRows.map((row) => (
-                    <tr
-                      key={row.feature}
-                      className="table-row-hover"
-                      style={{ borderBottom: "1px solid var(--color-surface-700)" }}
-                    >
-                      <td className="text-sm font-medium text-surface-300 px-6 py-3">
-                        {row.feature}
-                      </td>
-                      <td className="text-center px-4 py-3 bg-primary-600/[0.02] dark:bg-primary-600/[0.04]">
-                        <CompetitorCell value={row.shipOS} winning />
-                      </td>
-                      <td className="text-center px-4 py-3">
-                        <CompetitorCell value={row.postalMate} />
-                      </td>
-                      <td className="text-center px-4 py-3">
-                        <CompetitorCell value={row.shipRite} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Bottom CTA inside card */}
-              <div className="px-6 py-5 flex flex-col sm:flex-row items-center justify-center gap-4" style={{ borderTop: "1px solid var(--color-surface-700)" }}>
-                <a
-                  href="/api/auth/signup"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary-900/20 hover:-translate-y-0.5"
-                >
-                  Switch to ShipOS
-                  <ArrowRight className="w-4 h-4" />
-                </a>
-                <p className="text-xs text-surface-500">
-                  Free migration tool for PostalMate users · 30-day free trial · No credit card required
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* ── Bottom CTA ── */}
           <div className="text-center pb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-surface-100 mb-4">
@@ -688,7 +562,19 @@ export default function PricingPage() {
         </div>
       </main>
 
-      <PublicFooter />
+      {/* ── Footer ── */}
+      <footer
+        className="relative z-10 px-6 py-4"
+        style={{ borderTop: "1px solid var(--color-surface-700)" }}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-surface-600">
+          <span>ShipOS v0.1.0</span>
+          <span>
+            Built by{" "}
+            <span className="text-surface-400">Bardo Labs</span>
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

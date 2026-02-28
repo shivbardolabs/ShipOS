@@ -12,7 +12,7 @@ import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 
 import { useActivityLog } from '@/components/activity-log-provider';
-import { customers } from '@/lib/mock-data';
+// customers now fetched from API
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import type { SmartIntakeResult, SmartIntakeResponse } from '@/app/api/packages/smart-intake/route';
@@ -81,25 +81,28 @@ const packageSizeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Customer matcher                                                          */
 /* -------------------------------------------------------------------------- */
-function findCustomerByPMB(pmb: string): Customer | null {
+async function findCustomerByPMB(pmb: string): Promise<Customer | null> {
   if (!pmb) return null;
   const normalized = pmb.replace(/[^0-9]/g, '').padStart(4, '0');
   const search = `PMB-${normalized}`;
-  return customers.find((c) => c.pmbNumber === search && c.status === 'active') ?? null;
+  try {
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(search)}&limit=1&status=active`);
+    const data = await res.json();
+    return data.customers?.[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
-function searchCustomers(query: string): Customer[] {
+async function searchCustomers(query: string): Promise<Customer[]> {
   if (!query || query.length < 2) return [];
-  const q = query.toLowerCase();
-  return customers
-    .filter((c) =>
-      c.status === 'active' &&
-      (`${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        c.pmbNumber.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q) ||
-        c.businessName?.toLowerCase().includes(q))
-    )
-    .slice(0, 5);
+  try {
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(query)}&limit=5&status=active`);
+    const data = await res.json();
+    return data.customers ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -167,7 +170,17 @@ export default function SmartIntakePage() {
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      // Render the <video> element first, then attach stream via useEffect
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        // Wait for the video to actually have data before showing ready state
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setCameraReady(true);
+          }).catch(() => {
+            setCameraError('Could not start video playback.');
+          });
+        };
+      }
       setCameraActive(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -180,32 +193,6 @@ export default function SmartIntakePage() {
       }
     }
   }, []);
-
-  // Attach the media stream to the <video> element once it has rendered.
-  // Previously, startCamera tried to set srcObject before setCameraActive(true),
-  // meaning videoRef.current was null (the <video> is conditional on cameraActive).
-  useEffect(() => {
-    if (!cameraActive || !streamRef.current || cameraReady) return;
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.srcObject = streamRef.current;
-    video.onloadedmetadata = () => {
-      video.play().then(() => {
-        setCameraReady(true);
-      }).catch(() => {
-        setCameraError('Could not start video playback.');
-      });
-    };
-    // If metadata already loaded (fast devices), kick off playback immediately
-    if (video.readyState >= 1) {
-      video.play().then(() => {
-        setCameraReady(true);
-      }).catch(() => {
-        setCameraError('Could not start video playback.');
-      });
-    }
-  }, [cameraActive, cameraReady]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -278,14 +265,16 @@ export default function SmartIntakePage() {
 
       setResponseMode(data.mode);
 
-      // Match each result to a customer
-      const matched: MatchedPackage[] = data.results.map((r) => ({
-        result: r,
-        customer: findCustomerByPMB(r.pmbNumber),
-        confirmed: false,
-        editing: false,
-        overrides: {},
-      }));
+      // Match each result to a customer (async lookups)
+      const matched: MatchedPackage[] = await Promise.all(
+        data.results.map(async (r: SmartIntakeResult) => ({
+          result: r,
+          customer: await findCustomerByPMB(r.pmbNumber),
+          confirmed: false,
+          editing: false,
+          overrides: {},
+        }))
+      );
 
       setMatchedPackages(matched);
       setPhase('review');
@@ -403,7 +392,14 @@ export default function SmartIntakePage() {
     [matchedPackages]
   );
 
-  const customerResults = useMemo(() => searchCustomers(searchQuery), [searchQuery]);
+  const [customerResults, setCustomerResults] = useState<Customer[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    searchCustomers(searchQuery).then((results) => {
+      if (!cancelled) setCustomerResults(results);
+    });
+    return () => { cancelled = true; };
+  }, [searchQuery]);
 
   /* ==================================================================== */
   /*  RENDER                                                              */
@@ -412,7 +408,7 @@ export default function SmartIntakePage() {
     <div className="space-y-6">
       <PageHeader
         title="Smart Intake"
-        description="AI-powered package check-in — snap a photo, we handle the rest"
+        description="Snap a photo, we handle it."
         badge={
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-blue-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />

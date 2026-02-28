@@ -77,7 +77,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        'flex items-center gap-1 border-b border-surface-800',
+        'flex items-center gap-1 border-b border-surface-800 overflow-x-auto scrollbar-hide',
         className
       )}
     >

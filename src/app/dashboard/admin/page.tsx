@@ -249,7 +249,7 @@ function EditUserModal({
       open={open}
       onClose={onClose}
       title="Edit User Assignment"
-      description="Assign a tenant and role to this user"
+      description="Assign tenant and role."
       size="md"
       footer={
         <>

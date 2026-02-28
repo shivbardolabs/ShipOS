@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
 import type { PackageLabelData } from '@/lib/labels';
+import { useActivityLog } from '@/components/activity-log-provider';
 
 /* -------------------------------------------------------------------------- */
 /*  BAR-41: Automated Label Printing — Batch Queue Component                  */
@@ -70,6 +71,7 @@ export function LabelPrintQueue({
   onClearQueue,
   className,
 }: LabelPrintQueueProps) {
+  const { log: logActivity } = useActivityLog();
   const [showPreview, setShowPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [printing, setPrinting] = useState(false);
@@ -108,6 +110,27 @@ export function LabelPrintQueue({
         .join('\n<div style="page-break-after: always;"></div>\n');
 
       printLabel(allLabelsHtml);
+
+      // Log batch label print to activity log
+      const labelSummary = queue.map((l) => `${l.pmbNumber} (${l.carrier.toUpperCase()})`).join(', ');
+      logActivity({
+        action: 'package.labels_printed',
+        entityType: 'package',
+        entityId: `batch_${Date.now()}`,
+        entityLabel: `${queue.length} label${queue.length !== 1 ? 's' : ''}`,
+        description: `Printed batch of ${queue.length} label${queue.length !== 1 ? 's' : ''}: ${labelSummary}`,
+        metadata: {
+          labelCount: queue.length,
+          labels: queue.map((l) => ({
+            packageId: l.packageId,
+            customerName: l.customerName,
+            pmbNumber: l.pmbNumber,
+            trackingNumber: l.trackingNumber,
+            carrier: l.carrier,
+          })),
+        },
+      });
+
       onBatchPrintComplete();
     } catch {
       setPrintError('Failed to print labels. Please try again.');

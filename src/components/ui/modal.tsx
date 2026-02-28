@@ -108,8 +108,8 @@ export function Modal({
             </div>
           )}
 
-          {/* Body */}
-          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">{children}</div>
+          {/* Body — TASTE: no visible scrollbars */}
+          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto scrollable">{children}</div>
 
           {/* Footer */}
           {footer && (

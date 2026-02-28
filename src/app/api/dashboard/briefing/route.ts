@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
-import {
-  packages,
-  customers,
-  shipments,
-  dashboardStats,
-  mailPieces,
-} from '@/lib/mock-data';
+import prisma from '@/lib/prisma';
+import { getOrProvisionUser } from '@/lib/auth';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/dashboard/briefing                                               */
@@ -44,99 +39,82 @@ export interface BriefingResponse {
 
 /* ── Data aggregation helpers ───────────────────────────────────────────── */
 
-function aggregateStoreData() {
+async function aggregateStoreData() {
+  const user = await getOrProvisionUser();
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 86_400_000);
-  const fourteenDaysAgo = new Date(now.getTime() - 14 * 86_400_000);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Packages awaiting pickup (checked_in, notified, or ready — not released)
-  const awaitingPickup = packages.filter(
-    (p) => p.status !== 'released'
-  );
+  const tenantFilter = user && user.role !== 'superadmin' && user.tenantId
+    ? { tenantId: user.tenantId }
+    : {};
+  const customerRelationFilter = user && user.role !== 'superadmin' && user.tenantId
+    ? { customer: { tenantId: user.tenantId } }
+    : {};
 
-  // Aging packages: checked in > 7 days ago and still not released
-  const agingPackages = awaitingPickup.filter((p) => {
-    const checkedIn = new Date(p.checkedInAt);
-    return checkedIn < sevenDaysAgo;
-  });
-
-  // IDs expiring within 30 days
-  const expiringIds = customers.filter((c) => {
-    if (c.status !== 'active' || !c.idExpiration) return false;
-    const exp = new Date(c.idExpiration);
-    return exp <= thirtyDaysFromNow && exp > now;
-  });
-
-  // Already-expired IDs
-  const expiredIds = customers.filter((c) => {
-    if (!c.idExpiration) return false;
-    return new Date(c.idExpiration) <= now;
-  });
-
-  // Today's check-ins
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const checkedInToday = packages.filter(
-    (p) => new Date(p.checkedInAt) >= todayStart
-  ).length;
-
-  // Inactive customers: active customers with no recent package activity
-  const activeCustomerIds = new Set(
-    customers.filter((c) => c.status === 'active').map((c) => c.id)
-  );
-  const recentlyActiveCustomerIds = new Set(
-    packages
-      .filter((p) => new Date(p.checkedInAt) >= fourteenDaysAgo)
-      .map((p) => p.customerId)
-  );
-  const inactiveCustomers = [...activeCustomerIds].filter(
-    (id) => !recentlyActiveCustomerIds.has(id)
-  );
-
-  // Revenue snapshot
-  const revenue = dashboardStats.revenueToday;
-  const shipmentsToday = dashboardStats.shipmentsToday;
-
-  // Mail pieces received today
-  const mailToday = mailPieces.filter(
-    (m) => new Date(m.receivedAt) >= todayStart
-  ).length;
-
-  // Shipments pending (not yet shipped)
-  const pendingShipments = shipments.filter(
-    (s) => s.status === 'pending' || s.status === 'label_created'
-  ).length;
+  const [
+    awaitingPickupCount,
+    agingPackages,
+    expiringIds,
+    expiredIdsCount,
+    checkedInToday,
+    activeCustomers,
+    revenueResult,
+    shipmentsToday,
+    mailToday,
+    pendingShipments,
+    packagesHeld,
+    notificationsSent,
+  ] = await Promise.all([
+    prisma.package.count({ where: { ...customerRelationFilter, status: { in: ['checked_in', 'notified', 'ready'] } } }),
+    prisma.package.findMany({
+      where: { ...customerRelationFilter, status: { in: ['checked_in', 'notified', 'ready'] }, checkedInAt: { lt: sevenDaysAgo } },
+      take: 5,
+      orderBy: { checkedInAt: 'asc' },
+      include: { customer: { select: { firstName: true, lastName: true, pmbNumber: true } } },
+    }),
+    prisma.customer.findMany({
+      where: { ...tenantFilter, status: 'active', deletedAt: null, idExpiration: { gt: now, lte: thirtyDaysFromNow } },
+      select: { firstName: true, lastName: true, pmbNumber: true, idExpiration: true },
+    }),
+    prisma.customer.count({ where: { ...tenantFilter, deletedAt: null, idExpiration: { lte: now } } }),
+    prisma.package.count({ where: { ...customerRelationFilter, checkedInAt: { gte: todayStart } } }),
+    prisma.customer.count({ where: { ...tenantFilter, status: 'active', deletedAt: null } }),
+    prisma.shipment.aggregate({ where: { ...customerRelationFilter, createdAt: { gte: todayStart } }, _sum: { retailPrice: true } }),
+    prisma.shipment.count({ where: { ...customerRelationFilter, createdAt: { gte: todayStart } } }),
+    prisma.mailPiece.count({ where: { ...customerRelationFilter, receivedAt: { gte: todayStart } } }),
+    prisma.shipment.count({ where: { ...customerRelationFilter, status: { in: ['pending', 'label_created'] } } }),
+    prisma.package.count({ where: { ...customerRelationFilter, status: { in: ['checked_in', 'notified', 'ready'] } } }),
+    prisma.notification.count({ where: { ...customerRelationFilter, sentAt: { gte: todayStart } } }),
+  ]);
 
   return {
-    awaitingPickup: awaitingPickup.length,
+    awaitingPickup: awaitingPickupCount,
     agingPackages: agingPackages.length,
-    agingPackageDetails: agingPackages.slice(0, 5).map((p) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    agingPackageDetails: agingPackages.map((p: any) => ({
       tracking: p.trackingNumber,
-      customer: p.customer?.firstName + ' ' + p.customer?.lastName,
+      customer: (p.customer?.firstName ?? '') + ' ' + (p.customer?.lastName ?? ''),
       pmb: p.customer?.pmbNumber,
-      daysHeld: Math.floor(
-        (now.getTime() - new Date(p.checkedInAt).getTime()) / 86_400_000
-      ),
+      daysHeld: Math.floor((now.getTime() - new Date(p.checkedInAt).getTime()) / 86_400_000),
     })),
     expiringIds: expiringIds.length,
     expiringIdDetails: expiringIds.map((c) => ({
       name: c.firstName + ' ' + c.lastName,
       pmb: c.pmbNumber,
-      daysUntilExpiry: Math.ceil(
-        (new Date(c.idExpiration!).getTime() - now.getTime()) / 86_400_000
-      ),
+      daysUntilExpiry: Math.ceil((new Date(c.idExpiration!).getTime() - now.getTime()) / 86_400_000),
     })),
-    expiredIds: expiredIds.length,
+    expiredIds: expiredIdsCount,
     checkedInToday,
-    inactiveCustomers: inactiveCustomers.length,
-    totalActiveCustomers: dashboardStats.activeCustomers,
-    revenueToday: revenue,
+    inactiveCustomers: 0, // Would need a more complex query; omit for now
+    totalActiveCustomers: activeCustomers,
+    revenueToday: revenueResult._sum.retailPrice ?? 0,
     shipmentsToday,
     mailToday,
     pendingShipments,
-    totalPackagesHeld: dashboardStats.packagesHeld,
-    notificationsSent: dashboardStats.notificationsSent,
+    totalPackagesHeld: packagesHeld,
+    notificationsSent,
   };
 }
 
@@ -183,8 +161,8 @@ Guidelines:
 
 /* ── Demo briefing ──────────────────────────────────────────────────────── */
 
-function getDemoBriefing(): Briefing {
-  const data = aggregateStoreData();
+async function getDemoBriefing(): Promise<Briefing> {
+  const data = await aggregateStoreData();
 
   return {
     greeting: 'Good morning! ☀️',
@@ -269,12 +247,12 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
       } satisfies BriefingResponse);
     }
 
     /* Aggregate store data */
-    const data = aggregateStoreData();
+    const data = await aggregateStoreData();
 
     /* Call GPT-4o */
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -313,7 +291,7 @@ export async function GET() {
         {
           success: false,
           mode: 'ai' as const,
-          briefing: getDemoBriefing(),
+          briefing: await getDemoBriefing(),
           error: `AI API error: ${detail}`,
         } satisfies BriefingResponse,
         { status: 502 }
@@ -336,7 +314,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
         error: 'Failed to parse AI response, using demo briefing',
       } satisfies BriefingResponse);
     }
@@ -352,7 +330,7 @@ export async function GET() {
       {
         success: false,
         mode: 'demo' as const,
-        briefing: getDemoBriefing(),
+        briefing: await getDemoBriefing(),
         error: 'Internal server error',
       } satisfies BriefingResponse,
       { status: 500 }

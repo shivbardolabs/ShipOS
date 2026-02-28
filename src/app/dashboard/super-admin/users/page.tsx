@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,65 +39,8 @@ interface SuperAdmin {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mock data                                                                 */
+/*  Data is fetched from /api/super-admin/users                               */
 /* -------------------------------------------------------------------------- */
-const initialAdmins: SuperAdmin[] = [
-  {
-    id: 'sa1',
-    firstName: 'Shiven',
-    lastName: 'Ramji',
-    email: 'shiv@bardolabs.ai',
-    status: 'active',
-    invitedBy: null,
-    inviteExpiresAt: null,
-    lastLoginAt: '2026-02-27T10:30:00Z',
-    loginCount: 156,
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2026-02-27T10:30:00Z',
-  },
-  {
-    id: 'sa2',
-    firstName: 'Rafael',
-    lastName: 'Cordero',
-    email: 'rafael@bardolabs.ai',
-    status: 'active',
-    invitedBy: 'Shiven Ramji',
-    inviteExpiresAt: null,
-    lastLoginAt: '2026-02-26T16:45:00Z',
-    loginCount: 89,
-    createdAt: '2025-03-15T09:00:00Z',
-    updatedAt: '2026-02-26T16:45:00Z',
-  },
-  {
-    id: 'sa3',
-    firstName: 'Caitlin',
-    lastName: 'Meyer',
-    email: 'caitlin@bardolabs.ai',
-    status: 'active',
-    invitedBy: 'Shiven Ramji',
-    inviteExpiresAt: null,
-    lastLoginAt: '2026-02-25T11:20:00Z',
-    loginCount: 42,
-    createdAt: '2025-06-01T10:00:00Z',
-    updatedAt: '2026-02-25T11:20:00Z',
-  },
-  {
-    id: 'sa4',
-    firstName: 'Dave',
-    lastName: 'Thompson',
-    email: 'dave@bardolabs.ai',
-    status: 'pending',
-    invitedBy: 'Shiven Ramji',
-    inviteExpiresAt: '2026-03-01T09:00:00Z',
-    lastLoginAt: null,
-    loginCount: 0,
-    createdAt: '2026-02-26T09:00:00Z',
-    updatedAt: '2026-02-26T09:00:00Z',
-  },
-];
-
-// Mock "current user" for self-deactivation prevention
-const CURRENT_USER_ID = 'sa1';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -132,7 +75,24 @@ const statusVariant = (s: string) => {
 /*  Super Admin Users Page (BAR-232)                                          */
 /* -------------------------------------------------------------------------- */
 export default function SuperAdminUsersPage() {
-  const [admins, setAdmins] = useState<SuperAdmin[]>(initialAdmins);
+  const [admins, setAdmins] = useState<SuperAdmin[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [adminsLoading, setAdminsLoading] = useState(true);
+
+  const fetchAdmins = useCallback(() => {
+    fetch('/api/super-admin/users')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.users) setAdmins(data.users);
+        if (data.currentUserId) setCurrentUserId(data.currentUserId);
+      })
+      .catch((err) => console.error('Failed to fetch super admins:', err))
+      .finally(() => setAdminsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, [fetchAdmins]);
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editAdmin, setEditAdmin] = useState<SuperAdmin | null>(null);
@@ -193,34 +153,51 @@ export default function SuperAdminUsersPage() {
     return Object.keys(errors).length === 0;
   }, [formData, admins, editAdmin]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!validateForm()) return;
 
     if (editAdmin) {
-      setAdmins((prev) =>
-        prev.map((a) =>
-          a.id === editAdmin.id
-            ? { ...a, ...formData, updatedAt: new Date().toISOString() }
-            : a
-        )
-      );
+      // PATCH existing admin
+      try {
+        const res = await fetch('/api/super-admin/users', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: editAdmin.id, ...formData }),
+        });
+        if (res.ok) {
+          fetchAdmins(); // Refresh from API
+        } else {
+          const err = await res.json();
+          console.error('Failed to update admin:', err.error);
+        }
+      } catch (err) {
+        console.error('Failed to update admin:', err);
+      }
       setEditAdmin(null);
     } else {
-      const newAdmin: SuperAdmin = {
-        id: `sa${Date.now()}`,
-        ...formData,
-        status: 'pending',
-        invitedBy: 'Shiven Ramji',
-        inviteExpiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-        lastLoginAt: null,
-        loginCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setAdmins((prev) => [...prev, newAdmin]);
+      // POST new admin
+      try {
+        const res = await fetch('/api/super-admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        if (res.ok) {
+          fetchAdmins(); // Refresh from API
+        } else {
+          const err = await res.json();
+          if (err.error === 'Email already in use') {
+            setFormErrors({ email: 'Email already in use' });
+            return;
+          }
+          console.error('Failed to create admin:', err.error);
+        }
+      } catch (err) {
+        console.error('Failed to create admin:', err);
+      }
       setShowCreateModal(false);
     }
-  }, [validateForm, formData, editAdmin]);
+  }, [validateForm, formData, editAdmin, fetchAdmins]);
 
   const toggleStatus = useCallback(
     (adminId: string) => {
@@ -228,7 +205,7 @@ export default function SuperAdminUsersPage() {
       if (!admin) return;
 
       // Prevent self-deactivation
-      if (adminId === CURRENT_USER_ID) return;
+      if (adminId === currentUserId) return;
 
       // Prevent deactivating the last active super admin
       if (admin.status === 'active' && activeCount <= 1) return;
@@ -236,25 +213,30 @@ export default function SuperAdminUsersPage() {
       if (admin.status === 'active') {
         setShowDeactivateConfirm(adminId);
       } else {
-        setAdmins((prev) =>
-          prev.map((a) =>
-            a.id === adminId ? { ...a, status: 'active', updatedAt: new Date().toISOString() } : a
-          )
-        );
+        // Reactivate via PATCH
+        fetch('/api/super-admin/users', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: adminId, status: 'active' }),
+        })
+          .then(() => fetchAdmins())
+          .catch((err) => console.error('Failed to reactivate admin:', err));
       }
     },
-    [admins, activeCount]
+    [admins, activeCount, currentUserId, fetchAdmins]
   );
 
   const confirmDeactivate = useCallback(() => {
     if (!showDeactivateConfirm) return;
-    setAdmins((prev) =>
-      prev.map((a) =>
-        a.id === showDeactivateConfirm ? { ...a, status: 'inactive' as const, updatedAt: new Date().toISOString() } : a
-      )
-    );
+    fetch('/api/super-admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: showDeactivateConfirm, status: 'inactive' }),
+    })
+      .then(() => fetchAdmins())
+      .catch((err) => console.error('Failed to deactivate admin:', err));
     setShowDeactivateConfirm(null);
-  }, [showDeactivateConfirm]);
+  }, [showDeactivateConfirm, fetchAdmins]);
 
   const resendInvite = useCallback((adminId: string) => {
     setAdmins((prev) =>
@@ -265,6 +247,26 @@ export default function SuperAdminUsersPage() {
       )
     );
   }, []);
+
+  if (adminsLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Super Admin Users"
+          description="Manage Bardo Labs staff who administer the mailbox platform"
+          icon={<Users className="h-6 w-6" />}
+        />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-card p-4 animate-pulse">
+              <div className="h-7 w-12 rounded bg-surface-800" />
+              <div className="mt-1 h-4 w-20 rounded bg-surface-800" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -315,7 +317,7 @@ export default function SuperAdminUsersPage() {
       {/* Admin Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {filtered.map((admin) => {
-          const isSelf = admin.id === CURRENT_USER_ID;
+          const isSelf = admin.id === currentUserId;
           const isLastActive = admin.status === 'active' && activeCount <= 1;
           const inviteExpired =
             admin.status === 'pending' &&

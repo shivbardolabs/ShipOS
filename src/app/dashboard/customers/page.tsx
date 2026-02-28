@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { SearchInput, Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
-import { customers as mockCustomers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/lib/types';
 import {
   UserPlus, Package, Mail, Phone, ChevronLeft, ChevronRight, LayoutGrid, List,
   AlertTriangle, Upload, FileSpreadsheet, CheckCircle2, XCircle, ChevronDown,
-  User, Download, AlertCircle, Calendar,
+  User, Download, AlertCircle, Calendar, Loader2,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
@@ -140,7 +139,10 @@ function autoMapColumns(headers: string[]): Record<string, string> {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const [customers] = useState<Customer[]>(mockCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [total, setTotal] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
@@ -157,26 +159,40 @@ export default function CustomersPage() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importedCount, setImportedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const filtered = useMemo(() => {
-    let result = customers;
-    if (statusFilter !== 'all') result = result.filter((c) => c.status === statusFilter);
-    if (platformFilter !== 'all') result = result.filter((c) => c.platform === platformFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((c) =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        c.pmbNumber.toLowerCase().includes(q) ||
-        (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.phone && c.phone.includes(q)) ||
-        (c.businessName && c.businessName.toLowerCase().includes(q))
-      );
-    }
-    return result;
-  }, [customers, search, statusFilter, platformFilter]);
+  /* ── Fetch customers from API ──────────────────────────────── */
+  const fetchCustomers = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set('page', String(page + 1));
+    params.set('limit', String(PAGE_SIZE));
+    if (search.trim()) params.set('search', search.trim());
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (platformFilter !== 'all') params.set('platform', platformFilter);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    fetch(`/api/customers?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setCustomers(data.customers ?? []);
+        setTotal(data.total ?? 0);
+      })
+      .catch((err) => console.error('Failed to fetch customers:', err))
+      .finally(() => setLoading(false));
+  }, [page, search, statusFilter, platformFilter]);
+
+  useEffect(() => {
+    // Debounce search, but fetch immediately for filter/page changes
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(fetchCustomers, search ? 300 : 0);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [fetchCustomers, search]);
+
+  // With server-side filtering, filtered = customers (already filtered by API)
+  const filtered = customers;
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const paged = filtered;
   const activeCount = customers.filter((c) => c.status === 'active').length;
 
   const handleFormChange = useCallback((field: string, value: string | boolean) => {
@@ -193,11 +209,43 @@ export default function CustomersPage() {
     return Object.keys(errors).length === 0;
   }, [form]);
 
-  const handleAddCustomer = useCallback(() => {
+  const [addSaving, setAddSaving] = useState(false);
+
+  const handleAddCustomer = useCallback(async () => {
     if (!validateForm()) return;
-    setAddSuccess(true);
-    setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
-  }, [validateForm]);
+    setAddSaving(true);
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email || undefined,
+          phone: form.phone || undefined,
+          businessName: form.businessName || undefined,
+          pmbNumber: form.pmbNumber || `PMB-${Date.now().toString(36).toUpperCase()}`,
+          platform: form.platform || 'physical',
+          billingTerms: form.billingTerms || undefined,
+          notifyEmail: form.notifyEmail,
+          notifySms: form.notifySms,
+          notes: form.notes || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) {
+          setCustomers((prev) => [data.customer, ...prev]);
+        }
+      }
+      setAddSuccess(true);
+      setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
+    } catch {
+      setFormErrors({ submit: 'Failed to save customer. Please try again.' });
+    } finally {
+      setAddSaving(false);
+    }
+  }, [validateForm, form]);
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -410,7 +458,7 @@ export default function CustomersPage() {
         footer={addSuccess ? undefined : (
           <>
             <Button variant="secondary" onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM); setFormErrors({}); }}>Cancel</Button>
-            <Button leftIcon={<UserPlus className="h-4 w-4" />} onClick={handleAddCustomer}>Add Customer</Button>
+            <Button leftIcon={addSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} onClick={handleAddCustomer} disabled={addSaving}>{addSaving ? 'Saving…' : 'Add Customer'}</Button>
           </>
         )}>
         {addSuccess ? (

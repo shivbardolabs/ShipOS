@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Stepper, type Step } from '@/components/ui/stepper';
+import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
+import type { ParsedAddress } from '@/components/ui/address-autocomplete';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import { customers as mockCustomers } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
@@ -195,6 +197,24 @@ export default function NewCustomerPage() {
     setFormErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
   }, []);
 
+  const handleAddressSelect = useCallback((parsed: ParsedAddress) => {
+    setCustomerForm((prev) => ({
+      ...prev,
+      homeAddress: parsed.street,
+      homeCity: parsed.city,
+      homeState: parsed.state,
+      homeZip: parsed.zip,
+    }));
+    setFormErrors((prev) => {
+      const next = { ...prev };
+      delete next['homeAddress'];
+      delete next['homeCity'];
+      delete next['homeState'];
+      delete next['homeZip'];
+      return next;
+    });
+  }, []);
+
   const selectPmb = useCallback((num: number, platform: MailboxPlatform) => {
     setCustomerForm((prev) => ({ ...prev, pmbNumber: String(num), platform }));
     setPmbDropdownOpen(false); setPmbSearch('');
@@ -375,7 +395,7 @@ export default function NewCustomerPage() {
                     <div className="border-t border-surface-800 pt-4">
                       <p className="text-sm font-medium text-surface-300 mb-3 flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</p>
                       <div className="space-y-3">
-                        <Input label="Street Address *" placeholder="123 Main St" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} />
+                        <AddressAutocomplete value={customerForm.homeAddress} onChange={(v) => updateField('homeAddress', v)} onSelect={handleAddressSelect} error={formErrors.homeAddress} />
                         <div className="grid grid-cols-3 gap-3">
                           <Input label="City *" placeholder="Anytown" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
                           <Input label="State *" placeholder="CA" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />

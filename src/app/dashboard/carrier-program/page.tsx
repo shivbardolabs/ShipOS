@@ -288,7 +288,7 @@ export default function CarrierProgramPage() {
     <div className="space-y-6">
       <PageHeader
         title="Carrier Program"
-        description="FedEx HAL & UPS Access Point — Package hold, checkout & carrier upload"
+        description="Manage carrier programs and uploads."
         actions={
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={() => setSettingsModal(true)}>
