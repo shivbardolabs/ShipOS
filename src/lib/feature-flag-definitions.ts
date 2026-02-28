@@ -299,6 +299,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── Billing Dashboard (BAR-304) ────────────────────────────────────────────
+  {
+    key: 'billing_dashboard',
+    name: 'Billing Dashboard',
+    description: 'Central CLIENT billing dashboard with revenue analytics, aging reports, trend analysis, optimization alerts, and export',
+    category: 'business',
+    defaultEnabled: false,
+  },
+
   // ── Return to Sender (BAR-321) ────────────────────────────────────────────
   {
     key: 'rts_workflow',

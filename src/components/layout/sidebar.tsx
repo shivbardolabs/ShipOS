@@ -36,6 +36,7 @@ import {
   ScanLine,
   UserPlus,
   CalendarClock,
+  DollarSign,
 
   BookOpen,
   Printer,
@@ -114,6 +115,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Renewals', href: '/dashboard/renewals', icon: CalendarClock, flagKey: 'automated_renewals' },
       { label: 'Loyalty Program', href: '/dashboard/loyalty', icon: Award, flagKey: 'loyalty-program' },
+      { label: 'Billing', href: '/dashboard/billing', icon: DollarSign, flagKey: 'billing_dashboard' },
       { label: 'Report Hub', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Charge Events', href: '/dashboard/charge-events', icon: Receipt, flagKey: 'charge_events' },
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
