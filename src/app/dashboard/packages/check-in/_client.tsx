@@ -230,6 +230,9 @@ export default function CheckInPage() {
   const [dbCustomers, setDbCustomers] = useState<SearchCustomer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
 
+  // BAR-325: Auto-advance timer ref for customer selection
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   // Step 1 — Recipient (BAR-266) — used when program != 'pmb'
   const [recipientName, setRecipientName] = useState('');
   const [kinekNumber, setKinekNumber] = useState('');
@@ -478,6 +481,29 @@ export default function CheckInPage() {
         return false;
     }
   })();
+
+  /* ── BAR-325: Auto-advance on customer selection ──────────────────── */
+  const handleCustomerSelect = useCallback(
+    (cust: SearchCustomer) => {
+      // Clear any existing auto-advance timer
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+
+      setSelectedCustomer(cust);
+
+      // Auto-advance to Step 2 after brief visual confirmation
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setStep(2);
+      }, 300);
+    },
+    []
+  );
+
+  // Clean up auto-advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    };
+  }, []);
 
   // Handle carrier selection with auto-fill sender
   const handleCarrierSelect = (carrierId: string) => {
@@ -888,7 +914,11 @@ export default function CheckInPage() {
           <div key={s.id} className="flex items-center">
             <button
               onClick={() => {
-                if (s.id < step) setStep(s.id);
+                if (s.id < step) {
+                  // BAR-325: Cancel any pending auto-advance when navigating back
+                  if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+                  setStep(s.id);
+                }
               }}
               className={cn(
                 'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all',
@@ -1051,11 +1081,11 @@ export default function CheckInPage() {
                       return (
                         <button
                           key={cust.id}
-                          onClick={() => setSelectedCustomer(cust)}
+                          onClick={() => handleCustomerSelect(cust)}
                           className={cn(
-                            'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                            'flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
                             isSelected
-                              ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
+                              ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30 scale-[0.98]'
                               : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
                           )}
                         >
@@ -1659,7 +1689,11 @@ export default function CheckInPage() {
           <Button
             variant="ghost"
             leftIcon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => setStep(Math.max(1, step - 1))}
+            onClick={() => {
+              // BAR-325: Cancel any pending auto-advance when going back
+              if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+              setStep(Math.max(1, step - 1));
+            }}
             disabled={step === 1}
           >
             Back
