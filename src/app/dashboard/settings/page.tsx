@@ -421,109 +421,13 @@ export default function SettingsPage() {
     postscan: true,
   });
 
-  // ─── Service Agreement Template state ──────────────────────────────
-  const DEFAULT_TEMPLATE = `MAILBOX SERVICE AGREEMENT
-
-This Mailbox Service Agreement ("Agreement") is entered into between {storeName} ("Provider") and {customerName} ("Customer") for PMB #{pmbNumber}.
-
-1. SERVICES
-Provider agrees to receive and hold mail and packages on behalf of Customer at the address listed above. Customer agrees to comply with all USPS CMRA regulations, including completion of PS Form 1583.
-
-2. TERM
-This Agreement begins on {startDate} and renews automatically on a {billingCycle} basis unless terminated by either party with 30 days written notice.
-
-3. FEES
-Customer agrees to pay the applicable mailbox rental fee and any additional service charges (forwarding, scanning, storage beyond the free hold period, etc.) as listed in the current rate schedule.
-
-4. CUSTOMER RESPONSIBILITIES
-- Provide valid government-issued photo ID and proof of address per USPS requirements.
-- Pick up or arrange forwarding of mail/packages in a timely manner.
-- Notify Provider of any address or contact changes within 5 business days.
-
-5. PROVIDER RESPONSIBILITIES
-- Accept and securely store mail and packages during business hours.
-- Notify Customer of incoming items via the selected notification method.
-- Maintain USPS CMRA compliance and safeguard Customer information.
-
-6. LIMITATION OF LIABILITY
-Provider is not liable for loss or damage to items caused by carriers, acts of nature, or circumstances beyond reasonable control. Maximum liability shall not exceed the monthly service fee.
-
-7. GOVERNING LAW
-This Agreement is governed by the laws of the state in which the Provider operates.
-
-Customer Signature: _________________________  Date: ___________
-Provider Signature: _________________________  Date: ___________`;
-
-  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
-  const [templateContent, setTemplateContent] = useState(DEFAULT_TEMPLATE);
-  const [templateSaving, setTemplateSaving] = useState(false);
-  const [templateSaved, setTemplateSaved] = useState(false);
-  const [templateFileName, setTemplateFileName] = useState<string | null>(null);
-  const templateFileRef = useRef<HTMLInputElement>(null);
-
-  const handleSaveTemplate = useCallback(() => {
-    setTemplateSaving(true);
-    // Simulate save (would be an API call in production)
-    setTimeout(() => {
-      setTemplateSaving(false);
-      setTemplateSaved(true);
-      setTimeout(() => {
-        setTemplateSaved(false);
-        setShowEditTemplateModal(false);
-      }, 1200);
-    }, 600);
-  }, []);
-
-  const handleUploadTemplate = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setTemplateFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result;
-      if (typeof text === 'string') {
-        setTemplateContent(text);
-        setTemplateSaved(false);
-      }
-    };
-    reader.readAsText(file);
-    // Reset file input so the same file can be re-uploaded
-    e.target.value = '';
-  }, []);
-
-  /* ──────────────────────────────────────────────────────────────────── */
-  /*  Receipt logo upload handler                                       */
-  /* ──────────────────────────────────────────────────────────────────── */
-  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate type
-    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
-      alert('Please upload a PNG or JPG image.');
-      return;
-    }
-    // Validate size (2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be under 2MB.');
-      return;
-    }
-
-    setLogoUploading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReceiptLogo(reader.result as string);
-      setLogoUploading(false);
-    };
-    reader.onerror = () => {
-      alert('Failed to read file. Please try again.');
-      setLogoUploading(false);
-    };
-    reader.readAsDataURL(file);
-
-    // Reset input so re-uploading the same file triggers onChange
-    e.target.value = '';
-  }, []);
+  // Carrier program toggles (BAR-266)
+  const [carrierProgramEnabled, setCarrierProgramEnabled] = useState<Record<string, boolean>>({
+    ups_ap: false,
+    fedex_hal: false,
+    kinek: false,
+    amazon: false,
+  });
 
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
@@ -847,6 +751,120 @@ Provider Signature: _________________________  Date: ___________`;
                 <div className="mt-6 flex items-center justify-between">
                   <Button variant="ghost" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>Add Custom Range</Button>
                   <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Carrier Programs (BAR-266) */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Carrier Programs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-surface-400 mb-6">
+                  Enable carrier receiving programs your store participates in. Enabled programs appear as options during package check-in.
+                </p>
+
+                <div className="space-y-4">
+                  {/* UPS Access Point */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.ups_ap ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-amber-900/30 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">UPS Access Point</p>
+                          <p className="text-xs text-surface-500">Receive and hold UPS-redirected packages for pickup</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.ups_ap ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.ups_ap ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.ups_ap}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, ups_ap: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* FedEx HAL */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.fedex_hal ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">FedEx Hold At Location</p>
+                          <p className="text-xs text-surface-500">Receive and hold FedEx-redirected packages (FASC required)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.fedex_hal ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.fedex_hal ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.fedex_hal}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, fedex_hal: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KINEK */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.kinek ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-teal-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">KINEK</p>
+                          <p className="text-xs text-surface-500">Third-party package receiving network — recipients identified by 7-digit KINEK number</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.kinek ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.kinek ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.kinek}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, kinek: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amazon */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.amazon ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">Amazon</p>
+                          <p className="text-xs text-surface-500">Receive and hold Amazon packages for pickup</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.amazon ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.amazon ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.amazon}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, amazon: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end">
+                  <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Programs</Button>
                 </div>
               </CardContent>
             </Card>

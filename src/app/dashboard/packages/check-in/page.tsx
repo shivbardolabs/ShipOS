@@ -116,12 +116,70 @@ const packageTypeOptions = [
 ];
 
 /* -------------------------------------------------------------------------- */
+/*  Package Program Types (BAR-266)                                           */
+/* -------------------------------------------------------------------------- */
+type PackageProgram = 'pmb' | 'ups_ap' | 'fedex_hal' | 'kinek' | 'amazon';
+
+const packageProgramOptions: {
+  id: PackageProgram;
+  label: string;
+  icon: string;
+  desc: string;
+  color: string;
+  activeColor: string;
+}[] = [
+  {
+    id: 'pmb',
+    label: 'PMB',
+    icon: '📬',
+    desc: 'Private Mailbox customer',
+    color: 'border-primary-500/40 bg-primary-500/10 text-primary-400 hover:bg-primary-500/20',
+    activeColor: 'border-primary-500 bg-primary-500/20 ring-1 ring-primary-500/30',
+  },
+  {
+    id: 'ups_ap',
+    label: 'UPS AP',
+    icon: '📦',
+    desc: 'UPS Access Point',
+    color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30',
+    activeColor: 'border-amber-600 bg-amber-900/30 ring-1 ring-amber-500/30',
+  },
+  {
+    id: 'fedex_hal',
+    label: 'FedEx HAL',
+    icon: '📦',
+    desc: 'FedEx Hold At Location',
+    color: 'border-indigo-300/40 bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
+    activeColor: 'border-indigo-500 bg-indigo-100 ring-1 ring-indigo-500/30',
+  },
+  {
+    id: 'kinek',
+    label: 'KINEK',
+    icon: '📦',
+    desc: 'KINEK network',
+    color: 'border-teal-500/40 bg-teal-500/10 text-teal-400 hover:bg-teal-500/20',
+    activeColor: 'border-teal-500 bg-teal-500/20 ring-1 ring-teal-500/30',
+  },
+  {
+    id: 'amazon',
+    label: 'Amazon',
+    icon: '📦',
+    desc: 'Amazon packages',
+    color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20',
+    activeColor: 'border-orange-500 bg-orange-500/20 ring-1 ring-orange-500/30',
+  },
+];
+
+/* -------------------------------------------------------------------------- */
 /*  Main Component                                                            */
 /* -------------------------------------------------------------------------- */
 export default function CheckInPage() {
   const [step, setStep] = useState(1);
 
-  // Step 1 — Customer (BAR-38: enhanced lookup)
+  // Step 1 — Package Program (BAR-266)
+  const [packageProgram, setPackageProgram] = useState<PackageProgram>('pmb');
+
+  // Step 1 — Customer (BAR-38: enhanced lookup) — used when program = 'pmb'
   const [customerSearch, setCustomerSearch] = useState('');
   const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'phone' | 'company'>('pmb');
   const [selectedCustomer, setSelectedCustomer] = useState<SearchCustomer | null>(null);
@@ -130,7 +188,19 @@ export default function CheckInPage() {
   const [dbCustomers, setDbCustomers] = useState<SearchCustomer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
 
-  // Step 2 — Carrier (BAR-239: tracking number, auto-suggest carrier, sender autocomplete)
+  // Step 1 — Recipient (BAR-266) — used when program != 'pmb'
+  const [recipientName, setRecipientName] = useState('');
+  const [kinekNumber, setKinekNumber] = useState('');
+
+  // TODO: In production, fetch enabled programs from client settings API
+  // For now, all carrier programs are visible (PMB is always enabled)
+  const enabledPrograms = useMemo(() => {
+    // PMB is always available; carrier programs filtered by client settings
+    // This will be replaced by an API call to /api/settings/carrier-programs
+    return packageProgramOptions;
+  }, []);
+
+  // Step 2 — Carrier (BAR-37: enhanced auto-detect, BAR-240: API enrichment)
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('');
   const [carrierAutoSuggested, setCarrierAutoSuggested] = useState(false);
@@ -318,7 +388,14 @@ export default function CheckInPage() {
   const canProceed = (() => {
     switch (step) {
       case 1:
-        return !!selectedCustomer || (isWalkIn && walkInName.trim().length > 0);
+        if (packageProgram === 'pmb') {
+          return !!selectedCustomer || (isWalkIn && walkInName.trim().length > 0);
+        }
+        if (packageProgram === 'kinek') {
+          return recipientName.trim().length > 0 && /^\d{7}$/.test(kinekNumber.trim());
+        }
+        // ups_ap, fedex_hal, amazon — just need recipient name
+        return recipientName.trim().length > 0;
       case 2:
         return !!selectedCarrier && !!trackingNumber.trim();
       case 3:
@@ -339,23 +416,223 @@ export default function CheckInPage() {
     else setSenderName('');
   };
 
-  /* ======================================================================== */
-  /*  Submit — BAR-260: Save package to database via API                      */
-  /* ======================================================================== */
+  // Handle barcode scan (BAR-37 + BAR-240)
+  const handleBarcodeScan = useCallback(
+    (value: string) => {
+      setTrackingNumber(value);
+      const result = detectCarrier(value);
+      if (result) {
+        setCarrierDetectionResult({
+          confidence: result.confidence,
+          rule: result.matchedRule,
+        });
+        handleCarrierSelect(result.carrierId);
+        // Trigger carrier API enrichment
+        fetchCarrierApiData(value, result.carrierId);
+      }
+    },
+    [fetchCarrierApiData] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  /* ── Resolve display name & PMB for current recipient ──────────────── */
+  const resolveRecipient = useCallback(() => {
+    if (packageProgram !== 'pmb') {
+      const progLabel = packageProgram === 'ups_ap' ? 'UPS AP'
+        : packageProgram === 'fedex_hal' ? 'FedEx HAL'
+        : packageProgram === 'kinek' ? 'KINEK'
+        : 'Amazon';
+      return {
+        name: recipientName || 'Unknown',
+        pmb: packageProgram === 'kinek' ? kinekNumber : progLabel,
+      };
+    }
+    return {
+      name: isWalkIn
+        ? walkInName
+        : selectedCustomer
+          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+          : 'Unknown',
+      pmb: isWalkIn ? 'WALK-IN' : (selectedCustomer?.pmbNumber || '—'),
+    };
+  }, [packageProgram, recipientName, kinekNumber, isWalkIn, walkInName, selectedCustomer]);
+
+  /* ── BAR-266: Resolve program type label for label printing ─────────── */
+  const resolveProgramType = useCallback((): string => {
+    if (packageProgram === 'pmb') {
+      if (isWalkIn) return 'Walk-In';
+      return selectedCustomer?.platform || 'Store';
+    }
+    if (packageProgram === 'ups_ap') return 'UPS Access Point';
+    if (packageProgram === 'fedex_hal') return 'FedEx HAL';
+    if (packageProgram === 'kinek') return 'KINEK';
+    if (packageProgram === 'amazon') return 'Amazon Hub';
+    return '';
+  }, [packageProgram, isWalkIn, selectedCustomer]);
+
+  /* ── BAR-266: Resolve condition display for label ───────────────────── */
+  const resolveConditionLabel = useCallback((): string => {
+    if (condition === 'other') return conditionOther || 'Other';
+    if (condition === 'partially_opened') return 'Partially Opened';
+    return condition.charAt(0).toUpperCase() + condition.slice(1);
+  }, [condition, conditionOther]);
+
+  /* ── BAR-266: Is this a carrier program (non-PMB, non-KINEK)? ─────── */
+  const isCarrierProgram = packageProgram === 'ups_ap' || packageProgram === 'fedex_hal' || packageProgram === 'amazon';
+
+  /* ── BAR-41: Label printing ──────────────────────────────────────────── */
+  const addToLabelQueue = useCallback(
+    (pkgId: string) => {
+      const { name: custName, pmb } = resolveRecipient();
+
+      const newLabel: QueuedLabel = {
+        id: `lbl_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        packageId: pkgId,
+        customerName: custName,
+        pmbNumber: pmb,
+        trackingNumber: trackingNumber || 'N/A',
+        carrier: selectedCarrier === 'other'
+          ? (customCarrierName || 'Other')
+          : (selectedCarrier || 'Unknown'),
+        checkedInAt: new Date().toISOString(),
+        storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
+        isCarrierProgram,
+      };
+
+      setLabelQueue((prev) => [...prev, newLabel]);
+      return newLabel;
+    },
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram, trackingNumber, selectedCarrier, customCarrierName]
+  );
+
+  const handleAutoprint = useCallback(
+    (pkgId: string) => {
+      const { name: custName, pmb } = resolveRecipient();
+      const carrier = selectedCarrier === 'other'
+        ? (customCarrierName || 'Other')
+        : (selectedCarrier || 'Unknown');
+
+      const html = renderPackageLabel({
+        pmbNumber: pmb,
+        customerName: custName,
+        trackingNumber: trackingNumber || 'N/A',
+        carrier,
+        checkedInAt: new Date().toISOString(),
+        packageId: pkgId,
+        storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
+        isCarrierProgram,
+      });
+      printLabel(html);
+    },
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram, trackingNumber, selectedCarrier, customCarrierName]
+  );
+
+  /* ── BAR-241: Staging / queue jump ───────────────────────────────────── */
+  const addToStagingQueue = useCallback(
+    (pkgId: string) => {
+      const { name: custName, pmb } = resolveRecipient();
+
+      const staging: StagingPackage = {
+        id: pkgId,
+        trackingNumber: trackingNumber || 'N/A',
+        carrier: selectedCarrier || 'unknown',
+        customerName: custName,
+        pmbNumber: pmb,
+        stagingStatus: 'scanned',
+        scannedAt: new Date().toISOString(),
+      };
+      setStagingQueue((prev) => [...prev, staging]);
+    },
+    [resolveRecipient, trackingNumber, selectedCarrier]
+  );
+
+  const handleQueueJump = useCallback(
+    (pkg: StagingPackage) => {
+      // Mark as labeled in staging queue
+      setStagingQueue((prev) =>
+        prev.map((p) =>
+          p.id === pkg.id ? { ...p, stagingStatus: 'labeled' as const } : p
+        )
+      );
+      // Print label immediately
+      const html = renderPackageLabel({
+        pmbNumber: pkg.pmbNumber,
+        customerName: pkg.customerName,
+        trackingNumber: pkg.trackingNumber,
+        carrier: pkg.carrier,
+        checkedInAt: new Date().toISOString(),
+        packageId: pkg.id,
+        storeName: 'ShipOS Store',
+        programType: resolveProgramType(),
+        condition: resolveConditionLabel(),
+        perishable,
+        isCarrierProgram,
+      });
+      printLabel(html);
+    },
+    [resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram]
+  );
+
+  const handleQuickRelease = useCallback(
+    (pkg: StagingPackage) => {
+      // Mark as released — skip notification since customer is present
+      setStagingQueue((prev) =>
+        prev.map((p) =>
+          p.id === pkg.id ? { ...p, stagingStatus: 'released' as const } : p
+        )
+      );
+      logActivity({
+        action: 'package.release',
+        entityType: 'package',
+        entityId: pkg.id,
+        entityLabel: pkg.trackingNumber,
+        description: `Queue jump: released ${pkg.carrier.toUpperCase()} package to ${pkg.customerName} (${pkg.pmbNumber}) — customer was present during staging`,
+        metadata: { queueJump: true, carrier: pkg.carrier },
+      });
+    },
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const handleEndBatchSession = useCallback(() => {
+    setBatchSessionActive(false);
+    // Don't clear staging queue — labels may still need printing
+  }, []);
+
+  // Handle submit
+  const { log: logActivity, lastActionByVerb } = useActivityLog();
+  const lastCheckIn = lastActionByVerb('package.check_in');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    setSubmitError(null);
+
+    const carrierLabel = selectedCarrier === 'other'
+      ? (customCarrierName || 'Other')
+      : (selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown');
+    const { name: resolvedName, pmb: resolvedPmb } = resolveRecipient();
+    const custLabel = packageProgram === 'pmb'
+      ? (isWalkIn
+          ? `Walk-in: ${walkInName}`
+          : selectedCustomer
+            ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})`
+            : '')
+      : `${resolvedName} (${resolvedPmb})`;
 
     try {
       const res = await fetch('/api/packages/check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerId: selectedCustomer?.id || null,
-          trackingNumber: trackingNumber.trim() || null,
-          carrier: selectedCarrier,
-          customCarrierName: selectedCarrier === 'other' ? customCarrierName : undefined,
-          senderName: senderName.trim() || null,
+          packageProgram,
+          customerId: selectedCustomer?.id || undefined,
+          trackingNumber: trackingNumber || undefined,
+          carrier: selectedCarrier === 'other' ? (customCarrierName || 'other') : selectedCarrier,
+          senderName: senderName || undefined,
           packageType,
           hazardous,
           perishable,
@@ -364,11 +641,27 @@ export default function CheckInPage() {
           notes: notes.trim() || null,
           storageLocation: storageLocation.trim() || null,
           requiresSignature,
-          isWalkIn,
-          walkInName: isWalkIn ? walkInName.trim() : undefined,
-          sendEmail,
-          sendSms,
-          printLabel,
+          storageLocation: storageLocation || undefined,
+          notes: notes || undefined,
+          isWalkIn: packageProgram === 'pmb' ? isWalkIn : false,
+          walkInName: packageProgram === 'pmb' && isWalkIn ? walkInName : undefined,
+          recipientName: packageProgram !== 'pmb' ? recipientName : undefined,
+          kinekNumber: packageProgram === 'kinek' ? kinekNumber : undefined,
+          conditionTags: conditionTags.length > 0 ? conditionTags : undefined,
+          customerNote: customerNote || undefined,
+          internalNote: internalNote || undefined,
+          conditionPhotos: conditionPhotos.length > 0 ? conditionPhotos : undefined,
+          sendEmail: printMode === 'batch' ? false : sendEmail, // BAR-41: delay notifications in batch mode
+          sendSms: printMode === 'batch' ? false : sendSms,
+          printLabel: printLabelEnabled,
+          // BAR-240: Include enrichment data
+          carrierApiData: carrierApiData ? {
+            senderName: carrierApiData.sender?.name,
+            senderAddress: carrierApiData.sender?.address,
+            recipientName: carrierApiData.recipient?.name,
+            recipientAddress: carrierApiData.recipient?.address,
+            serviceType: carrierApiData.serviceType,
+          } : undefined,
         }),
       });
 
@@ -398,17 +691,43 @@ export default function CheckInPage() {
         entityLabel: trackingNumber || `${carrierLabel} package`,
         description: `Checked in ${carrierLabel} package for ${custLabel}`,
         metadata: {
+          packageProgram,
           carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
           trackingNumber,
           packageType,
           customerId: selectedCustomer?.id,
           customerName: custLabel,
+          recipientName: packageProgram !== 'pmb' ? recipientName : undefined,
+          kinekNumber: packageProgram === 'kinek' ? kinekNumber : undefined,
           hazardous,
           perishable,
           requiresSignature,
           storageLocation: storageLocation || undefined,
-          isWalkIn,
-          walkInName: isWalkIn ? walkInName : undefined,
+          isWalkIn: packageProgram === 'pmb' ? isWalkIn : false,
+          walkInName: packageProgram === 'pmb' && isWalkIn ? walkInName : undefined,
+          notificationSent: data.notification?.sent ?? false,
+          printMode,
+          carrierDetection: carrierDetectionResult,
+          carrierApiEnriched: !!carrierApiData,
+        },
+      });
+    } catch {
+      logActivity({
+        action: 'package.check_in',
+        entityType: 'package',
+        entityId: `pkg_${Date.now()}`,
+        entityLabel: trackingNumber || `${carrierLabel} package`,
+        description: `Checked in ${carrierLabel} package for ${custLabel}`,
+        metadata: {
+          packageProgram,
+          carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
+          trackingNumber,
+          packageType,
+          customerId: selectedCustomer?.id,
+          customerName: custLabel,
+          recipientName: packageProgram !== 'pmb' ? recipientName : undefined,
+          kinekNumber: packageProgram === 'kinek' ? kinekNumber : undefined,
+          apiError: true,
         },
       });
 
@@ -425,11 +744,14 @@ export default function CheckInPage() {
   // Reset for new check-in
   const handleReset = () => {
     setStep(1);
+    setPackageProgram('pmb');
     setCustomerSearch('');
     setSearchMode('pmb');
     setSelectedCustomer(null);
     setIsWalkIn(false);
     setWalkInName('');
+    setRecipientName('');
+    setKinekNumber('');
     setSelectedCarrier('');
     setCarrierAutoSuggested(false);
     setCustomCarrierName('');
@@ -537,155 +859,269 @@ export default function CheckInPage() {
       {/* Step Content */}
       <Card padding="lg">
         {/* ================================================================ */}
-        {/*  Step 1: Identify Customer                                       */}
+        {/*  Step 1: Identify Customer / Recipient (BAR-266 enhanced)        */}
         {/* ================================================================ */}
         {step === 1 && (
           <div className="space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-surface-100 mb-1">
-                Identify Customer
+                Identify Recipient
               </h2>
               <p className="text-sm text-surface-400">
-                Search by PMB number, name, phone, or company — or check in for a walk-in customer
+                Select the package program, then identify the recipient
               </p>
             </div>
 
-            {/* Walk-in toggle */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/40 border border-surface-700/50 max-w-lg">
-              <input
-                type="checkbox"
-                checked={isWalkIn}
-                onChange={(e) => { setIsWalkIn(e.target.checked); if (!e.target.checked) setWalkInName(''); setSelectedCustomer(null); }}
-                className="h-4 w-4 rounded border-surface-600 text-primary-600 focus:ring-primary-500"
-                id="walk-in-toggle"
-              />
-              <label htmlFor="walk-in-toggle" className="text-sm text-surface-300 cursor-pointer">
-                Walk-in customer (no mailbox)
+            {/* Package Program Selector (BAR-266) */}
+            <div>
+              <label className="text-sm font-medium text-surface-300 mb-3 block">
+                Package Program
               </label>
-            </div>
-
-            {isWalkIn ? (
-              <div className="max-w-lg">
-                <label className="text-sm font-medium text-surface-300 mb-2 block">Walk-In Customer Name</label>
-                <Input
-                  placeholder="Enter customer name..."
-                  value={walkInName}
-                  onChange={(e) => setWalkInName(e.target.value)}
-                  className="!py-3"
-                />
-                {walkInName.trim() && (
-                  <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Package will be checked in for walk-in: {walkInName}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Search mode tabs (BAR-38) */}
-                <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl max-w-md">
-                  {([
-                    { id: 'pmb' as const, label: 'PMB #' },
-                    { id: 'name' as const, label: 'Name' },
-                    { id: 'phone' as const, label: 'Phone' },
-                    { id: 'company' as const, label: 'Company' },
-                  ]).map((mode) => (
-                    <button
-                      key={mode.id}
-                      onClick={() => { setSearchMode(mode.id); setCustomerSearch(''); }}
-                      className={cn(
-                        'flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium transition-all',
-                        searchMode === mode.id
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
-                      )}
-                    >
-                      {mode.label}
-                    </button>
-                  ))}
-                </div>
-
-                <SearchInput
-                  placeholder={
-                    searchMode === 'pmb' ? 'Enter PMB number (e.g. PMB-0003)...' :
-                    searchMode === 'name' ? 'Search by first or last name...' :
-                    searchMode === 'phone' ? 'Search by phone number...' :
-                    'Search by company/business name...'
-                  }
-                  value={customerSearch}
-                  onSearch={setCustomerSearch}
-                  className="max-w-lg"
-                />
-              </>
-            )}
-
-            {!isWalkIn && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {customersLoading && dbCustomers.length === 0 && (
-                  <div className="col-span-2 py-8 text-center text-surface-500">
-                    <Loader2 className="mx-auto h-6 w-6 mb-2 text-surface-600 animate-spin" />
-                    <p>Searching customers...</p>
-                  </div>
-                )}
-                {dbCustomers.map((cust) => {
-                  const isSelected = selectedCustomer?.id === cust.id;
+              <div className="flex flex-wrap gap-2">
+                {enabledPrograms.map((prog) => {
+                  const isActive = packageProgram === prog.id;
                   return (
                     <button
-                      key={cust.id}
-                      onClick={() => setSelectedCustomer(cust)}
+                      key={prog.id}
+                      onClick={() => {
+                        setPackageProgram(prog.id);
+                        // Reset recipient fields when switching programs
+                        setSelectedCustomer(null);
+                        setCustomerSearch('');
+                        setIsWalkIn(false);
+                        setWalkInName('');
+                        setRecipientName('');
+                        setKinekNumber('');
+                      }}
                       className={cn(
-                        'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
-                        isSelected
-                          ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
-                          : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
+                        'flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all',
+                        isActive ? prog.activeColor : prog.color
                       )}
                     >
-                      <CustomerAvatar
-                        firstName={cust.firstName}
-                        lastName={cust.lastName}
-                        size="md"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-surface-200 text-sm truncate">
-                            {cust.firstName} {cust.lastName}
-                          </p>
-                          <Badge
-                            variant={
-                              (platformColors[cust.platform] as 'default' | 'info' | 'success' | 'warning') ||
-                              'default'
-                            }
-                            dot={false}
-                          >
-                            {cust.platform}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-xs font-mono text-primary-600">
-                            {cust.pmbNumber}
-                          </span>
-                          {cust.businessName && (
-                            <span className="text-xs text-surface-500 truncate">
-                              {cust.businessName}
-                            </span>
-                          )}
-                        </div>
-                        {cust.activePackageCount !== undefined && cust.activePackageCount > 0 && (
-                          <span className="text-[10px] text-amber-400 mt-0.5 inline-block">
-                            {cust.activePackageCount} pkg{cust.activePackageCount !== 1 ? 's' : ''} in inventory
-                          </span>
-                        )}
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
-                      )}
+                      <span>{prog.icon}</span>
+                      <span>{prog.label}</span>
                     </button>
                   );
                 })}
-                {!customersLoading && dbCustomers.length === 0 && (
-                  <div className="col-span-2 py-12 text-center text-surface-500">
-                    <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
-                    <p>No customers found matching your search</p>
+              </div>
+            </div>
+
+            {/* ── PMB Flow ─────────────────────────────────────────────── */}
+            {packageProgram === 'pmb' && (
+              <>
+                {/* Walk-in toggle */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/40 border border-surface-700/50 max-w-lg">
+                  <input
+                    type="checkbox"
+                    checked={isWalkIn}
+                    onChange={(e) => { setIsWalkIn(e.target.checked); if (!e.target.checked) setWalkInName(''); setSelectedCustomer(null); }}
+                    className="h-4 w-4 rounded border-surface-600 text-primary-600 focus:ring-primary-500"
+                    id="walk-in-toggle"
+                  />
+                  <label htmlFor="walk-in-toggle" className="text-sm text-surface-300 cursor-pointer">
+                    Walk-in customer (no mailbox)
+                  </label>
+                </div>
+
+                {isWalkIn ? (
+                  <div className="max-w-lg">
+                    <label className="text-sm font-medium text-surface-300 mb-2 block">Walk-In Customer Name</label>
+                    <Input
+                      placeholder="Enter customer name..."
+                      value={walkInName}
+                      onChange={(e) => setWalkInName(e.target.value)}
+                      className="!py-3"
+                    />
+                    {walkInName.trim() && (
+                      <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Package will be checked in for walk-in: {walkInName}
+                      </p>
+                    )}
                   </div>
+                ) : (
+                  <>
+                    {/* Search mode tabs */}
+                    <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl max-w-md">
+                      {([
+                        { id: 'pmb' as const, label: 'PMB #' },
+                        { id: 'name' as const, label: 'Name' },
+                        { id: 'phone' as const, label: 'Phone' },
+                        { id: 'company' as const, label: 'Company' },
+                      ]).map((mode) => (
+                        <button
+                          key={mode.id}
+                          onClick={() => { setSearchMode(mode.id); setCustomerSearch(''); }}
+                          className={cn(
+                            'flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium transition-all',
+                            searchMode === mode.id
+                              ? 'bg-primary-600 text-white shadow-sm'
+                              : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
+                          )}
+                        >
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <SearchInput
+                      placeholder={
+                        searchMode === 'pmb' ? 'Enter PMB number or recipient name...' :
+                        searchMode === 'name' ? 'Search by first or last name...' :
+                        searchMode === 'phone' ? 'Search by phone number...' :
+                        'Search by company/business name...'
+                      }
+                      value={customerSearch}
+                      onSearch={setCustomerSearch}
+                      className="max-w-lg"
+                    />
+                  </>
+                )}
+
+                {!isWalkIn && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredCustomers.map((cust) => {
+                      const isSelected = selectedCustomer?.id === cust.id;
+                      return (
+                        <button
+                          key={cust.id}
+                          onClick={() => setSelectedCustomer(cust)}
+                          className={cn(
+                            'flex items-center gap-4 rounded-xl border p-4 text-left transition-all',
+                            isSelected
+                              ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
+                              : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
+                          )}
+                        >
+                          <CustomerAvatar
+                            firstName={cust.firstName}
+                            lastName={cust.lastName}
+                            photoUrl={cust.photoUrl}
+                            size="md"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-surface-200 text-sm truncate">
+                                {cust.firstName} {cust.lastName}
+                              </p>
+                              <Badge
+                                variant={
+                                  (platformColors[cust.platform] as 'default' | 'info' | 'success' | 'warning') ||
+                                  'default'
+                                }
+                                dot={false}
+                              >
+                                {cust.platform}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5">
+                              <span className="text-xs font-mono text-primary-600">
+                                {cust.pmbNumber}
+                              </span>
+                              {cust.businessName && (
+                                <span className="text-xs text-surface-500 truncate">
+                                  {cust.businessName}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                    {filteredCustomers.length === 0 && (
+                      <div className="col-span-2 py-12 text-center text-surface-500">
+                        <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
+                        <p>No customers found matching your search</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── UPS AP / FedEx HAL / Amazon Flow (BAR-266) ───────────── */}
+            {(packageProgram === 'ups_ap' || packageProgram === 'fedex_hal' || packageProgram === 'amazon') && (
+              <div className="max-w-lg space-y-4">
+                <div className="p-3 rounded-lg bg-surface-800/40 border border-surface-700/50">
+                  <p className="text-xs text-surface-400 flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5" />
+                    {packageProgram === 'ups_ap' && 'UPS Access Point — transient recipient (no customer profile required)'}
+                    {packageProgram === 'fedex_hal' && 'FedEx Hold At Location — transient recipient (no customer profile required)'}
+                    {packageProgram === 'amazon' && 'Amazon package — transient recipient (no customer profile required)'}
+                  </p>
+                </div>
+                <div>
+                  <Input
+                    label="Recipient Name"
+                    placeholder="Enter recipient name from package..."
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    className="!py-3"
+                  />
+                </div>
+                {recipientName.trim() && (
+                  <p className="text-xs text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Package will be checked in for: {recipientName}
+                    <Badge variant="default" dot={false} className="ml-1">
+                      {packageProgram === 'ups_ap' ? 'UPS AP' : packageProgram === 'fedex_hal' ? 'FedEx HAL' : 'Amazon'}
+                    </Badge>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* ── KINEK Flow (BAR-266) ─────────────────────────────────── */}
+            {packageProgram === 'kinek' && (
+              <div className="max-w-lg space-y-4">
+                <div className="p-3 rounded-lg bg-surface-800/40 border border-surface-700/50">
+                  <p className="text-xs text-surface-400 flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5" />
+                    KINEK network — recipient identified by 7-digit KINEK number
+                  </p>
+                </div>
+                <div>
+                  <Input
+                    label="Recipient Name"
+                    placeholder="Enter recipient name from package..."
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    className="!py-3"
+                  />
+                </div>
+                <div>
+                  <Input
+                    label="KINEK Number"
+                    placeholder="Enter 7-digit KINEK number..."
+                    value={kinekNumber}
+                    onChange={(e) => {
+                      // Only allow digits, max 7
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 7);
+                      setKinekNumber(val);
+                    }}
+                    className="!py-3 font-mono"
+                  />
+                  {kinekNumber.length > 0 && kinekNumber.length < 7 && (
+                    <p className="mt-1 text-xs text-amber-400 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      KINEK number must be 7 digits ({kinekNumber.length}/7)
+                    </p>
+                  )}
+                  {kinekNumber.length === 7 && (
+                    <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Valid KINEK number
+                    </p>
+                  )}
+                </div>
+                {recipientName.trim() && kinekNumber.length === 7 && (
+                  <p className="text-xs text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Package will be checked in for: {recipientName}
+                    <Badge variant="default" dot={false} className="ml-1">KINEK #{kinekNumber}</Badge>
+                  </p>
                 )}
               </div>
             )}
