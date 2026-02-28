@@ -205,7 +205,7 @@ model Package {
   carrier        String // amazon, ups, fedex, usps, dhl, walmart, target, other
   senderName     String?
   packageType    String  @default("medium") // letter, small, medium, large, oversized
-  status         String  @default("checked_in") // checked_in, notified, ready, released, returned
+  status         String  @default("checked_in") // checked_in, notified, ready, released, returned, rts_initiated, rts_labeled, rts_completed
   hazardous      Boolean @default(false)
   perishable     Boolean @default(false)
   notes          String?
@@ -1203,4 +1203,78 @@ model TosCharge {
   @@index([tenantId, customerId])
   @@index([customerId, status])
   @@index([tenantId, status])
+}
+
+// ── Return to Sender (BAR-321) ───────────────────────────────────────────────
+
+/// Reason why a package or mail piece is being returned to sender.
+enum RtsReason {
+  no_matching_customer
+  closed_pmb
+  expired_pmb
+  customer_request
+  storage_policy_expiry
+  refused
+  unclaimed
+  other
+}
+
+/// Processing step the RTS item is currently at.
+enum RtsStep {
+  initiated       // Marked for RTS
+  label_printed   // RTS label generated / printed
+  carrier_handoff // Handed off to carrier for return
+  completed       // Confirmed returned (carrier scan or manual)
+  cancelled       // RTS cancelled (e.g. customer claimed package before handoff)
+}
+
+/// Tracks Return-to-Sender actions for packages and mail pieces.
+/// Every status change is also recorded in AuditLog for USPS compliance.
+model ReturnToSender {
+  id        String  @id @default(cuid())
+  tenantId  String
+
+  // Polymorphic reference: exactly one of these should be set
+  packageId   String?
+  mailPieceId String?
+
+  // RTS metadata
+  reason       RtsReason
+  reasonDetail String?    // Free-text elaboration (e.g. "PMB expired 2026-01-15")
+  step         RtsStep    @default(initiated)
+
+  // Carrier-specific return info
+  carrier            String?  // usps, fedex, ups, dhl, other
+  returnTrackingNumber String? // Tracking number for the return shipment
+  carrierNotes       String?  // Carrier-specific procedures / notes
+
+  // Timestamps for each processing step
+  initiatedAt     DateTime  @default(now())
+  labelPrintedAt  DateTime?
+  carrierHandoffAt DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+
+  // Who performed each step
+  initiatedById     String
+  labelPrintedById  String?
+  carrierHandoffById String?
+  completedById     String?
+  cancelledById     String?
+  cancelReason      String?
+
+  // Customer reference (denormalised for reporting when PMB is closed)
+  customerId  String?
+  pmbNumber   String?  // Snapshot at time of RTS
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([step])
+  @@index([reason])
+  @@index([packageId])
+  @@index([mailPieceId])
+  @@index([tenantId, step])
+  @@index([tenantId, createdAt])
 }

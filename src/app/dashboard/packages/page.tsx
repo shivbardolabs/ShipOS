@@ -72,7 +72,10 @@ const statusLabels: Record<string, string> = {
   notified: 'Notified',
   ready: 'Ready',
   released: 'Released',
-  returned: 'Returned' };
+  returned: 'Returned',
+  rts_initiated: 'RTS Initiated',
+  rts_labeled: 'RTS Labeled',
+  rts_completed: 'RTS Complete' };
 
 /* -------------------------------------------------------------------------- */
 /*  Package type display                                                      */

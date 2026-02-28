@@ -41,6 +41,7 @@ import {
   Printer,
   Palette,
   Receipt,
+  Undo2,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -80,6 +81,7 @@ const navSections: NavSection[] = [
       { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles, flagKey: 'ai-smart-intake' },
       { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus, flagKey: 'package-check-in' },
       { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck, flagKey: 'package-check-out' },
+      { label: 'Return to Sender', href: '/dashboard/packages/rts', icon: Undo2, flagKey: 'rts_workflow' },
     ],
   },
   {

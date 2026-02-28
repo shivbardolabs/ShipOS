@@ -299,6 +299,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── Return to Sender (BAR-321) ────────────────────────────────────────────
+  {
+    key: 'rts_workflow',
+    name: 'Return to Sender (RTS)',
+    description: 'Complete RTS workflow: initiate, print label, carrier handoff, tracking, and compliance audit trail',
+    category: 'packages',
+    defaultEnabled: false,
+  },
+
   // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
   {
     key: 'stripe_payments',
