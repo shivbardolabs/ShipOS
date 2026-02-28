@@ -36,7 +36,7 @@ interface CarrierPickup {
   manifestId?: string;
 }
 
-function buildCarrierPickups(): CarrierPickup[] {
+function buildCarrierPickups(shipments: { carrier: string; status: string; trackingNumber?: string }[]): CarrierPickup[] {
   const carrierConfig: { id: string; name: string; color: string; bgColor: string; borderColor: string; iconBg: string }[] = [
     { id: 'ups', name: 'UPS', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBg: 'bg-amber-100' },
     { id: 'fedex', name: 'FedEx', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', iconBg: 'bg-indigo-100' },
@@ -76,7 +76,12 @@ export default function EndOfDayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [carriers, setCarriers] = useState<CarrierPickup[]>(buildCarrierPickups);
+  const [carriers, setCarriers] = useState<CarrierPickup[]>([]);
+
+  useEffect(() => {
+    if (shipments.length > 0) setCarriers(buildCarrierPickups(shipments));
+  }, [shipments]);
+
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showManifest, setShowManifest] = useState<string | null>(null);
   const [dayClosed, setDayClosed] = useState(false);
@@ -108,7 +113,7 @@ export default function EndOfDayPage() {
   };
 
   const handleResetDay = () => {
-    setCarriers(buildCarrierPickups());
+    setCarriers(buildCarrierPickups(shipments));
     setDayClosed(false);
   };
 

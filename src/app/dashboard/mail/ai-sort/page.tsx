@@ -92,20 +92,20 @@ const mailTypeConfig: Record<
 /* -------------------------------------------------------------------------- */
 /*  Customer matcher                                                          */
 /* -------------------------------------------------------------------------- */
-function findCustomerByPMB(pmb: string): Customer | null {
+function findCustomerByPMB(pmb: string, customerList: Customer[]): Customer | null {
   if (!pmb) return null;
   const normalized = pmb.replace(/[^0-9]/g, '').padStart(4, '0');
   const search = `PMB-${normalized}`;
   return (
-    customers.find((c) => c.pmbNumber === search && c.status === 'active') ??
+    customerList.find((c) => c.pmbNumber === search && c.status === 'active') ??
     null
   );
 }
 
-function searchCustomers(query: string): Customer[] {
+function searchCustomers(query: string, customerList: Customer[]): Customer[] {
   if (!query || query.length < 2) return [];
   const q = query.toLowerCase();
-  return customers
+  return customerList
     .filter(
       (c) =>
         c.status === 'active' &&
@@ -303,7 +303,7 @@ export default function AIMailSortPage() {
 
       const matched: SortedMailPiece[] = data.results.map((r) => ({
         result: r,
-        customer: findCustomerByPMB(r.pmbNumber),
+        customer: findCustomerByPMB(r.pmbNumber, customers),
         confirmed: false,
         editing: false,
         overrides: {},
@@ -447,7 +447,7 @@ export default function AIMailSortPage() {
   );
 
   const customerResults = useMemo(
-    () => searchCustomers(searchQuery),
+    () => searchCustomers(searchQuery, customers),
     [searchQuery],
   );
 
@@ -970,7 +970,7 @@ export default function AIMailSortPage() {
               value={editPiece.overrides.pmbNumber ?? editPiece.result.pmbNumber}
               onChange={(e) => {
                 updateOverride(editingIdx, 'pmbNumber', e.target.value);
-                const customer = findCustomerByPMB(e.target.value);
+                const customer = findCustomerByPMB(e.target.value, customers);
                 if (customer) {
                   setSortedMail((prev) => {
                     const updated = [...prev];
