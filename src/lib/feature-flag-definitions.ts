@@ -439,6 +439,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     category: 'platform',
     defaultEnabled: false,
   },
+
+  // ── PMB Plan Features (BAR-307) ──────────────────────────────────────────
+  {
+    key: 'pmb_plan_features',
+    name: 'PMB Plan Features',
+    description: 'Advanced PMB pricing: plan tiers with annual discounts, overages, quotas, add-ons, promo codes, and franchise pricing',
+    category: 'business',
+    defaultEnabled: false,
+  },
 ];
 
 /** Category display metadata */

@@ -42,6 +42,9 @@ import {
   Palette,
   Receipt,
   Undo2,
+  Crown,
+  Tag,
+  Building2,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -117,6 +120,9 @@ const navSections: NavSection[] = [
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
       { label: 'Brand Kit', href: '/dashboard/settings/brandkit', icon: Palette },
+      { label: 'PMB Plans', href: '/dashboard/settings/pmb-plans', icon: Crown, flagKey: 'pmb_plan_features' },
+      { label: 'Promo Codes', href: '/dashboard/settings/promo-codes', icon: Tag, flagKey: 'pmb_plan_features' },
+      { label: 'Franchise Pricing', href: '/dashboard/settings/franchise-pricing', icon: Building2, flagKey: 'pmb_plan_features' },
     ],
   },
   {
