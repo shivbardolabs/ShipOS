@@ -37,6 +37,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Copy,
+  Forward,
   MapPin,
   Users,
 } from 'lucide-react';
