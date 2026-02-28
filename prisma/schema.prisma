@@ -1642,6 +1642,7 @@ model FranchiseLocation {
   @@index([franchiseId])
 }
 
+
 /// BAR-336: Pending Check-In Queue — packages scanned via Smart Intake awaiting clerk approval.
 model SmartIntakePending {
   id             String  @id @default(cuid())
@@ -1692,25 +1693,4 @@ model SmartIntakePending {
   @@index([batchId])
   @@index([tenantId])
   @@index([trackingNumber])
-}
-
-/// Audit trail for franchise pricing changes.
-model FranchisePricingOverride {
-  id          String @id @default(cuid())
-  franchiseId String
-  tenantId    String? // null = franchise-level, non-null = location-level
-
-  tierSlug    String  // Which plan tier this override applies to
-  field       String  // e.g. "priceMonthly", "priceAnnual", "overageMailRate"
-  oldValue    String? // Previous value
-  newValue    String  // New value
-
-  changedBy   String? // User who made the change
-  changedAt   DateTime @default(now())
-
-  franchise FranchiseGroup @relation(fields: [franchiseId], references: [id])
-
-  @@index([franchiseId])
-  @@index([tenantId])
-  @@index([changedAt])
 }
