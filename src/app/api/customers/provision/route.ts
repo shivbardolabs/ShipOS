@@ -6,10 +6,9 @@ import prisma from '@/lib/prisma';
  * POST /api/customers/provision
  *
  * Atomically provisions a new customer account:
- * 1. Creates Customer record
- * 2. Creates CustomerAgreement
- * 3. Creates first Invoice
- * 4. Assigns PMB number
+ * 1. Creates Customer record (auto-generates PMB number)
+ * 2. Creates first Invoice
+ * 3. Records Form 1583-A upload metadata
  *
  * All within a transaction for consistency.
  */
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
     const {
       // Step 1: Plan
       planId,
-      // Step 2: Personal info
+      // Step 2: Client contact information
       firstName,
       lastName,
       email,
@@ -36,36 +35,24 @@ export async function POST(request: Request) {
       homeCity,
       homeState,
       homeZip,
-      // Step 3: ID verification
-      idType,
-      idExpiration,
-      // Step 4: Form 1583
-      form1583Acknowledged,
-      // Step 5: Agreement
-      signatureDataUrl,
-      // Step 6: PMB
-      pmbNumber,
-      platform,
+      // Step 3: Form 1583-A uploads (metadata only — files handled client-side)
+      form1583Uploads,
     } = body;
 
     // Validate required fields
-    if (!firstName || !lastName || !pmbNumber) {
+    if (!firstName || !lastName || !email) {
       return NextResponse.json(
-        { error: 'First name, last name, and PMB number are required' },
+        { error: 'First name, last name, and email are required' },
         { status: 400 }
       );
     }
 
-    // Check PMB uniqueness
-    const existingPmb = await prisma.customer.findUnique({
-      where: { pmbNumber },
-    });
-    if (existingPmb) {
-      return NextResponse.json(
-        { error: `PMB ${pmbNumber} is already assigned` },
-        { status: 409 }
-      );
-    }
+    // Determine Form 1583 status based on uploads
+    const hasForm1583Uploads =
+      Array.isArray(form1583Uploads) && form1583Uploads.length > 0;
+
+    // Auto-generate a unique PMB number
+    const pmbNumber = `PMB-${Date.now().toString(36).toUpperCase()}`;
 
     // Atomic transaction
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,18 +65,14 @@ export async function POST(request: Request) {
           email: email || null,
           phone: phone || null,
           pmbNumber,
-          platform: platform || 'physical',
+          platform: 'physical',
           status: 'active',
           homeAddress: homeAddress || null,
           homeCity: homeCity || null,
           homeState: homeState || null,
           homeZip: homeZip || null,
-          idType: idType || null,
-          idExpiration: idExpiration ? new Date(idExpiration) : null,
-          form1583Status: form1583Acknowledged ? 'submitted' : 'pending',
-          form1583Date: form1583Acknowledged ? new Date() : null,
-          agreementSigned: !!signatureDataUrl,
-          agreementSignedAt: signatureDataUrl ? new Date() : null,
+          form1583Status: hasForm1583Uploads ? 'submitted' : 'pending',
+          form1583Date: hasForm1583Uploads ? new Date() : null,
           renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
           renewalStatus: 'current',
           smsConsent: !!phone,
@@ -99,29 +82,8 @@ export async function POST(request: Request) {
         },
       });
 
-      // 2. Create CustomerAgreement if signed
-      let agreement = null;
-      if (signatureDataUrl) {
-        // Find default template
-        const template = await tx.mailboxAgreementTemplate.findFirst({
-          where: { isDefault: true },
-        });
-
-        if (template) {
-          agreement = await tx.customerAgreement.create({
-            data: {
-              customerId: customer.id,
-              templateId: template.id,
-              signedAt: new Date(),
-              signatureDataUrl,
-              status: 'signed',
-            },
-          });
-        }
-      }
-
-      // 3. Create initial Invoice
-      const invoiceNumber = `NEW-${pmbNumber}-${Date.now().toString(36).toUpperCase()}`;
+      // 2. Create initial Invoice
+      const invoiceNumber = `NEW-${customer.id.slice(0, 8)}-${Date.now().toString(36).toUpperCase()}`;
       let amount = 0;
 
       if (planId) {
@@ -140,34 +102,32 @@ export async function POST(request: Request) {
           status: 'draft',
           dueDate: new Date(),
           items: JSON.stringify([
-            { description: `Account Setup — ${pmbNumber}`, quantity: 1, price: amount },
+            { description: `Account Setup — ${firstName} ${lastName}`, quantity: 1, price: amount },
           ]),
         },
       });
 
-      // 4. Audit log
+      // 3. Audit log
       await tx.auditLog.create({
         data: {
           action: 'customer_provisioned',
           entityType: 'customer',
           entityId: customer.id,
           details: JSON.stringify({
-            pmbNumber,
             planId,
-            hasAgreement: !!agreement,
+            form1583Uploads: form1583Uploads || [],
             invoiceId: invoice.id,
           }),
           userId: user.id,
         },
       });
 
-      return { customer, agreement, invoice };
+      return { customer, invoice };
     });
 
     return NextResponse.json({
       success: true,
       customerId: result.customer.id,
-      pmbNumber: result.customer.pmbNumber,
       invoiceId: result.invoice.id,
     });
   } catch (err) {

@@ -359,7 +359,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
   {
     key: 'account_provisioning',
     name: 'Account Provisioning Wizard',
-    description: 'Multi-step customer onboarding: plan selection, ID verification, Form 1583, agreement signing, PMB assignment',
+    description: 'Multi-step customer onboarding: plan selection, client contact info, Form 1583-A upload (moved to Platform Console)',
     category: 'operations',
     defaultEnabled: false,
   },

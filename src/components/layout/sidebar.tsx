@@ -36,7 +36,7 @@ import {
   ScanLine,
   UserPlus,
   CalendarClock,
-  ClipboardList,
+
   BookOpen,
   Printer,
   Palette,
@@ -87,7 +87,6 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Customers', href: '/dashboard/customers', icon: Users, flagKey: 'customer-management' },
       { label: 'AI Onboard', href: '/dashboard/customers/ai-onboard', icon: UserPlus, flagKey: 'ai-customer-onboarding' },
-      { label: 'Provision', href: '/dashboard/customers/provision', icon: ClipboardList, flagKey: 'account_provisioning' },
       { label: 'Mail', href: '/dashboard/mail', icon: Mail, flagKey: 'mail-management' },
       { label: 'AI Mail Sort', href: '/dashboard/mail/ai-sort', icon: MailOpen, flagKey: 'ai-mail-sort' },
       { label: 'Shipping', href: '/dashboard/shipping', icon: Truck, flagKey: 'shipping' },
