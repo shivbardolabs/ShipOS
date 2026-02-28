@@ -697,17 +697,25 @@ model Subscription {
 }
 
 model PaymentRecord {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  amount      Float
-  currency    String   @default("usd")
-  status      String   @default("succeeded") // succeeded, failed, pending, refunded
-  method      String   @default("stripe") // stripe, manual, check, wire
-  description String?
+  id              String    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  amount          Float
+  currency        String    @default("usd")
+  status          String    @default("succeeded") // succeeded, failed, pending, refunded
+  method          String    @default("stripe") // stripe, manual, check, wire
+  description     String?
   stripePaymentId String?
-  invoiceUrl  String?
-  createdAt   DateTime @default(now())
+  stripeInvoiceId String?   // Stripe Invoice ID for reconciliation
+  invoiceUrl      String?
+  billingPeriod   String?   // "YYYY-MM" for monthly subscription billing (idempotency key)
+  periodStart     DateTime? // Start of the billing period
+  periodEnd       DateTime? // End of the billing period
+  createdAt       DateTime  @default(now())
+
+  @@unique([tenantId, billingPeriod], name: "unique_tenant_billing_period")
+  @@index([tenantId])
+  @@index([billingPeriod])
 }
 
 // ── Checkout Transactions ────────────────────────────────────────────────────
