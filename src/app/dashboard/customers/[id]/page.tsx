@@ -37,6 +37,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Copy,
+  MapPin,
+  Users,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
