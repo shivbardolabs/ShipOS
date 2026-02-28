@@ -318,7 +318,7 @@ function PackagesContent() {
   }, []);
 
   // Filters
-  const [statusTab, setStatusTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
   const [programFilter, setProgramFilter] = useState<string>('all');
   const [carrierFilter, setCarrierFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -336,7 +336,7 @@ function PackagesContent() {
   /* Apply overrides to produce the live package list */
   const packages = useMemo(
     () =>
-      rawPackages.map((pkg) =>
+      allPackages.map((pkg) =>
         statusOverrides[pkg.id]
           ? {
               ...pkg,
@@ -350,7 +350,7 @@ function PackagesContent() {
             }
           : pkg
       ),
-    [statusOverrides]
+    [allPackages, statusOverrides]
   );
 
   /* ---- Notify handler ---- */
