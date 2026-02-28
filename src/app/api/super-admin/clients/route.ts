@@ -59,8 +59,12 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clients = tenants.map((t: any) => {
-      // Store model doesn't have status, so all stores belonging to active tenant are "active"
+      const activeStores = t.stores.filter((s: any) => {
+        // Store model doesn't have status, so all stores belonging to active tenant are "active"
+        return true;
+      });
       const activeSub = t.subscriptions[0];
       const subscriptionFee = activeSub?.plan?.priceMonthly ?? 125;
       const monthlyRevenue = subscriptionFee * t.stores.length;

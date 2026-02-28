@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +11,13 @@ import { Tabs } from '@/components/ui/tabs';
 import { Modal } from '@/components/ui/modal';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { notifications, customers } from '@/lib/mock-data';
-import { formatDateTime } from '@/lib/utils';
+// notifications and customers now fetched from API
+import {
+  formatDateTime,
+  getCarrierTrackingUrl,
+  getNotificationTargetUrl,
+  getNotificationStatusLabel,
+} from '@/lib/utils';
 import type { Notification } from '@/lib/types';
 import {
   Bell,
@@ -63,6 +69,22 @@ export default function NotificationsPage() {
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<Notification | null>(null);
 
+  /* ── Fetch notifications + customers from API ───────────────── */
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/notifications?limit=100')
+      .then((r) => r.json())
+      .then((data) => setNotifications(data.notifications ?? []))
+      .catch((err) => console.error('Failed to fetch notifications:', err));
+    fetch('/api/customers?limit=200&status=active')
+      .then((r) => r.json())
+      .then((data) => setCustomers(data.customers ?? []))
+      .catch((err) => console.error('Failed to fetch customers:', err));
+  }, []);
+
   // Stats
   const stats = useMemo(() => {
     const total = notifications.length;
@@ -71,7 +93,7 @@ export default function NotificationsPage() {
     const pending = notifications.filter((n) => n.status === 'pending').length;
     const sent = notifications.filter((n) => n.status === 'sent').length;
     return { total, delivered, failed, pending, sent };
-  }, []);
+  }, [notifications]);
 
   // Filtered data
   const filtered = useMemo<NotifRow[]>(() => {
@@ -80,7 +102,7 @@ export default function NotificationsPage() {
       return notifications.filter((n) => n.status === 'failed' || n.status === 'bounced') as NotifRow[];
     }
     return notifications.filter((n) => n.status === activeTab) as NotifRow[];
-  }, [activeTab]);
+  }, [activeTab, notifications]);
 
   // Tabs
   const tabs = [

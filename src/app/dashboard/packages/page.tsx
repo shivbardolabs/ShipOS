@@ -9,6 +9,15 @@ import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/input';
 import { Tabs } from '@/components/ui/tabs';
 import { Modal } from '@/components/ui/modal';
+import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { InventorySummary } from '@/components/packages/inventory-summary';
+import { ConditionTagBadges } from '@/components/packages/condition-notes';
+import { ConditionNotes } from '@/components/packages/condition-notes';
+import { PackageLabelReprintModal } from '@/components/packages/label-reprint-modal';
+import { VerificationBadge } from '@/components/packages/package-verification';
+// Packages now fetched from API (mock-data removed)
+import { formatDate, formatCurrency, cn } from '@/lib/utils';
+import type { InventoryPackage, PackageProgramType, ConditionTag } from '@/lib/types';
 import {
   Package,
   Eye,
@@ -102,19 +111,173 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
-  return (
-    <div
-      className={cn(
-        'fixed top-4 right-4 z-[100] flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg animate-in fade-in-0 slide-in-from-top-2',
-        toast.type === 'success'
-          ? 'bg-emerald-900/90 text-emerald-100 border border-emerald-700/50'
-          : 'bg-blue-900/90 text-blue-100 border border-blue-700/50'
-      )}
-    >
-      <CheckCircle2 className="h-4 w-4 shrink-0" />
-      <span className="text-sm font-medium">{toast.message}</span>
-    </div>
-  );
+/* -------------------------------------------------------------------------- */
+/*  Mock data: Extend packages with inventory fields                          */
+/* -------------------------------------------------------------------------- */
+const CONDITION_TAGS: ConditionTag[] = [
+  'damaged',
+  'open_resealed',
+  'wet',
+  'leaking',
+  'oversized',
+  'perishable',
+  'fragile',
+  'must_pickup_asap',
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
+  // Extend existing packages with program type + notes
+  const extended: InventoryPackage[] = rawPackages.map((pkg, i) => ({
+    ...pkg,
+    programType: 'pmb' as PackageProgramType,
+    conditionTags: i % 7 === 0 ? [CONDITION_TAGS[i % CONDITION_TAGS.length]] : [],
+    customerNote: i % 5 === 0 ? 'Package slightly dented on one corner' : '',
+    internalNote: i % 9 === 0 ? 'Customer called about this — handle with care' : '',
+    conditionPhotos: [],
+    verificationStatus: 'unverified' as const,
+    putBackCount: 0,
+  }));
+
+  // Add carrier program packages (BAR-266)
+  const carrierPackages: InventoryPackage[] = [
+    {
+      id: 'pkg_ap_1',
+      trackingNumber: '1Z999AA100000001',
+      carrier: 'ups',
+      senderName: 'Amazon.com',
+      packageType: 'medium',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'ups_ap',
+      recipientName: 'Carlos Mendez',
+      holdDeadline: new Date(Date.now() + 5 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_ap_2',
+      trackingNumber: '1Z999AA100000002',
+      carrier: 'ups',
+      senderName: 'Best Buy',
+      packageType: 'large',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'ups_ap',
+      recipientName: 'Angela Foster',
+      holdDeadline: new Date(Date.now() - 1 * 86400000).toISOString(),
+      conditionTags: ['damaged'],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_hal_1',
+      trackingNumber: '748912345678901',
+      carrier: 'fedex',
+      senderName: 'Wayfair',
+      packageType: 'large',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'fedex_hal',
+      recipientName: 'David Chen',
+      holdDeadline: new Date(Date.now() + 6 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_hal_2',
+      trackingNumber: '748998765432109',
+      carrier: 'fedex',
+      senderName: 'Home Depot',
+      packageType: 'xlarge',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 0,
+      receivingFee: 0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'fedex_hal',
+      recipientName: 'Sarah Phillips',
+      holdDeadline: new Date(Date.now() - 5 * 86400000).toISOString(),
+      conditionTags: ['oversized'],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_kinek_1',
+      trackingNumber: 'TBA934857263001',
+      carrier: 'amazon',
+      senderName: 'Amazon.com',
+      packageType: 'small',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 5.0,
+      receivingFee: 3.0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'kinek',
+      recipientName: 'Tom Rogers',
+      kinekNumber: '4829371',
+      holdDeadline: new Date(Date.now() + 4 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+    {
+      id: 'pkg_kinek_2',
+      trackingNumber: '1Z888BB200000003',
+      carrier: 'ups',
+      senderName: 'Nike',
+      packageType: 'medium',
+      status: 'checked_in',
+      hazardous: false,
+      perishable: false,
+      storageFee: 8.0,
+      receivingFee: 3.0,
+      quotaFee: 0,
+      checkedInAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+      customerId: '',
+      programType: 'kinek',
+      recipientName: 'Lisa Wang',
+      kinekNumber: '5938271',
+      holdDeadline: new Date(Date.now() - 3 * 86400000).toISOString(),
+      conditionTags: [],
+      conditionPhotos: [],
+      verificationStatus: 'unverified',
+      putBackCount: 0,
+    },
+  ];
+
+  return [...extended, ...carrierPackages];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -132,7 +295,27 @@ export default function PackagesPage() {
 
 function PackagesContent() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState('all');
+  const [allPackages, setAllPackages] = useState<InventoryPackage[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [packagesLoading, setPackagesLoading] = useState(true);
+
+  /* ── Fetch packages from API ────────────────────────────────── */
+  useEffect(() => {
+    setPackagesLoading(true);
+    fetch('/api/packages?limit=100')
+      .then((r) => r.json())
+      .then((data) => {
+        const built = buildInventoryPackages(data.packages ?? []);
+        setAllPackages(built);
+      })
+      .catch((err) => console.error('Failed to fetch packages:', err))
+      .finally(() => setPackagesLoading(false));
+  }, []);
+
+  // Filters
+  const [statusTab, setStatusTab] = useState('all');
+  const [programFilter, setProgramFilter] = useState<string>('all');
+  const [carrierFilter, setCarrierFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,10 @@ import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
+import { detectCarrier } from '@/lib/carrier-detection';
+import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
+import { printLabel, renderPackageLabel } from '@/lib/labels';
+// customers now fetched from API
 import { cn } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------- */
@@ -168,21 +172,33 @@ export default function CheckInPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkedInPackageId, setCheckedInPackageId] = useState<string | null>(null);
 
-  // Activity log (keep for local UI feedback)
-  const { log: logActivity, lastActionByVerb } = useActivityLog();
-  const lastCheckIn = lastActionByVerb('package.check_in');
+  // Fetch customers from API with debounced search
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const customerDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  /* ======================================================================== */
-  /*  Step 1: Fetch customers from DB (replaces mock data)                    */
-  /* ======================================================================== */
-  const fetchCustomers = useCallback(async (q: string, mode: string) => {
-    setCustomersLoading(true);
-    try {
-      const params = new URLSearchParams({ q, mode, limit: '10' });
-      const res = await fetch(`/api/customers/search?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDbCustomers(data.customers || []);
+  useEffect(() => {
+    if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current);
+    customerDebounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams({ limit: '10', status: 'active' });
+      if (customerSearch.trim()) params.set('search', customerSearch.trim());
+      fetch(`/api/customers?${params}`)
+        .then((r) => r.json())
+        .then((data) => setCustomers(data.customers ?? []))
+        .catch((err) => console.error('Failed to fetch customers:', err));
+    }, customerSearch ? 300 : 0);
+    return () => { if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current); };
+  }, [customerSearch]);
+
+  const filteredCustomers = customers;
+
+  /* ── BAR-37: Enhanced carrier detection from tracking number ─────────── */
+  const handleTrackingNumberChange = useCallback(
+    (value: string) => {
+      setTrackingNumber(value);
+
+      if (value.trim().length < 6) {
+        setCarrierDetectionResult(null);
+        return;
       }
     } catch (err) {
       console.error('Customer search failed:', err);
