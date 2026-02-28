@@ -1,15 +1,15 @@
 'use client';
-/* eslint-disable */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
-
+import { customers, packages, mailPieces, shipments, notifications, auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards } from '@/lib/mock-data';
+import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
+import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
 import {
   ArrowLeft,
   Edit,
@@ -37,33 +37,18 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Copy,
-  MapPin,
-  Forward,
-  Users,
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  Receipt,
-  Eye,
-  EyeOff,
-  PackageCheck,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
-import { useActivityLog } from '@/components/activity-log-provider';
-import { LastUpdatedBy, ActivityTimeline } from '@/components/ui/performed-by';
-import type { Package as PackageType, MailPiece, Shipment, Notification, AuditLogEntry } from '@/lib/types';
-import { cn, formatDate, formatDateTime, formatCurrency } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
-  physical: { label: 'Physical PMB', classes: 'bg-amber-100 text-amber-600 border-amber-500/30' },
+  physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
   anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
-  other: { label: 'Other', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' } };
+  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' } };
 
 function getDaysUntil(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -84,7 +69,23 @@ function expirationBadge(days: number | null) {
 /*  Column definitions                                                        */
 /* -------------------------------------------------------------------------- */
 
-/* packageCols moved inside component for router + state access */
+const packageCols: Column<PackageType & Record<string, unknown>>[] = [
+  {
+    key: 'status',
+    label: 'Status',
+    render: (row) => <Badge status={row.status} className="text-xs">{row.status.replace('_', ' ')}</Badge> },
+  { key: 'trackingNumber', label: 'Tracking', render: (row) => <span className="font-mono text-xs">{row.trackingNumber || '—'}</span> },
+  { key: 'carrier', label: 'Carrier', sortable: true, render: (row) => <span className="uppercase text-xs font-medium">{row.carrier}</span> },
+  { key: 'packageType', label: 'Type', render: (row) => <span className="capitalize text-xs">{row.packageType}</span> },
+  { key: 'checkedInAt', label: 'Checked In', sortable: true, render: (row) => <span className="text-xs text-surface-400">{formatDate(row.checkedInAt)}</span> },
+  {
+    key: 'actions',
+    label: '',
+    align: 'right',
+    render: () => (
+      <Button variant="ghost" size="sm">View</Button>
+    ) },
+];
 
 const mailCols: Column<MailPiece & Record<string, unknown>>[] = [
   {
@@ -117,7 +118,7 @@ const shipmentCols: Column<Shipment & Record<string, unknown>>[] = [
 ];
 
 const notifCols: Column<Notification & Record<string, unknown>>[] = [
-  { key: 'type', label: 'Type', render: (row) => <span className="capitalize text-xs font-medium">{row.type.replace(/_/g, ' ')}</span> },
+  { key: 'type', label: 'Type', render: (row) => <span className="capitalize text-xs font-medium">{row.type.replace(/_/g, ' ').replace(/\bid\b/gi, 'ID')}</span> },
   {
     key: 'channel',
     label: 'Channel',
@@ -146,123 +147,29 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('packages');
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editSaved, setEditSaved] = useState(false);
-  const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
-  const [form1583Override, setForm1583Override] = useState<string | null>(null);
 
-  /* ── Fetch customer + relations from API ───────────────────── */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [customerData, setCustomerData] = useState<any>(null);
-  const [customerLoading, setCustomerLoading] = useState(true);
-  const [loyaltyAccounts, setLoyaltyAccounts] = useState<any[]>([]);
-  const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
-  const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!params.id) return;
-    setCustomerLoading(true);
-    fetch(`/api/customers/${params.id}`)
-      .then((r) => { if (!r.ok) throw new Error('Not found'); return r.json(); })
-      .then((data) => setCustomerData(data))
-      .catch((err) => console.error('Failed to fetch customer:', err))
-      .finally(() => setCustomerLoading(false));
-  }, [params.id]);
-
-  // Fetch loyalty data
-  useEffect(() => {
-    fetch('/api/loyalty')
-      .then((r) => r.json())
-      .then((d) => {
-        setLoyaltyAccounts(d.accounts || []);
-        setLoyaltyTiers(d.tiers || []);
-        setLoyaltyRewards(d.rewards || []);
-      })
-      .catch(() => {});
-  }, []);
-
-  const customer = customerData;
+  const customer = customers.find((c) => c.id === params.id);
 
   const customerPackages = useMemo(
-    () => (customer?.packages ?? []) as (PackageType & Record<string, unknown>)[],
-    [customer?.packages]
+    () => packages.filter((p) => p.customerId === customer?.id) as (PackageType & Record<string, unknown>)[],
+    [customer?.id]
   );
-  const inCustodyCount = useMemo(
-    () => customerPackages.filter((p) => p.status !== 'released' && p.status !== 'returned').length,
-    [customerPackages]
-  );
-
-  const packageCols: Column<PackageType & Record<string, unknown>>[] = useMemo(() => [
-    {
-      key: 'status',
-      label: 'Status',
-      render: (row: PackageType & Record<string, unknown>) => <Badge status={row.status} className="text-xs">{row.status.replace('_', ' ')}</Badge> },
-    { key: 'trackingNumber', label: 'Tracking', render: (row: PackageType & Record<string, unknown>) => <span className="font-mono text-xs">{row.trackingNumber || '\u2014'}</span> },
-    { key: 'carrier', label: 'Carrier', sortable: true, render: (row: PackageType & Record<string, unknown>) => <span className="uppercase text-xs font-medium">{row.carrier}</span> },
-    { key: 'packageType', label: 'Type', render: (row: PackageType & Record<string, unknown>) => <span className="capitalize text-xs">{row.packageType}</span> },
-    { key: 'checkedInAt', label: 'Checked In', sortable: true, render: (row: PackageType & Record<string, unknown>) => <span className="text-xs text-surface-400">{formatDate(row.checkedInAt)}</span> },
-    {
-      key: 'actions',
-      label: '',
-      align: 'right' as const,
-      render: (row: PackageType & Record<string, unknown>) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            setExpandedPackageId(expandedPackageId === row.id ? null : row.id);
-          }}
-          leftIcon={expandedPackageId === row.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        >
-          {expandedPackageId === row.id ? 'Close' : 'View'}
-        </Button>
-      ) },
-  ], [expandedPackageId]);
-
   const customerMail = useMemo(
-    () => (customer?.mailPieces ?? []) as (MailPiece & Record<string, unknown>)[],
-    [customer?.mailPieces]
+    () => mailPieces.filter((m) => m.customerId === customer?.id) as (MailPiece & Record<string, unknown>)[],
+    [customer?.id]
   );
   const customerShipments = useMemo(
-    () => (customer?.shipments ?? []) as (Shipment & Record<string, unknown>)[],
-    [customer?.shipments]
+    () => shipments.filter((s) => s.customerId === customer?.id) as (Shipment & Record<string, unknown>)[],
+    [customer?.id]
   );
   const customerNotifications = useMemo(
-    () => (customer?.notifications ?? []) as (Notification & Record<string, unknown>)[],
-    [customer?.notifications]
+    () => notifications.filter((n) => n.customerId === customer?.id) as (Notification & Record<string, unknown>)[],
+    [customer?.id]
   );
-  // Use activity log for customer activity
-  const { entries: allActivity, lastActionFor } = useActivityLog();
-  const customerActivityLog = useMemo(
-    () => allActivity.filter((e) => e.entityType === 'customer' && e.entityId === customer?.id).slice(0, 10),
-    [allActivity, customer?.id]
-  );
-  const lastCustomerUpdate = lastActionFor('customer', customer?.id ?? '');
   const customerActivity = useMemo(
-    () => customerActivityLog as unknown as (AuditLogEntry & Record<string, unknown>)[],
-    [customerActivityLog]
-  );
-
-  // Fee tracking data — placeholder until CustomerFee model is added
-  const feeSummary = useMemo(
-    () => ({ totalFees: 0, unpaidFees: 0, paidFees: 0, waivedFees: 0, fees: [] as any[], feeCount: 0, totalOwed: 0, storageFees: 0, overageFees: 0, receivingFees: 0, forwardingFees: 0, otherFees: 0, paidAmount: 0, waivedAmount: 0 }),
+    () => auditLog.slice(0, 10) as (AuditLogEntry & Record<string, unknown>)[],
     []
   );
-
-  if (customerLoading) {
-    return (
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => router.push('/dashboard/customers')} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-          Back to Customers
-        </Button>
-        <div className="glass-card p-12 text-center">
-          <div className="h-6 w-48 mx-auto rounded bg-surface-800 animate-pulse mb-3" />
-          <div className="h-4 w-64 mx-auto rounded bg-surface-800 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
 
   if (!customer) {
     return (
@@ -291,21 +198,13 @@ export default function CustomerDetailPage() {
     idDays !== null && idDays <= 30 ? 'bg-red-500' :
     idDays !== null && idDays <= 90 ? 'bg-yellow-500' : 'bg-emerald-500';
 
-  // Form 1583 approval logic — cannot approve unless both ID forms are satisfied
-  const effective1583Status = form1583Override ?? customer.form1583Status;
-  const hasGovernmentId = !!customer.idType;
-  const hasProofOfAddress = customer.proofOfAddressStatus === 'submitted' || customer.proofOfAddressStatus === 'approved';
-  const can1583Approve = hasGovernmentId && hasProofOfAddress;
-  const show1583ApproveBtn = effective1583Status === 'submitted' || effective1583Status === 'pending';
-
   const tabs = [
-    { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: inCustodyCount },
+    { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: customerPackages.length },
     { id: 'mail', label: 'Mail', icon: <Mail className="h-3.5 w-3.5" />, count: customerMail.length },
     { id: 'shipments', label: 'Shipments', icon: <Truck className="h-3.5 w-3.5" />, count: customerShipments.length },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
     { id: 'activity', label: 'Activity', icon: <Clock className="h-3.5 w-3.5" /> },
     { id: 'loyalty', label: 'Loyalty', icon: <Award className="h-3.5 w-3.5" /> },
-    { id: 'fees', label: 'Fees', icon: <DollarSign className="h-3.5 w-3.5" />, count: feeSummary.feeCount },
   ];
 
   // Loyalty data for this customer
@@ -317,54 +216,8 @@ export default function CustomerDetailPage() {
     ? Math.min(100, ((loyaltyAccount.lifetimePoints - loyaltyAccount.currentTier!.minPoints) / (nextTier.minPoints - loyaltyAccount.currentTier!.minPoints)) * 100)
     : loyaltyAccount ? 100 : 0;
 
-  // BAR-18: ID expiration warning banner
-  const idExpirationWarning = (() => {
-    const warnings: { idType: string; days: number }[] = [];
-    if (idDays !== null && idDays <= 90) {
-      warnings.push({ idType: customer.idType === 'drivers_license' ? "Driver's License" : 'Primary ID', days: idDays });
-    }
-    if (passportDays !== null && passportDays <= 90) {
-      warnings.push({ idType: 'Passport', days: passportDays });
-    }
-    return warnings;
-  })();
-
   return (
     <div className="space-y-6">
-      {/* BAR-18: ID Expiration Alert Banner */}
-      {idExpirationWarning.length > 0 && (
-        <div className={cn(
-          'rounded-xl border p-4 flex items-start gap-3',
-          idExpirationWarning.some((w) => w.days <= 0)
-            ? 'border-red-500/40 bg-red-500/10'
-            : idExpirationWarning.some((w) => w.days <= 30)
-              ? 'border-red-500/30 bg-red-500/5'
-              : 'border-yellow-500/30 bg-yellow-500/5',
-        )}>
-          <AlertTriangle className={cn(
-            'h-5 w-5 mt-0.5 flex-shrink-0',
-            idExpirationWarning.some((w) => w.days <= 0) ? 'text-red-400' : 'text-yellow-400',
-          )} />
-          <div>
-            <p className={cn(
-              'text-sm font-medium',
-              idExpirationWarning.some((w) => w.days <= 0) ? 'text-red-300' : 'text-yellow-300',
-            )}>
-              {idExpirationWarning.some((w) => w.days <= 0) ? 'Expired ID on File' : 'ID Expiring Soon'}
-            </p>
-            <div className="mt-1 space-y-0.5">
-              {idExpirationWarning.map((w) => (
-                <p key={w.idType} className="text-xs text-surface-400">
-                  {w.idType}: {w.days <= 0
-                    ? `expired ${Math.abs(w.days)} day${Math.abs(w.days) !== 1 ? 's' : ''} ago — CMRA compliance at risk`
-                    : `expires in ${w.days} day${w.days !== 1 ? 's' : ''} — customer should bring updated ID`}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Back */}
       <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/customers')} leftIcon={<ArrowLeft className="h-4 w-4" />}>
         Back to Customers
@@ -406,12 +259,11 @@ export default function CustomerDetailPage() {
               <p className="text-sm text-surface-400 mt-1">{customer.businessName}</p>
             )}
             <p className="text-sm text-surface-500 mt-1">{customer.pmbNumber}</p>
-            {lastCustomerUpdate && <LastUpdatedBy entry={lastCustomerUpdate} className="mt-2" />}
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />} onClick={() => setShowEditModal(true)}>
+            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
               Edit
             </Button>
             <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />}>
@@ -439,57 +291,6 @@ export default function CustomerDetailPage() {
               searchable={false}
               pageSize={8}
               emptyMessage="No packages found for this customer"
-              expandedRowKey={expandedPackageId}
-              renderExpandedRow={(row) => {
-                const pkg = row as PackageType & Record<string, unknown>;
-                const isInCustody = pkg.status !== 'released' && pkg.status !== 'returned';
-                const daysHeld = Math.max(0, Math.floor((Date.now() - new Date(pkg.checkedInAt).getTime()) / 86400000));
-                return (
-                  <div className="py-4 space-y-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Sender</p>
-                        <p className="text-xs text-surface-200">{pkg.senderName || '\u2014'}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Days Held</p>
-                        <p className="text-xs text-surface-200">{daysHeld} day{daysHeld !== 1 ? 's' : ''}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Condition</p>
-                        <p className="text-xs text-surface-200 capitalize">{pkg.condition || 'Good'}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Storage Fee</p>
-                        <p className="text-xs text-surface-200">{formatCurrency(pkg.storageFee)}</p>
-                      </div>
-                      {pkg.notes && (
-                        <div className="col-span-2 sm:col-span-4">
-                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Notes</p>
-                          <p className="text-xs text-surface-200">{pkg.notes}</p>
-                        </div>
-                      )}
-                      {pkg.releasedAt && (
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-0.5">Released</p>
-                          <p className="text-xs text-surface-200">{formatDate(pkg.releasedAt)}</p>
-                        </div>
-                      )}
-                    </div>
-                    {isInCustody && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => router.push('/dashboard/packages/check-out')}
-                          leftIcon={<PackageCheck className="h-3.5 w-3.5" />}
-                        >
-                          Check Out
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              }}
             />
           </TabPanel>
 
@@ -529,37 +330,33 @@ export default function CustomerDetailPage() {
             />
           </TabPanel>
 
-          {/* Activity tab — powered by Activity Log */}
+          {/* Activity tab */}
           <TabPanel active={activeTab === 'activity'}>
-            {customerActivityLog.length > 0 ? (
-              <ActivityTimeline entries={customerActivityLog} maxItems={10} />
-            ) : (
-              <div className="space-y-3">
-                {customerActivity.map((entry, i) => (
-                  <div
-                    key={entry.id}
-                    className={cn(
-                      'flex items-start gap-3 py-3',
-                      i < customerActivity.length - 1 && 'border-b border-surface-800'
-                    )}
-                  >
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
-                      {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
-                       entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
-                       entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
-                       entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
-                       <FileText className="h-3.5 w-3.5 text-surface-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-surface-200">{entry.details}</p>
-                      <p className="text-xs text-surface-500 mt-0.5">
-                        {entry.user?.name} · {formatDateTime(entry.createdAt)}
-                      </p>
-                    </div>
+            <div className="space-y-3">
+              {customerActivity.map((entry, i) => (
+                <div
+                  key={entry.id}
+                  className={cn(
+                    'flex items-start gap-3 py-3',
+                    i < customerActivity.length - 1 && 'border-b border-surface-800'
+                  )}
+                >
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
+                    {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
+                     entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
+                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
+                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
+                     <FileText className="h-3.5 w-3.5 text-surface-400" />}
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-surface-200">{entry.details}</p>
+                    <p className="text-xs text-surface-500 mt-0.5">
+                      {entry.user?.name} · {formatDateTime(entry.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </TabPanel>
 
           {/* Loyalty tab */}
@@ -635,7 +432,7 @@ export default function CustomerDetailPage() {
                       {loyaltyAccount.currentTier.name} Tier Benefits
                     </h4>
                     <ul className="space-y-2">
-                      {(Array.isArray(loyaltyAccount.currentTier.benefits) ? loyaltyAccount.currentTier.benefits : (() => { try { return JSON.parse(loyaltyAccount.currentTier.benefits || '[]'); } catch { return []; } })()).map((b: string, i: number) => (
+                      {loyaltyAccount.currentTier.benefits.map((b, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-surface-300">
                           <Star className="h-3.5 w-3.5 flex-shrink-0" style={{ color: loyaltyAccount.currentTier!.color }} />
                           {b}
@@ -682,7 +479,7 @@ export default function CustomerDetailPage() {
                 <div>
                   <h4 className="text-sm font-semibold text-surface-200 mb-3">Recent Transactions</h4>
                   <div className="space-y-2">
-                    {(loyaltyAccount.transactions || []).slice(0, 10).map((txn: { id: string; points: number; type: string; description?: string; createdAt: string }) => {
+                    {(loyaltyAccount.transactions || []).slice(0, 10).map((txn) => {
                       const isEarn = txn.points > 0;
                       return (
                         <div key={txn.id} className="flex items-center justify-between rounded-lg bg-surface-900/50 px-3 py-2.5">
@@ -717,334 +514,6 @@ export default function CustomerDetailPage() {
                 </button>
               </div>
             )}
-          </TabPanel>
-
-          {/* Fees tab */}
-          <TabPanel active={activeTab === 'fees'}>
-            <div className="space-y-6">
-              {/* Monthly Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className="h-3.5 w-3.5 text-accent-amber" />
-                    <p className="text-xs text-surface-500">Total Owed</p>
-                  </div>
-                  <p className="text-2xl font-bold text-surface-100">{formatCurrency(feeSummary.totalOwed)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Feb 2026 • {feeSummary.feeCount} charges</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Package className="h-3.5 w-3.5 text-primary-400" />
-                    <p className="text-xs text-surface-500">Storage</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.storageFees)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Accrued this month</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="h-3.5 w-3.5 text-accent-rose" />
-                    <p className="text-xs text-surface-500">Overage</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.overageFees)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Plan limit exceeded</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Receipt className="h-3.5 w-3.5 text-accent-emerald" />
-                    <p className="text-xs text-surface-500">Other Fees</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">
-                    {formatCurrency(feeSummary.receivingFees + feeSummary.forwardingFees + feeSummary.otherFees)}
-                  </p>
-                  <p className="text-[10px] text-surface-500 mt-1">Receiving, forwarding, misc</p>
-                </div>
-              </div>
-
-              {/* Paid / Waived banner */}
-              {(feeSummary.paidAmount > 0 || feeSummary.waivedAmount > 0) && (
-                <div className="flex gap-3 text-xs">
-                  {feeSummary.paidAmount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-emerald/10 px-3 py-1 text-accent-emerald font-medium">
-                      <CheckCircle className="h-3 w-3" />
-                      {formatCurrency(feeSummary.paidAmount)} paid
-                    </span>
-                  )}
-                  {feeSummary.waivedAmount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-700 px-3 py-1 text-surface-400 font-medium">
-                      <XCircle className="h-3 w-3" />
-                      {formatCurrency(feeSummary.waivedAmount)} waived
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Fee Line Items */}
-              {feeSummary.fees.length > 0 ? (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-surface-200">Fee Details</h4>
-                  <div className="rounded-lg border border-surface-800 overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-surface-800 bg-surface-900/50">
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Date</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Category</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Description</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Linked Item</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-medium text-surface-500">Amount</th>
-                          <th className="text-center px-4 py-2.5 text-xs font-medium text-surface-500">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {feeSummary.fees.map((fee) => (
-                          <tr key={fee.id} className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors">
-                            <td className="px-4 py-2.5 text-xs text-surface-400 whitespace-nowrap">
-                              {formatDate(fee.createdAt)}
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <span className={cn(
-                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                                fee.category === 'storage' && 'bg-primary-500/15 text-primary-400',
-                                fee.category === 'overage' && 'bg-accent-rose/15 text-accent-rose',
-                                fee.category === 'receiving' && 'bg-blue-500/15 text-blue-400',
-                                fee.category === 'forwarding' && 'bg-accent-amber/15 text-accent-amber',
-                                fee.category === 'late_pickup' && 'bg-orange-500/15 text-orange-400',
-                                fee.category === 'other' && 'bg-surface-600/30 text-surface-300',
-                              )}>
-                                {fee.category.replace('_', ' ')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <p className="text-xs text-surface-200">{fee.description}</p>
-                              {fee.accrualType === 'daily' && fee.dailyRate && fee.daysAccrued && (
-                                <p className="text-[10px] text-surface-500 mt-0.5">
-                                  {formatCurrency(fee.dailyRate)}/day × {fee.daysAccrued} days
-                                </p>
-                              )}
-                            </td>
-                            <td className="px-4 py-2.5">
-                              {fee.linkedEntityLabel ? (
-                                <span className="text-xs font-mono text-primary-400">{fee.linkedEntityLabel}</span>
-                              ) : (
-                                <span className="text-xs text-surface-600">—</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2.5 text-right">
-                              <span className={cn(
-                                'text-sm font-semibold',
-                                fee.status === 'paid' ? 'text-accent-emerald' :
-                                fee.status === 'waived' ? 'text-surface-500 line-through' :
-                                fee.status === 'accruing' ? 'text-accent-amber' :
-                                'text-surface-100'
-                              )}>
-                                {formatCurrency(fee.amount)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5 text-center">
-                              <Badge
-                                status={
-                                  fee.status === 'paid' ? 'delivered' :
-                                  fee.status === 'accruing' ? 'pending' :
-                                  fee.status === 'waived' ? 'returned' :
-                                  fee.status === 'invoiced' ? 'sent' :
-                                  'ready'
-                                }
-                                className="text-[10px]"
-                              >
-                                {fee.status}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <DollarSign className="h-10 w-10 text-surface-600 mx-auto mb-3" />
-                  <p className="text-sm text-surface-400">No fees accrued this month</p>
-                  <p className="text-xs text-surface-500 mt-1">Storage and overage charges will appear here as they accrue</p>
-                </div>
-              )}
-
-              {/* Month-end Snapshot Notice */}
-              {feeSummary.totalOwed > 0 && (
-                <div className="flex items-start gap-3 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-4">
-                  <AlertTriangle className="h-4 w-4 text-accent-amber flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-surface-200">End-of-Month Summary</p>
-                    <p className="text-xs text-surface-400 mt-0.5">
-                      At the end of the billing period, all accruing fees will be finalized and included in the customer&apos;s invoice.
-                      Current balance owed: <span className="font-semibold text-accent-amber">{formatCurrency(feeSummary.totalOwed)}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabPanel>
-
-          {/* Fees tab */}
-          <TabPanel active={activeTab === 'fees'}>
-            <div className="space-y-6">
-              {/* Monthly Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className="h-3.5 w-3.5 text-accent-amber" />
-                    <p className="text-xs text-surface-500">Total Owed</p>
-                  </div>
-                  <p className="text-2xl font-bold text-surface-100">{formatCurrency(feeSummary.totalOwed)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Feb 2026 &bull; {feeSummary.feeCount} charges</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Package className="h-3.5 w-3.5 text-primary-400" />
-                    <p className="text-xs text-surface-500">Storage</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.storageFees)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Accrued this month</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="h-3.5 w-3.5 text-accent-rose" />
-                    <p className="text-xs text-surface-500">Overage</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">{formatCurrency(feeSummary.overageFees)}</p>
-                  <p className="text-[10px] text-surface-500 mt-1">Plan limit exceeded</p>
-                </div>
-                <div className="rounded-xl border border-surface-700 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Receipt className="h-3.5 w-3.5 text-accent-emerald" />
-                    <p className="text-xs text-surface-500">Other Fees</p>
-                  </div>
-                  <p className="text-xl font-bold text-surface-100">
-                    {formatCurrency(feeSummary.receivingFees + feeSummary.forwardingFees + feeSummary.otherFees)}
-                  </p>
-                  <p className="text-[10px] text-surface-500 mt-1">Receiving, forwarding, misc</p>
-                </div>
-              </div>
-
-              {/* Paid / Waived banner */}
-              {(feeSummary.paidAmount > 0 || feeSummary.waivedAmount > 0) && (
-                <div className="flex gap-3 text-xs">
-                  {feeSummary.paidAmount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-emerald/10 px-3 py-1 text-accent-emerald font-medium">
-                      <CheckCircle className="h-3 w-3" />
-                      {formatCurrency(feeSummary.paidAmount)} paid
-                    </span>
-                  )}
-                  {feeSummary.waivedAmount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-700 px-3 py-1 text-surface-400 font-medium">
-                      <XCircle className="h-3 w-3" />
-                      {formatCurrency(feeSummary.waivedAmount)} waived
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Fee Line Items */}
-              {feeSummary.fees.length > 0 ? (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-surface-200">Fee Details</h4>
-                  <div className="rounded-lg border border-surface-800 overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-surface-800 bg-surface-900/50">
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Date</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Category</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Description</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-500">Linked Item</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-medium text-surface-500">Amount</th>
-                          <th className="text-center px-4 py-2.5 text-xs font-medium text-surface-500">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {feeSummary.fees.map((fee) => (
-                          <tr key={fee.id} className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors">
-                            <td className="px-4 py-2.5 text-xs text-surface-400 whitespace-nowrap">
-                              {formatDate(fee.createdAt)}
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <span className={cn(
-                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                                fee.category === 'storage' && 'bg-primary-500/15 text-primary-400',
-                                fee.category === 'overage' && 'bg-accent-rose/15 text-accent-rose',
-                                fee.category === 'receiving' && 'bg-blue-500/15 text-blue-400',
-                                fee.category === 'forwarding' && 'bg-accent-amber/15 text-accent-amber',
-                                fee.category === 'late_pickup' && 'bg-orange-500/15 text-orange-400',
-                                fee.category === 'other' && 'bg-surface-600/30 text-surface-300',
-                              )}>
-                                {fee.category.replace('_', ' ')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <p className="text-xs text-surface-200">{fee.description}</p>
-                              {fee.accrualType === 'daily' && fee.dailyRate && fee.daysAccrued && (
-                                <p className="text-[10px] text-surface-500 mt-0.5">
-                                  {formatCurrency(fee.dailyRate)}/day &times; {fee.daysAccrued} days
-                                </p>
-                              )}
-                            </td>
-                            <td className="px-4 py-2.5">
-                              {fee.linkedEntityLabel ? (
-                                <span className="text-xs font-mono text-primary-400">{fee.linkedEntityLabel}</span>
-                              ) : (
-                                <span className="text-xs text-surface-600">&mdash;</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2.5 text-right">
-                              <span className={cn(
-                                'text-sm font-semibold',
-                                fee.status === 'paid' ? 'text-accent-emerald' :
-                                fee.status === 'waived' ? 'text-surface-500 line-through' :
-                                fee.status === 'accruing' ? 'text-accent-amber' :
-                                'text-surface-100'
-                              )}>
-                                {formatCurrency(fee.amount)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5 text-center">
-                              <Badge
-                                status={
-                                  fee.status === 'paid' ? 'delivered' :
-                                  fee.status === 'accruing' ? 'pending' :
-                                  fee.status === 'waived' ? 'returned' :
-                                  fee.status === 'invoiced' ? 'sent' :
-                                  'ready'
-                                }
-                                className="text-[10px]"
-                              >
-                                {fee.status}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <DollarSign className="h-10 w-10 text-surface-600 mx-auto mb-3" />
-                  <p className="text-sm text-surface-400">No fees accrued this month</p>
-                  <p className="text-xs text-surface-500 mt-1">Storage and overage charges will appear here as they accrue</p>
-                </div>
-              )}
-
-              {/* Month-end Snapshot Notice */}
-              {feeSummary.totalOwed > 0 && (
-                <div className="flex items-start gap-3 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-4">
-                  <AlertTriangle className="h-4 w-4 text-accent-amber flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-surface-200">End-of-Month Summary</p>
-                    <p className="text-xs text-surface-400 mt-0.5">
-                      At the end of the billing period, all accruing fees will be finalized and included in the customer&apos;s invoice.
-                      Current balance owed: <span className="font-semibold text-accent-amber">{formatCurrency(feeSummary.totalOwed)}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
           </TabPanel>
         </div>
 
@@ -1090,75 +559,13 @@ export default function CustomerDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Address & Forwarding */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Address Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="text-surface-500 flex-shrink-0 mt-0.5"><MapPin className="h-3.5 w-3.5" /></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-surface-500">Street Address</p>
-                  <p className="text-sm text-surface-200">{customer.address || '—'}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="text-surface-500 flex-shrink-0 mt-0.5"><Forward className="h-3.5 w-3.5" /></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-surface-500">Preferred Forwarding Address</p>
-                  <p className="text-sm text-surface-200">{customer.forwardingAddress || '—'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Authorized Pickup Persons */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-surface-400" />
-                <CardTitle>Authorized Pickup</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {customer.authorizedPickupPersons && customer.authorizedPickupPersons.length > 0 ? (
-                <div className="space-y-3">
-                  {customer.authorizedPickupPersons.map((person: { id: string; name: string; relationship?: string; phone?: string }) => (
-                    <div key={person.id} className="flex items-center gap-3 rounded-lg bg-surface-800/50 px-3 py-2.5">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600/10 text-primary-500 text-xs font-semibold">
-                        {person.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-surface-200">{person.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {person.relationship && (
-                            <span className="text-[10px] text-surface-500">{person.relationship}</span>
-                          )}
-                          {person.phone && (
-                            <>
-                              {person.relationship && <span className="text-surface-700">·</span>}
-                              <span className="text-[10px] text-surface-500">{person.phone}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-surface-500 italic">No authorized persons on file.</p>
-              )}
-            </CardContent>
-          </Card>
-
           {/* CMRA Compliance */}
           <Card>
             <CardHeader>
               <CardTitle>CMRA Compliance</CardTitle>
-              {effective1583Status && (
-                <Badge status={effective1583Status as 'pending' | 'submitted' | 'approved' | 'expired'} className="text-xs">
-                  1583 {effective1583Status}
+              {customer.form1583Status && (
+                <Badge status={customer.form1583Status} className="text-xs">
+                  1583 {customer.form1583Status}
                 </Badge>
               )}
             </CardHeader>
@@ -1170,8 +577,6 @@ export default function CustomerDetailPage() {
                     <span className="text-xs text-surface-400">
                       {customer.idType === 'drivers_license' ? "Driver's License" :
                        customer.idType === 'passport' ? 'Passport' :
-                       customer.idType === 'military_id' ? 'Military ID' :
-                       customer.idType === 'other' ? 'Other ID' :
                        "Driver's License + Passport"}
                     </span>
                     {idBadge && (
@@ -1213,80 +618,6 @@ export default function CustomerDetailPage() {
                 <div className="pt-3 border-t border-surface-800">
                   <p className="text-xs text-surface-400">Form 1583 Date</p>
                   <p className="text-sm text-surface-200 mt-0.5">{formatDate(customer.form1583Date)}</p>
-                </div>
-              )}
-
-              {/* Proof of Address */}
-              <div className="pt-3 border-t border-surface-800">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-surface-400">Proof of Address</span>
-                  <Badge variant={customer.proofOfAddressStatus === 'approved' ? 'success' : customer.proofOfAddressStatus === 'submitted' ? 'info' : customer.proofOfAddressStatus === 'expired' ? 'danger' : 'warning'} className="text-[10px]">
-                    {customer.proofOfAddressStatus ? customer.proofOfAddressStatus.charAt(0).toUpperCase() + customer.proofOfAddressStatus.slice(1) : 'Not Submitted'}
-                  </Badge>
-                </div>
-                <p className="text-xs text-surface-500">Required for CMRA compliance</p>
-              </div>
-
-              {/* Approve / Requirements section */}
-              {show1583ApproveBtn && (
-                <div className="pt-3 border-t border-surface-800">
-                  {can1583Approve ? (
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
-                      onClick={() => setForm1583Override('approved')}
-                    >
-                      Approve Form 1583
-                    </Button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-yellow-500 flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-                        Cannot approve — missing requirements
-                      </p>
-                      <ul className="space-y-1 ml-5">
-                        <li className="flex items-center gap-2 text-xs">
-                          {hasGovernmentId ? (
-                            <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
-                          )}
-                          <span className={hasGovernmentId ? 'text-surface-400 line-through' : 'text-surface-200'}>
-                            Government-issued ID on file
-                          </span>
-                        </li>
-                        <li className="flex items-center gap-2 text-xs">
-                          {hasProofOfAddress ? (
-                            <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
-                          )}
-                          <span className={hasProofOfAddress ? 'text-surface-400 line-through' : 'text-surface-200'}>
-                            Proof of address submitted
-                          </span>
-                        </li>
-                      </ul>
-                      <Button
-                        size="sm"
-                        className="w-full mt-1"
-                        leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
-                        disabled
-                      >
-                        Approve Form 1583
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Just-approved confirmation */}
-              {form1583Override === 'approved' && customer.form1583Status !== 'approved' && (
-                <div className="pt-3 border-t border-surface-800">
-                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-400">
-                    <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                    <span className="text-xs font-medium">Form 1583 approved successfully</span>
-                  </div>
                 </div>
               )}
             </CardContent>
@@ -1353,18 +684,6 @@ export default function CustomerDetailPage() {
           </Card>
         </div>
       </div>
-
-      {/* Edit Customer Modal */}
-      <EditCustomerModal
-        customer={customer}
-        open={showEditModal}
-        onClose={() => { setShowEditModal(false); setEditSaved(false); }}
-        saved={editSaved}
-        onSave={() => {
-          setEditSaved(true);
-          setTimeout(() => { setShowEditModal(false); setEditSaved(false); }, 1200);
-        }}
-      />
     </div>
   );
 }
@@ -1384,4 +703,3 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
     </div>
   );
 }
-
