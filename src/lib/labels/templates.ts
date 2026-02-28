@@ -32,6 +32,8 @@ export interface PackageLabelData {
   condition?: string;
   /** BAR-266: Perishable flag — shown alongside condition when true */
   perishable?: boolean;
+  /** BAR-266: True for carrier programs (UPS AP, FedEx HAL, Amazon) — changes label layout */
+  isCarrierProgram?: boolean;
 }
 
 export interface RTSLabelData {
@@ -98,6 +100,7 @@ export function renderPackageLabel(data: PackageLabelData): string {
   body { font-family: Arial, Helvetica, sans-serif; width: 4in; height: 6in; padding: 0.15in; display: flex; flex-direction: column; }
   .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 0.08in; margin-bottom: 0.1in; }
   .pmb { font-size: 72pt; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+  .program-name { font-size: 36pt; font-weight: 900; line-height: 1.1; letter-spacing: -1px; text-transform: uppercase; }
   .customer { font-size: 16pt; font-weight: 600; margin-top: 0.05in; }
   .type-badge { display: inline-block; font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 2px 10px; border: 2px solid #000; border-radius: 4px; margin-top: 0.04in; }
   .section { margin: 0.08in 0; }
@@ -105,6 +108,8 @@ export function renderPackageLabel(data: PackageLabelData): string {
   .label { font-weight: 700; text-transform: uppercase; font-size: 9pt; color: #555; }
   .value { font-weight: 600; }
   .condition-bar { text-align: center; padding: 0.06in 0.1in; margin: 0.06in 0; border: 2px solid ${isNonGood ? '#000' : '#ccc'}; border-radius: 4px; font-size: 12pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; ${isNonGood ? 'background: #000; color: #fff;' : ''} }
+  .rts-date { margin: 0.08in 0; padding: 0.06in 0.1in; border: 1px solid #000; border-radius: 4px; font-size: 12pt; font-weight: 700; }
+  .rts-date-line { display: inline-block; border-bottom: 1px solid #000; min-width: 2in; margin-left: 0.1in; }
   .barcode-area { text-align: center; margin: 0.12in 0; padding: 0.1in; border: 1px solid #ccc; border-radius: 4px; }
   .tracking { font-family: 'Courier New', monospace; font-size: 14pt; font-weight: 700; letter-spacing: 1px; }
   .barcode-bars { height: 48px; margin: 0.08in auto; background: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px, #000 4px, #000 5px, #fff 5px, #fff 9px); width: 80%; }
@@ -114,12 +119,16 @@ export function renderPackageLabel(data: PackageLabelData): string {
 </head>
 <body>
   <div class="header">
-    <div class="pmb">${escapeHtml(data.pmbNumber)}</div>
+    ${data.isCarrierProgram
+      ? `<div class="program-name">${escapeHtml(data.programType || data.pmbNumber)}</div>`
+      : `<div class="pmb">${escapeHtml(data.pmbNumber)}</div>`}
     <div class="customer">${escapeHtml(data.customerName)}</div>
-    ${data.programType ? `<div class="type-badge">${escapeHtml(data.programType)}</div>` : ''}
+    ${!data.isCarrierProgram && data.programType ? `<div class="type-badge">${escapeHtml(data.programType)}</div>` : ''}
   </div>
 
   <div class="condition-bar">${conditionDisplay ? `⚠ ${escapeHtml(conditionDisplay)}` : 'Good'}</div>
+
+  ${data.isCarrierProgram ? '<div class="rts-date">RTS Date: <span class="rts-date-line">&nbsp;</span></div>' : ''}
 
   <div class="section">
     <div class="row">

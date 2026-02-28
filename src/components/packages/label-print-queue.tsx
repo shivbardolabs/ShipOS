@@ -40,6 +40,8 @@ export interface QueuedLabel {
   condition?: string;
   /** BAR-266: Perishable flag */
   perishable?: boolean;
+  /** BAR-266: Carrier program flag (UPS AP, FedEx HAL, Amazon) */
+  isCarrierProgram?: boolean;
   /** Pre-rendered label HTML (if already generated) */
   labelHtml?: string;
 }
@@ -85,6 +87,7 @@ export function LabelPrintQueue({
       programType: label.programType,
       condition: label.condition,
       perishable: label.perishable,
+      isCarrierProgram: label.isCarrierProgram,
     };
     return renderPackageLabel(data);
   }, []);

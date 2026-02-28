@@ -396,6 +396,9 @@ export default function CheckInPage() {
     return condition.charAt(0).toUpperCase() + condition.slice(1);
   }, [condition, conditionOther]);
 
+  /* ── BAR-266: Is this a carrier program (non-PMB, non-KINEK)? ─────── */
+  const isCarrierProgram = packageProgram === 'ups_ap' || packageProgram === 'fedex_hal' || packageProgram === 'amazon';
+
   /* ── BAR-41: Label printing ──────────────────────────────────────────── */
   const addToLabelQueue = useCallback(
     (pkgId: string) => {
@@ -415,12 +418,13 @@ export default function CheckInPage() {
         programType: resolveProgramType(),
         condition: resolveConditionLabel(),
         perishable,
+        isCarrierProgram,
       };
 
       setLabelQueue((prev) => [...prev, newLabel]);
       return newLabel;
     },
-    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, trackingNumber, selectedCarrier, customCarrierName]
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram, trackingNumber, selectedCarrier, customCarrierName]
   );
 
   const handleAutoprint = useCallback(
@@ -441,10 +445,11 @@ export default function CheckInPage() {
         programType: resolveProgramType(),
         condition: resolveConditionLabel(),
         perishable,
+        isCarrierProgram,
       });
       printLabel(html);
     },
-    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, trackingNumber, selectedCarrier, customCarrierName]
+    [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram, trackingNumber, selectedCarrier, customCarrierName]
   );
 
   /* ── BAR-241: Staging / queue jump ───────────────────────────────────── */
@@ -486,10 +491,11 @@ export default function CheckInPage() {
         programType: resolveProgramType(),
         condition: resolveConditionLabel(),
         perishable,
+        isCarrierProgram,
       });
       printLabel(html);
     },
-    [resolveProgramType, resolveConditionLabel, perishable]
+    [resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram]
   );
 
   const handleQuickRelease = useCallback(
