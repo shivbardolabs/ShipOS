@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
+import { cn, formatDate, formatCurrency, formatDateTime } from '@/lib/utils';
 import { auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
 import {
   ArrowLeft,

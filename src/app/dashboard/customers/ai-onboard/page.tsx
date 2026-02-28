@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { useActivityLog } from '@/components/activity-log-provider';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import type { IdScanResult, IdScanResponse } from '@/app/api/customers/id-scan/route';
 import {
   Camera,
