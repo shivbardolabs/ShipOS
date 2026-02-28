@@ -406,6 +406,14 @@ export default function SettingsPage() {
     postscan: true,
   });
 
+  // Carrier program toggles (BAR-266)
+  const [carrierProgramEnabled, setCarrierProgramEnabled] = useState<Record<string, boolean>>({
+    ups_ap: false,
+    fedex_hal: false,
+    kinek: false,
+    amazon: false,
+  });
+
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
   /*                                                                    */
@@ -728,6 +736,120 @@ export default function SettingsPage() {
                 <div className="mt-6 flex items-center justify-between">
                   <Button variant="ghost" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>Add Custom Range</Button>
                   <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Carrier Programs (BAR-266) */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Carrier Programs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-surface-400 mb-6">
+                  Enable carrier receiving programs your store participates in. Enabled programs appear as options during package check-in.
+                </p>
+
+                <div className="space-y-4">
+                  {/* UPS Access Point */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.ups_ap ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-amber-900/30 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">UPS Access Point</p>
+                          <p className="text-xs text-surface-500">Receive and hold UPS-redirected packages for pickup</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.ups_ap ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.ups_ap ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.ups_ap}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, ups_ap: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* FedEx HAL */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.fedex_hal ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">FedEx Hold At Location</p>
+                          <p className="text-xs text-surface-500">Receive and hold FedEx-redirected packages (FASC required)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.fedex_hal ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.fedex_hal ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.fedex_hal}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, fedex_hal: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KINEK */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.kinek ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-teal-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">KINEK</p>
+                          <p className="text-xs text-surface-500">Third-party package receiving network — recipients identified by 7-digit KINEK number</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.kinek ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.kinek ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.kinek}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, kinek: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amazon */}
+                  <div className={`glass-card p-4 ${!carrierProgramEnabled.amazon ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                          <Package className="h-4 w-4 text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-surface-200">Amazon</p>
+                          <p className="text-xs text-surface-500">Receive and hold Amazon packages for pickup</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge dot={false} className={`text-xs ${carrierProgramEnabled.amazon ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+                          {carrierProgramEnabled.amazon ? 'Active' : 'Disabled'}
+                        </Badge>
+                        <ToggleSwitch
+                          checked={carrierProgramEnabled.amazon}
+                          onChange={(val) => setCarrierProgramEnabled(prev => ({ ...prev, amazon: val }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end">
+                  <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Programs</Button>
                 </div>
               </CardContent>
             </Card>
