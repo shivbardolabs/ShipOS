@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTheme } from '@/components/theme-provider';

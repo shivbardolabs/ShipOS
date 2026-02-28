@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable */
 
 import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
