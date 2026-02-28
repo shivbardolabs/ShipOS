@@ -1073,8 +1073,6 @@ model BillingModelConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([tenantId, isActive])
-  @@index([tenantId, sortOrder])
   tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
