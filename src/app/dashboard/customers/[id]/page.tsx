@@ -713,11 +713,48 @@ export default function CustomerDetailPage() {
                 </div>
               )}
 
+              {/* Proof of Address */}
+              {customer.proofOfAddressType && (
+                <div className="pt-3 border-t border-surface-800">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-surface-400">Proof of Address</span>
+                    {customer.proofOfAddressStatus && (
+                      <Badge status={customer.proofOfAddressStatus} className="text-[10px]">
+                        {customer.proofOfAddressStatus}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-surface-200 mt-0.5">
+                    {customer.proofOfAddressType === 'home_vehicle_insurance' ? 'Home/Vehicle Insurance' :
+                     customer.proofOfAddressType === 'mortgage_deed_of_trust' ? 'Mortgage / Deed of Trust' :
+                     customer.proofOfAddressType === 'current_lease' ? 'Current Lease Agreement' :
+                     customer.proofOfAddressType === 'state_drivers_nondriver_id' ? "Driver's License / Non-Driver ID" :
+                     customer.proofOfAddressType === 'voter_id_card' ? 'Voter Registration Card' :
+                     customer.proofOfAddressType}
+                  </p>
+                  {customer.proofOfAddressDateOfIssue && (
+                    <p className="text-xs text-surface-500 mt-1">
+                      Issued: {formatDate(customer.proofOfAddressDateOfIssue)}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Form 1583 */}
               {customer.form1583Date && (
                 <div className="pt-3 border-t border-surface-800">
                   <p className="text-xs text-surface-400">Form 1583 Date</p>
                   <p className="text-sm text-surface-200 mt-0.5">{formatDate(customer.form1583Date)}</p>
+                </div>
+              )}
+
+              {/* Form 1583 Gating Warning */}
+              {customer.form1583Status === 'submitted' && (!customer.proofOfAddressType || !customer.proofOfAddressDateOfIssue) && (
+                <div className="pt-3 border-t border-surface-800">
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 flex items-start gap-2">
+                    <Clock className="h-3.5 w-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-[11px] text-amber-300">Form 1583 cannot be approved until proof of address document type and date of issue are on file.</p>
+                  </div>
                 </div>
               )}
             </CardContent>
