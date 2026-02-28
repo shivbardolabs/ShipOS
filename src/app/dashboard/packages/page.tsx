@@ -108,6 +108,14 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
+  return (
+    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>
+      <span>{toast.message}</span>
+      <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100">✕</button>
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Mock data: Extend packages with inventory fields                          */
 /* -------------------------------------------------------------------------- */
@@ -862,5 +870,4 @@ function InfoField({
       </p>
     </div>
   );
-}
 }
