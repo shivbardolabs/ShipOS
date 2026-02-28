@@ -1,424 +1,629 @@
 'use client';
-/* eslint-disable */
 
-import { useState, useMemo, useEffect} from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabPanel } from '@/components/ui/tabs';
-import { DataTable, type Column } from '@/components/ui/data-table';
+import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { useTenant } from '@/components/tenant-provider';
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
 import {
-  Plus,
+  FileText,
   DollarSign,
   AlertCircle,
   CheckCircle2,
   Clock,
-  FileText,
-  Eye,
   Send,
-  Printer,
-  MoreHorizontal,
-  Download,
+  Ban,
+  Plus,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
+  CreditCard,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
-/*  Mock invoices                                                             */
+/*  Types                                                                     */
 /* -------------------------------------------------------------------------- */
-interface Invoice {
+
+interface InvoiceLineItem {
   id: string;
-  number: string;
-  customerId: string;
-  customerName: string;
-  customerPmb: string;
-  type: 'shipping' | 'storage' | 'receiving' | 'services' | 'monthly';
+  description: string;
+  serviceType: string | null;
+  quantity: number;
+  unitPrice: number;
   amount: number;
-  tax: number;
-  total: number;
-  status: 'draft' | 'sent' | 'paid' | 'overdue';
-  dueDate: string;
-  createdAt: string;
-  paidAt?: string;
 }
 
-const today = new Date('2026-02-21');
-const daysAgo = (n: number) => new Date(today.getTime() - n * 86400000).toISOString();
-const daysFromNow = (n: number) => new Date(today.getTime() + n * 86400000).toISOString();
+interface InvoiceCustomer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  pmbNumber: string;
+  email: string | null;
+}
 
-const invoices: Invoice[] = [
-  {
-    id: 'inv_001', number: 'INV-2026-0041', customerId: 'cust_003', customerName: 'Robert Singh',
-    customerPmb: 'PMB-0003', type: 'monthly', amount: 285.00, tax: 25.29, total: 310.29,
-    status: 'paid', dueDate: daysAgo(5), createdAt: daysAgo(20), paidAt: daysAgo(7),
-  },
-  {
-    id: 'inv_002', number: 'INV-2026-0042', customerId: 'cust_001', customerName: 'James Morrison',
-    customerPmb: 'PMB-0001', type: 'shipping', amount: 147.50, tax: 13.09, total: 160.59,
-    status: 'sent', dueDate: daysFromNow(10), createdAt: daysAgo(5),
-  },
-  {
-    id: 'inv_003', number: 'INV-2026-0043', customerId: 'cust_005', customerName: 'David Kim',
-    customerPmb: 'PMB-0005', type: 'storage', amount: 45.00, tax: 3.99, total: 48.99,
-    status: 'overdue', dueDate: daysAgo(3), createdAt: daysAgo(18),
-  },
-  {
-    id: 'inv_004', number: 'INV-2026-0044', customerId: 'cust_010', customerName: 'Elizabeth Martinez',
-    customerPmb: 'PMB-0010', type: 'services', amount: 520.00, tax: 46.15, total: 566.15,
-    status: 'paid', dueDate: daysAgo(10), createdAt: daysAgo(30), paidAt: daysAgo(12),
-  },
-  {
-    id: 'inv_005', number: 'INV-2026-0045', customerId: 'cust_014', customerName: 'Jessica White',
-    customerPmb: 'PMB-0014', type: 'monthly', amount: 195.00, tax: 17.31, total: 212.31,
-    status: 'sent', dueDate: daysFromNow(5), createdAt: daysAgo(10),
-  },
-  {
-    id: 'inv_006', number: 'INV-2026-0046', customerId: 'cust_021', customerName: 'Mark Walker',
-    customerPmb: 'PMB-0021', type: 'receiving', amount: 87.50, tax: 7.77, total: 95.27,
-    status: 'draft', dueDate: daysFromNow(15), createdAt: daysAgo(1),
-  },
-  {
-    id: 'inv_007', number: 'INV-2026-0047', customerId: 'cust_024', customerName: 'Donna Young',
-    customerPmb: 'PMB-0024', type: 'shipping', amount: 312.75, tax: 27.76, total: 340.51,
-    status: 'paid', dueDate: daysAgo(2), createdAt: daysAgo(15), paidAt: daysAgo(4),
-  },
-  {
-    id: 'inv_008', number: 'INV-2026-0048', customerId: 'cust_017', customerName: 'Matthew Garcia',
-    customerPmb: 'PMB-0017', type: 'storage', amount: 65.00, tax: 5.77, total: 70.77,
-    status: 'overdue', dueDate: daysAgo(7), createdAt: daysAgo(22),
-  },
-  {
-    id: 'inv_009', number: 'INV-2026-0049', customerId: 'cust_012', customerName: 'Sarah Taylor',
-    customerPmb: 'PMB-0012', type: 'monthly', amount: 225.00, tax: 19.97, total: 244.97,
-    status: 'draft', dueDate: daysFromNow(20), createdAt: daysAgo(0),
-  },
-  {
-    id: 'inv_010', number: 'INV-2026-0050', customerId: 'cust_029', customerName: 'Kevin Scott',
-    customerPmb: 'PMB-0029', type: 'services', amount: 175.00, tax: 15.53, total: 190.53,
-    status: 'sent', dueDate: daysFromNow(8), createdAt: daysAgo(7),
-  },
-];
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  tenantId: string | null;
+  customerId: string | null;
+  type: string;
+  amount: number;
+  tax: number;
+  amountPaid: number;
+  status: string;
+  dueDate: string | null;
+  paidAt: string | null;
+  sentAt: string | null;
+  sentVia: string | null;
+  notes: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  createdAt: string;
+  lineItems: InvoiceLineItem[];
+  customer: InvoiceCustomer | null;
+}
+
+interface Summary {
+  totalDraft: number;
+  totalSent: number;
+  totalPaid: number;
+  totalOverdue: number;
+  amountDraft: number;
+  amountSent: number;
+  amountPaid: number;
+  amountOverdue: number;
+}
+
+interface CustomerOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  pmbNumber: string;
+}
 
 /* -------------------------------------------------------------------------- */
-/*  Stats                                                                     */
+/*  Status helpers                                                            */
 /* -------------------------------------------------------------------------- */
-const outstanding = invoices
-  .filter((i) => i.status === 'sent' || i.status === 'overdue')
-  .reduce((s, i) => s + i.total, 0);
-const overdue = invoices
-  .filter((i) => i.status === 'overdue')
-  .reduce((s, i) => s + i.total, 0);
-const paidThisMonth = invoices
-  .filter((i) => i.status === 'paid')
-  .reduce((s, i) => s + i.total, 0);
-const totalRevenue = invoices.reduce((s, i) => s + i.total, 0);
+
+function statusVariant(s: string): 'success' | 'warning' | 'danger' | 'default' | 'info' {
+  switch (s) {
+    case 'paid': return 'success';
+    case 'draft': return 'default';
+    case 'sent': return 'info';
+    case 'overdue': return 'danger';
+    case 'partially_paid': return 'warning';
+    case 'void': return 'default';
+    default: return 'default';
+  }
+}
+
+function statusIcon(s: string) {
+  switch (s) {
+    case 'paid': return <CheckCircle2 className="h-3.5 w-3.5" />;
+    case 'draft': return <FileText className="h-3.5 w-3.5" />;
+    case 'sent': return <Send className="h-3.5 w-3.5" />;
+    case 'overdue': return <AlertCircle className="h-3.5 w-3.5" />;
+    default: return <Clock className="h-3.5 w-3.5" />;
+  }
+}
 
 /* -------------------------------------------------------------------------- */
-/*  Invoicing Page                                                            */
+/*  Component                                                                 */
 /* -------------------------------------------------------------------------- */
+
 export default function InvoicingPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [customers, setCustomers] = useState<any[]>([]);
+  const { localUser } = useTenant();
+  const isAdmin = localUser?.role === 'admin' || localUser?.role === 'superadmin' || localUser?.role === 'manager';
+
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const limit = 25;
+
+  // Detail modal
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+  // Generate invoice modal
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [genCustomerId, setGenCustomerId] = useState('');
+  const [genMode, setGenMode] = useState<'single' | 'batch'>('single');
+  const [generating, setGenerating] = useState(false);
+
+  // Payment modal
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentInvoiceId, setPaymentInvoiceId] = useState('');
+  const [paying, setPaying] = useState(false);
+
+  const fetchInvoices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter) params.set('status', statusFilter);
+      params.set('limit', String(limit));
+      params.set('offset', String(page * limit));
+
+      const res = await fetch(`/api/invoices?${params}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setInvoices(data.invoices || []);
+      setTotal(data.total || 0);
+      setSummary(data.summary || null);
+    } catch {
+      console.error('Failed to fetch invoices');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, page]);
+
+  useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
 
   useEffect(() => {
-    Promise.all([
-    fetch('/api/customers?limit=500').then(r => r.json()).then(d => setCustomers(d.customers || [])),
-    ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const [activeTab, setActiveTab] = useState('all');
-  const [showCreate, setShowCreate] = useState(false);
-  const [actionRow, setActionRow] = useState<string | null>(null);
-
-  const filteredInvoices = useMemo(() => {
-    switch (activeTab) {
-      case 'draft':
-        return invoices.filter((i) => i.status === 'draft');
-      case 'sent':
-        return invoices.filter((i) => i.status === 'sent');
-      case 'paid':
-        return invoices.filter((i) => i.status === 'paid');
-      case 'overdue':
-        return invoices.filter((i) => i.status === 'overdue');
-      default:
-        return invoices;
+    if (showGenerate && customers.length === 0) {
+      fetch('/api/customers?limit=200')
+        .then(r => r.json())
+        .then(data => setCustomers(data.customers || []))
+        .catch(() => {});
     }
-  }, [activeTab]);
+  }, [showGenerate, customers.length]);
 
-  const tabs = [
-    { id: 'all', label: 'All', count: invoices.length },
-    { id: 'draft', label: 'Draft', count: invoices.filter((i) => i.status === 'draft').length },
-    { id: 'sent', label: 'Sent', count: invoices.filter((i) => i.status === 'sent').length },
-    { id: 'paid', label: 'Paid', count: invoices.filter((i) => i.status === 'paid').length },
-    { id: 'overdue', label: 'Overdue', count: invoices.filter((i) => i.status === 'overdue').length },
-  ];
-
-  const statusVariant = (status: string) => {
-    switch (status) {
-      case 'paid': return 'success';
-      case 'sent': return 'info';
-      case 'overdue': return 'danger';
-      case 'draft': return 'muted';
-      default: return 'default';
+  const handleGenerateInvoice = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          genMode === 'single'
+            ? { action: 'generate_single', customerId: genCustomerId }
+            : { action: 'generate_batch' },
+        ),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Failed to generate invoice');
+        return;
+      }
+      setShowGenerate(false);
+      fetchInvoices();
+    } catch {
+      console.error('Failed to generate');
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const typeLabel = (type: string) => {
-    const map: Record<string, string> = {
-      shipping: 'Shipping',
-      storage: 'Storage Fee',
-      receiving: 'Receiving Fee',
-      services: 'Services',
-      monthly: 'Monthly Invoice',
-    };
-    return map[type] || type;
+  const handleSendInvoice = async (invoiceId: string) => {
+    await fetch(`/api/invoices/${invoiceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'send', via: 'email' }),
+    });
+    fetchInvoices();
   };
 
-  const columns: Column<Invoice & Record<string, unknown>>[] = [
-    {
-      key: 'number',
-      label: 'Invoice #',
-      sortable: true,
-      render: (row) => (
-        <span className="font-mono text-sm text-primary-600 font-medium">{row.number}</span>
-      ),
-    },
-    {
-      key: 'customerName',
-      label: 'Customer',
-      sortable: true,
-      render: (row) => (
-        <div>
-          <span className="text-surface-200">{row.customerName}</span>
-          <p className="text-xs text-surface-500">{row.customerPmb}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      render: (row) => (
-        <Badge variant="muted" dot={false}>
-          {typeLabel(row.type)}
-        </Badge>
-      ),
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      align: 'right',
-      sortable: true,
-      render: (row) => <span className="text-surface-300">{formatCurrency(row.amount)}</span>,
-    },
-    {
-      key: 'tax',
-      label: 'Tax',
-      align: 'right',
-      render: (row) => <span className="text-surface-500 text-xs">{formatCurrency(row.tax)}</span>,
-    },
-    {
-      key: 'total',
-      label: 'Total',
-      align: 'right',
-      sortable: true,
-      render: (row) => (
-        <span className="text-surface-100 font-semibold">{formatCurrency(row.total)}</span>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (row) => (
-        <Badge variant={statusVariant(row.status) as 'success' | 'info' | 'danger' | 'muted'} dot>
-          {row.status}
-        </Badge>
-      ),
-    },
-    {
-      key: 'dueDate',
-      label: 'Due Date',
-      sortable: true,
-      render: (row) => {
-        const isOverdue =
-          row.status !== 'paid' && new Date(row.dueDate) < today;
-        return (
-          <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-surface-400'}`}>
-            {formatDate(row.dueDate)}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      label: '',
-      width: 'w-10',
-      render: (row) => (
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            iconOnly
-            onClick={(e) => {
-              e.stopPropagation();
-              setActionRow(actionRow === row.id ? null : row.id);
-            }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-          {actionRow === row.id && (
-            <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-surface-700 bg-surface-900 shadow-xl py-1">
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
-                <Eye className="h-3.5 w-3.5" /> View Invoice
-              </button>
-              {row.status === 'draft' && (
-                <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
-                  <Send className="h-3.5 w-3.5" /> Send Invoice
-                </button>
-              )}
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
-                <Download className="h-3.5 w-3.5" /> Download PDF
-              </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
-                <Printer className="h-3.5 w-3.5" /> Print
-              </button>
-            </div>
-          )}
-        </div>
-      ),
-    },
-  ];
+  const handleVoidInvoice = async (invoiceId: string) => {
+    if (!confirm('Void this invoice? Linked charges will revert to pending.')) return;
+    await fetch(`/api/invoices/${invoiceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'void' }),
+    });
+    fetchInvoices();
+    setSelectedInvoice(null);
+  };
+
+  const handleRecordPayment = async () => {
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) return;
+    setPaying(true);
+    try {
+      await fetch(`/api/invoices/${paymentInvoiceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'record_payment',
+          amount: parseFloat(paymentAmount),
+          method: paymentMethod,
+        }),
+      });
+      setShowPayment(false);
+      setPaymentAmount('');
+      fetchInvoices();
+      setSelectedInvoice(null);
+    } catch {
+      console.error('Failed to record payment');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Invoicing"
-        description="Create and track invoices."
-        actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setShowCreate(true)}>
-            Create Invoice
-          </Button>
-        }
+        description="Generate, track, and manage customer invoices"
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Clock className="h-5 w-5" />}
-          title="Outstanding"
-          value={formatCurrency(outstanding)}
-        />
-        <StatCard
-          icon={<AlertCircle className="h-5 w-5" />}
-          title="Overdue"
-          value={formatCurrency(overdue)}
-        />
-        <StatCard
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          title="Paid This Month"
-          value={formatCurrency(paidThisMonth)}
-          change={18}
-        />
-        <StatCard
-          icon={<DollarSign className="h-5 w-5" />}
-          title="Total Revenue"
-          value={formatCurrency(totalRevenue)}
-          change={12}
-        />
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Draft</span>
+            </div>
+            <p className="text-xl font-bold">{summary?.totalDraft ?? 0}</p>
+            <p className="text-xs text-gray-400">{formatCurrency(summary?.amountDraft ?? 0)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Send className="h-4 w-4 text-blue-400" />
+              <span className="text-sm text-gray-500">Sent</span>
+            </div>
+            <p className="text-xl font-bold text-blue-600">{summary?.totalSent ?? 0}</p>
+            <p className="text-xs text-gray-400">{formatCurrency(summary?.amountSent ?? 0)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+              <span className="text-sm text-gray-500">Paid</span>
+            </div>
+            <p className="text-xl font-bold text-green-600">{summary?.totalPaid ?? 0}</p>
+            <p className="text-xs text-gray-400">{formatCurrency(summary?.amountPaid ?? 0)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <span className="text-sm text-gray-500">Overdue</span>
+            </div>
+            <p className="text-xl font-bold text-red-600">{summary?.totalOverdue ?? 0}</p>
+            <p className="text-xs text-gray-400">{formatCurrency(summary?.amountOverdue ?? 0)}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-
-      {/* Invoice Table */}
-      <TabPanel active={true}>
-        <DataTable
-          columns={columns}
-          data={filteredInvoices as (Invoice & Record<string, unknown>)[]}
-          keyAccessor={(row) => row.id}
-          searchable
-          searchPlaceholder="Search invoices…"
-          searchFields={['number', 'customerName', 'customerPmb', 'type']}
-          pageSize={10}
-          emptyMessage="No invoices found"
+      {/* Filters & Actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+          options={[
+            { value: '', label: 'All Statuses' },
+            { value: 'draft', label: 'Draft' },
+            { value: 'sent', label: 'Sent' },
+            { value: 'paid', label: 'Paid' },
+            { value: 'overdue', label: 'Overdue' },
+            { value: 'void', label: 'Void' },
+          ]}
         />
-      </TabPanel>
 
-      {/* Create Invoice Modal */}
-      <Modal
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        title="Create Invoice"
-        description="Create a new invoice."
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowCreate(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="secondary"
-              leftIcon={<FileText className="h-4 w-4" />}
-              onClick={() => setShowCreate(false)}
-            >
-              Save as Draft
-            </Button>
-            <Button
-              leftIcon={<Send className="h-4 w-4" />}
-              onClick={() => setShowCreate(false)}
-            >
-              Create & Send
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <Select
-            label="Customer"
-            placeholder="Select a customer..."
-            options={customers
-              .filter((c) => c.status === 'active')
-              .map((c) => ({
-                value: c.id,
-                label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
-              }))}
-          />
-          <Select
-            label="Invoice Type"
-            placeholder="Select type..."
-            options={[
-              { value: 'monthly', label: 'Monthly Invoice' },
-              { value: 'shipping', label: 'Shipping' },
-              { value: 'storage', label: 'Storage Fee' },
-              { value: 'receiving', label: 'Receiving Fee' },
-              { value: 'services', label: 'Services' },
-            ]}
-          />
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="Amount"
-              type="number"
-              placeholder="0.00"
-              leftIcon={<DollarSign className="h-4 w-4" />}
-            />
-            <Input
-              label="Tax Rate (%)"
-              type="number"
-              placeholder="8.875"
-            />
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-surface-300">Total</label>
-              <div className="flex items-center h-[38px] rounded-lg border border-surface-700 bg-surface-800 px-3.5 text-sm">
-                <span className="text-surface-100 font-semibold">$0.00</span>
-              </div>
-              <p className="text-xs text-surface-500">Auto-calculated</p>
+        <div className="flex-1" />
+
+        {isAdmin && (
+          <Button onClick={() => setShowGenerate(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Generate Invoice
+          </Button>
+        )}
+      </div>
+
+      {/* Invoice List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Invoices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
+          ) : invoices.length === 0 ? (
+            <p className="text-center text-gray-400 py-12">
+              No invoices yet. Generate invoices from deferred TOS charges.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-gray-500">
+                    <th className="pb-2 font-medium">Invoice #</th>
+                    <th className="pb-2 font-medium">Customer</th>
+                    <th className="pb-2 font-medium text-right">Amount</th>
+                    <th className="pb-2 font-medium">Status</th>
+                    <th className="pb-2 font-medium">Due Date</th>
+                    <th className="pb-2 font-medium">Created</th>
+                    <th className="pb-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map(inv => (
+                    <tr key={inv.id} className="border-b last:border-0 hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedInvoice(inv)}>
+                      <td className="py-3 font-mono text-xs">{inv.invoiceNumber}</td>
+                      <td className="py-3">
+                        {inv.customer ? (
+                          <div>
+                            <span className="font-medium">{inv.customer.firstName} {inv.customer.lastName}</span>
+                            <span className="text-xs text-gray-400 ml-2">{inv.customer.pmbNumber}</span>
+                          </div>
+                        ) : '—'}
+                      </td>
+                      <td className="py-3 text-right font-mono font-medium">
+                        {formatCurrency(inv.amount + inv.tax)}
+                        {inv.amountPaid > 0 && inv.status !== 'paid' && (
+                          <div className="text-xs text-green-500">Paid: {formatCurrency(inv.amountPaid)}</div>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        <Badge variant={statusVariant(inv.status)}>
+                          <span className="flex items-center gap-1">
+                            {statusIcon(inv.status)} {inv.status}
+                          </span>
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-gray-500 text-xs">
+                        {inv.dueDate ? formatDate(inv.dueDate) : '—'}
+                      </td>
+                      <td className="py-3 text-gray-500 text-xs">
+                        {formatDateTime(inv.createdAt)}
+                      </td>
+                      <td className="py-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-1">
+                          {inv.status === 'draft' && isAdmin && (
+                            <Button variant="ghost" size="sm" onClick={() => handleSendInvoice(inv.id)}>
+                              <Send className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {(inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'partially_paid') && isAdmin && (
+                            <Button variant="ghost" size="sm" onClick={() => {
+                              setPaymentInvoiceId(inv.id);
+                              setPaymentAmount(String((inv.amount + inv.tax - inv.amountPaid).toFixed(2)));
+                              setShowPayment(true);
+                            }}>
+                              <CreditCard className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {inv.status !== 'paid' && inv.status !== 'void' && isAdmin && (
+                            <Button variant="ghost" size="sm" onClick={() => handleVoidInvoice(inv.id)} className="text-red-500">
+                              <Ban className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <span className="text-sm text-gray-500">
+                Page {page + 1} of {totalPages} ({total} total)
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Invoice Detail Modal */}
+      <Modal
+        isOpen={!!selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+        title={`Invoice ${selectedInvoice?.invoiceNumber || ''}`}
+      >
+        {selectedInvoice && (
+          <div className="p-4 space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-medium">
+                  {selectedInvoice.customer
+                    ? `${selectedInvoice.customer.firstName} ${selectedInvoice.customer.lastName}`
+                    : 'Unknown Customer'}
+                </p>
+                {selectedInvoice.customer?.pmbNumber && (
+                  <p className="text-sm text-gray-500">{selectedInvoice.customer.pmbNumber}</p>
+                )}
+              </div>
+              <Badge variant={statusVariant(selectedInvoice.status)}>
+                {selectedInvoice.status}
+              </Badge>
+            </div>
+
+            {/* Line Items */}
+            {selectedInvoice.lineItems.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Line Items</h4>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-gray-500">
+                      <th className="pb-1 text-left font-medium">Description</th>
+                      <th className="pb-1 text-right font-medium">Qty</th>
+                      <th className="pb-1 text-right font-medium">Rate</th>
+                      <th className="pb-1 text-right font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedInvoice.lineItems.map(li => (
+                      <tr key={li.id} className="border-b last:border-0">
+                        <td className="py-1.5">{li.description}</td>
+                        <td className="py-1.5 text-right">{li.quantity}</td>
+                        <td className="py-1.5 text-right font-mono">{formatCurrency(li.unitPrice)}</td>
+                        <td className="py-1.5 text-right font-mono">{formatCurrency(li.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t font-medium">
+                      <td colSpan={3} className="pt-2 text-right">Subtotal</td>
+                      <td className="pt-2 text-right font-mono">{formatCurrency(selectedInvoice.amount)}</td>
+                    </tr>
+                    {selectedInvoice.tax > 0 && (
+                      <tr>
+                        <td colSpan={3} className="text-right text-gray-500">Tax</td>
+                        <td className="text-right font-mono text-gray-500">{formatCurrency(selectedInvoice.tax)}</td>
+                      </tr>
+                    )}
+                    <tr className="text-lg">
+                      <td colSpan={3} className="pt-1 text-right font-bold">Total</td>
+                      <td className="pt-1 text-right font-mono font-bold">
+                        {formatCurrency(selectedInvoice.amount + selectedInvoice.tax)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-500">Due Date:</span>{' '}
+                {selectedInvoice.dueDate ? formatDate(selectedInvoice.dueDate) : '—'}
+              </div>
+              <div>
+                <span className="text-gray-500">Created:</span>{' '}
+                {formatDateTime(selectedInvoice.createdAt)}
+              </div>
+              {selectedInvoice.paidAt && (
+                <div>
+                  <span className="text-gray-500">Paid:</span>{' '}
+                  {formatDateTime(selectedInvoice.paidAt)}
+                </div>
+              )}
+              {selectedInvoice.sentAt && (
+                <div>
+                  <span className="text-gray-500">Sent:</span>{' '}
+                  {formatDateTime(selectedInvoice.sentAt)} via {selectedInvoice.sentVia}
+                </div>
+              )}
+            </div>
+
+            {selectedInvoice.notes && (
+              <p className="text-sm text-gray-500 bg-gray-50 rounded p-2">{selectedInvoice.notes}</p>
+            )}
           </div>
-          <Input label="Due Date" type="date" />
-          <Input label="Notes (optional)" placeholder="Additional notes for this invoice..." />
+        )}
+      </Modal>
+
+      {/* Generate Invoice Modal */}
+      <Modal
+        isOpen={showGenerate}
+        onClose={() => setShowGenerate(false)}
+        title="Generate Invoice"
+      >
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Mode</label>
+            <Select
+              value={genMode}
+              onChange={e => setGenMode(e.target.value as 'single' | 'batch')}
+              options={[
+                { value: 'single', label: 'Single Customer' },
+                { value: 'batch', label: 'Batch — All Customers with Pending Charges' },
+              ]}
+            />
+          </div>
+
+          {genMode === 'single' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer</label>
+              <Select
+                value={genCustomerId}
+                onChange={e => setGenCustomerId(e.target.value)}
+                options={[
+                  { value: '', label: 'Select customer...' },
+                  ...customers.map(c => ({
+                    value: c.id,
+                    label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
+                  })),
+                ]}
+              />
+            </div>
+          )}
+
+          <p className="text-sm text-gray-500">
+            {genMode === 'single'
+              ? 'Generates an invoice from all pending deferred charges for this customer.'
+              : 'Generates invoices for ALL customers with pending deferred charges.'}
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancel</Button>
+            <Button
+              onClick={handleGenerateInvoice}
+              disabled={generating || (genMode === 'single' && !genCustomerId)}
+            >
+              {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
+              Generate
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Record Payment Modal */}
+      <Modal
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        title="Record Payment"
+      >
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Payment Amount ($)</label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={paymentAmount}
+              onChange={e => setPaymentAmount(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Payment Method</label>
+            <Select
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value)}
+              options={[
+                { value: 'cash', label: 'Cash' },
+                { value: 'card', label: 'Card' },
+                { value: 'ach', label: 'ACH Bank Transfer' },
+                { value: 'paypal', label: 'PayPal' },
+                { value: 'check', label: 'Check' },
+              ]}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowPayment(false)}>Cancel</Button>
+            <Button onClick={handleRecordPayment} disabled={paying || !paymentAmount}>
+              {paying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <DollarSign className="h-4 w-4 mr-1" />}
+              Record Payment
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

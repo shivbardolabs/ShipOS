@@ -290,6 +290,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── TOS Billing (BAR-306) ────────────────────────────────────────────────
+  {
+    key: 'tos_billing',
+    name: 'Time-of-Service Billing',
+    description: 'Immediate charge and deferred invoicing with payment method management (card, ACH, PayPal, auto-pay)',
+    category: 'business',
+    defaultEnabled: false,
+  },
+
   // ── Auto Charge Generation (BAR-308) ────────────────────────────────────
   {
     key: 'auto_charge_generation',
