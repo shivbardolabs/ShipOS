@@ -41,6 +41,14 @@ interface TopClient {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+/** Safely format a number with toLocaleString; returns '0' if value is nil */
+function fmtNum(value: number | undefined | null, opts?: Intl.NumberFormatOptions): string {
+  return (value ?? 0).toLocaleString('en-US', opts);
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Dashboard Page (BAR-237)                                                  */
 /* -------------------------------------------------------------------------- */
 export default function SuperAdminDashboard() {
@@ -54,10 +62,27 @@ export default function SuperAdminDashboard() {
       fetch('/api/super-admin/billing?period=current').then((r) => r.json()),
     ])
       .then(([dashData, billingData]) => {
-        setMetrics(dashData);
+        // Validate response has expected shape before setting metrics
+        if (dashData && typeof dashData.totalClients === 'number') {
+          setMetrics({
+            totalClients: dashData.totalClients ?? 0,
+            activeClients: dashData.activeClients ?? 0,
+            inactiveClients: dashData.inactiveClients ?? 0,
+            totalStores: dashData.totalStores ?? 0,
+            activeStores: dashData.activeStores ?? 0,
+            inactiveStores: dashData.inactiveStores ?? 0,
+            totalMRR: dashData.totalMRR ?? 0,
+            overduePayments: dashData.overduePayments ?? 0,
+            pendingPayments: dashData.pendingPayments ?? 0,
+            totalSuperAdmins: dashData.totalSuperAdmins ?? 0,
+            activeSuperAdmins: dashData.activeSuperAdmins ?? 0,
+          });
+        } else {
+          console.error('Invalid dashboard response:', dashData);
+        }
         // Sort clients by revenue descending, take top 5
         const sorted = (billingData.clients || [])
-          .sort((a: TopClient, b: TopClient) => b.monthlyRevenue - a.monthlyRevenue)
+          .sort((a: TopClient, b: TopClient) => (b.monthlyRevenue ?? 0) - (a.monthlyRevenue ?? 0))
           .slice(0, 5);
         setTopClients(sorted);
       })
@@ -116,7 +141,7 @@ export default function SuperAdminDashboard() {
           <StatCard
             icon={<DollarSign className="h-5 w-5" />}
             title="Monthly Recurring Revenue"
-            value={`$${metrics.totalMRR.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+            value={`$${fmtNum(metrics.totalMRR, { minimumFractionDigits: 2 })}`}
             className="card-hover cursor-pointer"
           />
         </Link>
@@ -238,7 +263,7 @@ export default function SuperAdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-surface-100">
-                        ${client.monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ${fmtNum(client.monthlyRevenue, { minimumFractionDigits: 2 })}
                       </p>
                       <p className="text-[10px] text-surface-500">/month</p>
                     </div>
