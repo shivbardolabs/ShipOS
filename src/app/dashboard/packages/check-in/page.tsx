@@ -363,7 +363,7 @@ export default function CheckInPage() {
         : 'Amazon';
       return {
         name: recipientName || 'Unknown',
-        pmb: packageProgram === 'kinek' ? `KINEK-${kinekNumber}` : progLabel,
+        pmb: packageProgram === 'kinek' ? kinekNumber : progLabel,
       };
     }
     return {
