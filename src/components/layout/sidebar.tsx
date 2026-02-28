@@ -29,14 +29,12 @@ import {
   Menu,
   X,
   Scale,
-  ScrollText,
   LogOut,
   Award,
   Activity,
   Sparkles,
   ScanLine,
   UserPlus,
-  Flag,
   DollarSign,
   CalendarClock,
   ClipboardList,
@@ -45,8 +43,6 @@ import {
   ScreenShare,
   Monitor,
   Printer,
-  Building2,
-  CreditCard,
   Palette,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
@@ -76,16 +72,7 @@ const navSections: NavSection[] = [
     title: 'PLATFORM',
     requiredRole: 'superadmin',
     items: [
-      { label: 'Super Admin Console', href: '/dashboard/super-admin', icon: ShieldCheck },
-      { label: 'Client Provisioning', href: '/dashboard/super-admin/clients', icon: Building2 },
-      { label: 'Admin Users', href: '/dashboard/super-admin/users', icon: Users },
-      { label: 'Billing & Reports', href: '/dashboard/super-admin/billing', icon: CreditCard },
-      { label: 'Master Admin', href: '/dashboard/admin', icon: Shield },
-      { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: Flag },
-      { label: 'Legal Documents', href: '/dashboard/admin/legal', icon: ScrollText, flagKey: 'legal-management' },
-      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
-      { label: 'Tag Manager', href: '/dashboard/admin/tag-manager', icon: Flag },
-      { label: 'Deliverability', href: '/dashboard/admin/deliverability', icon: Activity },
+      { label: 'Platform Console', href: '/dashboard/super-admin', icon: ShieldCheck },
     ],
   },
   {
@@ -184,13 +171,7 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
-    // Exact match for parent routes that have sub-pages (e.g. /dashboard/admin vs /dashboard/admin/feature-flags)
-    if (href === '/dashboard/admin') return pathname === '/dashboard/admin';
-    if (href === '/dashboard/admin/feature-flags') return pathname === '/dashboard/admin/feature-flags';
-    if (href === '/dashboard/admin/legal') return pathname === '/dashboard/admin/legal';
-    if (href === '/dashboard/admin/analytics') return pathname === '/dashboard/admin/analytics';
-    if (href === '/dashboard/admin/tag-manager') return pathname === '/dashboard/admin/tag-manager';
-    if (href === '/dashboard/admin/deliverability') return pathname.startsWith('/dashboard/admin/deliverability') || pathname.startsWith('/dashboard/admin/email-deliverability') || pathname.startsWith('/dashboard/admin/sms-deliverability');
+    if (href === '/dashboard/super-admin') return pathname.startsWith('/dashboard/super-admin');
     return pathname.startsWith(href);
   };
 

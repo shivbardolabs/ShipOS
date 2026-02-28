@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Building2,
@@ -15,6 +14,12 @@ import {
   Activity,
   ArrowRight,
   Clock,
+  Shield,
+  Flag,
+  ScrollText,
+  CreditCard,
+  Tag,
+  Send,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -52,13 +57,82 @@ const topClients = [
 ];
 
 /* -------------------------------------------------------------------------- */
+/*  Console modules — the 9 sections accessible from the dashboard            */
+/* -------------------------------------------------------------------------- */
+const consoleModules = [
+  {
+    label: 'Client Provisioning',
+    href: '/dashboard/super-admin/clients',
+    icon: Building2,
+    description: 'Manage clients, stores, and onboarding',
+    color: '#3b82f6',
+  },
+  {
+    label: 'Admin Users',
+    href: '/dashboard/super-admin/users',
+    icon: Users,
+    description: 'Manage super admin user accounts',
+    color: '#8b5cf6',
+  },
+  {
+    label: 'Billing & Reports',
+    href: '/dashboard/super-admin/billing',
+    icon: CreditCard,
+    description: 'Revenue, invoices, and financial reports',
+    color: '#10b981',
+  },
+  {
+    label: 'Master Admin',
+    href: '/dashboard/super-admin/master-admin',
+    icon: Shield,
+    description: 'Cross-tenant user directory and sessions',
+    color: '#f59e0b',
+  },
+  {
+    label: 'Feature Flags',
+    href: '/dashboard/super-admin/feature-flags',
+    icon: Flag,
+    description: 'Toggle features per tenant or user',
+    color: '#e11d48',
+  },
+  {
+    label: 'Legal Documents',
+    href: '/dashboard/super-admin/legal',
+    icon: ScrollText,
+    description: 'Terms, privacy policy, and compliance docs',
+    color: '#6366f1',
+  },
+  {
+    label: 'Analytics',
+    href: '/dashboard/super-admin/analytics',
+    icon: BarChart3,
+    description: 'Platform-wide analytics and insights',
+    color: '#06b6d4',
+  },
+  {
+    label: 'Tag Manager',
+    href: '/dashboard/super-admin/tag-manager',
+    icon: Tag,
+    description: 'Manage tracking tags and scripts',
+    color: '#d946ef',
+  },
+  {
+    label: 'Deliverability',
+    href: '/dashboard/super-admin/deliverability',
+    icon: Send,
+    description: 'Email and SMS deliverability monitoring',
+    color: '#f97316',
+  },
+];
+
+/* -------------------------------------------------------------------------- */
 /*  Dashboard Page (BAR-237)                                                  */
 /* -------------------------------------------------------------------------- */
 export default function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin Dashboard"
+        title="Platform Console"
         description="Platform overview — clients, stores, revenue, and system health"
         icon={<LayoutDashboard className="h-6 w-6" />}
       />
@@ -110,79 +184,37 @@ export default function SuperAdminDashboard() {
         </Link>
       </div>
 
-      {/* Secondary Stats Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Client Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Active</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${(summaryMetrics.activeClients / summaryMetrics.totalClients) * 120}px` }} />
-                  <span className="text-sm font-semibold text-emerald-400">{summaryMetrics.activeClients}</span>
+      {/* ── Console Modules Grid ── */}
+      <div>
+        <h2 className="text-lg font-semibold text-surface-100 mb-4">Console Modules</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {consoleModules.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <Link key={mod.href} href={mod.href}>
+                <div className="glass-card p-4 card-hover cursor-pointer group transition-all duration-200 hover:border-surface-600">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: `${mod.color}20` }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color: mod.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-surface-100 group-hover:text-white truncate">
+                          {mod.label}
+                        </p>
+                        <ArrowRight className="h-4 w-4 text-surface-600 group-hover:text-surface-400 transition-colors flex-shrink-0" />
+                      </div>
+                      <p className="text-xs text-surface-500 mt-0.5">{mod.description}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Inactive</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-surface-600" style={{ width: `${(summaryMetrics.inactiveClients / summaryMetrics.totalClients) * 120}px` }} />
-                  <span className="text-sm font-semibold text-surface-400">{summaryMetrics.inactiveClients}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Store Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Active</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-blue-500" style={{ width: `${(summaryMetrics.activeStores / summaryMetrics.totalStores) * 120}px` }} />
-                  <span className="text-sm font-semibold text-blue-400">{summaryMetrics.activeStores}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Inactive</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-surface-600" style={{ width: `${(summaryMetrics.inactiveStores / summaryMetrics.totalStores) * 120}px` }} />
-                  <span className="text-sm font-semibold text-surface-400">{summaryMetrics.inactiveStores}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Paid</span>
-                <span className="text-sm font-semibold text-emerald-400">
-                  {summaryMetrics.totalClients - summaryMetrics.overduePayments - summaryMetrics.pendingPayments}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Pending</span>
-                <span className="text-sm font-semibold text-yellow-400">{summaryMetrics.pendingPayments}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-surface-400">Overdue</span>
-                <span className="text-sm font-semibold text-red-400">{summaryMetrics.overduePayments}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Bottom Section: Recent Activity + Top Clients */}
@@ -252,32 +284,6 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/super-admin/clients">
-              <Button variant="secondary" size="sm" leftIcon={<Building2 className="h-4 w-4" />}>
-                Provision New Client
-              </Button>
-            </Link>
-            <Link href="/dashboard/super-admin/users">
-              <Button variant="secondary" size="sm" leftIcon={<Users className="h-4 w-4" />}>
-                Add Super Admin
-              </Button>
-            </Link>
-            <Link href="/dashboard/super-admin/billing">
-              <Button variant="secondary" size="sm" leftIcon={<BarChart3 className="h-4 w-4" />}>
-                View Reports
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
