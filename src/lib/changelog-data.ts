@@ -21,6 +21,136 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.25.0                                                    */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.25.0',
+    date: '2026-02-28',
+    title: 'Subscription billing with idempotent batch charging, Move sidebar pages into Settings, Package program selector in check-in wizard Step 1',
+    summary:
+      'This release includes 29 updates.',
+    highlights: ['Subscription billing', 'Move sidebar', 'Package program'],
+    changes: [
+      {
+        text: 'Subscription billing with idempotent batch charging',
+        type: 'feature',
+      },
+      {
+        text: 'Move sidebar pages into Settings',
+        type: 'feature',
+      },
+      {
+        text: 'Package program selector in check-in wizard Step 1',
+        type: 'feature',
+      },
+      {
+        text: 'Wire core pages to Postgres — customers, packages, mail, shipments, notifications, dashboard stats',
+        type: 'feature',
+      },
+      {
+        text: 'Wire all pages to Postgres — eliminate mock-data site-wide',
+        type: 'feature',
+      },
+      {
+        text: 'Wire super-admin pages to Postgres — dashboard, clients, users, billing',
+        type: 'feature',
+      },
+      {
+        text: 'Log batch label prints in Activity Log',
+        type: 'feature',
+      },
+      {
+        text: 'Court-Ordered Protected Individual checkbox with file upload (PS1583 4k)',
+        type: 'feature',
+      },
+      {
+        text: 'Consolidate Super Admin into single Platform Console entry',
+        type: 'feature',
+      },
+      {
+        text: 'Good Taste UI — 18 design principles',
+        type: 'feature',
+      },
+      {
+        text: 'Super Admin console — dashboard, clients, users, billing & reports',
+        type: 'feature',
+      },
+      {
+        text: 'Batch A — Dashboard & UX (BAR-258, BAR-264, BAR-303, BAR-100, BAR-189)',
+        type: 'feature',
+      },
+      {
+        text: 'Activity Log now reads from real AuditLog database',
+        type: 'fix',
+      },
+      {
+        text: 'BAR-311/312/313/314 — Settings page bug fixes',
+        type: 'fix',
+      },
+      {
+        text: 'Apply PR #105 changes on current main',
+        type: 'improvement',
+      },
+      {
+        text: 'Apply PR #102 changes on current main',
+        type: 'improvement',
+      },
+      {
+        text: 'Apply PR #94 changes on current main',
+        type: 'improvement',
+      },
+      {
+        text: 'Apply PR #30 changes on current main',
+        type: 'improvement',
+      },
+      {
+        text: 'Apply PR #26 changes on current main',
+        type: 'improvement',
+      },
+      {
+        text: 'Upload Photo opens gallery instead of camera',
+        type: 'fix',
+      },
+      {
+        text: 'Wire up logo upload in Settings → Receipts',
+        type: 'fix',
+      },
+      {
+        text: 'Wire up Edit Template & Upload New Template buttons in Mailbox Config',
+        type: 'fix',
+      },
+      {
+        text: 'Correct Check In & Check Out routes in command palette',
+        type: 'fix',
+      },
+      {
+        text: 'Wire up Release Package button in Package Details modal',
+        type: 'fix',
+      },
+      {
+        text: 'Resolve 5 UI bugs found during automated testing',
+        type: 'fix',
+      },
+      {
+        text: 'Wire customer creation to database instead of mock-only UI',
+        type: 'fix',
+      },
+      {
+        text: 'Restrict secondary ID dropdown to drivers lic + secondary IDs only',
+        type: 'fix',
+      },
+      {
+        text: 'Add CI status badge to README',
+        type: 'improvement',
+      },
+      {
+        text: 'Resolve camera spinner stuck on Starting Camera (BAR-227)',
+        type: 'fix',
+      },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   /*  v0.24.0                                                            */
   /* ------------------------------------------------------------------ */
   {
