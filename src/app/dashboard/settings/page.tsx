@@ -18,7 +18,6 @@ import { formatCurrency } from '@/lib/utils';
 import type { UserRole } from '@/lib/permissions';
 import Link from 'next/link';
 import {
-import { Modal } from '@/components/ui/modal';
   Building2,
   DollarSign,
   Truck,
@@ -54,6 +53,7 @@ import { Modal } from '@/components/ui/modal';
   Monitor,
   Database,
   ArrowRight } from 'lucide-react';
+import { Modal } from '@/components/ui/modal';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
