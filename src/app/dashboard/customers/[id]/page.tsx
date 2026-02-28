@@ -40,8 +40,10 @@ import {
   Forward,
   MapPin,
   Users,
+  BarChart3,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
+import { QuotaUsageCard } from '@/components/pmb/quota-usage-card';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -243,6 +245,7 @@ export default function CustomerDetailPage() {
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
     { id: 'activity', label: 'Activity', icon: <Clock className="h-3.5 w-3.5" /> },
     { id: 'loyalty', label: 'Loyalty', icon: <Award className="h-3.5 w-3.5" /> },
+    { id: 'quota', label: 'Quota Usage', icon: <BarChart3 className="h-3.5 w-3.5" /> },
   ];
 
   // Loyalty data for this customer
@@ -552,6 +555,13 @@ export default function CustomerDetailPage() {
                 </button>
               </div>
             )}
+          </TabPanel>
+
+          {/* Quota Usage Tab */}
+          <TabPanel active={activeTab === 'quota'}>
+            <div className="space-y-4">
+              <QuotaUsageCard customerId={customer.id} />
+            </div>
           </TabPanel>
         </div>
 

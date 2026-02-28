@@ -1278,3 +1278,268 @@ model ReturnToSender {
   @@index([tenantId, step])
   @@index([tenantId, createdAt])
 }
+
+// ── BAR-307: PMB Plan Features ──────────────────────────────────────────────
+
+/// PMB subscription plan tiers with annual/monthly pricing and service quotas.
+/// CLIENTs define these tiers; CUSTOMERs subscribe.
+model PmbPlanTier {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String  // e.g. "Bronze", "Silver", "Gold", "Platinum"
+  slug        String  // URL-safe identifier: "bronze", "silver"
+  description String?
+
+  // Pricing
+  priceMonthly Float            // Monthly rate
+  priceAnnual  Float            // Annual rate (discounted)
+  annualDiscountPct Float @default(0) // Display discount %: e.g. 17 = 17% off monthly
+
+  // Service quotas included
+  includedMailItems    Int @default(30)  // Mail items per cycle
+  includedScans        Int @default(5)   // Scan pages per cycle
+  freeStorageDays      Int @default(30)  // Free package storage days
+  includedForwarding   Int @default(0)   // Forwarding per cycle
+  includedShredding    Int @default(0)   // Shredding per cycle
+  maxRecipients        Int @default(1)   // Max PMB recipients
+  maxPackagesPerMonth  Int @default(0)   // 0 = unlimited
+
+  // Overage rates (inline for simple cases)
+  overageMailRate       Float @default(0.50)
+  overageScanRate       Float @default(1.00)
+  overageStorageRate    Float @default(0.50)
+  overageForwardingRate Float @default(2.00)
+  overagePackageRate    Float @default(2.00)
+
+  // Config
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customerAddOns PmbCustomerAddOn[]
+  promoRedemptions PromoRedemption[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, isActive])
+}
+
+/// Optional add-on services beyond base plan.
+model PmbAddOn {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String  // e.g. "Extra Scanning Package", "Priority Forwarding"
+  slug        String
+  description String?
+  priceMonthly Float  // Monthly add-on price
+  priceAnnual  Float? // Optional annual price
+  unit         String @default("month") // month, item, scan, etc.
+
+  // What the add-on provides
+  quotaType  String? // mail, scans, storage, forwarding, shredding, packages
+  quotaAmount Int     @default(0) // Additional quota provided
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customerAddOns PmbCustomerAddOn[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+/// Tracks a CUSTOMER's active add-on subscriptions.
+model PmbCustomerAddOn {
+  id         String @id @default(cuid())
+  tenantId   String
+  customerId String
+  addOnId    String
+  planTierId String? // The plan tier the customer is on when add-on was added
+
+  // Billing
+  billingCycle String   @default("monthly") // monthly, annual
+  price        Float    // Actual price charged (may differ from add-on list price if prorated)
+  prorated     Boolean  @default(false)
+  proratedFrom DateTime?
+  activatedAt  DateTime @default(now())
+  deactivatedAt DateTime?
+  status       String   @default("active") // active, cancelled, expired
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addOn    PmbAddOn      @relation(fields: [addOnId], references: [id])
+  planTier PmbPlanTier?  @relation(fields: [planTierId], references: [id])
+
+  @@index([tenantId, customerId])
+  @@index([customerId, status])
+}
+
+/// Tracks per-customer quota consumption within a billing cycle.
+model PmbQuotaUsage {
+  id         String @id @default(cuid())
+  tenantId   String
+  customerId String
+
+  // Billing period
+  periodStart DateTime
+  periodEnd   DateTime
+  period      String   // "YYYY-MM" format
+
+  // Consumption counters
+  mailItemsUsed     Int @default(0)
+  scansUsed         Int @default(0)
+  storageDaysUsed   Int @default(0)
+  forwardingUsed    Int @default(0)
+  shreddingUsed     Int @default(0)
+  packagesReceived  Int @default(0)
+
+  // Included quotas (snapshot from plan at period start)
+  mailItemsIncluded    Int @default(0)
+  scansIncluded        Int @default(0)
+  storageDaysIncluded  Int @default(0)
+  forwardingIncluded   Int @default(0)
+  shreddingIncluded    Int @default(0)
+  packagesIncluded     Int @default(0)
+
+  // Overage tracking
+  overageCharged Float   @default(0)
+  overageInvoiced Boolean @default(false)
+
+  // Alert tracking
+  alertSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, customerId, period])
+  @@index([tenantId, period])
+  @@index([customerId])
+}
+
+/// Promotional pricing codes.
+model PromoCode {
+  id       String @id @default(cuid())
+  tenantId String
+
+  code        String  // e.g. "WELCOME20", "SUMMER2026"
+  description String?
+
+  // Discount configuration
+  discountType   String  // percent, fixed_amount, free_months
+  discountValue  Float   // 20 for 20%, $10 for fixed, 2 for 2 months free
+  discountAppliesTo String @default("all") // all, monthly, annual, specific_tier
+
+  // Validity
+  startsAt  DateTime @default(now())
+  expiresAt DateTime?
+  maxRedemptions Int @default(0) // 0 = unlimited
+  maxPerCustomer Int @default(1) // How many times a single customer can use it
+
+  // Scope
+  applicableTierSlugs String? // JSON array of tier slugs, null = all tiers
+
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  redemptions PromoRedemption[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+  @@index([code])
+}
+
+/// Tracks promo code redemptions.
+model PromoRedemption {
+  id          String @id @default(cuid())
+  promoCodeId String
+  tenantId    String
+  customerId  String
+  planTierId  String?
+
+  // Applied discount
+  discountAmount Float  // Actual dollar amount discounted
+  billingCycle   String // monthly, annual
+
+  // Lifecycle
+  appliedAt    DateTime @default(now())
+  expiresAt    DateTime? // When the promo benefit expires
+  status       String   @default("active") // active, expired, revoked
+
+  createdAt DateTime @default(now())
+
+  promoCode PromoCode    @relation(fields: [promoCodeId], references: [id])
+  planTier  PmbPlanTier? @relation(fields: [planTierId], references: [id])
+
+  @@index([promoCodeId])
+  @@index([tenantId, customerId])
+}
+
+/// Franchise group — multi-location management entity.
+model FranchiseGroup {
+  id   String @id @default(cuid())
+  name String // Franchise name e.g. "PostalPros National"
+  slug String @unique
+
+  // Admin contact
+  adminEmail String?
+  adminName  String?
+  phone      String?
+
+  // Default pricing overrides (apply to all locations unless location overrides)
+  defaultPricingJson String? // JSON: { "bronze": { priceMonthly: 7.99 }, ... }
+
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locations FranchiseLocation[]
+  pricingOverrides FranchisePricingOverride[]
+}
+
+/// Links a tenant (location) to a franchise group.
+model FranchiseLocation {
+  id           String @id @default(cuid())
+  franchiseId  String
+  tenantId     String @unique // Each tenant belongs to at most one franchise
+
+  // Location-level overrides (null = use franchise default)
+  customPricingJson String? // JSON: { "bronze": { priceMonthly: 8.49 }, ... }
+
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  franchise FranchiseGroup @relation(fields: [franchiseId], references: [id])
+
+  @@index([franchiseId])
+}
+
+/// Audit trail for franchise pricing changes.
+model FranchisePricingOverride {
+  id          String @id @default(cuid())
+  franchiseId String
+  tenantId    String? // null = franchise-level, non-null = location-level
+
+  tierSlug    String  // Which plan tier this override applies to
+  field       String  // e.g. "priceMonthly", "priceAnnual", "overageMailRate"
+  oldValue    String? // Previous value
+  newValue    String  // New value
+
+  changedBy   String? // User who made the change
+  changedAt   DateTime @default(now())
+
+  franchise FranchiseGroup @relation(fields: [franchiseId], references: [id])
+
+  @@index([franchiseId])
+  @@index([tenantId])
+  @@index([changedAt])
+}
