@@ -25,6 +25,9 @@ import {
   PackageCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
   Download,
   Plus,
   CheckCircle2,
@@ -290,6 +293,78 @@ function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Sortable column headers (BAR-338)                                         */
+/* -------------------------------------------------------------------------- */
+type SortField =
+  | 'status'
+  | 'trackingNumber'
+  | 'carrier'
+  | 'customer'
+  | 'packageType'
+  | 'storageLocation'
+  | 'checkedInAt'
+  | 'daysHeld';
+
+type SortDirection = 'asc' | 'desc';
+
+interface SortState {
+  field: SortField;
+  direction: SortDirection;
+}
+
+/** Clickable column header with sort indicator */
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onSort,
+  align = 'left',
+}: {
+  label: string;
+  field: SortField;
+  sort: SortState;
+  onSort: (field: SortField) => void;
+  align?: 'left' | 'center' | 'right';
+}) {
+  const isActive = sort.field === field;
+  const alignClass =
+    align === 'center'
+      ? 'justify-center'
+      : align === 'right'
+        ? 'justify-end'
+        : 'justify-start';
+
+  return (
+    <th
+      className={cn(
+        'px-4 py-3 text-xs font-semibold uppercase tracking-wider select-none',
+        isActive ? 'text-surface-200' : 'text-surface-400',
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className={cn(
+          'inline-flex items-center gap-1 hover:text-surface-200 transition-colors w-full',
+          alignClass,
+        )}
+      >
+        {label}
+        {isActive ? (
+          sort.direction === 'asc' ? (
+            <ChevronUp className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+          )
+        ) : (
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-50" />
+        )}
+      </button>
+    </th>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Page Component                                                            */
 /* -------------------------------------------------------------------------- */
 const PAGE_SIZE = 12;
@@ -329,6 +404,9 @@ function PackagesContent() {
   const [page, setPage] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Sort state (BAR-338) — default: newest checked-in first
+  const [sort, setSort] = useState<SortState>({ field: 'checkedInAt', direction: 'desc' });
 
   /* Track local status overrides (mock data is read-only) */
   const [statusOverrides, setStatusOverrides] = useState<
@@ -483,9 +561,69 @@ function PackagesContent() {
     return data;
   }, [activeTab, search, packages]);
 
-  // Pagination
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  /* ── Sorted data (BAR-338) ──────────────────────────────────── */
+  const sorted = useMemo(() => {
+    const data = [...filtered];
+    const { field, direction } = sort;
+    const dir = direction === 'asc' ? 1 : -1;
+
+    data.sort((a, b) => {
+      let aVal: string | number = '';
+      let bVal: string | number = '';
+
+      switch (field) {
+        case 'status':
+          aVal = statusLabels[a.status] || a.status;
+          bVal = statusLabels[b.status] || b.status;
+          break;
+        case 'trackingNumber':
+          aVal = a.trackingNumber?.toLowerCase() || '';
+          bVal = b.trackingNumber?.toLowerCase() || '';
+          break;
+        case 'carrier':
+          aVal = a.carrier.toLowerCase();
+          bVal = b.carrier.toLowerCase();
+          break;
+        case 'customer': {
+          const aName = a.customer
+            ? `${a.customer.firstName} ${a.customer.lastName}`.toLowerCase()
+            : '';
+          const bName = b.customer
+            ? `${b.customer.firstName} ${b.customer.lastName}`.toLowerCase()
+            : '';
+          aVal = aName;
+          bVal = bName;
+          break;
+        }
+        case 'packageType':
+          aVal = packageTypeLabels[a.packageType] || a.packageType;
+          bVal = packageTypeLabels[b.packageType] || b.packageType;
+          break;
+        case 'storageLocation':
+          aVal = a.storageLocation?.toLowerCase() || '';
+          bVal = b.storageLocation?.toLowerCase() || '';
+          break;
+        case 'checkedInAt':
+          aVal = new Date(a.checkedInAt).getTime();
+          bVal = new Date(b.checkedInAt).getTime();
+          break;
+        case 'daysHeld':
+          aVal = daysHeld(a.checkedInAt);
+          bVal = daysHeld(b.checkedInAt);
+          break;
+      }
+
+      if (aVal < bVal) return -1 * dir;
+      if (aVal > bVal) return 1 * dir;
+      return 0;
+    });
+
+    return data;
+  }, [filtered, sort]);
+
+  // Pagination — uses sorted data
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const paged = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId);
@@ -494,6 +632,16 @@ function PackagesContent() {
 
   const handleSearch = useCallback((value: string) => {
     setSearch(value);
+    setPage(0);
+  }, []);
+
+  /** Toggle sort: click active column → flip direction; click new column → asc */
+  const handleSort = useCallback((field: SortField) => {
+    setSort((prev) =>
+      prev.field === field
+        ? { field, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: 'asc' }
+    );
     setPage(0);
   }, []);
 
@@ -543,31 +691,15 @@ function PackagesContent() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-surface-800 bg-surface-900/80">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Tracking #
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Carrier
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Customer
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Type
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Location
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Checked In
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-surface-400">
-                  Days Held
-                </th>
+              <tr className="border-b border-surface-800 bg-surface-900/80 group">
+                <SortableHeader label="Status" field="status" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Tracking #" field="trackingNumber" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Carrier" field="carrier" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Customer" field="customer" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Type" field="packageType" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Location" field="storageLocation" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Checked In" field="checkedInAt" sort={sort} onSort={handleSort} />
+                <SortableHeader label="Days Held" field="daysHeld" sort={sort} onSort={handleSort} align="center" />
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-surface-400">
                   Actions
                 </th>
@@ -705,8 +837,8 @@ function PackagesContent() {
           <div className="flex items-center justify-between px-4 py-3 border-t border-surface-700/60">
             <span className="text-xs text-surface-500">
               Showing {page * PAGE_SIZE + 1}–
-              {Math.min((page + 1) * PAGE_SIZE, filtered.length)} of{' '}
-              {filtered.length}
+              {Math.min((page + 1) * PAGE_SIZE, sorted.length)} of{' '}
+              {sorted.length}
             </span>
             <div className="flex items-center gap-1">
               <Button
