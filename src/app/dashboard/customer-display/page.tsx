@@ -243,7 +243,7 @@ export default function CustomerDisplayPage() {
     <div className="space-y-6">
       <PageHeader
         title="Customer Display"
-        description="Configure and preview customer-facing screens for POS 2nd Screen and MailBox OS Client portal."
+        description="Configure customer-facing screens."
         icon={<ScreenShare className="h-5 w-5" />}
         actions={
           <div className="flex items-center gap-2">

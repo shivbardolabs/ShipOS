@@ -122,7 +122,7 @@ export default function RevenueReportPage() {
       <PageHeader
         title="Revenue & Profitability"
         icon={<DollarSign className="h-6 w-6" />}
-        description="Comprehensive revenue analysis — income, margins, and profit across all service lines"
+        description="Revenue, margins, and profit."
         actions={<ExportToolbar reportName="Revenue_Report" />}
       />
 

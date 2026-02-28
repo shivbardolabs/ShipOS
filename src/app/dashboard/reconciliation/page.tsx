@@ -290,7 +290,7 @@ export default function ReconciliationPage() {
     <div className="space-y-6">
       <PageHeader
         title="Shipping Reconciliation"
-        description="Audit carrier bills, catch overcharges, and recover refunds"
+        description="Audit bills, recover refunds."
         actions={
           <div className="flex items-center gap-2">
             <Button
@@ -487,7 +487,7 @@ export default function ReconciliationPage() {
           }
         }}
         title="Upload Carrier Bill"
-        description="Upload your carrier invoice to reconcile against ShipOS shipment records"
+        description="Upload a carrier invoice."
         size="lg"
       >
         {uploadPhase === 'idle' ? (
@@ -610,7 +610,7 @@ export default function ReconciliationPage() {
         open={showReport}
         onClose={() => setShowReport(false)}
         title="Generate Dispute Report"
-        description="Create a carrier dispute report for the selected reconciliation run"
+        description="Create a dispute report."
         size="lg"
         footer={
           <>

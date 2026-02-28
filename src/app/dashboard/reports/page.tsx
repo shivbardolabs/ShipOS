@@ -109,7 +109,7 @@ export default function ReportsPage() {
       <PageHeader
         title="Report Hub"
         icon={<BarChart3 className="h-6 w-6" />}
-        description="Central reporting dashboard — navigate to detailed reports or view quick summaries"
+        description="All reports in one hub."
         actions={<ExportToolbar reportName="Summary_Report" />}
       />
 

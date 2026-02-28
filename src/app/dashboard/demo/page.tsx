@@ -152,7 +152,7 @@ export default function DemoPage() {
     <div className="space-y-8">
       <PageHeader
         title="Demo & Walkthrough"
-        description="Seed demo data and follow the guided walkthrough to explore every ShipOS feature."
+        description="Explore with demo data."
         icon={<BookOpen className="h-6 w-6" />}
       />
 

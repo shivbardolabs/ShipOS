@@ -100,7 +100,7 @@ export default function FranchiseReportPage() {
       <PageHeader
         title="Franchise Admin Reports"
         icon={<Building2 className="h-6 w-6" />}
-        description="Cross-store aggregated analytics — compare locations, track franchise-wide KPIs"
+        description="Compare all locations."
         badge={<Badge variant="info" dot={false}>Franchise Admin Only</Badge>}
         actions={<ExportToolbar reportName="Franchise_Report" />}
       />

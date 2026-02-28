@@ -256,7 +256,7 @@ export default function NotificationsPage() {
       {/* Header */}
       <PageHeader
         title="Notifications"
-        description="Manage and monitor customer notifications across all channels"
+        description="Monitor all notifications."
         actions={
           <Button leftIcon={<Send className="h-4 w-4" />} onClick={() => setSendModalOpen(true)}>
             Send Notification
@@ -489,7 +489,7 @@ export default function NotificationsPage() {
         open={sendModalOpen}
         onClose={() => setSendModalOpen(false)}
         title="Send Notification"
-        description="Compose and send a notification to a customer"
+        description="Send a notification."
         size="lg"
         footer={
           <>

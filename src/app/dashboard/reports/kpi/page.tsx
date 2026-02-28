@@ -140,7 +140,7 @@ export default function KpiDashboardPage() {
       <PageHeader
         title="KPI Dashboard"
         icon={<Activity className="h-6 w-6" />}
-        description="Customizable store metrics — configure which KPIs appear and track trends over time"
+        description="Configure your KPI dashboard."
         actions={<ExportToolbar reportName="KPI_Dashboard" />}
       />
 

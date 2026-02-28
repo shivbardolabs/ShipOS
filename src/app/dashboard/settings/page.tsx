@@ -494,7 +494,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings"
-        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store, pricing, and preferences"
+        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store."
         actions={
           isViewOnly ? (
             <Badge variant="warning" dot>View Only</Badge>
@@ -1003,7 +1003,7 @@ export default function SettingsPage() {
                     checked={showReceiptOptions}
                     onChange={setShowReceiptOptions}
                     label="Show receipt options to customer at checkout"
-                    description="Let customers choose their preferred receipt method during check-out"
+                    description="Customer picks receipt type."
                   />
                 </div>
               </CardContent>
@@ -1019,7 +1019,7 @@ export default function SettingsPage() {
                     checked={emailReceipts}
                     onChange={setEmailReceipts}
                     label="Enable Email Receipts"
-                    description="Automatically send receipts via email after transactions"
+                    description="Auto-send email receipts."
                   />
 
                   <Select
@@ -1060,7 +1060,7 @@ export default function SettingsPage() {
                     checked={signatureLine}
                     onChange={setSignatureLine}
                     label="Include Signature Line"
-                    description="Add a signature line at the bottom of printed receipts"
+                    description="Add signature to receipts."
                   />
 
                   <Textarea
@@ -1256,7 +1256,7 @@ export default function SettingsPage() {
                       checked={smsDefaultArrival}
                       onChange={setSmsDefaultArrival}
                       label="Send SMS by default for package arrivals"
-                      description="New check-ins will automatically trigger an SMS notification"
+                      description="Auto-SMS on check-in."
                     />
 
                     <p className="text-xs text-surface-500 mt-2">

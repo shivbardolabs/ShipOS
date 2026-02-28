@@ -152,7 +152,7 @@ export default function ProgramsReportPage() {
       <PageHeader
         title="Special Program Reporting"
         icon={<Layers className="h-6 w-6" />}
-        description="Activity and performance from special partnership programs — Amazon Counter, Vinted, PUDO Point, The Return, Return Queen"
+        description="Track partner programs."
         actions={<ExportToolbar reportName="Special_Programs_Report" />}
       />
 

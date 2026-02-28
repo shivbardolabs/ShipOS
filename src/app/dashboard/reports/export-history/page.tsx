@@ -125,7 +125,7 @@ export default function ExportHistoryPage() {
       <PageHeader
         title="Export History"
         icon={<Clock className="h-6 w-6" />}
-        description="Previously generated report exports — download or regenerate"
+        description="Download past exports."
         actions={
           <div className="flex items-center gap-2">
             <Select

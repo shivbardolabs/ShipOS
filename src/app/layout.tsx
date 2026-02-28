@@ -6,6 +6,7 @@ import { TenantProvider } from '@/components/tenant-provider';
 import { FeatureFlagProvider } from '@/components/feature-flag-provider';
 import { PostHogAnalyticsProvider } from '@/components/posthog-provider';
 import { GTMProvider, GTMNoScript } from '@/components/gtm-provider';
+import { ToastProvider } from '@/components/ui/toast';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -57,7 +58,9 @@ export default function RootLayout({
                   <GTMProvider />
                   <body className="min-h-screen bg-surface-950 font-sans antialiased">
                     <GTMNoScript />
-                    {children}
+                    <ToastProvider>
+                      {children}
+                    </ToastProvider>
                   </body>
                 </PostHogAnalyticsProvider>
               </Suspense>

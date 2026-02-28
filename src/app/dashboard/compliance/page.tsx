@@ -233,7 +233,7 @@ export default function CompliancePage() {
       {/* Header */}
       <PageHeader
         title="CMRA Compliance"
-        description="Monitor customer ID expirations and Form 1583 status"
+        description="Monitor IDs and Form 1583."
         actions={
           <Button leftIcon={<Bell className="h-4 w-4" />}>
             Send Bulk Reminders

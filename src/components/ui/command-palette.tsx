@@ -348,8 +348,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           </button>
         </div>
 
-        {/* Results */}
-        <div ref={listRef} className="max-h-[380px] overflow-y-auto overscroll-contain py-2 scrollbar-thin">
+        {/* Results — TASTE: no visible scrollbars */}
+        <div ref={listRef} className="max-h-[380px] overflow-y-auto overscroll-contain py-2 scrollable">
           {flatResults.length === 0 && query.trim() ? (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <Search className="h-8 w-8 text-surface-700 mb-3" />
