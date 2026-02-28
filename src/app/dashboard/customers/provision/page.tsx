@@ -155,7 +155,7 @@ export default function ProvisionPage() {
     <div className="space-y-6">
       <PageHeader
         title="Provision New Account"
-        description="Step-by-step customer onboarding wizard"
+        description="Onboard a new customer."
         icon={<UserPlus className="h-6 w-6" />}
       />
 

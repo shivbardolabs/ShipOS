@@ -123,7 +123,7 @@ export default function RenewalsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Renewal Pipeline"
-        description="Track and manage customer mailbox renewals"
+        description="Track mailbox renewals."
         icon={<CalendarClock className="h-6 w-6" />}
         actions={
           <Button onClick={runCron} loading={processing} leftIcon={<Send className="h-4 w-4" />}>

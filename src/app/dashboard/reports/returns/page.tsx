@@ -147,7 +147,7 @@ export default function ReturnsReportPage() {
       <PageHeader
         title="Returns Program Reporting"
         icon={<RotateCcw className="h-6 w-6" />}
-        description="Dedicated reporting for FedEx Easy Returns and Happy Returns programs"
+        description="Track returns programs."
         actions={<ExportToolbar reportName="Returns_Report" />}
       />
 

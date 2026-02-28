@@ -255,7 +255,7 @@ export default function AnalyticsPage() {
       <PageHeader
         title="Interactive Charts & BI"
         icon={<BarChart3 className="h-6 w-6" />}
-        description="Interactive data visualizations, custom BI dashboards, and business intelligence tools"
+        description="Explore your data."
         actions={<ExportToolbar reportName="BI_Analytics" />}
       />
 

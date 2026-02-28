@@ -47,6 +47,7 @@ import {
   Printer,
   Building2,
   CreditCard,
+  Palette,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -131,6 +132,7 @@ const navSections: NavSection[] = [
       { label: 'Pricing Dashboard', href: '/dashboard/pricing', icon: DollarSign, flagKey: 'action-pricing' },
       { label: 'Customer Display', href: '/dashboard/customer-display', icon: ScreenShare, flagKey: 'customer-display' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { label: 'Brand Kit', href: '/dashboard/settings/brandkit', icon: Palette },
       { label: 'Platform Config', href: '/dashboard/settings/platform-config', icon: Monitor, requiredRole: 'admin' },
     ],
   },
@@ -235,8 +237,8 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      {/* Nav sections — TASTE: scrollable with hidden scrollbar */}
+      <nav className="flex-1 overflow-y-auto scrollable px-3 py-4 space-y-6">
         {navSections
           .filter((section) => !section.requiredRole || role === section.requiredRole)
           .map((section) => {

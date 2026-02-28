@@ -170,7 +170,7 @@ export default function PackageReportPage() {
       <PageHeader
         title="Package Inventory Report"
         icon={<Package className="h-6 w-6" />}
-        description="Real-time inventory snapshot — status, aging, carrier, and customer breakdowns"
+        description="Package inventory at a glance."
         actions={<ExportToolbar reportName="Package_Inventory" />}
       />
 

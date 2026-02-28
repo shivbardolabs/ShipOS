@@ -567,7 +567,7 @@ export default function CheckInPage() {
     <div className="space-y-6">
       <PageHeader
         title="Check In Package"
-        description="Process a new incoming package"
+        description="Check in a package."
         badge={lastCheckIn ? <PerformedBy entry={lastCheckIn} showAction className="ml-2" /> : undefined}
         actions={
           <div className="flex items-center gap-2">

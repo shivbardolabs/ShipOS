@@ -30,16 +30,17 @@ const variantStyles: Record<ButtonVariant, string> = {
     'bg-transparent text-primary-600 border border-primary-300 hover:bg-primary-50 active:bg-primary-50',
 };
 
+/* ── TASTE: Larger hit targets (44px minimum touch target) ── */
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'text-xs px-2.5 py-1.5 rounded-md gap-1.5',
-  md: 'text-sm px-4 py-2 rounded-lg gap-2',
-  lg: 'text-base px-6 py-2.5 rounded-lg gap-2.5',
+  sm: 'text-xs px-3 py-2 rounded-md gap-1.5 min-h-[36px]',
+  md: 'text-sm px-4 py-2.5 rounded-lg gap-2 min-h-[44px]',
+  lg: 'text-base px-6 py-3 rounded-lg gap-2.5 min-h-[52px]',
 };
 
 const iconOnlySizes: Record<ButtonSize, string> = {
-  sm: 'p-1.5 rounded-md',
-  md: 'p-2 rounded-lg',
-  lg: 'p-3 rounded-lg',
+  sm: 'p-2 rounded-md min-h-[36px] min-w-[36px]',
+  md: 'p-2.5 rounded-lg min-h-[44px] min-w-[44px]',
+  lg: 'p-3 rounded-lg min-h-[52px] min-w-[52px]',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(

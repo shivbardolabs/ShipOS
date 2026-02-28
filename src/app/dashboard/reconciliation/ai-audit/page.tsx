@@ -432,7 +432,7 @@ export default function AIAuditPage() {
       <PageHeader
         title="AI Carrier Bill Auditor"
         icon={<Sparkles className="h-5 w-5 text-violet-400" />}
-        description="Upload a carrier invoice and let AI find overcharges and billing discrepancies"
+        description="AI finds carrier overcharges."
         badge={
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/15 text-violet-400 border border-violet-500/25">
             <Zap className="h-3 w-3" />

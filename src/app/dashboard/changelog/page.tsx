@@ -282,7 +282,7 @@ export default function ChangelogPage() {
 
         <PageHeader
           title="Changelog"
-          description="See what's new in ShipOS — every feature, improvement, and fix we've shipped."
+          description="See what we shipped."
         />
       </div>
 
