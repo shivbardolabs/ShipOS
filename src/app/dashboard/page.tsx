@@ -299,7 +299,7 @@ function timeAgo(isoString: string): string {
 export default function DashboardPage() {
   const volumeData = useMemo(() => buildVolumeData(), []);
   const maxVolume = Math.max(...volumeData.map((v) => v.count));
-  const { entries: activityEntries } = useActivityLog();
+  const { entries: activityEntries, loading: activityLoading } = useActivityLog();
 
   /* ── Live dashboard stats from Postgres ───────────────────────── */
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -1016,8 +1016,17 @@ export default function DashboardPage() {
               })}
               {feedItems.length === 0 && (
                 <div className="text-center py-8 text-surface-500">
-                  <Activity className="h-8 w-8 mx-auto mb-2 text-surface-600" />
-                  <p className="text-sm">No activity yet</p>
+                  {activityLoading ? (
+                    <>
+                      <div className="h-8 w-8 mx-auto mb-2 border-2 border-surface-600 border-t-primary-500 rounded-full animate-spin" />
+                      <p className="text-sm">Loading activity…</p>
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="h-8 w-8 mx-auto mb-2 text-surface-600" />
+                      <p className="text-sm">No activity yet</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

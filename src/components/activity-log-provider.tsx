@@ -12,86 +12,11 @@ import { useTenant } from '@/components/tenant-provider';
 import {
   logAction as _logAction,
   readLog,
-  getLastActionForEntity,
-  getLastActionByVerb,
-  getRecentActions as _getRecentActions,
-  getActionsByCategory as _getActionsByCategory,
-  getActionsByUser as _getActionsByUser,
   type LogActionParams,
   type ActivityLogEntry,
   type ActionVerb,
   type ActionCategory,
 } from '@/lib/activity-log';
-
-/* -------------------------------------------------------------------------- */
-/*  Seed data — pre-populate log with realistic history                       */
-/* -------------------------------------------------------------------------- */
-const SEED_KEY = 'shipos_activity_log_seeded_v3';
-
-interface SeedEntry {
-  action: ActionVerb;
-  entityType: string;
-  entityId: string;
-  entityLabel: string;
-  description: string;
-  userName: string;
-  userRole: string;
-  minutesAgo: number;
-}
-
-const SEED_DATA: SeedEntry[] = [
-  { action: 'package.check_in', entityType: 'package', entityId: 'pkg_001', entityLabel: 'TBA000000017', description: 'Checked in Amazon package for PMB-0003', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 15 },
-  { action: 'notification.send', entityType: 'notification', entityId: 'notif_001', entityLabel: 'Linda Nakamura', description: 'Sent arrival notification to Linda Nakamura (PMB-0002)', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 30 },
-  { action: 'package.labels_printed', entityType: 'package', entityId: 'batch_001', entityLabel: '4 labels', description: 'Printed batch of 4 labels: PMB-0003 (AMAZON), PMB-0002 (USPS), PMB-0005 (UPS), PMB-0012 (FEDEX)', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 45 },
-  { action: 'package.release', entityType: 'package', entityId: 'pkg_010', entityLabel: 'PKG pkg_010', description: 'Released 2 packages to David Kim (PMB-0005)', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 55 },
-  { action: 'shipment.create', entityType: 'shipment', entityId: 'ship_001', entityLabel: 'FedEx Express', description: 'Created FedEx Express shipment for PMB-0010', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 80 },
-  { action: 'mail.insert', entityType: 'mail', entityId: 'mail_001', entityLabel: 'Letter', description: 'Inserted and uploaded mail for PMB-0014', userName: 'Alex Rivera', userRole: 'employee', minutesAgo: 110 },
-  { action: 'customer.create', entityType: 'customer', entityId: 'cust_030', entityLabel: 'PMB-0030', description: 'Registered new customer Rachel Green (PMB-0030)', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 140 },
-  { action: 'package.check_in', entityType: 'package', entityId: 'pkg_004', entityLabel: '1Z999AA100000041', description: 'Checked in oversized UPS package for PMB-0001', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 170 },
-  { action: 'customer.update', entityType: 'customer', entityId: 'cust_005', entityLabel: 'PMB-0005', description: 'Updated ID expiration for David Kim (PMB-0005)', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 200 },
-  { action: 'shipment.ship', entityType: 'shipment', entityId: 'ship_002', entityLabel: 'DHL International', description: 'DHL International shipment shipped for PMB-0019', userName: 'Alex Rivera', userRole: 'employee', minutesAgo: 240 },
-  { action: 'notification.send', entityType: 'notification', entityId: 'notif_002', entityLabel: 'Patricia Williams', description: 'Sent renewal reminder to Patricia Williams (PMB-0006)', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 300 },
-  { action: 'mail.forward', entityType: 'mail', entityId: 'mail_002', entityLabel: 'Legal document', description: 'Forwarded legal mail to customer PMB-0026', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 350 },
-  { action: 'settings.update', entityType: 'settings', entityId: 'general', entityLabel: 'Store Info', description: 'Updated store business hours', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 420 },
-  { action: 'package.check_in', entityType: 'package', entityId: 'pkg_015', entityLabel: '74890000001511', description: 'Checked in FedEx package for PMB-0012', userName: 'Alex Rivera', userRole: 'employee', minutesAgo: 460 },
-  { action: 'invoice.create', entityType: 'invoice', entityId: 'inv_001', entityLabel: 'INV-2026-042', description: 'Created invoice for PMB-0010 storage fees', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 500 },
-  { action: 'compliance.form1583_update', entityType: 'customer', entityId: 'cust_017', entityLabel: 'PMB-0017', description: 'Updated Form 1583 status to submitted for PMB-0017', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 560 },
-  { action: 'user.invite', entityType: 'user', entityId: 'invite_001', entityLabel: 'jsmith@store.com', description: 'Invited new employee jsmith@store.com', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 720 },
-  { action: 'package.release', entityType: 'package', entityId: 'pkg_020', entityLabel: 'PKG pkg_020', description: 'Released package to Elizabeth Martinez (PMB-0010)', userName: 'Alex Rivera', userRole: 'employee', minutesAgo: 780 },
-  { action: 'settings.carrier_rate_update', entityType: 'settings', entityId: 'carrier_rates', entityLabel: 'UPS Rates', description: 'Updated UPS Ground retail rate to $13.49', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 900 },
-  { action: 'loyalty.configure', entityType: 'loyalty', entityId: 'program_001', entityLabel: 'ShipOS Rewards', description: 'Updated points-per-dollar from 1 to 1.5', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 1080 },
-  { action: 'customer.update', entityType: 'customer', entityId: 'cust_003', entityLabel: 'PMB-0003', description: 'Updated notification preferences for Robert Singh', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 1200 },
-];
-
-function seedActivityLog() {
-  if (typeof window === 'undefined') return;
-  if (localStorage.getItem(SEED_KEY)) return;
-
-  const users: Record<string, { id: string; avatar?: string }> = {
-    'Sarah Chen': { id: 'usr_001' },
-    'Mike Torres': { id: 'usr_002' },
-    'Alex Rivera': { id: 'usr_003' },
-  };
-
-  const now = Date.now();
-  const entries: ActivityLogEntry[] = SEED_DATA.map((s, i) => ({
-    id: `seed_${String(i + 1).padStart(3, '0')}`,
-    action: s.action,
-    category: s.action.split('.')[0] as ActionCategory,
-    entityType: s.entityType,
-    entityId: s.entityId,
-    entityLabel: s.entityLabel,
-    description: s.description,
-    userId: users[s.userName]?.id ?? 'usr_001',
-    userName: s.userName,
-    userRole: s.userRole,
-    userAvatar: users[s.userName]?.avatar,
-    timestamp: new Date(now - s.minutesAgo * 60_000).toISOString(),
-  }));
-
-  localStorage.setItem('shipos_activity_log', JSON.stringify(entries));
-  localStorage.setItem(SEED_KEY, 'true');
-}
 
 /* -------------------------------------------------------------------------- */
 /*  Context                                                                   */
@@ -112,8 +37,10 @@ interface ActivityLogContextValue {
   actionsByUser: (userId: string, limit?: number) => ActivityLogEntry[];
   /** All log entries (reactive — updated after each log call) */
   entries: ActivityLogEntry[];
-  /** Force a re-read from localStorage */
+  /** Force a re-read from the API */
   refresh: () => void;
+  /** Whether the initial load is still in progress */
+  loading: boolean;
 }
 
 const ActivityLogContext = createContext<ActivityLogContextValue>({
@@ -125,6 +52,7 @@ const ActivityLogContext = createContext<ActivityLogContextValue>({
   actionsByUser: () => [],
   entries: [],
   refresh: () => {},
+  loading: true,
 });
 
 /* -------------------------------------------------------------------------- */
@@ -134,16 +62,41 @@ const ActivityLogContext = createContext<ActivityLogContextValue>({
 export function ActivityLogProvider({ children }: { children: ReactNode }) {
   const { localUser } = useTenant();
   const [entries, setEntries] = useState<ActivityLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Seed on first mount + load existing entries
-  useEffect(() => {
-    seedActivityLog();
-    setEntries(readLog());
+  // Fetch audit log entries from the real API
+  const fetchEntries = useCallback(async () => {
+    try {
+      const res = await fetch('/api/audit-log?limit=200');
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      if (data.entries && Array.isArray(data.entries)) {
+        // Merge with any client-side entries logged in the current session
+        // (in-memory only, these will be in the DB on next fetch)
+        const localEntries = readLog();
+        const dbIds = new Set(data.entries.map((e: ActivityLogEntry) => e.id));
+        const uniqueLocal = localEntries.filter((e) => !dbIds.has(e.id));
+        // Show DB entries first (newest), then any local-only entries
+        setEntries([...data.entries, ...uniqueLocal]);
+      }
+    } catch (err) {
+      console.warn('[ActivityLogProvider] API fetch failed, falling back to localStorage', err);
+      // Fallback to localStorage if API is unavailable
+      setEntries(readLog());
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Load on mount
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
 
   const refresh = useCallback(() => {
-    setEntries(readLog());
-  }, []);
+    setLoading(true);
+    fetchEntries();
+  }, [fetchEntries]);
 
   const log = useCallback(
     (params: Omit<LogActionParams, 'userId' | 'userName' | 'userRole' | 'userAvatar'>) => {
@@ -155,40 +108,39 @@ export function ActivityLogProvider({ children }: { children: ReactNode }) {
         userRole: localUser.role,
         userAvatar: localUser.avatar ?? undefined,
       });
-      // Update reactive state
-      setEntries(readLog());
+      // Add to reactive state immediately for instant UI feedback
+      setEntries((prev) => [entry, ...prev]);
       return entry;
     },
     [localUser]
   );
 
   const lastActionFor = useCallback(
-    (entityType: string, entityId: string) => getLastActionForEntity(entityType, entityId),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entries] // re-evaluate when entries change
+    (entityType: string, entityId: string) =>
+      entries.find((e) => e.entityType === entityType && e.entityId === entityId) ?? null,
+    [entries]
   );
 
   const lastActionByVerb = useCallback(
-    (action: ActionVerb) => getLastActionByVerb(action),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (action: ActionVerb) =>
+      entries.find((e) => e.action === action) ?? null,
     [entries]
   );
 
   const recentActions = useCallback(
-    (limit?: number) => _getRecentActions(limit),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (limit = 20) => entries.slice(0, limit),
     [entries]
   );
 
   const actionsByCategory = useCallback(
-    (category: ActionCategory, limit?: number) => _getActionsByCategory(category, limit),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (category: ActionCategory, limit = 50) =>
+      entries.filter((e) => e.category === category).slice(0, limit),
     [entries]
   );
 
   const actionsByUser = useCallback(
-    (userId: string, limit?: number) => _getActionsByUser(userId, limit),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (userId: string, limit = 50) =>
+      entries.filter((e) => e.userId === userId).slice(0, limit),
     [entries]
   );
 
@@ -203,6 +155,7 @@ export function ActivityLogProvider({ children }: { children: ReactNode }) {
         actionsByUser,
         entries,
         refresh,
+        loading,
       }}
     >
       {children}

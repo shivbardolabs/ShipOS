@@ -28,6 +28,8 @@ import {
   Award,
   UserPlus,
   TrendingUp,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -194,7 +196,7 @@ function ActivityEntryRow({ entry }: { entry: import('@/lib/activity-log').Activ
 }
 
 export default function ActivityLogPage() {
-  const { entries } = useActivityLog();
+  const { entries, loading, refresh } = useActivityLog();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [userFilter, setUserFilter] = useState<string>('all');
@@ -266,11 +268,25 @@ export default function ActivityLogPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Activity Log"
-        description="Track every action in one place."
-        icon={<Activity className="h-5 w-5" />}
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Activity Log"
+          description="Track every action in one place."
+          icon={<Activity className="h-5 w-5" />}
+        />
+        <button
+          onClick={refresh}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 transition-colors disabled:opacity-50"
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+          Refresh
+        </button>
+      </div>
 
       {/* ── Stats ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -355,11 +371,16 @@ export default function ActivityLogPage() {
         </CardHeader>
 
         <div className="px-5 pb-5 pt-3">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-surface-500">
+              <Loader2 className="h-10 w-10 mb-3 text-surface-600 animate-spin" />
+              <p className="text-sm font-medium">Loading activity…</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-surface-500">
               <Activity className="h-10 w-10 mb-3 text-surface-600" />
               <p className="text-sm font-medium">No activity found</p>
-              <p className="text-xs mt-1">Try adjusting your filters</p>
+              <p className="text-xs mt-1">{entries.length === 0 ? 'Activity will appear here as actions are performed in the system' : 'Try adjusting your filters'}</p>
             </div>
           ) : (
             <div className="space-y-0.5">
