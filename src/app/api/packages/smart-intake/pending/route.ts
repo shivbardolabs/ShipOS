@@ -12,6 +12,18 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
+
+    // BAR-337: Fast path for sidebar badge — just return the pending count
+    if (searchParams.get('countOnly') === 'true') {
+      const pendingCount = await prisma.smartIntakePending.count({
+        where: {
+          status: 'pending',
+          ...(user.role !== 'superadmin' && user.tenantId ? { tenantId: user.tenantId } : {}),
+        },
+      });
+      return NextResponse.json({ count: pendingCount });
+    }
+
     const status = searchParams.get('status'); // pending | approved | rejected
     const search = searchParams.get('search');
     const batchId = searchParams.get('batchId');

@@ -467,6 +467,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── Sidebar Pending Badge (BAR-337) ──────────────────────────────────────
+  {
+    key: 'sidebar_pending_badge',
+    name: 'Sidebar Pending Badge',
+    description: 'Show notification badge on sidebar nav with count of packages pending clerk check-in review from Smart Intake',
+    category: 'packages',
+    defaultEnabled: true,
+  },
+
   // ── PMB Plan Features (BAR-307) ──────────────────────────────────────────
   {
     key: 'pmb_plan_features',

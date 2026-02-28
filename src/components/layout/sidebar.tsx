@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useTenant } from '@/components/tenant-provider';
 import { useFlags } from '@/components/feature-flag-provider';
+import { usePendingIntakeCount } from '@/hooks/use-pending-intake-count';
 import { cn } from '@/lib/utils';
 import {
   Package,
@@ -63,6 +64,8 @@ interface NavItem {
   requiredRole?: string;
   /** Feature flag key — item hidden if flag is disabled */
   flagKey?: string;
+  /** Badge key — shows a count badge sourced from useSidebarBadges() */
+  badgeKey?: string;
 }
 
 interface NavSection {
@@ -85,8 +88,8 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package, flagKey: 'package-management' },
-      { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles, flagKey: 'ai-smart-intake' },
-      { label: 'Pending Check-In', href: '/dashboard/packages/pending-checkin', icon: ClipboardCheck, flagKey: 'pending-checkin-queue' },
+      { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles, flagKey: 'ai-smart-intake', badgeKey: 'pendingIntake' },
+      { label: 'Pending Check-In', href: '/dashboard/packages/pending-checkin', icon: ClipboardCheck, flagKey: 'pending-checkin-queue', badgeKey: 'pendingIntake' },
       { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus, flagKey: 'package-check-in' },
       { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck, flagKey: 'package-check-out' },
       { label: 'Return to Sender', href: '/dashboard/packages/rts', icon: Undo2, flagKey: 'rts_workflow' },
@@ -169,6 +172,31 @@ function RoleBanner({ role }: { role: UserRole }) {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Pending Badge — count indicator for nav items (BAR-337)                   */
+/* -------------------------------------------------------------------------- */
+function PendingBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  const display = count > 99 ? '99+' : String(count);
+  // Amber for low counts (1-9), red/rose for 10+
+  const isUrgent = count >= 10;
+  return (
+    <span
+      className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none text-white animate-in fade-in duration-200"
+      style={{
+        background: isUrgent
+          ? 'linear-gradient(135deg, #e11d48, #f43f5e)'
+          : 'linear-gradient(135deg, #d97706, #f59e0b)',
+        boxShadow: isUrgent
+          ? '0 0 8px rgba(225, 29, 72, 0.4)'
+          : '0 0 8px rgba(217, 119, 6, 0.3)',
+      }}
+    >
+      {display}
+    </span>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Sidebar                                                                   */
 /* -------------------------------------------------------------------------- */
 export function Sidebar() {
@@ -177,6 +205,15 @@ export function Sidebar() {
   const { user, isLoading } = useUser();
   const { tenant, localUser } = useTenant();
   const { isEnabled } = useFlags();
+
+  // BAR-337: Pending intake count for sidebar badge
+  const badgeEnabled = isEnabled('sidebar_pending_badge');
+  const { count: pendingIntakeCount } = usePendingIntakeCount(30_000, badgeEnabled);
+
+  // Map of badgeKey → count (extensible for future badges)
+  const badgeCounts: Record<string, number> = {
+    pendingIntake: badgeEnabled ? pendingIntakeCount : 0,
+  };
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -256,6 +293,7 @@ export function Sidebar() {
                 <div className="space-y-0.5">
                   {visibleItems.map((item) => {
                     const active = isActive(item.href);
+                    const badgeCount = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
                     return (
                       <Link
                         key={item.href}
@@ -283,6 +321,7 @@ export function Sidebar() {
                           style={isPlatformSection ? { color: '#e11d48' } : undefined}
                         />
                         <span className="truncate">{item.label}</span>
+                        {badgeCount > 0 && <PendingBadge count={badgeCount} />}
                       </Link>
                     );
                   })}

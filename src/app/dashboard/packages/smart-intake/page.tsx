@@ -48,6 +48,8 @@ interface MatchedPackage {
   editing: boolean;
   /** Editable overrides */
   overrides: Partial<SmartIntakeResult>;
+  /** BAR-337: Server-side pending item ID (for badge count tracking) */
+  pendingItemId?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -276,6 +278,37 @@ export default function SmartIntakePage() {
         }))
       );
 
+      // BAR-337: Save to pending queue for sidebar badge count
+      try {
+        const pendingResp = await fetch('/api/packages/smart-intake/pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: data.results.map((r: SmartIntakeResult) => ({
+              carrier: r.carrier,
+              trackingNumber: r.trackingNumber,
+              senderName: r.senderName,
+              senderAddress: r.senderAddress,
+              recipientName: r.recipientName,
+              pmbNumber: r.pmbNumber,
+              packageSize: r.packageSize,
+              confidence: r.confidence,
+              rawExtraction: JSON.stringify(r),
+            })),
+          }),
+        });
+        if (pendingResp.ok) {
+          const pendingData = await pendingResp.json();
+          // Link created pending item IDs back to matched packages
+          const createdItems: Array<{ id: string }> = pendingData.items ?? [];
+          createdItems.forEach((item, i) => {
+            if (matched[i]) matched[i].pendingItemId = item.id;
+          });
+        }
+      } catch {
+        // Non-blocking: badge count is a nice-to-have
+      }
+
       setMatchedPackages(matched);
       setPhase('review');
     } catch {
@@ -319,6 +352,15 @@ export default function SmartIntakePage() {
             confidence: effectiveResult.confidence,
           },
         });
+      }
+
+      // BAR-337: Approve pending item to decrement sidebar badge
+      if (pkg.pendingItemId) {
+        fetch(`/api/packages/smart-intake/pending/${pkg.pendingItemId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'approve' }),
+        }).catch(() => {}); // Non-blocking
       }
     },
     [matchedPackages, log]
