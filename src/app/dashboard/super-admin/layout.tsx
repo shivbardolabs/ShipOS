@@ -12,7 +12,6 @@ import {
   Shield,
   Flag,
   ScrollText,
-  Activity,
   LogOut,
   Menu,
   X,
