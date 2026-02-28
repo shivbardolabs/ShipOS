@@ -48,6 +48,7 @@ import {
   Building2,
   Wallet,
   CreditCard,
+  ClipboardCheck,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -85,6 +86,7 @@ const navSections: NavSection[] = [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Package Mgmt', href: '/dashboard/packages', icon: Package, flagKey: 'package-management' },
       { label: 'Smart Intake', href: '/dashboard/packages/smart-intake', icon: Sparkles, flagKey: 'ai-smart-intake' },
+      { label: 'Pending Check-In', href: '/dashboard/packages/pending-checkin', icon: ClipboardCheck, flagKey: 'pending-checkin-queue' },
       { label: 'Package Check-In', href: '/dashboard/packages/check-in', icon: PackagePlus, flagKey: 'package-check-in' },
       { label: 'Package Check-Out', href: '/dashboard/packages/check-out', icon: PackageCheck, flagKey: 'package-check-out' },
       { label: 'Return to Sender', href: '/dashboard/packages/rts', icon: Undo2, flagKey: 'rts_workflow' },

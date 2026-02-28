@@ -326,6 +326,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── Pending Check-In Queue (BAR-336) ───────────────────────────────────────
+  {
+    key: 'pending-checkin-queue',
+    name: 'Pending Check-In Queue',
+    description: 'Batch Smart Intake clerk approval queue — review, edit, approve or reject AI-scanned packages before final check-in',
+    category: 'packages',
+    defaultEnabled: false,
+  },
+
   // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
   {
     key: 'stripe_payments',

@@ -1642,6 +1642,58 @@ model FranchiseLocation {
   @@index([franchiseId])
 }
 
+/// BAR-336: Pending Check-In Queue — packages scanned via Smart Intake awaiting clerk approval.
+model SmartIntakePending {
+  id             String  @id @default(cuid())
+  trackingNumber String?
+  carrier        String  // amazon, ups, fedex, usps, dhl, lasership, ontrac, other
+  senderName     String?
+  senderAddress  String?
+  recipientName  String?
+  pmbNumber      String?
+  packageSize    String  @default("medium") // letter, pack, small, medium, large, xlarge
+  serviceType    String? // pmb_customer, ipostal, ups_access_point, fedex_hal, kinek, amazon_hub, general_delivery
+  confidence     Float   @default(0)
+
+  /// Carrier confidence: high, medium, low
+  carrierConfidence String?
+  /// Whether tracking number passes validation
+  trackingNumberValid Boolean @default(false)
+  /// Whether recipient appears to be a business name
+  recipientIsBusiness Boolean @default(false)
+
+  /// Approval status: pending, approved, rejected
+  status         String  @default("pending")
+  /// Clerk who reviewed (null if not yet reviewed)
+  reviewedById   String?
+  /// Timestamp of approval/rejection
+  reviewedAt     DateTime?
+  /// Reason for rejection (if rejected)
+  rejectionReason String?
+
+  /// Original image reference (base64 thumbnail or URL)
+  labelImageUrl  String?
+  /// JSON blob of the raw extraction result for audit purposes
+  rawExtraction  String?
+
+  /// If approved, the Package.id created from this pending item
+  checkedInPackageId String?
+
+  /// Batch scan session grouping (all items from one scan share a batchId)
+  batchId        String?
+
+  /// Tenant scoping
+  tenantId       String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([batchId])
+  @@index([tenantId])
+  @@index([trackingNumber])
+}
+
 /// Audit trail for franchise pricing changes.
 model FranchisePricingOverride {
   id          String @id @default(cuid())
