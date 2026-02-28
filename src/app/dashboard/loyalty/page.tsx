@@ -2,7 +2,6 @@
 /* eslint-disable */
 
 import { useState, useEffect } from 'react';
-import { formatDate } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-header';
 import {
   Award,
