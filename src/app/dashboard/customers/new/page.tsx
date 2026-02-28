@@ -281,7 +281,50 @@ export default function NewCustomerPage() {
     if (validateStep(step)) setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
   }, [step, validateStep]);
   const handleBack = useCallback(() => { setStep((s) => Math.max(s - 1, 0)); }, []);
-  const handleCreate = useCallback(() => { setCreated(true); }, []);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleCreate = useCallback(async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: customerForm.firstName,
+          lastName: customerForm.lastName,
+          email: customerForm.email || undefined,
+          phone: customerForm.phone || undefined,
+          businessName: customerForm.businessName || undefined,
+          pmbNumber: customerForm.pmbNumber,
+          platform: customerForm.platform || 'physical',
+          billingTerms: customerForm.billingTerms || undefined,
+          homeAddress: customerForm.homeAddress || undefined,
+          homeCity: customerForm.homeCity || undefined,
+          homeState: customerForm.homeState || undefined,
+          homeZip: customerForm.homeZip || undefined,
+          idType: primaryIdType || undefined,
+          idExpiration: primaryIdExpiration || undefined,
+          form1583Status: form1583.crdUploaded ? 'submitted' : 'pending',
+          form1583Notarized: form1583.notarized,
+          agreementSigned,
+          notifyEmail: customerForm.notifyEmail,
+          notifySms: customerForm.notifySms,
+          notes: customerForm.notes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save customer');
+      }
+      setCreated(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save customer');
+    } finally {
+      setSaving(false);
+    }
+  }, [customerForm, primaryIdType, primaryIdExpiration, form1583, agreementSigned]);
 
   if (created) {
     return (
@@ -831,9 +874,15 @@ export default function NewCustomerPage() {
           {step < WIZARD_STEPS.length - 1 ? (
             <Button variant="default" onClick={handleNext} rightIcon={<ArrowRight className="h-4 w-4" />}>Continue</Button>
           ) : (
-            <Button variant="default" onClick={handleCreate} leftIcon={<CheckCircle2 className="h-4 w-4" />}>Create Customer</Button>
+            <Button variant="default" onClick={handleCreate} disabled={saving} leftIcon={saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}>{saving ? 'Saving…' : 'Create Customer'}</Button>
           )}
         </div>
+        {saveError && (
+          <div className="mt-2 px-2 py-2 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            {saveError}
+          </div>
+        )}
       </Card>
     </div>
   );

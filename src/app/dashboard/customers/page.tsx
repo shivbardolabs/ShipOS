@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import type { Customer } from '@/lib/types';
 import {
   UserPlus, Package, Mail, Phone, ChevronLeft, ChevronRight, LayoutGrid, List,
   AlertTriangle, Upload, FileSpreadsheet, CheckCircle2, XCircle, ChevronDown,
-  User, Download, AlertCircle, Calendar,
+  User, Download, AlertCircle, Calendar, Loader2,
 } from 'lucide-react';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
@@ -140,7 +140,31 @@ function autoMapColumns(headers: string[]): Record<string, string> {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const [customers] = useState<Customer[]>(mockCustomers);
+  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/customers');
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && Array.isArray(data.customers)) {
+            // Merge DB customers with mock data — DB customers take priority
+            const dbIds = new Set(data.customers.map((c: Customer) => c.id));
+            const merged = [
+              ...data.customers,
+              ...mockCustomers.filter((m) => !dbIds.has(m.id)),
+            ];
+            setCustomers(merged);
+          }
+        }
+      } catch {
+        // Fall back to mock data silently
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
@@ -193,11 +217,43 @@ export default function CustomersPage() {
     return Object.keys(errors).length === 0;
   }, [form]);
 
-  const handleAddCustomer = useCallback(() => {
+  const [addSaving, setAddSaving] = useState(false);
+
+  const handleAddCustomer = useCallback(async () => {
     if (!validateForm()) return;
-    setAddSuccess(true);
-    setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
-  }, [validateForm]);
+    setAddSaving(true);
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email || undefined,
+          phone: form.phone || undefined,
+          businessName: form.businessName || undefined,
+          pmbNumber: form.pmbNumber || `PMB-${Date.now().toString(36).toUpperCase()}`,
+          platform: form.platform || 'physical',
+          billingTerms: form.billingTerms || undefined,
+          notifyEmail: form.notifyEmail,
+          notifySms: form.notifySms,
+          notes: form.notes || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) {
+          setCustomers((prev) => [data.customer, ...prev]);
+        }
+      }
+      setAddSuccess(true);
+      setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
+    } catch {
+      setFormErrors({ submit: 'Failed to save customer. Please try again.' });
+    } finally {
+      setAddSaving(false);
+    }
+  }, [validateForm, form]);
 
   const handleFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -410,7 +466,7 @@ export default function CustomersPage() {
         footer={addSuccess ? undefined : (
           <>
             <Button variant="secondary" onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM); setFormErrors({}); }}>Cancel</Button>
-            <Button leftIcon={<UserPlus className="h-4 w-4" />} onClick={handleAddCustomer}>Add Customer</Button>
+            <Button leftIcon={addSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} onClick={handleAddCustomer} disabled={addSaving}>{addSaving ? 'Saving…' : 'Add Customer'}</Button>
           </>
         )}>
         {addSuccess ? (
