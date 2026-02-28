@@ -62,7 +62,7 @@ export interface Package {
   carrier: string;
   senderName?: string;
   packageType: 'letter' | 'pack' | 'small' | 'medium' | 'large' | 'xlarge';
-  status: 'checked_in' | 'notified' | 'ready' | 'released' | 'returned';
+  status: 'checked_in' | 'notified' | 'ready' | 'released' | 'returned' | 'rts_initiated' | 'rts_labeled' | 'rts_completed';
   hazardous: boolean;
   perishable: boolean;
   notes?: string;

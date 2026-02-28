@@ -150,6 +150,10 @@ export function getStatusColor(status: string): string {
     approved: "bg-green-500/20 text-green-400 border-green-500/30",
     submitted: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     expired: "bg-red-500/20 text-red-400 border-red-500/30",
+    // RTS statuses
+    rts_initiated: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    rts_labeled: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    rts_completed: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     // Reconciliation statuses
     matched: "bg-green-500/20 text-green-400 border-green-500/30",
     overcharge: "bg-red-500/20 text-red-400 border-red-500/30",

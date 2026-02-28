@@ -26,7 +26,8 @@ import {
   Hash,
   Phone,
   User,
-  Loader2 } from 'lucide-react';
+  Loader2,
+  Undo2 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
@@ -40,6 +41,7 @@ import { printLabel, renderPackageLabel } from '@/lib/labels';
 // customers now fetched from API
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { RtsInitiateDialog } from '@/components/packages/rts-initiate-dialog';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -336,6 +338,7 @@ export default function CheckInPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkedInPackageId, setCheckedInPackageId] = useState<string | null>(null);
+  const [showRtsDialog, setShowRtsDialog] = useState(false);
 
   // BAR-324: Derive detected search category from input (no extra state needed)
   const detectedCategory = detectSearchCategory(customerSearch);
@@ -1209,6 +1212,17 @@ export default function CheckInPage() {
                       <div className="col-span-2 py-12 text-center text-surface-500">
                         <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
                         <p>No customers found matching your search</p>
+                        <p className="text-xs text-surface-600 mt-2">
+                          If no customer can be matched, you can return this package to the sender.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowRtsDialog(true)}
+                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/30 transition-colors"
+                        >
+                          <Undo2 className="h-3.5 w-3.5" />
+                          Return to Sender
+                        </button>
                       </div>
                     )}
                   </div>
@@ -2134,6 +2148,18 @@ export default function CheckInPage() {
           )}
         </div>
       </Modal>
+
+      {/* RTS Dialog — triggered from no-results flow (BAR-321) */}
+      {showRtsDialog && (
+        <RtsInitiateDialog
+          onClose={() => setShowRtsDialog(false)}
+          onSuccess={() => {
+            setShowRtsDialog(false);
+            handleReset();
+          }}
+          prefillReason="no_matching_customer"
+        />
+      )}
     </div>
   );
 }

@@ -138,7 +138,7 @@ function deriveCategoryFromAction(action: string, entityType: string): string {
   const validCategories = [
     'package', 'customer', 'mail', 'shipment', 'notification',
     'settings', 'user', 'loyalty', 'compliance', 'invoice',
-    'report', 'auth', 'carrier_program', 'alert', 'sms',
+    'report', 'auth', 'carrier_program', 'alert', 'sms', 'rts',
   ];
   if (validCategories.includes(prefix)) return prefix;
 
@@ -208,6 +208,16 @@ function buildDescription(
         : 'Updated carrier program enrollment',
     'carrier_program.upload_batch': (d) =>
       `Uploaded batch: ${d?.uploaded || 0} succeeded, ${d?.failed || 0} failed`,
+    'rts.initiated': (d) =>
+      d?.description as string || 'Return to Sender initiated',
+    'rts.label_printed': (d) =>
+      d?.description as string || 'RTS label printed',
+    'rts.carrier_handoff': (d) =>
+      d?.description as string || 'RTS carrier handoff recorded',
+    'rts.completed': (d) =>
+      d?.description as string || 'RTS completed',
+    'rts.cancelled': (d) =>
+      d?.description as string || 'RTS cancelled',
   };
 
   const fn = ACTION_DESCRIPTIONS[action];
