@@ -408,6 +408,35 @@ export default function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  /*  Receipt logo upload handler                                       */
+  /* ──────────────────────────────────────────────────────────────────── */
+  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      alert('Please upload a PNG or JPG image.');
+      return;
+    }
+    // Validate size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be under 2MB.');
+      return;
+    }
+
+    setLogoUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setReceiptLogo(reader.result as string);
+      setLogoUploading(false);
+    };
+    reader.onerror = () => {
+      alert('Failed to read file. Please try again.');
+      setLogoUploading(false);
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   // ─── Billing & Payment state ────────────────────────────────────────────
   const [cardholderName, setCardholderName] = useState('');
