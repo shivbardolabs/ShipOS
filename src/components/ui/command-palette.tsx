@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { customers, packages } from '@/lib/mock-data';
+
 import {
   Search,
   Users,
@@ -70,8 +70,8 @@ interface SearchResult {
 const actions: SearchResult[] = [
   { id: 'act_dashboard', type: 'action', title: 'Dashboard', subtitle: 'Go to dashboard overview', icon: <LayoutDashboard className="h-4 w-4" />, href: '/dashboard', shortcut: '' },
   { id: 'act_smart_intake', type: 'action', title: 'Smart Intake', subtitle: 'AI-powered package check-in', icon: <Sparkles className="h-4 w-4" />, href: '/dashboard/packages/smart-intake', shortcut: '' },
-  { id: 'act_checkin', type: 'action', title: 'Check In', subtitle: 'Check in a new package', icon: <ClipboardCheck className="h-4 w-4" />, href: '/dashboard/check-in', shortcut: '' },
-  { id: 'act_checkout', type: 'action', title: 'Check Out', subtitle: 'Release packages to customers', icon: <Package className="h-4 w-4" />, href: '/dashboard/check-out', shortcut: '' },
+  { id: 'act_checkin', type: 'action', title: 'Check In', subtitle: 'Check in a new package', icon: <ClipboardCheck className="h-4 w-4" />, href: '/dashboard/packages/check-in', shortcut: '' },
+  { id: 'act_checkout', type: 'action', title: 'Check Out', subtitle: 'Release packages to customers', icon: <Package className="h-4 w-4" />, href: '/dashboard/packages/check-out', shortcut: '' },
   { id: 'act_packages', type: 'action', title: 'Packages', subtitle: 'View all packages', icon: <Package className="h-4 w-4" />, href: '/dashboard/packages', shortcut: '' },
   { id: 'act_customers', type: 'action', title: 'Customers', subtitle: 'Manage customer accounts', icon: <Users className="h-4 w-4" />, href: '/dashboard/customers', shortcut: '' },
   { id: 'act_mail', type: 'action', title: 'Mail', subtitle: 'Manage mail pieces', icon: <Mail className="h-4 w-4" />, href: '/dashboard/mail', shortcut: '' },
@@ -101,6 +101,17 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [customers, setCustomers] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Fetch data when palette opens
+    fetch('/api/customers?limit=200').then((r) => r.json()).then((d) => setCustomers(d.customers || [])).catch(() => {});
+    fetch('/api/packages?limit=200').then((r) => r.json()).then((d) => setPackages(d.packages || [])).catch(() => {});
+  }, [open]);
 
   // Build search results
   const results = useMemo<SearchResult[]>(() => {
@@ -206,7 +217,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     // Sort by score descending, cap at 12
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, 12).map((s) => s.result);
-  }, [query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, customers, packages]);
 
   // Group results by type
   const grouped = useMemo(() => {
@@ -348,8 +360,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           </button>
         </div>
 
-        {/* Results */}
-        <div ref={listRef} className="max-h-[380px] overflow-y-auto overscroll-contain py-2 scrollbar-thin">
+        {/* Results — TASTE: no visible scrollbars */}
+        <div ref={listRef} className="max-h-[380px] overflow-y-auto overscroll-contain py-2 scrollable">
           {flatResults.length === 0 && query.trim() ? (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <Search className="h-8 w-8 text-surface-700 mb-3" />

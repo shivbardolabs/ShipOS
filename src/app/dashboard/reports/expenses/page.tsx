@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, generateDailySeries } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { shipments } from '@/lib/mock-data';
 import {
   Receipt,
   TrendingUp,
@@ -35,7 +35,7 @@ interface ExpenseCategory {
   subcategories: { label: string; amount: number }[];
 }
 
-function useExpenseData() {
+function useExpenseData(shipments: any[]) {
   return useMemo(() => {
     const wholesaleCost = shipments.reduce((s, sh) => s + sh.wholesaleCost, 0);
     const totalRevenue = shipments.reduce((s, sh) => s + sh.retailPrice, 0);
@@ -145,13 +145,23 @@ function useExpenseData() {
       costPerPackage,
       costPerShipment,
     };
-  }, []);
+  }, [shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Expenses Report Page                                                       */
 /* -------------------------------------------------------------------------- */
 export default function ExpensesReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -160,7 +170,7 @@ export default function ExpensesReportPage() {
   });
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
-  const data = useExpenseData();
+  const data = useExpenseData(shipments);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <Receipt className="h-4 w-4" /> },
@@ -174,7 +184,7 @@ export default function ExpensesReportPage() {
       <PageHeader
         title="Expenses & COGS"
         icon={<Receipt className="h-6 w-6" />}
-        description="Track carrier costs, materials, platform fees, and operating expenses"
+        description="Track costs and expenses."
         actions={<ExportToolbar reportName="Expense_Report" />}
       />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { useTenant } from '@/components/tenant-provider';
 import { PageHeader } from '@/components/layout/page-header';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { carrierRates } from '@/lib/mock-data';
+
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
 import { formatCurrency } from '@/lib/utils';
@@ -132,6 +132,16 @@ export default function SettingsPage() {
   const [closeTime, setCloseTime] = useState('18:00');
   const [savingTenant, setSavingTenant] = useState(false);
   const [tenantSaved, setTenantSaved] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [carrierRates, setCarrierRates] = useState<any[]>([]);
+
+  // Fetch carrier rates from API
+  useEffect(() => {
+    fetch('/api/carrier-rates')
+      .then((r) => r.json())
+      .then((d) => setCarrierRates(d.carrierRates || []))
+      .catch(() => {});
+  }, []);
 
   // Hydrate from tenant context
   useEffect(() => {
@@ -374,6 +384,11 @@ export default function SettingsPage() {
   const [receiptPreference, setReceiptPreference] = useState('sms');
   const [showReceiptOptions, setShowReceiptOptions] = useState(true);
 
+  // Receipt logo upload
+  const [receiptLogo, setReceiptLogo] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
 
   // ─── Billing & Payment state ────────────────────────────────────────────
   const [cardholderName, setCardholderName] = useState('');
@@ -405,6 +420,110 @@ export default function SettingsPage() {
     ipostal1: true,
     postscan: true,
   });
+
+  // ─── Service Agreement Template state ──────────────────────────────
+  const DEFAULT_TEMPLATE = `MAILBOX SERVICE AGREEMENT
+
+This Mailbox Service Agreement ("Agreement") is entered into between {storeName} ("Provider") and {customerName} ("Customer") for PMB #{pmbNumber}.
+
+1. SERVICES
+Provider agrees to receive and hold mail and packages on behalf of Customer at the address listed above. Customer agrees to comply with all USPS CMRA regulations, including completion of PS Form 1583.
+
+2. TERM
+This Agreement begins on {startDate} and renews automatically on a {billingCycle} basis unless terminated by either party with 30 days written notice.
+
+3. FEES
+Customer agrees to pay the applicable mailbox rental fee and any additional service charges (forwarding, scanning, storage beyond the free hold period, etc.) as listed in the current rate schedule.
+
+4. CUSTOMER RESPONSIBILITIES
+- Provide valid government-issued photo ID and proof of address per USPS requirements.
+- Pick up or arrange forwarding of mail/packages in a timely manner.
+- Notify Provider of any address or contact changes within 5 business days.
+
+5. PROVIDER RESPONSIBILITIES
+- Accept and securely store mail and packages during business hours.
+- Notify Customer of incoming items via the selected notification method.
+- Maintain USPS CMRA compliance and safeguard Customer information.
+
+6. LIMITATION OF LIABILITY
+Provider is not liable for loss or damage to items caused by carriers, acts of nature, or circumstances beyond reasonable control. Maximum liability shall not exceed the monthly service fee.
+
+7. GOVERNING LAW
+This Agreement is governed by the laws of the state in which the Provider operates.
+
+Customer Signature: _________________________  Date: ___________
+Provider Signature: _________________________  Date: ___________`;
+
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
+  const [templateContent, setTemplateContent] = useState(DEFAULT_TEMPLATE);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+  const [templateFileName, setTemplateFileName] = useState<string | null>(null);
+  const templateFileRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveTemplate = useCallback(() => {
+    setTemplateSaving(true);
+    // Simulate save (would be an API call in production)
+    setTimeout(() => {
+      setTemplateSaving(false);
+      setTemplateSaved(true);
+      setTimeout(() => {
+        setTemplateSaved(false);
+        setShowEditTemplateModal(false);
+      }, 1200);
+    }, 600);
+  }, []);
+
+  const handleUploadTemplate = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setTemplateFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text === 'string') {
+        setTemplateContent(text);
+        setTemplateSaved(false);
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input so the same file can be re-uploaded
+    e.target.value = '';
+  }, []);
+
+  /* ──────────────────────────────────────────────────────────────────── */
+  /*  Receipt logo upload handler                                       */
+  /* ──────────────────────────────────────────────────────────────────── */
+  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      alert('Please upload a PNG or JPG image.');
+      return;
+    }
+    // Validate size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be under 2MB.');
+      return;
+    }
+
+    setLogoUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setReceiptLogo(reader.result as string);
+      setLogoUploading(false);
+    };
+    reader.onerror = () => {
+      alert('Failed to read file. Please try again.');
+      setLogoUploading(false);
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so re-uploading the same file triggers onChange
+    e.target.value = '';
+  }, []);
 
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
@@ -494,7 +613,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings"
-        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store, pricing, and preferences"
+        badge={lastSettingsUpdate ? <LastUpdatedBy entry={lastSettingsUpdate} className="mt-2" /> : undefined} description="Configure your store."
         actions={
           isViewOnly ? (
             <Badge variant="warning" dot>View Only</Badge>
@@ -764,15 +883,58 @@ export default function SettingsPage() {
                   Use placeholders like <code className="text-primary-400 text-xs">{'{'}customerName{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}pmbNumber{'}'}</code>, <code className="text-primary-400 text-xs">{'{'}storeName{'}'}</code> for auto-population.
                 </p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-4 max-h-48 overflow-y-auto">
-                  <p className="text-xs text-surface-300 font-mono">Contract for Mailbox Service — using default template</p>
-                  <p className="text-xs text-surface-500 mt-1">Based on your uploaded agreement document with all USPS CMRA-compliant terms.</p>
+                  <pre className="text-xs text-surface-300 font-mono whitespace-pre-wrap">{templateContent.slice(0, 200)}…</pre>
+                  {templateFileName && (
+                    <p className="text-xs text-primary-400 mt-2 flex items-center gap-1.5">
+                      <FileText className="h-3 w-3" /> Loaded from: {templateFileName}
+                    </p>
+                  )}
                 </div>
                 <div className="mt-3 flex items-center gap-3">
-                  <Button variant="ghost" size="sm" leftIcon={<Edit3 className="h-3.5 w-3.5" />}>Edit Template</Button>
-                  <Button variant="ghost" size="sm" leftIcon={<Upload className="h-3.5 w-3.5" />}>Upload New Template</Button>
+                  <Button variant="ghost" size="sm" leftIcon={<Edit3 className="h-3.5 w-3.5" />} onClick={() => setShowEditTemplateModal(true)}>Edit Template</Button>
+                  <Button variant="ghost" size="sm" leftIcon={<Upload className="h-3.5 w-3.5" />} onClick={() => templateFileRef.current?.click()}>Upload New Template</Button>
+                  <input
+                    ref={templateFileRef}
+                    type="file"
+                    accept=".txt,.md,.html,.doc,.docx"
+                    className="hidden"
+                    onChange={handleUploadTemplate}
+                  />
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Template Modal */}
+            <Modal
+              open={showEditTemplateModal}
+              onClose={() => setShowEditTemplateModal(false)}
+              title="Edit Service Agreement Template"
+              description="Use placeholders like {customerName}, {pmbNumber}, {storeName}, {startDate}, {billingCycle} — they will be auto-filled during customer setup."
+              size="lg"
+              footer={
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setShowEditTemplateModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    leftIcon={templateSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                    onClick={handleSaveTemplate}
+                    loading={templateSaving}
+                    disabled={templateSaving}
+                  >
+                    {templateSaved ? 'Saved!' : 'Save Template'}
+                  </Button>
+                </>
+              }
+            >
+              <Textarea
+                value={templateContent}
+                onChange={(e) => setTemplateContent(e.target.value)}
+                className="min-h-[340px] font-mono text-xs leading-relaxed"
+                placeholder="Enter your service agreement template here…"
+              />
+            </Modal>
           </TabPanel>
 
           {/* ================================================================ */}
@@ -1003,7 +1165,7 @@ export default function SettingsPage() {
                     checked={showReceiptOptions}
                     onChange={setShowReceiptOptions}
                     label="Show receipt options to customer at checkout"
-                    description="Let customers choose their preferred receipt method during check-out"
+                    description="Customer picks receipt type."
                   />
                 </div>
               </CardContent>
@@ -1019,7 +1181,7 @@ export default function SettingsPage() {
                     checked={emailReceipts}
                     onChange={setEmailReceipts}
                     label="Enable Email Receipts"
-                    description="Automatically send receipts via email after transactions"
+                    description="Auto-send email receipts."
                   />
 
                   <Select
@@ -1047,20 +1209,66 @@ export default function SettingsPage() {
                     <label className="text-sm font-medium text-surface-300 mb-2 block">
                       Logo Upload
                     </label>
-                    <div className="flex items-center justify-center h-32 border-2 border-dashed border-surface-700 rounded-lg hover:border-surface-600 transition-colors cursor-pointer">
-                      <div className="text-center">
-                        <Upload className="h-6 w-6 text-surface-500 mx-auto mb-2" />
-                        <p className="text-sm text-surface-400">Click to upload logo</p>
-                        <p className="text-xs text-surface-600">PNG, JPG up to 2MB</p>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      className="hidden"
+                      onChange={handleLogoUpload}
+                    />
+                    {receiptLogo ? (
+                      <div className="relative h-32 border border-surface-700 rounded-lg bg-surface-800/50 flex items-center justify-center p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={receiptLogo}
+                          alt="Receipt logo"
+                          className="max-h-24 max-w-full object-contain"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            className="p-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 text-surface-300 hover:text-surface-100 transition-colors"
+                            title="Replace logo"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReceiptLogo(null)}
+                            className="p-1.5 rounded-lg bg-surface-700 hover:bg-red-600/80 text-surface-300 hover:text-white transition-colors"
+                            title="Remove logo"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => logoInputRef.current?.click()}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') logoInputRef.current?.click(); }}
+                        className="flex items-center justify-center h-32 border-2 border-dashed border-surface-700 rounded-lg hover:border-primary-500/50 hover:bg-primary-500/5 transition-colors cursor-pointer"
+                      >
+                        <div className="text-center">
+                          {logoUploading ? (
+                            <div className="h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          ) : (
+                            <Upload className="h-6 w-6 text-surface-500 mx-auto mb-2" />
+                          )}
+                          <p className="text-sm text-surface-400">{logoUploading ? 'Uploading…' : 'Click to upload logo'}</p>
+                          <p className="text-xs text-surface-600">PNG, JPG up to 2MB</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <ToggleSwitch
                     checked={signatureLine}
                     onChange={setSignatureLine}
                     label="Include Signature Line"
-                    description="Add a signature line at the bottom of printed receipts"
+                    description="Add signature to receipts."
                   />
 
                   <Textarea
@@ -1256,7 +1464,7 @@ export default function SettingsPage() {
                       checked={smsDefaultArrival}
                       onChange={setSmsDefaultArrival}
                       label="Send SMS by default for package arrivals"
-                      description="New check-ins will automatically trigger an SMS notification"
+                      description="Auto-SMS on check-in."
                     />
 
                     <p className="text-xs text-surface-500 mt-2">

@@ -22,7 +22,16 @@ import {
   Bell,
   ExternalLink,
   XCircle,
+  MoreVertical,
+  Edit,
+  Link2,
+  Mail,
+  Smartphone,
 } from 'lucide-react';
+import { DropdownMenu } from '@/components/ui/dropdown-menu';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/input';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -44,6 +53,9 @@ type ComplianceRow = Customer & { daysRemaining: number | null } & Record<string
 export default function CompliancePage() {
   const router = useRouter();
   const [filter, setFilter] = useState<'all' | 'expired' | 'critical' | 'warning' | 'ok'>('all');
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [renewalLinkModalOpen, setRenewalLinkModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<ComplianceRow | null>(null);
 
   const activeCustomers = useMemo(
     () => customers.filter((c) => c.status === 'active'),
@@ -152,7 +164,7 @@ export default function CompliancePage() {
     },
     {
       key: 'daysRemaining',
-      label: 'Days Remaining',
+      label: 'Status',
       sortable: true,
       render: (row) => {
         if (row.daysRemaining === null) return <span className="text-xs text-surface-500">—</span>;
@@ -165,16 +177,22 @@ export default function CompliancePage() {
         }
         if (row.daysRemaining <= 30) {
           return (
-            <Badge variant="danger" className="text-xs">
-              {row.daysRemaining} days
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="danger" className="text-xs font-bold animate-pulse">
+                PENDING
+              </Badge>
+              <span className="text-[10px] text-red-500">{row.daysRemaining}d</span>
+            </div>
           );
         }
         if (row.daysRemaining <= 90) {
           return (
-            <Badge variant="warning" className="text-xs">
-              {row.daysRemaining} days
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="warning" className="text-xs">
+                PENDING
+              </Badge>
+              <span className="text-[10px] text-amber-500">{row.daysRemaining}d</span>
+            </div>
           );
         }
         return (
@@ -200,30 +218,45 @@ export default function CompliancePage() {
       key: 'actions',
       label: '',
       align: 'right',
+      width: 'w-12',
       render: (row) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            iconOnly
-            title="Send Reminder"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            iconOnly
-            title="View Profile"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/dashboard/customers/${row.id}`);
-            }}
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <DropdownMenu
+          trigger={
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </div>
+          }
+          items={[
+            {
+              id: 'edit',
+              label: 'Edit ID Details',
+              icon: <Edit className="h-4 w-4" />,
+              onClick: () => router.push(`/dashboard/customers/${row.id}`),
+            },
+            {
+              id: 'notify',
+              label: 'Notify Customer',
+              icon: <Bell className="h-4 w-4" />,
+              onClick: () => {
+                setSelectedCustomer(row);
+                setNotifyModalOpen(true);
+              },
+            },
+            'separator',
+            {
+              id: 'send_renewal',
+              label: 'Send Link for Renewal',
+              icon: <Link2 className="h-4 w-4" />,
+              onClick: () => {
+                setSelectedCustomer(row);
+                setRenewalLinkModalOpen(true);
+              },
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -233,7 +266,7 @@ export default function CompliancePage() {
       {/* Header */}
       <PageHeader
         title="CMRA Compliance"
-        description="Monitor customer ID expirations and Form 1583 status"
+        description="Monitor customer ID expirations, Form 1583 status, and send renewal links"
         actions={
           <Button leftIcon={<Bell className="h-4 w-4" />}>
             Send Bulk Reminders
@@ -473,6 +506,127 @@ export default function CompliancePage() {
           </Card>
         </div>
       </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  Notify Customer Modal                                              */}
+      {/* ------------------------------------------------------------------ */}
+      <Modal
+        open={notifyModalOpen}
+        onClose={() => { setNotifyModalOpen(false); setSelectedCustomer(null); }}
+        title="Notify Customer — ID Expiring"
+        description={
+          selectedCustomer
+            ? `Send a notification to ${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})`
+            : undefined
+        }
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setNotifyModalOpen(false)}>Cancel</Button>
+            <Button leftIcon={<Send className="h-4 w-4" />}>Send Notification</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Select
+            label="Notification Channel"
+            placeholder="How to notify..."
+            options={[
+              { value: 'email', label: '📧  Email — Send expiration notice via email' },
+              { value: 'sms', label: '📱  SMS — Send secure link via text message' },
+              { value: 'both', label: '📧📱  Email & SMS' },
+            ]}
+          />
+
+          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="h-4 w-4 text-blue-500" />
+              <p className="text-xs font-semibold text-blue-400">Secure Upload Link</p>
+            </div>
+            <p className="text-xs text-surface-400">
+              When sent via SMS, the customer receives a secure link to photograph and upload their renewed ID directly from their phone.
+              The uploaded document is stored and available for entry into the USPS Gateway.
+            </p>
+          </div>
+
+          <Textarea
+            label="Additional Message (optional)"
+            placeholder="Add a personal note to the notification..."
+            rows={3}
+          />
+        </div>
+      </Modal>
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  Send Renewal Link Modal                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <Modal
+        open={renewalLinkModalOpen}
+        onClose={() => { setRenewalLinkModalOpen(false); setSelectedCustomer(null); }}
+        title="Send ID Renewal Link"
+        description={
+          selectedCustomer
+            ? `Send a secure upload link to ${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+            : undefined
+        }
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRenewalLinkModalOpen(false)}>Cancel</Button>
+            <Button leftIcon={<Send className="h-4 w-4" />}>Send Renewal Link</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Select
+            label="Delivery Method"
+            placeholder="Choose how to send the link..."
+            options={[
+              { value: 'email', label: '📧  Email — Send secure link via email' },
+              { value: 'sms', label: '📱  SMS — Send secure link via text message' },
+              { value: 'both', label: '📧📱  Both — Email & SMS' },
+            ]}
+          />
+
+          <div className="rounded-lg border border-surface-700 bg-surface-800/30 p-4 space-y-3">
+            <h4 className="text-xs font-semibold text-surface-300 uppercase tracking-wide">How It Works</h4>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-600/20 text-[10px] font-bold text-primary-400 flex-shrink-0 mt-0.5">1</div>
+                <p className="text-xs text-surface-400">Customer receives a secure link via email or SMS</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-600/20 text-[10px] font-bold text-primary-400 flex-shrink-0 mt-0.5">2</div>
+                <p className="text-xs text-surface-400">Customer photographs and uploads their renewed ID from their phone</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-600/20 text-[10px] font-bold text-primary-400 flex-shrink-0 mt-0.5">3</div>
+                <p className="text-xs text-surface-400">Uploaded ID is stored securely and available for USPS Gateway entry</p>
+              </div>
+            </div>
+          </div>
+
+          {selectedCustomer && (
+            <div className="rounded-lg border border-surface-700 bg-surface-800/30 p-3">
+              <p className="text-xs text-surface-500 mb-1">Customer Contact</p>
+              <div className="flex items-center gap-3">
+                {selectedCustomer.email && (
+                  <span className="flex items-center gap-1 text-xs text-surface-300">
+                    <Mail className="h-3 w-3 text-surface-500" />
+                    {selectedCustomer.email}
+                  </span>
+                )}
+                {selectedCustomer.phone && (
+                  <span className="flex items-center gap-1 text-xs text-surface-300">
+                    <Smartphone className="h-3 w-3 text-surface-500" />
+                    {selectedCustomer.phone}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

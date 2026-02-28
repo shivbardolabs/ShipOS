@@ -408,7 +408,7 @@ export default function SmartIntakePage() {
     <div className="space-y-6">
       <PageHeader
         title="Smart Intake"
-        description="AI-powered package check-in — snap a photo, we handle the rest"
+        description="Snap a photo, we handle it."
         badge={
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-blue-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />

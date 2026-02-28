@@ -26,7 +26,7 @@ import {
 /* -------------------------------------------------------------------------- */
 /*  Seed data — pre-populate log with realistic history                       */
 /* -------------------------------------------------------------------------- */
-const SEED_KEY = 'shipos_activity_log_seeded_v2';
+const SEED_KEY = 'shipos_activity_log_seeded_v3';
 
 interface SeedEntry {
   action: ActionVerb;
@@ -42,6 +42,7 @@ interface SeedEntry {
 const SEED_DATA: SeedEntry[] = [
   { action: 'package.check_in', entityType: 'package', entityId: 'pkg_001', entityLabel: 'TBA000000017', description: 'Checked in Amazon package for PMB-0003', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 15 },
   { action: 'notification.send', entityType: 'notification', entityId: 'notif_001', entityLabel: 'Linda Nakamura', description: 'Sent arrival notification to Linda Nakamura (PMB-0002)', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 30 },
+  { action: 'package.labels_printed', entityType: 'package', entityId: 'batch_001', entityLabel: '4 labels', description: 'Printed batch of 4 labels: PMB-0003 (AMAZON), PMB-0002 (USPS), PMB-0005 (UPS), PMB-0012 (FEDEX)', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 45 },
   { action: 'package.release', entityType: 'package', entityId: 'pkg_010', entityLabel: 'PKG pkg_010', description: 'Released 2 packages to David Kim (PMB-0005)', userName: 'Mike Torres', userRole: 'employee', minutesAgo: 55 },
   { action: 'shipment.create', entityType: 'shipment', entityId: 'ship_001', entityLabel: 'FedEx Express', description: 'Created FedEx Express shipment for PMB-0010', userName: 'Sarah Chen', userRole: 'admin', minutesAgo: 80 },
   { action: 'mail.insert', entityType: 'mail', entityId: 'mail_001', entityLabel: 'Letter', description: 'Inserted and uploaded mail for PMB-0014', userName: 'Alex Rivera', userRole: 'employee', minutesAgo: 110 },

@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { ExportToolbar } from '@/components/reports/export-toolbar';
 import { MiniBarChart, Sparkline, DonutChart } from '@/components/reports/mini-bar-chart';
 import { seededRandom, generateDailySeries, formatNumber } from '@/lib/report-utils';
 import { formatCurrency } from '@/lib/utils';
-import { packages, shipments } from '@/lib/mock-data';
 import {
   Monitor,
   Mail,
@@ -39,7 +39,7 @@ interface PlatformData {
   color: string;
 }
 
-function usePlatformData() {
+function usePlatformData(packages: any[], shipments: any[]) {
   return useMemo(() => {
     const totalPkgs = packages.length;
     const totalRev = shipments.reduce((s, sh) => s + sh.retailPrice, 0);
@@ -108,13 +108,26 @@ function usePlatformData() {
     const digTrend = generateDailySeries(30, 700, 500, 1100).map((d) => d.value);
 
     return { platforms, physRevenue, digRevenue, physPkgs, digPkgs, physTrend, digTrend };
-  }, []);
+  }, [packages, shipments]);
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Platform Report Page — BAR-273                                             */
 /* -------------------------------------------------------------------------- */
 export default function PlatformReportPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [packages, setPackages] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shipments, setShipments] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+    fetch('/api/packages?limit=500').then(r => r.json()).then(d => setPackages(d.packages || [])),
+    fetch('/api/shipments?limit=500').then(r => r.json()).then(d => setShipments(d.shipments || [])),
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [filters, setFilters] = useState<ReportFilterValues>({
     dateRange: 'month',
     platform: 'all',
@@ -122,7 +135,7 @@ export default function PlatformReportPage() {
     program: 'all',
   });
   const [activeTab, setActiveTab] = useState('overview');
-  const data = usePlatformData();
+  const data = usePlatformData(packages, shipments);
 
   const totalRevenue = data.platforms.reduce((s, p) => s + p.revenue, 0);
   const totalPackages = data.platforms.reduce((s, p) => s + p.packages, 0);
@@ -139,7 +152,7 @@ export default function PlatformReportPage() {
       <PageHeader
         title="Platform Dimension"
         icon={<Monitor className="h-6 w-6" />}
-        description="Filter and compare performance across In-Store Physical and Digital Mail platforms"
+        description="Compare platform performance."
         actions={<ExportToolbar reportName="Platform_Report" />}
       />
 

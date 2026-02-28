@@ -9,30 +9,41 @@ import {
   Building2,
   Users,
   BarChart3,
+  Shield,
+  Flag,
+  ScrollText,
   LogOut,
   Menu,
   X,
   ShieldCheck,
+  CreditCard,
+  Tag,
+  Send,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
-/*  Super Admin Navigation                                                    */
+/*  Platform Console Navigation                                               */
 /* -------------------------------------------------------------------------- */
 const navItems = [
   { label: 'Dashboard', href: '/dashboard/super-admin', icon: LayoutDashboard },
   { label: 'Client Provisioning', href: '/dashboard/super-admin/clients', icon: Building2 },
-  { label: 'Super Admin Users', href: '/dashboard/super-admin/users', icon: Users },
-  { label: 'Billing & Reporting', href: '/dashboard/super-admin/billing', icon: BarChart3 },
+  { label: 'Admin Users', href: '/dashboard/super-admin/users', icon: Users },
+  { label: 'Billing & Reports', href: '/dashboard/super-admin/billing', icon: CreditCard },
+  { label: 'Master Admin', href: '/dashboard/super-admin/master-admin', icon: Shield },
+  { label: 'Feature Flags', href: '/dashboard/super-admin/feature-flags', icon: Flag },
+  { label: 'Legal Documents', href: '/dashboard/super-admin/legal', icon: ScrollText },
+  { label: 'Analytics', href: '/dashboard/super-admin/analytics', icon: BarChart3 },
+  { label: 'Tag Manager', href: '/dashboard/super-admin/tag-manager', icon: Tag },
+  { label: 'Deliverability', href: '/dashboard/super-admin/deliverability', icon: Send },
 ];
 
 /* -------------------------------------------------------------------------- */
-/*  Super Admin Layout                                                        */
+/*  Super Admin / Platform Console Layout                                     */
 /* -------------------------------------------------------------------------- */
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Mock super admin session – in production, this would come from auth context
   const adminName = 'Shiven Ramji';
 
   return (
@@ -58,7 +69,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-surface-100">Bardo Labs</p>
+            <p className="text-sm font-bold text-surface-100">Platform Console</p>
             <p className="text-[10px] font-medium tracking-wider text-surface-500 uppercase">
               Super Admin
             </p>
@@ -100,8 +111,14 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           </div>
         </nav>
 
-        {/* Footer – user info + logout */}
+        {/* Footer – user info + back link + logout */}
         <div className="border-t border-surface-800 px-4 py-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-xs text-surface-500 hover:text-surface-300 mb-3 transition-colors"
+          >
+            ← Back to Dashboard
+          </Link>
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/20 text-primary-400 text-xs font-bold">
               {adminName.split(' ').map((n) => n[0]).join('')}
@@ -134,7 +151,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-orange-400" />
             <span className="text-xs font-medium text-orange-400 uppercase tracking-wider">
-              Super Admin Console
+              Platform Console
             </span>
           </div>
           <div className="ml-auto flex items-center gap-3">

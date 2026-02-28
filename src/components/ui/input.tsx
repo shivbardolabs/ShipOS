@@ -38,13 +38,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               {leftIcon}
             </div>
           )}
+          {/* TASTE: Larger hit targets — 44px min height for inputs */}
           <input
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded-lg border bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500',
+              'w-full rounded-lg border bg-surface-900 px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500 min-h-[44px]',
               'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
-              'transition-colors duration-150 outline-none',
+              'transition-colors duration-100 outline-none',
               leftIcon && 'pl-10',
               error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
               className
@@ -89,9 +90,9 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={textareaId}
           className={cn(
-            'w-full rounded-lg border bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500',
+            'w-full rounded-lg border bg-surface-900 px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500',
             'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
-            'transition-colors duration-150 outline-none resize-y min-h-[80px]',
+            'transition-colors duration-100 outline-none resize-y min-h-[80px]',
             error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
             className
           )}
@@ -127,9 +128,9 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           ref={ref}
           type="search"
           className={cn(
-            'w-full rounded-lg border bg-surface-900 pl-10 pr-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500',
+            'w-full rounded-lg border bg-surface-900 pl-10 pr-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500 min-h-[44px]',
             'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
-            'transition-colors duration-150 outline-none',
+            'transition-colors duration-100 outline-none',
             className
           )}
           onChange={(e) => {

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import { customers, packages, customerFees } from '@/lib/mock-data';
+import { getOrProvisionUser } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { formatCurrency } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------- */
@@ -24,32 +26,42 @@ export interface VoiceCommandResponse {
   requiresConfirmation: boolean;
 }
 
-/* ── Demo intent matcher ─────────────────────────────────────────────────── */
+/* ── Demo intent matcher — uses Prisma for live data ─────────────────────── */
 
-function matchDemoIntent(transcript: string): {
+async function matchIntent(
+  transcript: string,
+  tenantFilter: Record<string, any>,
+): Promise<{
   intent: Intent;
   response: string;
   data?: Record<string, unknown>;
   requiresConfirmation: boolean;
-} {
+}> {
   const t = transcript.toLowerCase().trim();
+  const customerRelFilter = tenantFilter.tenantId
+    ? { customer: { tenantId: tenantFilter.tenantId } }
+    : {};
 
   // --- check_in ---
   if (t.includes('check in') || t.includes('checkin') || t.includes('checking in')) {
     const carrierMatch = t.match(
-      /\b(amazon|ups|fedex|usps|dhl|lasership|ontrac|walmart|target)\b/i
+      /\b(amazon|ups|fedex|usps|dhl|lasership|ontrac|walmart|target)\b/i,
     );
     const pmbMatch = t.match(/pmb[- ]?(\d+)/i);
 
     const carrier = carrierMatch?.[1] ?? 'ups';
     const pmbNum = pmbMatch ? `PMB-${pmbMatch[1].padStart(4, '0')}` : 'PMB-0001';
 
-    const customer = customers.find(
-      (c) => c.pmbNumber.toLowerCase() === pmbNum.toLowerCase()
-    );
+    const customer = await prisma.customer.findFirst({
+      where: {
+        ...tenantFilter,
+        pmbNumber: { equals: pmbNum, mode: 'insensitive' },
+        deletedAt: null,
+      },
+    });
     const customerName = customer
       ? `${customer.firstName} ${customer.lastName}`
-      : 'James Morrison';
+      : 'Unknown Customer';
 
     return {
       intent: 'check_in',
@@ -58,7 +70,7 @@ function matchDemoIntent(transcript: string): {
         carrier: carrier.toLowerCase(),
         pmbNumber: pmbNum,
         customerName,
-        customerId: customer?.id ?? 'cust_001',
+        customerId: customer?.id ?? null,
       },
       requiresConfirmation: true,
     };
@@ -74,41 +86,61 @@ function matchDemoIntent(transcript: string): {
   ) {
     const pmbMatch = t.match(/pmb[- ]?(\d+)/i);
     const nameMatch = t.match(
-      /(?:packages (?:does|for|of))\s+([a-z]+(?: [a-z]+)?)/i
+      /(?:packages (?:does|for|of))\s+([a-z]+(?: [a-z]+)?)/i,
     );
 
-    let customer = null;
+    let customer: any = null;
 
     if (pmbMatch) {
       const pmbNum = `PMB-${pmbMatch[1].padStart(4, '0')}`;
-      customer = customers.find(
-        (c) => c.pmbNumber.toLowerCase() === pmbNum.toLowerCase()
-      );
+      customer = await prisma.customer.findFirst({
+        where: {
+          ...tenantFilter,
+          pmbNumber: { equals: pmbNum, mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
     } else if (nameMatch) {
-      const search = nameMatch[1].toLowerCase();
-      customer = customers.find(
-        (c) =>
-          `${c.firstName} ${c.lastName}`.toLowerCase().includes(search) ||
-          c.lastName.toLowerCase().includes(search)
-      );
+      const search = nameMatch[1];
+      customer = await prisma.customer.findFirst({
+        where: {
+          ...tenantFilter,
+          deletedAt: null,
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+          ],
+        },
+      });
     }
 
     if (!customer) {
-      customer = customers[0]; // default fallback
+      customer = await prisma.customer.findFirst({
+        where: { ...tenantFilter, deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+      });
     }
 
-    const custPackages = packages
-      .filter(
-        (p) =>
-          p.customerId === customer!.id &&
-          p.status !== 'released' &&
-          p.status !== 'returned'
-      )
-      .slice(0, 5);
+    if (!customer) {
+      return {
+        intent: 'query_packages',
+        response: 'No customers found in the system.',
+        requiresConfirmation: false,
+      };
+    }
+
+    const custPackages = await prisma.package.findMany({
+      where: {
+        customerId: customer.id,
+        status: { notIn: ['released', 'returned'] },
+      },
+      take: 5,
+      orderBy: { checkedInAt: 'desc' },
+    });
 
     const pkgList = custPackages.map(
-      (p) =>
-        `• ${p.carrier.toUpperCase()} — ${p.senderName ?? 'Unknown'} (${p.status.replace('_', ' ')})`
+      (p: any) =>
+        `• ${p.carrier.toUpperCase()} — ${p.senderName ?? 'Unknown'} (${p.status.replace('_', ' ')})`,
     );
 
     return {
@@ -122,7 +154,7 @@ function matchDemoIntent(transcript: string): {
         customerName: `${customer.firstName} ${customer.lastName}`,
         pmbNumber: customer.pmbNumber,
         packageCount: custPackages.length,
-        packages: custPackages.map((p) => ({
+        packages: custPackages.map((p: any) => ({
           id: p.id,
           carrier: p.carrier,
           sender: p.senderName,
@@ -141,23 +173,28 @@ function matchDemoIntent(transcript: string): {
     t.includes('notify')
   ) {
     const pmbMatch = t.match(/pmb[- ]?(\d+)/i);
-    const pmbNum = pmbMatch ? `PMB-${pmbMatch[1].padStart(4, '0')}` : 'PMB-0003';
-    const customer = customers.find(
-      (c) => c.pmbNumber.toLowerCase() === pmbNum.toLowerCase()
-    );
+    const pmbNum = pmbMatch
+      ? `PMB-${pmbMatch[1].padStart(4, '0')}`
+      : 'PMB-0003';
+    const customer = await prisma.customer.findFirst({
+      where: {
+        ...tenantFilter,
+        pmbNumber: { equals: pmbNum, mode: 'insensitive' },
+        deletedAt: null,
+      },
+    });
     const customerName = customer
       ? `${customer.firstName} ${customer.lastName}`
-      : 'Robert Singh';
+      : 'Unknown Customer';
 
     const pendingCount = customer
-      ? packages.filter(
-          (p) =>
-            p.customerId === customer.id &&
-            (p.status === 'checked_in' ||
-              p.status === 'notified' ||
-              p.status === 'ready')
-        ).length
-      : 3;
+      ? await prisma.package.count({
+          where: {
+            customerId: customer.id,
+            status: { in: ['checked_in', 'notified', 'ready'] },
+          },
+        })
+      : 0;
 
     return {
       intent: 'send_reminder',
@@ -165,7 +202,7 @@ function matchDemoIntent(transcript: string): {
       data: {
         pmbNumber: pmbNum,
         customerName,
-        customerId: customer?.id ?? 'cust_003',
+        customerId: customer?.id ?? null,
         pendingPackages: pendingCount,
         channels: customer
           ? [
@@ -186,29 +223,30 @@ function matchDemoIntent(transcript: string): {
     t.includes('packages today') ||
     t.includes('packages came')
   ) {
-    const todayPkgs = packages.filter((p) => {
-      const d = new Date(p.checkedInAt);
-      const now = new Date('2026-02-21');
-      return d.toDateString() === now.toDateString();
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    const todayPkgs = await prisma.package.findMany({
+      where: { ...customerRelFilter, checkedInAt: { gte: startOfToday } },
     });
 
     const byCarrier: Record<string, number> = {};
-    todayPkgs.forEach((p) => {
+    todayPkgs.forEach((p: any) => {
       byCarrier[p.carrier] = (byCarrier[p.carrier] || 0) + 1;
     });
 
-    const total =
-      todayPkgs.length > 0
-        ? todayPkgs.length
-        : 14; // fallback count for demo
-
+    const total = todayPkgs.length;
     const carrierBreakdown =
-      todayPkgs.length > 0
+      total > 0
         ? Object.entries(byCarrier)
             .sort((a, b) => b[1] - a[1])
             .map(([c, n]) => `${c.toUpperCase()}: ${n}`)
             .join(', ')
-        : 'Amazon: 5, UPS: 4, FedEx: 3, USPS: 2';
+        : 'None today';
 
     return {
       intent: 'count_packages',
@@ -227,29 +265,29 @@ function matchDemoIntent(transcript: string): {
     t.includes('what do i owe') ||
     t.includes('outstanding')
   ) {
-    const unpaidFees = customerFees.filter(
-      (f) =>
-        f.status !== 'paid' &&
-        f.status !== 'waived' &&
-        f.category === 'storage'
-    );
+    // Estimate storage fees from packages held > 5 days
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+    const heldPackages = await prisma.package.findMany({
+      where: {
+        ...customerRelFilter,
+        status: { in: ['checked_in', 'notified', 'ready'] },
+        checkedInAt: { lte: fiveDaysAgo },
+      },
+      select: { customerId: true },
+    });
 
-    const totalStorage = unpaidFees.reduce((sum, f) => sum + f.amount, 0);
-    const affectedCustomers = new Set(unpaidFees.map((f) => f.customerId)).size;
-
-    const allUnpaidFees = customerFees.filter(
-      (f) => f.status !== 'paid' && f.status !== 'waived'
-    );
-    const grandTotal = allUnpaidFees.reduce((sum, f) => sum + f.amount, 0);
+    const affectedCustomers = new Set(
+      heldPackages.map((p: any) => p.customerId),
+    ).size;
+    const estimatedFees = heldPackages.length * 1.0; // $1/day placeholder
 
     return {
       intent: 'storage_fees',
-      response: `Outstanding storage fees: ${formatCurrency(totalStorage)} across ${affectedCustomers} customer${affectedCustomers !== 1 ? 's' : ''}. Total outstanding fees (all types): ${formatCurrency(grandTotal)}.`,
+      response: `${heldPackages.length} packages held over 5 days across ${affectedCustomers} customer${affectedCustomers !== 1 ? 's' : ''}. Estimated storage fees: ${formatCurrency(estimatedFees)}.`,
       data: {
-        storageFeeTotal: totalStorage,
-        grandTotal,
+        heldPackageCount: heldPackages.length,
+        estimatedFees,
         affectedCustomers,
-        feeCount: unpaidFees.length,
       },
       requiresConfirmation: false,
     };
@@ -257,7 +295,8 @@ function matchDemoIntent(transcript: string): {
 
   // --- general ---
   const generalResponses: Record<string, string> = {
-    hello: "Hello! I'm your ShipOS voice assistant. I can help with check-ins, package queries, reminders, counts, and fee lookups. What do you need?",
+    hello:
+      "Hello! I'm your ShipOS voice assistant. I can help with check-ins, package queries, reminders, counts, and fee lookups. What do you need?",
     help: "I can help with:\n• Check in packages — \"Check in a FedEx package for PMB 0003\"\n• Query packages — \"What packages does James Morrison have?\"\n• Send reminders — \"Send pickup reminder to PMB 0005\"\n• Count packages — \"How many packages today?\"\n• Fee lookups — \"What's the storage fee total?\"\n\nJust speak naturally!",
     default:
       "I'm not sure I understood that. Try commands like:\n• \"Check in a UPS package for PMB 0001\"\n• \"What packages does Linda Nakamura have?\"\n• \"How many packages today?\"\n• \"Send pickup reminder to PMB 0003\"\n• \"What's the storage fee total?\"",
@@ -307,6 +346,19 @@ Rules:
 /* ── Main handler ────────────────────────────────────────────────────────── */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getOrProvisionUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 },
+      );
+    }
+
+    const tenantFilter =
+      user.role !== 'superadmin' && user.tenantId
+        ? { tenantId: user.tenantId }
+        : {};
+
     const body = await request.json();
     const { transcript } = body as { transcript?: string };
 
@@ -319,7 +371,7 @@ export async function POST(request: NextRequest) {
           response: 'No transcript provided.',
           requiresConfirmation: false,
         } satisfies VoiceCommandResponse,
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -328,7 +380,7 @@ export async function POST(request: NextRequest) {
     /* ── Demo mode ────────────────────────────────────────────────────── */
     if (!apiKey) {
       await new Promise((r) => setTimeout(r, 800));
-      const result = matchDemoIntent(transcript);
+      const result = await matchIntent(transcript, tenantFilter);
 
       return NextResponse.json({
         success: true,
@@ -375,7 +427,7 @@ export async function POST(request: NextRequest) {
           response: `Voice AI error: ${detail}`,
           requiresConfirmation: false,
         },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -391,7 +443,7 @@ export async function POST(request: NextRequest) {
       parsed = JSON.parse(cleaned);
     } catch {
       // Fall back to demo mode if we can't parse AI response
-      const result = matchDemoIntent(transcript);
+      const result = await matchIntent(transcript, tenantFilter);
       return NextResponse.json({
         success: true,
         mode: 'ai',
@@ -403,8 +455,7 @@ export async function POST(request: NextRequest) {
     const intent = parsed.intent as Intent;
     const entities = parsed.entities ?? {};
 
-    // Override entities into the transcript so the demo matcher can work
-    // Build a synthetic transcript that the demo matcher will match
+    // Build a synthetic transcript that the matcher will match
     let syntheticTranscript = transcript;
     if (intent === 'check_in') {
       syntheticTranscript = `check in ${entities.carrier ?? ''} package for pmb ${entities.pmbNumber?.replace('PMB-', '') ?? '0001'}`;
@@ -420,7 +471,7 @@ export async function POST(request: NextRequest) {
       syntheticTranscript = 'storage fee total';
     }
 
-    const result = matchDemoIntent(syntheticTranscript);
+    const result = await matchIntent(syntheticTranscript, tenantFilter);
 
     return NextResponse.json({
       success: true,
@@ -438,7 +489,7 @@ export async function POST(request: NextRequest) {
         response: 'Internal server error',
         requiresConfirmation: false,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

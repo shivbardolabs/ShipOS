@@ -1,142 +1,246 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { sendNotification } from '@/lib/notifications';
 
-/* -------------------------------------------------------------------------- */
-/*  POST /api/packages/check-in                                               */
-/*  BAR-35: Save checked-in package to DB                                     */
-/*  BAR-10: Trigger dual-channel (email + SMS) customer notification          */
-/* -------------------------------------------------------------------------- */
-
-interface CheckInBody {
-  customerId: string;
-  trackingNumber?: string;
-  carrier: string;
-  senderName?: string;
-  packageType: string;
-  condition?: string;
-  hazardous?: boolean;
-  perishable?: boolean;
-  requiresSignature?: boolean;
-  storageLocation?: string;
-  notes?: string;
-  isWalkIn?: boolean;
-  walkInName?: string;
-  sendEmail?: boolean;
-  sendSms?: boolean;
-  printLabel?: boolean;
-}
-
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/packages/check-in
+ *
+ * Creates a new Package record in the database and optionally
+ * triggers customer notifications (email/SMS).
+ *
+ * Fixes BAR-260: Packages checked-in were not saving because the
+ * front-end only logged to a client-side activity log.
+ */
+export async function POST(req: NextRequest) {
   try {
-    const body: CheckInBody = await request.json();
-
-    // Validate required fields
-    if (!body.carrier || !body.packageType) {
-      return NextResponse.json(
-        { error: 'carrier and packageType are required' },
-        { status: 400 }
-      );
+    const user = await getOrProvisionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    if (!body.customerId && !body.isWalkIn) {
+    const body = await req.json();
+
+    const {
+      customerId,
+      trackingNumber,
+      carrier,
+      customCarrierName,
+      senderName,
+      packageType,
+      hazardous,
+      perishable,
+      condition,
+      conditionOther,
+      notes,
+      storageLocation,
+      requiresSignature,
+      isWalkIn,
+      walkInName,
+      // Notification preferences
+      sendEmail,
+      sendSms,
+      // printLabel is handled client-side only
+    } = body;
+
+    // --- Validation ---
+    if (!isWalkIn && !customerId) {
       return NextResponse.json(
         { error: 'customerId is required for non-walk-in check-ins' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // For walk-ins, find or create a generic walk-in customer record
-    let customerId = body.customerId;
-    if (body.isWalkIn && !customerId) {
-      const walkIn = await prisma.customer.upsert({
-        where: { pmbNumber: 'WALK-IN' },
-        update: {},
-        create: {
-          firstName: body.walkInName || 'Walk-In',
-          lastName: 'Customer',
-          pmbNumber: 'WALK-IN',
+    if (!carrier) {
+      return NextResponse.json(
+        { error: 'carrier is required' },
+        { status: 400 },
+      );
+    }
+
+    if (!packageType) {
+      return NextResponse.json(
+        { error: 'packageType is required' },
+        { status: 400 },
+      );
+    }
+
+    // Verify customer belongs to the same tenant (if not walk-in)
+    let customer = null;
+    if (!isWalkIn && customerId) {
+      customer = await prisma.customer.findFirst({
+        where: {
+          id: customerId,
+          tenantId: user.tenantId,
+          status: 'active',
+        },
+      });
+
+      if (!customer) {
+        return NextResponse.json(
+          { error: 'Customer not found or not active' },
+          { status: 404 },
+        );
+      }
+    }
+
+    // For walk-in customers, find or create a generic walk-in customer record
+    if (isWalkIn) {
+      // Use a deterministic walk-in PMB
+      const walkInPmb = `WALKIN-${Date.now()}`;
+      customer = await prisma.customer.create({
+        data: {
+          firstName: walkInName?.split(' ')[0] || 'Walk-In',
+          lastName: walkInName?.split(' ').slice(1).join(' ') || 'Customer',
+          pmbNumber: walkInPmb,
           platform: 'physical',
           status: 'active',
+          tenantId: user.tenantId,
           notifyEmail: false,
           notifySms: false,
         },
       });
-      customerId = walkIn.id;
     }
-
-    // Verify customer exists
-    const customer = await prisma.customer.findUnique({
-      where: { id: customerId },
-    });
 
     if (!customer) {
       return NextResponse.json(
-        { error: 'Customer not found' },
-        { status: 404 }
+        { error: 'Could not resolve customer' },
+        { status: 400 },
       );
     }
 
-    // Create the package record
+    // Build the resolved carrier name
+    const resolvedCarrier = carrier === 'other' ? (customCarrierName || 'other') : carrier;
+
+    // Build condition string
+    const resolvedCondition =
+      condition === 'other' && conditionOther
+        ? `other: ${conditionOther}`
+        : condition || 'good';
+
+    // Build notes with any special flags
+    const notesParts: string[] = [];
+    if (notes) notesParts.push(notes);
+    if (requiresSignature) notesParts.push('[Requires Signature]');
+    const resolvedNotes = notesParts.length > 0 ? notesParts.join(' | ') : null;
+
+    // --- Create the package ---
     const pkg = await prisma.package.create({
       data: {
-        trackingNumber: body.trackingNumber || null,
-        carrier: body.carrier,
-        senderName: body.senderName || null,
-        packageType: body.packageType,
-        condition: body.condition || 'good',
-        hazardous: body.hazardous ?? false,
-        perishable: body.perishable ?? false,
-        storageLocation: body.storageLocation || null,
-        notes: body.notes || null,
+        trackingNumber: trackingNumber?.trim() || null,
+        carrier: resolvedCarrier,
+        senderName: senderName?.trim() || null,
+        packageType: packageType,
         status: 'checked_in',
-        customerId,
-        checkedInAt: new Date(),
+        hazardous: !!hazardous,
+        perishable: !!perishable,
+        condition: resolvedCondition,
+        notes: resolvedNotes,
+        storageLocation: storageLocation?.trim() || null,
+        customerId: customer.id,
+        checkedInById: user.id,
+        storeId: user.tenantId
+          ? (
+              await prisma.store.findFirst({
+                where: { tenantId: user.tenantId, isDefault: true },
+              })
+            )?.id || null
+          : null,
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            pmbNumber: true,
+            email: true,
+            phone: true,
+            notifyEmail: true,
+            notifySms: true,
+          },
+        },
       },
     });
 
-    // BAR-10: Send dual-channel notification (email + SMS)
-    let notificationResult = null;
-    const shouldNotify =
-      !body.isWalkIn &&
-      customer.pmbNumber !== 'WALK-IN' &&
-      (body.sendEmail !== false || body.sendSms !== false);
-
-    if (shouldNotify) {
-      try {
-        // Determine channel from explicit preferences
-        const wantsEmail = body.sendEmail !== false && customer.notifyEmail && customer.email;
-        const wantsSms = body.sendSms !== false && customer.notifySms && customer.phone;
-
-        const channel = wantsEmail && wantsSms
-          ? 'both' as const
-          : wantsSms
-            ? 'sms' as const
-            : 'email' as const;
-
-        notificationResult = await sendNotification({
-          type: 'package_arrival',
+    // --- Create audit log entry ---
+    await prisma.auditLog.create({
+      data: {
+        action: 'package_checkin',
+        entityType: 'package',
+        entityId: pkg.id,
+        details: JSON.stringify({
+          trackingNumber: pkg.trackingNumber,
+          carrier: pkg.carrier,
+          packageType: pkg.packageType,
           customerId: customer.id,
-          channel,
-          data: {
-            carrier: body.carrier,
-            trackingNumber: body.trackingNumber,
-            packageType: body.packageType,
-            senderName: body.senderName,
-            checkedInAt: pkg.checkedInAt.toISOString(),
-          },
-        });
+          customerName: `${customer.firstName} ${customer.lastName}`,
+          customerPmb: customer.pmbNumber,
+          hazardous: pkg.hazardous,
+          perishable: pkg.perishable,
+          storageLocation: pkg.storageLocation,
+          isWalkIn: !!isWalkIn,
+        }),
+        userId: user.id,
+      },
+    });
 
-        // Update package notified status
-        if (notificationResult.success) {
-          await prisma.package.update({
-            where: { id: pkg.id },
-            data: { status: 'notified', notifiedAt: new Date() },
-          });
-        }
-      } catch (notifError) {
-        // Don't fail the check-in if notification fails
-        console.error('[check-in] Notification error:', notifError);
+    // --- Send notifications ---
+    const notifications: { channel: string; status: string }[] = [];
+
+    if (sendEmail && customer.notifyEmail && customer.email) {
+      try {
+        await fetch(new URL('/api/notifications/send', req.url), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'package_arrival',
+            customerId: customer.id,
+            channel: 'email',
+            data: {
+              trackingNumber: pkg.trackingNumber,
+              carrier: pkg.carrier,
+              senderName: pkg.senderName,
+              packageType: pkg.packageType,
+              perishable: pkg.perishable,
+              hazardous: pkg.hazardous,
+              storageLocation: pkg.storageLocation,
+            },
+          }),
+        });
+        notifications.push({ channel: 'email', status: 'sent' });
+      } catch (err) {
+        console.error('[check-in] Email notification failed:', err);
+        notifications.push({ channel: 'email', status: 'failed' });
+      }
+
+      // Update package notifiedAt
+      await prisma.package.update({
+        where: { id: pkg.id },
+        data: { notifiedAt: new Date(), status: 'notified' },
+      });
+    }
+
+    if (sendSms && customer.notifySms && customer.phone) {
+      try {
+        await fetch(new URL('/api/notifications/send', req.url), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'package_arrival',
+            customerId: customer.id,
+            channel: 'sms',
+            data: {
+              trackingNumber: pkg.trackingNumber,
+              carrier: pkg.carrier,
+              senderName: pkg.senderName,
+              perishable: pkg.perishable,
+            },
+          }),
+        });
+        notifications.push({ channel: 'sms', status: 'sent' });
+      } catch (err) {
+        console.error('[check-in] SMS notification failed:', err);
+        notifications.push({ channel: 'sms', status: 'failed' });
       }
     }
 
@@ -146,23 +250,26 @@ export async function POST(request: NextRequest) {
         id: pkg.id,
         trackingNumber: pkg.trackingNumber,
         carrier: pkg.carrier,
+        senderName: pkg.senderName,
+        packageType: pkg.packageType,
         status: pkg.status,
-        checkedInAt: pkg.checkedInAt,
+        hazardous: pkg.hazardous,
+        perishable: pkg.perishable,
+        storageLocation: pkg.storageLocation,
+        checkedInAt: pkg.checkedInAt.toISOString(),
+        customer: {
+          id: pkg.customer.id,
+          name: `${pkg.customer.firstName} ${pkg.customer.lastName}`,
+          pmbNumber: pkg.customer.pmbNumber,
+        },
       },
-      notification: notificationResult
-        ? {
-            sent: notificationResult.success,
-            notificationId: notificationResult.notificationId,
-            email: notificationResult.emailResult?.success ?? null,
-            sms: notificationResult.smsResult?.success ?? null,
-          }
-        : null,
+      notifications,
     });
-  } catch (error) {
-    console.error('[check-in] Error:', error);
+  } catch (err) {
+    console.error('[POST /api/packages/check-in]', err);
     return NextResponse.json(
       { error: 'Failed to check in package' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

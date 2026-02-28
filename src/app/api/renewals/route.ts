@@ -43,11 +43,29 @@ export async function GET() {
         ? Math.ceil((c.renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
+      // Compute renewalStatus dynamically from daysUntilRenewal so the
+      // pipeline always reflects reality, even before the cron runs.
+      let renewalStatus = c.renewalStatus;
+      if (c.renewalDate) {
+        if (c.status === 'suspended' || renewalStatus === 'suspended') {
+          renewalStatus = 'suspended';
+        } else if (daysUntilRenewal < -15) {
+          renewalStatus = 'suspended';
+        } else if (daysUntilRenewal < 0) {
+          renewalStatus = 'past_due';
+        } else if (daysUntilRenewal <= 30) {
+          renewalStatus = 'due_soon';
+        } else {
+          renewalStatus = 'current';
+        }
+      }
+
       return {
         ...c,
         renewalDate: c.renewalDate?.toISOString() ?? null,
         lastRenewalNotice: c.lastRenewalNotice?.toISOString() ?? null,
         daysUntilRenewal,
+        renewalStatus,
       };
     });
 

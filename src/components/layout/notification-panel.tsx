@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { notifications } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
-import {
-  getNotificationTargetUrl,
-  getNotificationStatusLabel,
-} from '@/lib/utils';
 import {
   Bell,
   Package,
@@ -35,6 +30,11 @@ const notifTypeIcon: Record<string, React.ReactNode> = {
   welcome: <UserPlus className="h-4 w-4 text-primary-400" />,
 };
 
+/** Format notification type for display – capitalises "ID" properly. */
+function formatNotifType(type: string): string {
+  return type.replace(/_/g, ' ').replace(/\bid\b/gi, 'ID');
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Relative time helper                                                      */
 /* -------------------------------------------------------------------------- */
@@ -53,7 +53,6 @@ function timeAgo(dateStr: string): string {
 /*  NotificationPanel                                                         */
 /* -------------------------------------------------------------------------- */
 export function NotificationPanel() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
@@ -93,20 +92,6 @@ export function NotificationPanel() {
 
   const markAllRead = () => {
     setReadIds(new Set(recent.map((n) => n.id)));
-  };
-
-  /** Navigate to the correct page when a notification is clicked. */
-  const handleNotifClick = (notif: (typeof recent)[0]) => {
-    setReadIds((prev) => new Set([...prev, notif.id]));
-
-    // Always navigate in-app to the related customer / entity page.
-    // External tracking links are available via the notifications detail view.
-    const target = getNotificationTargetUrl(notif.type, {
-      customerId: notif.customerId,
-      linkedEntityId: notif.linkedEntityId,
-    });
-    setOpen(false);
-    router.push(target);
   };
 
   return (
@@ -162,7 +147,7 @@ export function NotificationPanel() {
                 return (
                   <button
                     key={notif.id}
-                    onClick={() => handleNotifClick(notif)}
+                    onClick={() => setReadIds((prev) => new Set([...prev, notif.id]))}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-800/60 border-b border-surface-800/50 last:border-0 ${
                       !isRead ? 'bg-primary-500/[0.03]' : ''
                     }`}
@@ -176,49 +161,26 @@ export function NotificationPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className={`text-[13px] leading-snug ${!isRead ? 'text-surface-200 font-medium' : 'text-surface-400'}`}>
-                          {notif.subject || notif.type.replace(/_/g, ' ')}
+                          {notif.subject || formatNotifType(notif.type)}
                         </p>
                         {!isRead && (
                           <span className="flex-shrink-0 mt-1.5 h-2 w-2 rounded-full bg-primary-500" />
                         )}
                       </div>
-
-                      {/* Customer name + PMB number */}
                       <div className="flex items-center gap-2 mt-1">
                         {notif.customer && (
                           <span className="text-[11px] text-surface-500 truncate">
                             {notif.customer.firstName} {notif.customer.lastName}
                           </span>
                         )}
-                        {notif.customer?.pmbNumber && (
-                          <>
-                            <span className="text-[10px] text-surface-600">•</span>
-                            <span className="text-[11px] text-surface-500 font-mono flex-shrink-0">
-                              {notif.customer.pmbNumber}
-                            </span>
-                          </>
-                        )}
                         <span className="text-[10px] text-surface-600">•</span>
                         <span className="text-[11px] text-surface-600 flex-shrink-0">
                           {timeAgo(notif.createdAt)}
                         </span>
                       </div>
-
-                      {/* Tracking number for shipment notifications */}
-                      {notif.type === 'shipment_update' && notif.carrier && notif.trackingNumber && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Truck className="h-3 w-3 text-surface-500" />
-                          <span className="text-[10px] text-surface-500 uppercase">{notif.carrier}</span>
-                          <span className="text-[10px] text-primary-400 font-mono truncate">
-                            {notif.trackingNumber}
-                          </span>
-                          <ExternalLink className="h-2.5 w-2.5 text-primary-400 flex-shrink-0" />
-                        </div>
-                      )}
-
                       <div className="mt-1">
                         <Badge status={notif.status} className="text-[10px] !py-0 !px-1.5">
-                          {getNotificationStatusLabel(notif.status)}
+                          {notif.status}
                         </Badge>
                       </div>
                     </div>

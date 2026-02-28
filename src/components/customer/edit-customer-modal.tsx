@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { CheckCircle, Save, Plus, Trash2 } from 'lucide-react';
+import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
+import type { ParsedAddress } from '@/components/ui/address-autocomplete';
 import type { Customer, AuthorizedPerson } from '@/lib/types';
 
 interface EditCustomerModalProps {
@@ -200,17 +202,25 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
         <div className="border-t border-surface-800 pt-5">
           <h3 className="text-sm font-semibold text-surface-200 mb-3">Addresses</h3>
           <div className="grid grid-cols-1 gap-4">
-            <Input
+            <AddressAutocomplete
               label="Street Address"
               value={form.address}
-              placeholder="e.g. 123 Main St, Apt 4B, City, State ZIP"
-              onChange={(e) => handleChange('address', e.target.value)}
+              placeholder="Start typing an address..."
+              onChange={(v) => handleChange('address', v)}
+              onSelect={(parsed: ParsedAddress) => {
+                const full = [parsed.street, parsed.city, parsed.state, parsed.zip].filter(Boolean).join(', ');
+                handleChange('address', full);
+              }}
             />
-            <Input
+            <AddressAutocomplete
               label="Preferred Forwarding Address"
               value={form.forwardingAddress}
-              placeholder="e.g. 456 Oak Ave, Suite 100, City, State ZIP"
-              onChange={(e) => handleChange('forwardingAddress', e.target.value)}
+              placeholder="Start typing an address..."
+              onChange={(v) => handleChange('forwardingAddress', v)}
+              onSelect={(parsed: ParsedAddress) => {
+                const full = [parsed.street, parsed.city, parsed.state, parsed.zip].filter(Boolean).join(', ');
+                handleChange('forwardingAddress', full);
+              }}
             />
           </div>
         </div>

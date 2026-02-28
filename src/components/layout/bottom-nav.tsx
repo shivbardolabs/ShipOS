@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { dashboardStats } from '@/lib/mock-data';
 import {
   LayoutDashboard,
   PackagePlus,
@@ -33,15 +32,10 @@ interface NavItem {
   badge?: number;
 }
 
-const primaryNav: NavItem[] = [
+const basePrimaryNav: NavItem[] = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Check In', href: '/dashboard/packages/check-in', icon: PackagePlus },
-  {
-    label: 'Check Out',
-    href: '/dashboard/packages/check-out',
-    icon: PackageCheck,
-    badge: dashboardStats.packagesHeld,
-  },
+  { label: 'Check Out', href: '/dashboard/packages/check-out', icon: PackageCheck },
   { label: 'Customers', href: '/dashboard/customers', icon: Users },
 ];
 
@@ -66,6 +60,20 @@ const overflowNav: NavItem[] = [
 export function BottomNav() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [packagesHeld, setPackagesHeld] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then((r) => r.json())
+      .then((d) => setPackagesHeld(d.packagesHeld ?? 0))
+      .catch(() => {});
+  }, []);
+
+  const primaryNav = basePrimaryNav.map((item) =>
+    item.href === '/dashboard/packages/check-out'
+      ? { ...item, badge: packagesHeld }
+      : item
+  );
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';

@@ -21,29 +21,47 @@ import {
   CheckCircle2,
   AlertTriangle,
   Snowflake,
-  Loader2,
-  Globe,
-  Layers,
-  Settings,
-} from 'lucide-react';
+  Eye,
+  RefreshCw,
+  Hash,
+  Loader2 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
-import { BarcodeScanner } from '@/components/ui/barcode-scanner';
-import { ConditionNotes } from '@/components/packages/condition-notes';
-import { LabelPrintQueue } from '@/components/packages/label-print-queue';
-import { BatchCheckinBar } from '@/components/packages/batch-checkin-bar';
-import { QueueJumpModal } from '@/components/packages/queue-jump-modal';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
 // customers now fetched from API
 import { cn } from '@/lib/utils';
-import type { Customer, ConditionTag } from '@/lib/types';
-import type { QueuedLabel, PrintMode } from '@/components/packages/label-print-queue';
-import type { StagingPackage } from '@/components/packages/queue-jump-modal';
-import type { CarrierTrackingData } from '@/lib/carrier-api';
+
+/* -------------------------------------------------------------------------- */
+/*  Types                                                                     */
+/* -------------------------------------------------------------------------- */
+interface SearchCustomer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  businessName?: string | null;
+  pmbNumber: string;
+  platform: string;
+  status: string;
+  notifyEmail: boolean;
+  notifySms: boolean;
+  activePackageCount?: number;
+}
+
+interface DuplicatePackage {
+  id: string;
+  trackingNumber: string;
+  carrier: string;
+  status: string;
+  checkedInAt: string;
+  customerName: string;
+  customerPmb: string;
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Step Config                                                               */
@@ -83,8 +101,7 @@ const carrierSenderMap: Record<string, string> = {
   ontrac: '',
   walmart: 'Walmart Inc',
   target: 'Target Corporation',
-  other: '',
-};
+  other: '' };
 
 /* -------------------------------------------------------------------------- */
 /*  Package type config                                                       */
@@ -107,23 +124,23 @@ export default function CheckInPage() {
   // Step 1 — Customer (BAR-38: enhanced lookup)
   const [customerSearch, setCustomerSearch] = useState('');
   const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'phone' | 'company'>('pmb');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<SearchCustomer | null>(null);
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
+  const [dbCustomers, setDbCustomers] = useState<SearchCustomer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
 
-  // Step 2 — Carrier (BAR-37: enhanced auto-detect, BAR-240: API enrichment)
+  // Step 2 — Carrier (BAR-239: tracking number, auto-suggest carrier, sender autocomplete)
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('');
+  const [carrierAutoSuggested, setCarrierAutoSuggested] = useState(false);
   const [senderName, setSenderName] = useState('');
   const [customCarrierName, setCustomCarrierName] = useState('');
-  const [carrierDetectionResult, setCarrierDetectionResult] = useState<{
-    confidence: string;
-    rule: string;
-  } | null>(null);
-  const [carrierApiData, setCarrierApiData] = useState<CarrierTrackingData | null>(null);
-  const [carrierApiLoading, setCarrierApiLoading] = useState(false);
+  const [senderSuggestions, setSenderSuggestions] = useState<string[]>([]);
+  const [showSenderSuggestions, setShowSenderSuggestions] = useState(false);
+  const senderRef = useRef<HTMLDivElement>(null);
 
-  // Step 3 — Package Details
+  // Step 3 — Package Details (BAR-245: conditional popups, duplicate tracking)
   const [packageType, setPackageType] = useState('');
   const [hazardous, setHazardous] = useState(false);
   const [perishable, setPerishable] = useState(false);
@@ -133,29 +150,27 @@ export default function CheckInPage() {
   const [storageLocation, setStorageLocation] = useState('');
   const [requiresSignature, setRequiresSignature] = useState(false);
 
-  // BAR-39: Condition Notes & Annotations
-  const [conditionTags, setConditionTags] = useState<ConditionTag[]>([]);
-  const [customerNote, setCustomerNote] = useState('');
-  const [internalNote, setInternalNote] = useState('');
-  const [conditionPhotos, setConditionPhotos] = useState<string[]>([]);
+  // BAR-245: Popup modals for size/perishable warnings
+  const [showSizeWarning, setShowSizeWarning] = useState(false);
+  const [showPerishableWarning, setShowPerishableWarning] = useState(false);
+  const [sizeWarningAcked, setSizeWarningAcked] = useState(false);
+  const [perishableWarningAcked, setPerishableWarningAcked] = useState(false);
 
-  // Step 4 — Notify & Print
-  const [printLabelEnabled, setPrintLabelEnabled] = useState(true);
+  // BAR-245: Duplicate tracking number detection
+  const [duplicatePackage, setDuplicatePackage] = useState<DuplicatePackage | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [checkingTracking, setCheckingTracking] = useState(false);
+
+  // Step 4 — Notify
+  const [printLabel, setPrintLabel] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(true);
 
-  // BAR-41: Print mode & queue
-  const [printMode, setPrintMode] = useState<PrintMode>('per-package');
-  const [labelQueue, setLabelQueue] = useState<QueuedLabel[]>([]);
-  const [showPrintSettings, setShowPrintSettings] = useState(false);
-
-  // BAR-241: Batch session & queue jump
-  const [batchSessionActive, setBatchSessionActive] = useState(false);
-  const [stagingQueue, setStagingQueue] = useState<StagingPackage[]>([]);
-  const [showQueueJump, setShowQueueJump] = useState(false);
-
-  // Success state
+  // Submit state (BAR-260: actually save to DB)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [checkedInPackageId, setCheckedInPackageId] = useState<string | null>(null);
 
   // Fetch customers from API with debounced search
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -185,58 +200,121 @@ export default function CheckInPage() {
         setCarrierDetectionResult(null);
         return;
       }
+    } catch (err) {
+      console.error('Customer search failed:', err);
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, []);
 
-      const result = detectCarrier(value);
-      if (result) {
-        setCarrierDetectionResult({
-          confidence: result.confidence,
-          rule: result.matchedRule,
-        });
-        // Auto-select carrier if none is selected or if high confidence
-        if (!selectedCarrier || result.confidence === 'high') {
-          handleCarrierSelect(result.carrierId);
-        }
-      } else {
-        setCarrierDetectionResult(null);
+  // Debounced customer search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCustomers(customerSearch, searchMode);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [customerSearch, searchMode, fetchCustomers]);
+
+  // Initial load
+  useEffect(() => {
+    fetchCustomers('', 'pmb');
+  }, [fetchCustomers]);
+
+  /* ======================================================================== */
+  /*  Step 2: Sender autocomplete from history (BAR-239)                      */
+  /* ======================================================================== */
+  const fetchSenderSuggestions = useCallback(async (q: string) => {
+    if (q.length < 2) { setSenderSuggestions([]); return; }
+    try {
+      const res = await fetch(`/api/packages/senders?q=${encodeURIComponent(q)}&limit=8`);
+      if (res.ok) {
+        const data = await res.json();
+        setSenderSuggestions(data.senders || []);
       }
-    },
-    [selectedCarrier] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+    } catch {
+      // Fail silently — autocomplete is optional
+    }
+  }, []);
 
-  /* ── BAR-240: Carrier API enrichment ─────────────────────────────────── */
-  const fetchCarrierApiData = useCallback(
-    async (tracking: string, carrier: string) => {
-      if (!ENRICHABLE_CARRIERS.includes(carrier)) return;
-      if (!tracking.trim() || tracking.length < 8) return;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchSenderSuggestions(senderName);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [senderName, fetchSenderSuggestions]);
 
-      setCarrierApiLoading(true);
-      try {
-        const res = await fetch('/api/packages/carrier-lookup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trackingNumber: tracking, carrier }),
-        });
-        const result = await res.json();
-        if (result.success && result.data) {
-          setCarrierApiData(result.data);
-          // Auto-fill sender name from API data
-          if (result.data.sender?.name && !senderName) {
-            setSenderName(result.data.sender.name);
-          }
-          if (result.data.sender?.company && !senderName) {
-            setSenderName(result.data.sender.company);
-          }
-        }
-      } catch {
-        // Graceful fallback — don't block the flow
-      } finally {
-        setCarrierApiLoading(false);
+  // Close sender suggestions on click outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (senderRef.current && !senderRef.current.contains(e.target as Node)) {
+        setShowSenderSuggestions(false);
       }
-    },
-    [senderName]
-  );
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
-  // Validation per step
+  // Auto-suggest carrier from tracking number (BAR-239)
+  const suggestCarrierFromTracking = (tracking: string) => {
+    const t = tracking.trim().toUpperCase();
+    if (t.startsWith('1Z')) return 'ups';
+    if (/^TBA/.test(t)) return 'amazon';
+    if (/^(FX|[0-9]{12,15}$)/.test(t) && !t.startsWith('9')) return 'fedex';
+    if (/^(9[0-9]{15,})$/.test(t) || /^(94|92|93|94|70|71|72|73|74|75|76|77|78|79)/.test(t) && t.length > 18) return 'usps';
+    if (/^[0-9]{10}$/.test(t)) return 'dhl';
+    if (/^1LS/.test(t)) return 'lasership';
+    if (/^C[0-9]{8}/.test(t)) return 'ontrac';
+    return '';
+  };
+
+  /* ======================================================================== */
+  /*  Step 3: Duplicate tracking check (BAR-245)                              */
+  /* ======================================================================== */
+  const checkDuplicateTracking = useCallback(async (tracking: string) => {
+    if (!tracking.trim()) { setDuplicatePackage(null); return; }
+    setCheckingTracking(true);
+    try {
+      const res = await fetch(`/api/packages/check-tracking?tracking=${encodeURIComponent(tracking.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          setDuplicatePackage(data.package);
+          setShowDuplicateModal(true);
+        } else {
+          setDuplicatePackage(null);
+        }
+      }
+    } catch {
+      // Fail silently
+    } finally {
+      setCheckingTracking(false);
+    }
+  }, []);
+
+  // Check tracking when moving to Step 3
+  useEffect(() => {
+    if (step === 3 && trackingNumber.trim()) {
+      checkDuplicateTracking(trackingNumber);
+    }
+  }, [step, trackingNumber, checkDuplicateTracking]);
+
+  // BAR-245: Show popup when Large/XL selected
+  useEffect(() => {
+    if ((packageType === 'large' || packageType === 'xlarge') && !sizeWarningAcked) {
+      setShowSizeWarning(true);
+    }
+  }, [packageType, sizeWarningAcked]);
+
+  // BAR-245: Show popup when perishable toggled on
+  useEffect(() => {
+    if (perishable && !perishableWarningAcked) {
+      setShowPerishableWarning(true);
+    }
+  }, [perishable, perishableWarningAcked]);
+
+  /* ======================================================================== */
+  /*  Validation                                                              */
+  /* ======================================================================== */
   const canProceed = (() => {
     switch (step) {
       case 1:
@@ -255,231 +333,68 @@ export default function CheckInPage() {
   // Handle carrier selection with auto-fill sender
   const handleCarrierSelect = (carrierId: string) => {
     setSelectedCarrier(carrierId);
+    setCarrierAutoSuggested(false);
     const autoSender = carrierSenderMap[carrierId];
     if (autoSender) setSenderName(autoSender);
-    else if (!senderName) setSenderName('');
+    else setSenderName('');
   };
 
-  // Handle barcode scan (BAR-37 + BAR-240)
-  const handleBarcodeScan = useCallback(
-    (value: string) => {
-      setTrackingNumber(value);
-      const result = detectCarrier(value);
-      if (result) {
-        setCarrierDetectionResult({
-          confidence: result.confidence,
-          rule: result.matchedRule,
-        });
-        handleCarrierSelect(result.carrierId);
-        // Trigger carrier API enrichment
-        fetchCarrierApiData(value, result.carrierId);
-      }
-    },
-    [fetchCarrierApiData] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  /* ── BAR-41: Label printing ──────────────────────────────────────────── */
-  const addToLabelQueue = useCallback(
-    (pkgId: string) => {
-      const custName = isWalkIn
-        ? walkInName
-        : selectedCustomer
-          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-          : 'Unknown';
-      const pmb = isWalkIn ? 'WALK-IN' : (selectedCustomer?.pmbNumber || '—');
-
-      const newLabel: QueuedLabel = {
-        id: `lbl_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        packageId: pkgId,
-        customerName: custName,
-        pmbNumber: pmb,
-        trackingNumber: trackingNumber || 'N/A',
-        carrier: selectedCarrier === 'other'
-          ? (customCarrierName || 'Other')
-          : (selectedCarrier || 'Unknown'),
-        checkedInAt: new Date().toISOString(),
-        storeName: 'ShipOS Store',
-      };
-
-      setLabelQueue((prev) => [...prev, newLabel]);
-      return newLabel;
-    },
-    [isWalkIn, walkInName, selectedCustomer, trackingNumber, selectedCarrier, customCarrierName]
-  );
-
-  const handleAutoprint = useCallback(
-    (pkgId: string) => {
-      const custName = isWalkIn
-        ? walkInName
-        : selectedCustomer
-          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-          : 'Unknown';
-      const pmb = isWalkIn ? 'WALK-IN' : (selectedCustomer?.pmbNumber || '—');
-      const carrier = selectedCarrier === 'other'
-        ? (customCarrierName || 'Other')
-        : (selectedCarrier || 'Unknown');
-
-      const html = renderPackageLabel({
-        pmbNumber: pmb,
-        customerName: custName,
-        trackingNumber: trackingNumber || 'N/A',
-        carrier,
-        checkedInAt: new Date().toISOString(),
-        packageId: pkgId,
-        storeName: 'ShipOS Store',
-      });
-      printLabel(html);
-    },
-    [isWalkIn, walkInName, selectedCustomer, trackingNumber, selectedCarrier, customCarrierName]
-  );
-
-  /* ── BAR-241: Staging / queue jump ───────────────────────────────────── */
-  const addToStagingQueue = useCallback(
-    (pkgId: string) => {
-      const custName = isWalkIn
-        ? walkInName
-        : selectedCustomer
-          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-          : 'Unknown';
-      const pmb = isWalkIn ? 'WALK-IN' : (selectedCustomer?.pmbNumber || '—');
-
-      const staging: StagingPackage = {
-        id: pkgId,
-        trackingNumber: trackingNumber || 'N/A',
-        carrier: selectedCarrier || 'unknown',
-        customerName: custName,
-        pmbNumber: pmb,
-        stagingStatus: 'scanned',
-        scannedAt: new Date().toISOString(),
-      };
-      setStagingQueue((prev) => [...prev, staging]);
-    },
-    [isWalkIn, walkInName, selectedCustomer, trackingNumber, selectedCarrier]
-  );
-
-  const handleQueueJump = useCallback(
-    (pkg: StagingPackage) => {
-      // Mark as labeled in staging queue
-      setStagingQueue((prev) =>
-        prev.map((p) =>
-          p.id === pkg.id ? { ...p, stagingStatus: 'labeled' as const } : p
-        )
-      );
-      // Print label immediately
-      const html = renderPackageLabel({
-        pmbNumber: pkg.pmbNumber,
-        customerName: pkg.customerName,
-        trackingNumber: pkg.trackingNumber,
-        carrier: pkg.carrier,
-        checkedInAt: new Date().toISOString(),
-        packageId: pkg.id,
-        storeName: 'ShipOS Store',
-      });
-      printLabel(html);
-    },
-    []
-  );
-
-  const handleQuickRelease = useCallback(
-    (pkg: StagingPackage) => {
-      // Mark as released — skip notification since customer is present
-      setStagingQueue((prev) =>
-        prev.map((p) =>
-          p.id === pkg.id ? { ...p, stagingStatus: 'released' as const } : p
-        )
-      );
-      logActivity({
-        action: 'package.release',
-        entityType: 'package',
-        entityId: pkg.id,
-        entityLabel: pkg.trackingNumber,
-        description: `Queue jump: released ${pkg.carrier.toUpperCase()} package to ${pkg.customerName} (${pkg.pmbNumber}) — customer was present during staging`,
-        metadata: { queueJump: true, carrier: pkg.carrier },
-      });
-    },
-    [] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const handleEndBatchSession = useCallback(() => {
-    setBatchSessionActive(false);
-    // Don't clear staging queue — labels may still need printing
-  }, []);
-
-  // Handle submit
-  const { log: logActivity, lastActionByVerb } = useActivityLog();
-  const lastCheckIn = lastActionByVerb('package.check_in');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  /* ======================================================================== */
+  /*  Submit — BAR-260: Save package to database via API                      */
+  /* ======================================================================== */
   const handleSubmit = async () => {
-    if (isSubmitting) return;
     setIsSubmitting(true);
-
-    const carrierLabel = selectedCarrier === 'other'
-      ? (customCarrierName || 'Other')
-      : (selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown');
-    const custLabel = isWalkIn
-      ? `Walk-in: ${walkInName}`
-      : selectedCustomer
-        ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})`
-        : '';
+    setSubmitError(null);
 
     try {
       const res = await fetch('/api/packages/check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerId: selectedCustomer?.id || undefined,
-          trackingNumber: trackingNumber || undefined,
-          carrier: selectedCarrier === 'other' ? (customCarrierName || 'other') : selectedCarrier,
-          senderName: senderName || undefined,
+          customerId: selectedCustomer?.id || null,
+          trackingNumber: trackingNumber.trim() || null,
+          carrier: selectedCarrier,
+          customCarrierName: selectedCarrier === 'other' ? customCarrierName : undefined,
+          senderName: senderName.trim() || null,
           packageType,
-          condition,
           hazardous,
           perishable,
+          condition,
+          conditionOther: condition === 'other' ? conditionOther : undefined,
+          notes: notes.trim() || null,
+          storageLocation: storageLocation.trim() || null,
           requiresSignature,
-          storageLocation: storageLocation || undefined,
-          notes: notes || undefined,
           isWalkIn,
-          walkInName: isWalkIn ? walkInName : undefined,
-          conditionTags: conditionTags.length > 0 ? conditionTags : undefined,
-          customerNote: customerNote || undefined,
-          internalNote: internalNote || undefined,
-          conditionPhotos: conditionPhotos.length > 0 ? conditionPhotos : undefined,
-          sendEmail: printMode === 'batch' ? false : sendEmail, // BAR-41: delay notifications in batch mode
-          sendSms: printMode === 'batch' ? false : sendSms,
-          printLabel: printLabelEnabled,
-          // BAR-240: Include enrichment data
-          carrierApiData: carrierApiData ? {
-            senderName: carrierApiData.sender?.name,
-            senderAddress: carrierApiData.sender?.address,
-            recipientName: carrierApiData.recipient?.name,
-            recipientAddress: carrierApiData.recipient?.address,
-            serviceType: carrierApiData.serviceType,
-          } : undefined,
+          walkInName: isWalkIn ? walkInName.trim() : undefined,
+          sendEmail,
+          sendSms,
+          printLabel,
         }),
       });
 
       const data = await res.json();
-      const entityId = data.package?.id || `pkg_${Date.now()}`;
 
-      // BAR-41: Handle printing based on mode
-      if (printLabelEnabled) {
-        if (printMode === 'per-package') {
-          handleAutoprint(entityId);
-        } else {
-          addToLabelQueue(entityId);
-        }
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to check in package');
       }
 
-      // BAR-241: Add to staging queue if batch session is active
-      if (batchSessionActive) {
-        addToStagingQueue(entityId);
-      }
+      // Store the package ID for the success modal
+      setCheckedInPackageId(data.package?.id || null);
+
+      // Also log to client-side activity log for immediate UI feedback
+      const carrierLabel = selectedCarrier === 'other'
+        ? (customCarrierName || 'Other')
+        : (selectedCarrier ? selectedCarrier.toUpperCase() : 'Unknown');
+      const custLabel = isWalkIn
+        ? `Walk-in: ${walkInName}`
+        : selectedCustomer
+          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName} (${selectedCustomer.pmbNumber})`
+          : '';
 
       logActivity({
         action: 'package.check_in',
         entityType: 'package',
-        entityId,
+        entityId: data.package?.id || `pkg_${Date.now()}`,
         entityLabel: trackingNumber || `${carrierLabel} package`,
         description: `Checked in ${carrierLabel} package for ${custLabel}`,
         metadata: {
@@ -494,31 +409,16 @@ export default function CheckInPage() {
           storageLocation: storageLocation || undefined,
           isWalkIn,
           walkInName: isWalkIn ? walkInName : undefined,
-          notificationSent: data.notification?.sent ?? false,
-          printMode,
-          carrierDetection: carrierDetectionResult,
-          carrierApiEnriched: !!carrierApiData,
         },
       });
-    } catch {
-      logActivity({
-        action: 'package.check_in',
-        entityType: 'package',
-        entityId: `pkg_${Date.now()}`,
-        entityLabel: trackingNumber || `${carrierLabel} package`,
-        description: `Checked in ${carrierLabel} package for ${custLabel}`,
-        metadata: {
-          carrier: selectedCarrier === 'other' ? customCarrierName : selectedCarrier,
-          trackingNumber,
-          packageType,
-          customerId: selectedCustomer?.id,
-          customerName: custLabel,
-          apiError: true,
-        },
-      });
+
+      setShowSuccess(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unexpected error';
+      setSubmitError(message);
+      console.error('[CheckIn] Submit failed:', err);
     } finally {
       setIsSubmitting(false);
-      setShowSuccess(true);
     }
   };
 
@@ -531,8 +431,10 @@ export default function CheckInPage() {
     setIsWalkIn(false);
     setWalkInName('');
     setSelectedCarrier('');
+    setCarrierAutoSuggested(false);
     setCustomCarrierName('');
     setSenderName('');
+    setSenderSuggestions([]);
     setPackageType('');
     setTrackingNumber('');
     setHazardous(false);
@@ -542,27 +444,35 @@ export default function CheckInPage() {
     setConditionOther('');
     setNotes('');
     setStorageLocation('');
-    setConditionTags([]);
-    setCustomerNote('');
-    setInternalNote('');
-    setConditionPhotos([]);
-    setPrintLabelEnabled(true);
+    setPrintLabel(true);
     setSendEmail(true);
     setSendSms(true);
     setShowSuccess(false);
-    setCarrierDetectionResult(null);
-    setCarrierApiData(null);
-    // Don't reset labelQueue, stagingQueue, or batchSessionActive — those persist across check-ins
+    setSubmitError(null);
+    setCheckedInPackageId(null);
+    setDuplicatePackage(null);
+    setSizeWarningAcked(false);
+    setPerishableWarningAcked(false);
   };
 
-  /* ── Platform badge colors ──────────────────────────────────────────── */
+  // Generate a unique tracking number (BAR-245)
+  const handleGenerateTracking = () => {
+    const prefix = selectedCarrier ? selectedCarrier.toUpperCase().slice(0, 3) : 'PKG';
+    const generated = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    setTrackingNumber(generated);
+    setDuplicatePackage(null);
+    setShowDuplicateModal(false);
+  };
+
+  /* ======================================================================== */
+  /*  Store badge                                                             */
+  /* ======================================================================== */
   const platformColors: Record<string, string> = {
     physical: 'warning',
     iPostal: 'info',
     anytime: 'success',
     postscan: 'warning',
-    other: 'default',
-  };
+    other: 'default' };
 
   return (
     <div className="space-y-6">
@@ -571,56 +481,14 @@ export default function CheckInPage() {
         description="Process a new incoming package"
         badge={lastCheckIn ? <PerformedBy entry={lastCheckIn} showAction className="ml-2" /> : undefined}
         actions={
-          <div className="flex items-center gap-2">
-            {/* BAR-41: Print Settings toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowPrintSettings(true)}
-              leftIcon={<Settings className="h-4 w-4" />}
-            >
-              Print: {printMode === 'per-package' ? 'Auto' : 'Batch'}
-            </Button>
-            {/* BAR-241: Start/resume batch session */}
-            {!batchSessionActive && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setBatchSessionActive(true)}
-                leftIcon={<Layers className="h-4 w-4" />}
-              >
-                Start Batch Session
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              leftIcon={<ArrowLeft className="h-4 w-4" />}
-              onClick={() => (window.location.href = '/dashboard/packages')}
-            >
-              Back to Packages
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            leftIcon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => (window.location.href = '/dashboard/packages')}
+          >
+            Back to Packages
+          </Button>
         }
-      />
-
-      {/* BAR-241: Batch Session Bar */}
-      <BatchCheckinBar
-        isActive={batchSessionActive}
-        stagedCount={stagingQueue.filter((p) => p.stagingStatus !== 'released').length}
-        labelQueueCount={labelQueue.length}
-        onQueueJump={() => setShowQueueJump(true)}
-        onEndSession={handleEndBatchSession}
-      />
-
-      {/* BAR-41: Label Print Queue (visible in batch mode) */}
-      <LabelPrintQueue
-        queue={labelQueue}
-        printMode={printMode}
-        onRemoveFromQueue={(id) =>
-          setLabelQueue((prev) => prev.filter((l) => l.id !== id))
-        }
-        onBatchPrintComplete={() => setLabelQueue([])}
-        onClearQueue={() => setLabelQueue([])}
       />
 
       {/* Step Progress Indicator */}
@@ -713,7 +581,7 @@ export default function CheckInPage() {
               </div>
             ) : (
               <>
-                {/* Search mode tabs */}
+                {/* Search mode tabs (BAR-38) */}
                 <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl max-w-md">
                   {([
                     { id: 'pmb' as const, label: 'PMB #' },
@@ -752,7 +620,13 @@ export default function CheckInPage() {
 
             {!isWalkIn && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filteredCustomers.map((cust) => {
+                {customersLoading && dbCustomers.length === 0 && (
+                  <div className="col-span-2 py-8 text-center text-surface-500">
+                    <Loader2 className="mx-auto h-6 w-6 mb-2 text-surface-600 animate-spin" />
+                    <p>Searching customers...</p>
+                  </div>
+                )}
+                {dbCustomers.map((cust) => {
                   const isSelected = selectedCustomer?.id === cust.id;
                   return (
                     <button
@@ -768,7 +642,6 @@ export default function CheckInPage() {
                       <CustomerAvatar
                         firstName={cust.firstName}
                         lastName={cust.lastName}
-                        photoUrl={cust.photoUrl}
                         size="md"
                       />
                       <div className="flex-1 min-w-0">
@@ -796,6 +669,11 @@ export default function CheckInPage() {
                             </span>
                           )}
                         </div>
+                        {cust.activePackageCount !== undefined && cust.activePackageCount > 0 && (
+                          <span className="text-[10px] text-amber-400 mt-0.5 inline-block">
+                            {cust.activePackageCount} pkg{cust.activePackageCount !== 1 ? 's' : ''} in inventory
+                          </span>
+                        )}
                       </div>
                       {isSelected && (
                         <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
@@ -803,7 +681,7 @@ export default function CheckInPage() {
                     </button>
                   );
                 })}
-                {filteredCustomers.length === 0 && (
+                {!customersLoading && dbCustomers.length === 0 && (
                   <div className="col-span-2 py-12 text-center text-surface-500">
                     <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
                     <p>No customers found matching your search</p>
@@ -815,7 +693,7 @@ export default function CheckInPage() {
         )}
 
         {/* ================================================================ */}
-        {/*  Step 2: Carrier & Sender (BAR-37 + BAR-240 enhanced)            */}
+        {/*  Step 2: Carrier & Sender                                        */}
         {/* ================================================================ */}
         {step === 2 && (
           <div className="space-y-5">
@@ -828,59 +706,47 @@ export default function CheckInPage() {
               </p>
             </div>
 
-            {/* Tracking Number */}
+            {/* Tracking Number — moved here from Step 3 (BAR-239) */}
             <div className="max-w-lg">
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <Input
-                    label="Tracking Number"
-                    placeholder="Enter or scan tracking number"
-                    value={trackingNumber}
-                    onChange={(e) => handleTrackingNumberChange(e.target.value)}
-                    leftIcon={<ScanBarcode className="h-5 w-5" />}
-                    className="!py-3"
-                  />
-                </div>
-                <BarcodeScanner onScan={handleBarcodeScan} />
-              </div>
-
-              {/* BAR-37: Detection result feedback */}
-              {trackingNumber.trim() && carrierDetectionResult && (
-                <div className="mt-1.5 flex items-center gap-2 text-xs">
-                  <CheckCircle2 className={cn(
-                    'h-3.5 w-3.5',
-                    carrierDetectionResult.confidence === 'high'
-                      ? 'text-emerald-400'
-                      : carrierDetectionResult.confidence === 'medium'
-                        ? 'text-blue-400'
-                        : 'text-amber-400'
-                  )} />
-                  <span className={cn(
-                    carrierDetectionResult.confidence === 'high'
-                      ? 'text-emerald-400'
-                      : carrierDetectionResult.confidence === 'medium'
-                        ? 'text-blue-400'
-                        : 'text-amber-400'
-                  )}>
-                    Auto-detected: {selectedCarrier.toUpperCase()}
-                  </span>
-                  <Badge
-                    variant={
-                      carrierDetectionResult.confidence === 'high'
-                        ? 'success'
-                        : carrierDetectionResult.confidence === 'medium'
-                          ? 'info'
-                          : 'warning'
-                    }
-                  >
-                    {carrierDetectionResult.confidence} confidence
-                  </Badge>
-                </div>
-              )}
-              {trackingNumber.trim() && !carrierDetectionResult && !selectedCarrier && (
+              <Input
+                label="Tracking Number"
+                placeholder="Enter or scan tracking number"
+                value={trackingNumber}
+                onChange={(e) => {
+                  setTrackingNumber(e.target.value);
+                  const suggested = suggestCarrierFromTracking(e.target.value);
+                  if (suggested && !selectedCarrier) {
+                    setSelectedCarrier(suggested);
+                    setCarrierAutoSuggested(true);
+                    const autoSender = carrierSenderMap[suggested];
+                    if (autoSender) setSenderName(autoSender);
+                  }
+                }}
+                leftIcon={<ScanBarcode className="h-5 w-5" />}
+                className="!py-3"
+              />
+              {trackingNumber.trim() && !selectedCarrier && (
                 <p className="mt-1 text-xs text-amber-400">
                   <AlertTriangle className="h-3 w-3 inline mr-1" />
                   Could not auto-detect carrier — please select below
+                </p>
+              )}
+              {trackingNumber.trim() && selectedCarrier && carrierAutoSuggested && (
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-xs text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Carrier auto-detected: {selectedCarrier.toUpperCase()}
+                  </p>
+                  <button
+                    onClick={() => { setSelectedCarrier(''); setCarrierAutoSuggested(false); }}
+                    className="text-xs text-primary-400 hover:text-primary-300 underline"
+                  >
+                    Select Different Carrier
+                  </button>
+                </div>
+              )}
+              {checkingTracking && (
+                <p className="mt-1 text-xs text-surface-500 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Checking tracking number...
                 </p>
               )}
             </div>
@@ -899,7 +765,9 @@ export default function CheckInPage() {
                       onClick={() => handleCarrierSelect(carrier.id)}
                       className={cn(
                         'flex flex-col items-center justify-center gap-2 rounded-xl border px-4 py-4 transition-all',
-                        isActive ? carrier.active : carrier.color
+                        isActive
+                          ? carrier.active
+                          : carrier.color
                       )}
                     >
                       <CarrierLogo carrier={carrier.id} size={28} />
@@ -910,7 +778,7 @@ export default function CheckInPage() {
               </div>
             </div>
 
-            {/* Custom carrier name */}
+            {/* Custom carrier name when "Other" is selected */}
             {selectedCarrier === 'other' && (
               <div className="max-w-md">
                 <Input
@@ -922,95 +790,38 @@ export default function CheckInPage() {
               </div>
             )}
 
-            {/* BAR-240: Carrier API enrichment button + results */}
-            {ENRICHABLE_CARRIERS.includes(selectedCarrier) && trackingNumber.trim().length >= 8 && (
-              <div className="rounded-xl border border-surface-700/50 bg-surface-900/60 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-blue-400" />
-                    <span className="text-sm font-medium text-surface-300">
-                      Carrier Data Enrichment
-                    </span>
-                  </div>
-                  {!carrierApiData && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fetchCarrierApiData(trackingNumber, selectedCarrier)}
-                      disabled={carrierApiLoading}
-                      leftIcon={carrierApiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Globe className="h-3.5 w-3.5" />}
-                    >
-                      {carrierApiLoading ? 'Looking up…' : 'Look Up Sender'}
-                    </Button>
-                  )}
-                  {carrierApiData && !carrierApiData.error && (
-                    <Badge variant="success" dot>Enriched</Badge>
-                  )}
-                </div>
-
-                {carrierApiData && !carrierApiData.error && (
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-surface-800">
-                    {carrierApiData.sender?.name && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500">Sender</p>
-                        <p className="text-sm text-surface-200">{carrierApiData.sender.name}</p>
-                        {carrierApiData.sender.city && (
-                          <p className="text-xs text-surface-400">
-                            {carrierApiData.sender.city}{carrierApiData.sender.state ? `, ${carrierApiData.sender.state}` : ''}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    {carrierApiData.recipient?.name && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500">Recipient</p>
-                        <p className="text-sm text-surface-200">{carrierApiData.recipient.name}</p>
-                        {carrierApiData.recipient.city && (
-                          <p className="text-xs text-surface-400">
-                            {carrierApiData.recipient.city}{carrierApiData.recipient.state ? `, ${carrierApiData.recipient.state}` : ''}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    {carrierApiData.serviceType && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500">Service</p>
-                        <p className="text-sm text-surface-200">{carrierApiData.serviceType}</p>
-                      </div>
-                    )}
-                    {carrierApiData.status && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-surface-500">Status</p>
-                        <p className="text-sm text-surface-200">{carrierApiData.status}</p>
-                      </div>
-                    )}
-                    {carrierApiData.fromCache && (
-                      <p className="col-span-2 text-[10px] text-surface-500">Data from cache</p>
-                    )}
-                  </div>
-                )}
-
-                {carrierApiData?.error && (
-                  <p className="text-xs text-amber-400 flex items-center gap-1.5">
-                    <AlertTriangle className="h-3 w-3 shrink-0" />
-                    {carrierApiData.error}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Sender Name */}
-            <div className="max-w-md">
+            {/* Sender Name with autocomplete (BAR-239) */}
+            <div className="max-w-md relative" ref={senderRef}>
               <Input
                 label="Sender Name"
                 placeholder="e.g. Amazon.com, John Smith"
                 value={senderName}
-                onChange={(e) => setSenderName(e.target.value)}
+                onChange={(e) => {
+                  setSenderName(e.target.value);
+                  setShowSenderSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (senderSuggestions.length > 0) setShowSenderSuggestions(true);
+                }}
               />
-              {carrierApiData?.sender?.name && senderName === carrierApiData.sender.name && (
-                <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Auto-filled from carrier API
-                </p>
+              {/* Sender autocomplete dropdown (BAR-239) */}
+              {showSenderSuggestions && senderSuggestions.length > 0 && senderName.length >= 2 && (
+                <div className="absolute z-10 mt-1 w-full rounded-lg border border-surface-700 bg-surface-900 shadow-xl overflow-hidden">
+                  {senderSuggestions
+                    .filter((s) => s.toLowerCase() !== senderName.toLowerCase())
+                    .map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => {
+                          setSenderName(suggestion);
+                          setShowSenderSuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                </div>
               )}
             </div>
           </div>
@@ -1029,6 +840,19 @@ export default function CheckInPage() {
                 Describe the package characteristics
               </p>
             </div>
+
+            {/* Duplicate tracking warning (BAR-245) */}
+            {duplicatePackage && !showDuplicateModal && (
+              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-300">Duplicate tracking number detected</p>
+                  <p className="text-xs text-surface-400 mt-1">
+                    This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Package Type Selector */}
             <div>
@@ -1050,13 +874,17 @@ export default function CheckInPage() {
                       )}
                     >
                       <span className="text-2xl">{pt.icon}</span>
-                      <span className={cn(
-                        'text-sm font-medium',
-                        isActive ? 'text-primary-600' : 'text-surface-300'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          isActive ? 'text-primary-600' : 'text-surface-300'
+                        )}
+                      >
                         {pt.label}
                       </span>
-                      <span className="text-[10px] text-surface-500">{pt.desc}</span>
+                      <span className="text-[10px] text-surface-500">
+                        {pt.desc}
+                      </span>
                     </button>
                   );
                 })}
@@ -1075,7 +903,10 @@ export default function CheckInPage() {
                 label="Perishable"
                 icon={<Snowflake className="h-4 w-4 text-blue-600" />}
                 checked={perishable}
-                onChange={setPerishable}
+                onChange={(val) => {
+                  setPerishable(val);
+                  if (!val) setPerishableWarningAcked(false);
+                }}
               />
               <ToggleSwitch
                 label="Requires Signature"
@@ -1085,7 +916,7 @@ export default function CheckInPage() {
               />
             </div>
 
-            {/* Conditional alerts */}
+            {/* Conditional inline alerts (kept for reference even with modals) */}
             {(hazardous || perishable) && (
               <div className={cn(
                 'p-4 rounded-xl border space-y-2',
@@ -1139,20 +970,6 @@ export default function CheckInPage() {
               </div>
             )}
 
-            {/* BAR-39: Package Condition Notes */}
-            <div className="border-t border-surface-800 pt-4">
-              <ConditionNotes
-                selectedTags={conditionTags}
-                customerNote={customerNote}
-                internalNote={internalNote}
-                photos={conditionPhotos}
-                onTagsChange={setConditionTags}
-                onCustomerNoteChange={setCustomerNote}
-                onInternalNoteChange={setInternalNote}
-                onPhotosChange={setConditionPhotos}
-              />
-            </div>
-
             {/* Storage Location */}
             <div className="max-w-lg">
               <Input
@@ -1167,7 +984,7 @@ export default function CheckInPage() {
             {/* Notes */}
             <div className="max-w-lg">
               <Textarea
-                label="General Notes"
+                label="Notes"
                 placeholder="Any special handling instructions..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -1264,56 +1081,6 @@ export default function CheckInPage() {
                   />
                 )}
               </div>
-
-              {/* BAR-37: Detection info */}
-              {carrierDetectionResult && (
-                <div className="pt-3 border-t border-surface-800">
-                  <SummaryField
-                    label="Carrier Detection"
-                    value={`Auto-detected (${carrierDetectionResult.confidence} confidence)`}
-                  />
-                </div>
-              )}
-
-              {/* BAR-240: Enrichment info */}
-              {carrierApiData && !carrierApiData.error && (
-                <div className="pt-3 border-t border-surface-800 space-y-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Globe className="h-3.5 w-3.5 text-blue-400" />
-                    <span className="text-xs font-semibold text-surface-400 uppercase tracking-wider">
-                      Carrier API Data
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {carrierApiData.sender?.name && (
-                      <SummaryField label="API Sender" value={carrierApiData.sender.name} />
-                    )}
-                    {carrierApiData.recipient?.name && (
-                      <SummaryField label="API Recipient" value={carrierApiData.recipient.name} />
-                    )}
-                    {carrierApiData.serviceType && (
-                      <SummaryField label="Service Type" value={carrierApiData.serviceType} />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {(conditionTags.length > 0 || customerNote || internalNote) && (
-                <div className="pt-3 border-t border-surface-800 space-y-2">
-                  {conditionTags.length > 0 && (
-                    <SummaryField label="Condition Tags" value={conditionTags.join(', ')} />
-                  )}
-                  {customerNote && (
-                    <SummaryField label="Customer Note" value={customerNote} />
-                  )}
-                  {internalNote && (
-                    <SummaryField label="Internal Note (Staff Only)" value={internalNote} />
-                  )}
-                  {conditionPhotos.length > 0 && (
-                    <SummaryField label="Condition Photos" value={`${conditionPhotos.length} photo(s) attached`} />
-                  )}
-                </div>
-              )}
               {notes && (
                 <div className="pt-3 border-t border-surface-800">
                   <SummaryField label="Notes" value={notes} />
@@ -1321,48 +1088,20 @@ export default function CheckInPage() {
               )}
             </div>
 
-            {/* Notification & Print Settings */}
+            {/* Notification Preview */}
             <div className="rounded-xl border border-surface-700/50 bg-surface-900/60 p-5 space-y-4">
               <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider">
-                Notification & Print Settings
+                Notification Settings
               </h3>
-
-              {/* BAR-41: Print mode indicator */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/40 border border-surface-700/30">
-                <Printer className="h-4 w-4 text-surface-400" />
-                <div className="flex-1">
-                  <p className="text-sm text-surface-300">
-                    Print Mode: <span className="font-medium text-surface-200">
-                      {printMode === 'per-package' ? 'Auto Print (per package)' : 'Batch Queue'}
-                    </span>
-                  </p>
-                  <p className="text-xs text-surface-500">
-                    {printMode === 'per-package'
-                      ? 'Label will print immediately on check-in'
-                      : `Label will be added to queue (${labelQueue.length} currently queued)`}
-                  </p>
-                </div>
-                {printMode === 'batch' && labelQueue.length > 0 && (
-                  <Badge variant="info">{labelQueue.length} queued</Badge>
-                )}
-              </div>
-
-              {/* Batch mode notification delay warning */}
-              {printMode === 'batch' && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-300">
-                    <strong>Batch mode:</strong> Customer notifications will be delayed until labels are printed.
-                  </p>
-                </div>
-              )}
 
               {selectedCustomer?.email && (
                 <div className="flex items-center gap-3 text-sm text-surface-400">
                   <Mail className="h-4 w-4 text-blue-600" />
                   <span>
                     Email will be sent to{' '}
-                    <span className="text-surface-200">{selectedCustomer.email}</span>
+                    <span className="text-surface-200">
+                      {selectedCustomer.email}
+                    </span>
                   </span>
                 </div>
               )}
@@ -1371,16 +1110,18 @@ export default function CheckInPage() {
                   <MessageSquare className="h-4 w-4 text-emerald-600" />
                   <span>
                     SMS will be sent to{' '}
-                    <span className="text-surface-200">{selectedCustomer.phone}</span>
+                    <span className="text-surface-200">
+                      {selectedCustomer.phone}
+                    </span>
                   </span>
                 </div>
               )}
 
               <div className="flex flex-col gap-3 pt-2">
                 <CheckboxOption
-                  label={printMode === 'batch' ? 'Add to print queue' : 'Print shelf label'}
-                  checked={printLabelEnabled}
-                  onChange={setPrintLabelEnabled}
+                  label="Print shelf label"
+                  checked={printLabel}
+                  onChange={setPrintLabel}
                   icon={<Printer className="h-4 w-4" />}
                 />
                 <CheckboxOption
@@ -1388,17 +1129,34 @@ export default function CheckInPage() {
                   checked={sendEmail}
                   onChange={setSendEmail}
                   icon={<Mail className="h-4 w-4" />}
-                  disabled={!selectedCustomer?.notifyEmail || printMode === 'batch'}
+                  disabled={!selectedCustomer?.notifyEmail}
                 />
                 <CheckboxOption
                   label="Send SMS notification"
                   checked={sendSms}
                   onChange={setSendSms}
                   icon={<MessageSquare className="h-4 w-4" />}
-                  disabled={!selectedCustomer?.notifySms || printMode === 'batch'}
+                  disabled={!selectedCustomer?.notifySms}
                 />
               </div>
             </div>
+
+            {/* Submit Error (BAR-260) */}
+            {submitError && (
+              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-300">Check-in failed</p>
+                  <p className="text-xs text-surface-400 mt-1">{submitError}</p>
+                  <button
+                    onClick={() => setSubmitError(null)}
+                    className="text-xs text-primary-400 hover:text-primary-300 underline mt-1"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1418,13 +1176,7 @@ export default function CheckInPage() {
           {step < 4 ? (
             <Button
               rightIcon={<ArrowRight className="h-4 w-4" />}
-              onClick={() => {
-                setStep(step + 1);
-                // BAR-240: Auto-trigger carrier API lookup when advancing to step 3
-                if (step === 2 && !carrierApiData && ENRICHABLE_CARRIERS.includes(selectedCarrier) && trackingNumber.length >= 8) {
-                  fetchCarrierApiData(trackingNumber, selectedCarrier);
-                }
-              }}
+              onClick={() => setStep(step + 1)}
               disabled={!canProceed}
             >
               Next
@@ -1435,13 +1187,139 @@ export default function CheckInPage() {
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Checking In…' : 'Check In Package'}
+              {isSubmitting ? 'Saving...' : 'Check In Package'}
             </Button>
           )}
         </div>
       </Card>
 
-      {/* Success Modal */}
+      {/* ================================================================== */}
+      {/*  BAR-245: Size Warning Modal (Large / Extra Large)                  */}
+      {/* ================================================================== */}
+      <Modal
+        open={showSizeWarning}
+        onClose={() => { setShowSizeWarning(false); setSizeWarningAcked(true); }}
+        title="Large Package Notice"
+        size="sm"
+        footer={
+          <Button onClick={() => { setShowSizeWarning(false); setSizeWarningAcked(true); }}>
+            OK
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
+            <Package className="h-7 w-7 text-amber-600" />
+          </div>
+          <p className="text-sm text-surface-300 max-w-xs">
+            This customer will be notified this package will accrue <strong className="text-surface-100">storage fees</strong> after the free storage period ends.
+          </p>
+          <p className="mt-3 text-xs text-surface-500 max-w-xs">
+            The notification will include: &ldquo;Due to its size, this package will accrue storage fees of $1/day if not picked up within 30 days of receipt.&rdquo;
+          </p>
+        </div>
+      </Modal>
+
+      {/* ================================================================== */}
+      {/*  BAR-245: Perishable Warning Modal                                  */}
+      {/* ================================================================== */}
+      <Modal
+        open={showPerishableWarning}
+        onClose={() => { setShowPerishableWarning(false); setPerishableWarningAcked(true); }}
+        title="Perishable Package Notice"
+        size="sm"
+        footer={
+          <Button onClick={() => { setShowPerishableWarning(false); setPerishableWarningAcked(true); }}>
+            OK
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 mb-4">
+            <Snowflake className="h-7 w-7 text-blue-600" />
+          </div>
+          <p className="text-sm text-surface-300 max-w-xs">
+            This customer will be notified this package <strong className="text-surface-100">must be picked up within 24 hours</strong>.
+          </p>
+          <p className="mt-3 text-xs text-surface-500 max-w-xs">
+            The notification will include: &ldquo;This package contains perishable goods. Please pick up within 24 hours or it may be disposed of.&rdquo;
+          </p>
+        </div>
+      </Modal>
+
+      {/* ================================================================== */}
+      {/*  BAR-245: Duplicate Tracking Number Modal                           */}
+      {/* ================================================================== */}
+      <Modal
+        open={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        title="Tracking Number Already Exists"
+        size="sm"
+        footer={
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button
+              variant="secondary"
+              leftIcon={<Eye className="h-4 w-4" />}
+              onClick={() => {
+                setShowDuplicateModal(false);
+                window.open(`/dashboard/packages?id=${duplicatePackage?.id}`, '_blank');
+              }}
+            >
+              View Package
+            </Button>
+            <Button
+              variant="secondary"
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              onClick={() => {
+                setShowDuplicateModal(false);
+                setTrackingNumber('');
+                setDuplicatePackage(null);
+              }}
+            >
+              Try Again
+            </Button>
+            <Button
+              leftIcon={<Hash className="h-4 w-4" />}
+              onClick={handleGenerateTracking}
+            >
+              Generate Tracking Number
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
+            <AlertTriangle className="h-7 w-7 text-amber-600" />
+          </div>
+          <p className="text-sm text-surface-300 mb-2">
+            This package already exists in inventory
+          </p>
+          {duplicatePackage && (
+            <div className="bg-surface-800/60 rounded-lg p-3 w-full text-left text-xs space-y-1 mt-2">
+              <div className="flex justify-between">
+                <span className="text-surface-500">Tracking:</span>
+                <span className="font-mono text-surface-300">{duplicatePackage.trackingNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-surface-500">Customer:</span>
+                <span className="text-surface-300">{duplicatePackage.customerName} ({duplicatePackage.customerPmb})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-surface-500">Status:</span>
+                <span className="text-surface-300 capitalize">{duplicatePackage.status.replace('_', ' ')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-surface-500">Checked In:</span>
+                <span className="text-surface-300">{new Date(duplicatePackage.checkedInAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* ================================================================== */}
+      {/*  Success Modal                                                      */}
+      {/* ================================================================== */}
       <Modal
         open={showSuccess}
         onClose={handleReset}
@@ -1452,9 +1330,11 @@ export default function CheckInPage() {
           <>
             <Button
               variant="secondary"
-              onClick={() => (window.location.href = '/dashboard/packages')}
+              onClick={() => (window.location.href = checkedInPackageId
+                ? `/dashboard/packages?id=${checkedInPackageId}`
+                : '/dashboard/packages')}
             >
-              View Packages
+              View Package
             </Button>
             <Button onClick={handleReset}>Check In Another</Button>
           </>
@@ -1468,103 +1348,26 @@ export default function CheckInPage() {
             Successfully Checked In!
           </h3>
           <p className="text-sm text-surface-400 max-w-xs">
-            {isWalkIn ? (
-              <>Package for walk-in <span className="text-surface-200 font-medium">{walkInName}</span> has been checked in.</>
-            ) : selectedCustomer ? (
-              <>
-                Package for{' '}
-                <span className="text-surface-200 font-medium">
-                  {selectedCustomer.firstName} {selectedCustomer.lastName}
-                </span>{' '}
-                ({selectedCustomer.pmbNumber}) has been checked in
-                {printMode === 'batch'
-                  ? ' and label added to queue.'
-                  : ' and notifications sent.'}
-              </>
-            ) : (
-              <>Package has been checked in.</>
-            )}
+            Package for{' '}
+            <span className="text-surface-200 font-medium">
+              {isWalkIn
+                ? walkInName
+                : selectedCustomer
+                  ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+                  : ''
+              }
+            </span>{' '}
+            {!isWalkIn && selectedCustomer?.pmbNumber ? `(${selectedCustomer.pmbNumber}) ` : ''}
+            has been checked in
+            {(sendEmail || sendSms) ? ' and notifications have been sent.' : '.'}
           </p>
           {trackingNumber && (
             <p className="mt-3 font-mono text-xs text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg">
               {trackingNumber}
             </p>
           )}
-          {/* BAR-41: Show print mode info */}
-          {printMode === 'batch' && (
-            <p className="mt-2 text-xs text-surface-500 flex items-center gap-1">
-              <Layers className="h-3 w-3" />
-              Label added to batch queue ({labelQueue.length} total)
-            </p>
-          )}
         </div>
       </Modal>
-
-      {/* BAR-41: Print Settings Modal */}
-      <Modal
-        open={showPrintSettings}
-        onClose={() => setShowPrintSettings(false)}
-        title="Label Print Settings"
-        size="sm"
-        footer={
-          <Button onClick={() => setShowPrintSettings(false)}>Done</Button>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-surface-400">
-            Choose how labels are printed during check-in.
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => setPrintMode('per-package')}
-              className={cn(
-                'w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all',
-                printMode === 'per-package'
-                  ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
-                  : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600'
-              )}
-            >
-              <Printer className={cn('h-5 w-5 mt-0.5', printMode === 'per-package' ? 'text-primary-600' : 'text-surface-400')} />
-              <div>
-                <p className={cn('text-sm font-medium', printMode === 'per-package' ? 'text-primary-600' : 'text-surface-200')}>
-                  Per-Package Auto Print
-                </p>
-                <p className="text-xs text-surface-400 mt-0.5">
-                  Labels print immediately as each package is checked in. Best for low-volume sessions.
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => setPrintMode('batch')}
-              className={cn(
-                'w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all',
-                printMode === 'batch'
-                  ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
-                  : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600'
-              )}
-            >
-              <Layers className={cn('h-5 w-5 mt-0.5', printMode === 'batch' ? 'text-primary-600' : 'text-surface-400')} />
-              <div>
-                <p className={cn('text-sm font-medium', printMode === 'batch' ? 'text-primary-600' : 'text-surface-200')}>
-                  Batch Queue Print
-                </p>
-                <p className="text-xs text-surface-400 mt-0.5">
-                  Labels queued during scanning, then all printed at once. Best for high-volume delivery truck processing.
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* BAR-241: Queue Jump Modal */}
-      <QueueJumpModal
-        open={showQueueJump}
-        onClose={() => setShowQueueJump(false)}
-        stagingQueue={stagingQueue}
-        onQueueJump={handleQueueJump}
-        onQuickRelease={handleQuickRelease}
-      />
     </div>
   );
 }
@@ -1576,8 +1379,7 @@ function ToggleSwitch({
   label,
   icon,
   checked,
-  onChange,
-}: {
+  onChange }: {
   label: string;
   icon: React.ReactNode;
   checked: boolean;
@@ -1617,8 +1419,7 @@ function CheckboxOption({
   checked,
   onChange,
   icon,
-  disabled,
-}: {
+  disabled }: {
   label: string;
   checked: boolean;
   onChange: (val: boolean) => void;
@@ -1653,8 +1454,7 @@ function CheckboxOption({
 function SummaryField({
   label,
   value,
-  mono,
-}: {
+  mono }: {
   label: string;
   value: string;
   mono?: boolean;
