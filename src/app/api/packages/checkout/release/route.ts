@@ -6,6 +6,7 @@ import {
   DEFAULT_FEE_CONFIG,
 } from '@/lib/checkout/fees';
 import { renderReceipt, buildReceiptData } from '@/lib/checkout/receipt';
+import { onPackageCheckout } from '@/lib/charge-event-service';
 import type { FeeConfig, PackageForFees } from '@/lib/checkout/fees';
 
 /* -------------------------------------------------------------------------- */
@@ -228,6 +229,34 @@ export async function POST(request: NextRequest) {
       });
     } catch {
       console.error('[checkout/release] Audit log write failed');
+    }
+
+    // --- BAR-308: Auto-generate storage charge events ---
+    try {
+      const storagePackages = feeResult.packages
+        .filter((p) => p.billableDays > 0 && p.storageFee > 0)
+        .map((p) => {
+          const originalPkg = packages.find((op) => op.id === p.packageId);
+          return {
+            id: p.packageId,
+            checkedInAt: originalPkg?.checkedInAt || new Date(),
+            storageFee: p.storageFee,
+            billableDays: p.billableDays,
+          };
+        });
+
+      if (storagePackages.length > 0 && tenantId) {
+        await onPackageCheckout({
+          tenantId,
+          customerId,
+          pmbNumber: customer.pmbNumber,
+          packages: storagePackages,
+          createdById: employeeId,
+        });
+      }
+    } catch (err) {
+      // Charge event generation is non-blocking — log but don't fail checkout
+      console.error('[checkout/release] Charge event generation failed:', err);
     }
 
     // Generate receipt HTML

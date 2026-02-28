@@ -290,6 +290,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: false,
   },
 
+  // ── Auto Charge Generation (BAR-308) ────────────────────────────────────
+  {
+    key: 'auto_charge_generation',
+    name: 'Auto Charge Generation',
+    description: 'Automatically generate charge events when services occur — check-in, storage, shipping, mail actions',
+    category: 'business',
+    defaultEnabled: false,
+  },
+
   // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
   {
     key: 'stripe_payments',

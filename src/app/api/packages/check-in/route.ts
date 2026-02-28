@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { onPackageCheckIn } from '@/lib/charge-event-service';
 
 /**
  * POST /api/packages/check-in
@@ -242,6 +243,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // --- BAR-308: Auto-generate receiving charge event ---
+    let chargeEvent: { chargeEventId: string; totalCharge: number } | null = null;
+    if (user.tenantId) {
+      try {
+        chargeEvent = await onPackageCheckIn({
+          tenantId: user.tenantId,
+          customerId: customer.id,
+          pmbNumber: customer.pmbNumber,
+          packageId: pkg.id,
+          carrier: resolvedCarrier,
+          packageType,
+          createdById: user.id,
+        });
+      } catch (err) {
+        // Charge event generation is non-blocking — log but don't fail check-in
+        console.error('[check-in] Charge event generation failed:', err);
+      }
+    }
+
     // --- Send notifications ---
     const notifications: { channel: string; status: string }[] = [];
 
@@ -322,6 +342,7 @@ export async function POST(req: NextRequest) {
         },
       },
       notifications,
+      ...(chargeEvent && { chargeEvent }),
     });
   } catch (err) {
     console.error('[POST /api/packages/check-in]', err);
