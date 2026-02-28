@@ -27,6 +27,8 @@ export interface Customer {
   notes?: string;
   idType?: 'drivers_license' | 'passport' | 'both' | 'military_id' | 'other';
   proofOfAddress?: string;
+  proofOfAddressType?: 'home_vehicle_insurance' | 'mortgage_deed_of_trust' | 'current_lease' | 'state_drivers_nondriver_id' | 'voter_id_card';
+  proofOfAddressDateOfIssue?: string;
   proofOfAddressStatus?: 'pending' | 'submitted' | 'approved' | 'expired';
   idExpiration?: string;
   passportExpiration?: string;

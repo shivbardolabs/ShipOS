@@ -51,6 +51,7 @@ export async function GET(
       smsConsentAt: c.smsConsentAt?.toISOString() ?? null,
       smsOptOutAt: c.smsOptOutAt?.toISOString() ?? null,
       crdUploadDate: c.crdUploadDate?.toISOString() ?? null,
+      proofOfAddressDateOfIssue: c.proofOfAddressDateOfIssue?.toISOString() ?? null,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
       deletedAt: null,

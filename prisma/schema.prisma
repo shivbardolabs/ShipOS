@@ -144,6 +144,11 @@ model Customer {
   agreementSigned    Boolean   @default(false)
   agreementSignedAt  DateTime?
 
+  // Proof of Address (CMRA requirement)
+  proofOfAddressType        String?   // home_vehicle_insurance, mortgage_deed_of_trust, current_lease, state_drivers_nondriver_id, voter_id_card
+  proofOfAddressDateOfIssue DateTime? // Date the proof-of-address document was issued
+  proofOfAddressStatus      String?   @default("pending") // pending, submitted, approved, expired
+
   // Home address (for Form 1583)
   homeAddress        String?
   homeCity           String?

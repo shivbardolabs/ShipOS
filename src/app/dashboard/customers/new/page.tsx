@@ -39,6 +39,14 @@ const BUSINESS_DOC_TYPES = [
   { value: 'other_business_doc', label: 'Other Business Document' },
 ];
 
+const PROOF_OF_ADDRESS_TYPES = [
+  { value: 'home_vehicle_insurance', label: 'Home or Vehicle Insurance Policy' },
+  { value: 'mortgage_deed_of_trust', label: 'Mortgage or Deed of Trust' },
+  { value: 'current_lease', label: 'Current Lease Agreement' },
+  { value: 'state_drivers_nondriver_id', label: "State Driver's License / Non-Driver ID" },
+  { value: 'voter_id_card', label: 'Voter Registration Card' },
+];
+
 /** Personal PMB fee structure */
 const PERSONAL_FEES = {
   setupFee: 15,
@@ -161,6 +169,12 @@ export default function NewCustomerPage() {
   const [businessDocType, setBusinessDocType] = useState('');
   const [businessDocFile, setBusinessDocFile] = useState<File | null>(null);
   const [businessDocPreview, setBusinessDocPreview] = useState<string | null>(null);
+
+  const [proofOfAddressType, setProofOfAddressType] = useState('');
+  const [proofOfAddressDateOfIssue, setProofOfAddressDateOfIssue] = useState('');
+  const fileInputRefPoa = useRef<HTMLInputElement>(null);
+  const [proofOfAddressFile, setProofOfAddressFile] = useState<File | null>(null);
+  const [proofOfAddressPreview, setProofOfAddressPreview] = useState<string | null>(null);
 
   const [form1583, setForm1583] = useState<Partial<PS1583FormData>>({
     cmraName: STORE_INFO.name, cmraAddress: STORE_INFO.address,
@@ -341,6 +355,7 @@ export default function NewCustomerPage() {
               setPrimaryIdPreview(null); setSecondaryIdPreview(null);
               setExtractedData(null); setAgreementSigned(false); setSignatureDataUrl(null);
               setBusinessDocType(''); setBusinessDocFile(null); setBusinessDocPreview(null);
+              setProofOfAddressType(''); setProofOfAddressDateOfIssue(''); setProofOfAddressFile(null); setProofOfAddressPreview(null);
             }}>Add Another Customer</Button>
           </div>
         </div>
@@ -714,6 +729,36 @@ export default function NewCustomerPage() {
                     </div>
                   </CardContent>
                 </Card>
+                <Card padding="md">
+                  <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Proof of Address</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="glass-card p-3 flex items-start gap-3 border-l-4 border-blue-500">
+                        <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div><p className="text-xs text-surface-300">A proof-of-address document is required for CMRA compliance and must be on file before Form 1583 can be approved.</p><p className="text-[11px] text-surface-500 mt-1">Date of Issue (not expiration) is required.</p></div>
+                      </div>
+                      <Select label="Document Type" placeholder="Select proof of address document..." options={PROOF_OF_ADDRESS_TYPES} value={proofOfAddressType} onChange={(e) => setProofOfAddressType(e.target.value)} />
+                      {proofOfAddressType && (
+                        <Input label="Date of Issue *" type="date" value={proofOfAddressDateOfIssue} onChange={(e) => setProofOfAddressDateOfIssue(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the document was issued (required)" />
+                      )}
+                      <div>
+                        <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document Scan/Photo</label>
+                        <input ref={fileInputRefPoa} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setProofOfAddressPreview(ev.target?.result as string); setProofOfAddressFile(file); }; reader.readAsDataURL(file); } }} />
+                        {proofOfAddressPreview ? (
+                          <div className="relative rounded-lg border border-surface-700 overflow-hidden">
+                            <img src={proofOfAddressPreview} alt="Proof of Address" className="w-full h-40 object-cover" />
+                            <div className="absolute top-2 right-2"><button onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{proofOfAddressFile?.name}</p></div>
+                          </div>
+                        ) : (
+                          <div onClick={() => fileInputRefPoa.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                            <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
@@ -786,6 +831,7 @@ export default function NewCustomerPage() {
                       { label: 'Secondary ID', value: ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 1 },
                       ...(isBusinessPmb ? [{ label: 'Business Document', value: BUSINESS_DOC_TYPES.find((d) => d.value === businessDocType)?.label || 'Not selected', ok: !!businessDocFile && !!businessDocType, step: 1 }] : []),
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 2 },
+                      { label: 'Proof of Address', value: proofOfAddressType ? (PROOF_OF_ADDRESS_TYPES.find((t) => t.value === proofOfAddressType)?.label || proofOfAddressType) : 'Not selected', ok: !!proofOfAddressType && !!proofOfAddressDateOfIssue, warn: !!proofOfAddressType && !proofOfAddressDateOfIssue, step: 2 },
                       { label: 'USPS CRD Upload', value: form1583.crdUploaded ? 'Uploaded' : 'Pending', ok: form1583.crdUploaded, warn: !form1583.crdUploaded, step: 2 },
                       { label: 'Form 1583 Notarized', value: form1583.notarized ? 'Yes' : 'Pending', ok: form1583.notarized, warn: !form1583.notarized, step: 2 },
                       { label: 'Service Agreement', value: agreementSigned ? 'Signed' : 'Not signed', ok: agreementSigned, step: 3 },
