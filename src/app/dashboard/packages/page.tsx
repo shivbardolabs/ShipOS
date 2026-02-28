@@ -29,10 +29,7 @@ import {
   Plus,
   CheckCircle2,
 } from 'lucide-react';
-import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { useActivityLog } from '@/components/activity-log-provider';
-import { packages as rawPackages } from '@/lib/mock-data';
-import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Package as PackageType } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -865,4 +862,5 @@ function InfoField({
       </p>
     </div>
   );
+}
 }

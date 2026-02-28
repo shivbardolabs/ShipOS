@@ -270,25 +270,21 @@ export default function CheckInPage() {
         setCarrierDetectionResult(null);
         return;
       }
-    } catch (err) {
-      console.error('Customer search failed:', err);
-    } finally {
-      setCustomersLoading(false);
-    }
-  }, []);
 
-  // Debounced customer search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCustomers(customerSearch, searchMode);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [customerSearch, searchMode, fetchCustomers]);
-
-  // Initial load
-  useEffect(() => {
-    fetchCustomers('', 'pmb');
-  }, [fetchCustomers]);
+      const result = detectCarrier(value);
+      if (result) {
+        setCarrierDetectionResult({
+          confidence: result.confidence,
+          rule: result.matchedRule,
+        });
+        setSelectedCarrier(result.carrierId);
+      } else {
+        setCarrierDetectionResult(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   /* ======================================================================== */
   /*  Step 2: Sender autocomplete from history (BAR-239)                      */
@@ -604,9 +600,6 @@ export default function CheckInPage() {
   }, []);
 
   // Handle submit
-  const { log: logActivity, lastActionByVerb } = useActivityLog();
-  const lastCheckIn = lastActionByVerb('package.check_in');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
