@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
+import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
 import {
   LayoutDashboard,
