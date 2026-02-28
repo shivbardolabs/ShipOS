@@ -174,6 +174,7 @@ const packageProgramOptions: {
 /*  Main Component                                                            */
 /* -------------------------------------------------------------------------- */
 export default function CheckInPage() {
+  const { log: logActivity } = useActivityLog();
   const [step, setStep] = useState(1);
 
   // Step 1 — Package Program (BAR-266)
@@ -262,6 +263,11 @@ export default function CheckInPage() {
   const filteredCustomers = customers;
 
   /* ── BAR-37: Enhanced carrier detection from tracking number ─────────── */
+  const fetchCarrierApiData = useCallback(async (tracking: string, carrierId: string) => {
+    // Carrier API enrichment - placeholder for API integration
+    console.log('[CheckIn] Carrier API data fetch:', { tracking, carrierId });
+  }, []);
+
   const handleTrackingNumberChange = useCallback(
     (value: string) => {
       setTrackingNumber(value);
