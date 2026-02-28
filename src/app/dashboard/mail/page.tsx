@@ -615,7 +615,7 @@ function MailContent() {
             <PerformedBy entry={lastMailAction} showAction className="ml-2" />
           ) : undefined
         }
-        description="Process, scan, and manage incoming mail for all customers"
+        description="Process and route incoming mail."
         actions={
           <Button
             leftIcon={<Plus className="h-4 w-4" />}

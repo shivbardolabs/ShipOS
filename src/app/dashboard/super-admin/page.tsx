@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent, StatCard } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Building2,
@@ -39,6 +38,75 @@ interface TopClient {
   monthlyRevenue: number;
   accountStatus: string;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Console modules — the 9 sections accessible from the dashboard            */
+/* -------------------------------------------------------------------------- */
+const consoleModules = [
+  {
+    label: 'Client Provisioning',
+    href: '/dashboard/super-admin/clients',
+    icon: Building2,
+    description: 'Manage clients, stores, and onboarding',
+    color: '#3b82f6',
+  },
+  {
+    label: 'Admin Users',
+    href: '/dashboard/super-admin/users',
+    icon: Users,
+    description: 'Manage super admin user accounts',
+    color: '#8b5cf6',
+  },
+  {
+    label: 'Billing & Reports',
+    href: '/dashboard/super-admin/billing',
+    icon: CreditCard,
+    description: 'Revenue, invoices, and financial reports',
+    color: '#10b981',
+  },
+  {
+    label: 'Master Admin',
+    href: '/dashboard/super-admin/master-admin',
+    icon: Shield,
+    description: 'Cross-tenant user directory and sessions',
+    color: '#f59e0b',
+  },
+  {
+    label: 'Feature Flags',
+    href: '/dashboard/super-admin/feature-flags',
+    icon: Flag,
+    description: 'Toggle features per tenant or user',
+    color: '#e11d48',
+  },
+  {
+    label: 'Legal Documents',
+    href: '/dashboard/super-admin/legal',
+    icon: ScrollText,
+    description: 'Terms, privacy policy, and compliance docs',
+    color: '#6366f1',
+  },
+  {
+    label: 'Analytics',
+    href: '/dashboard/super-admin/analytics',
+    icon: BarChart3,
+    description: 'Platform-wide analytics and insights',
+    color: '#06b6d4',
+  },
+  {
+    label: 'Tag Manager',
+    href: '/dashboard/super-admin/tag-manager',
+    icon: Tag,
+    description: 'Manage tracking tags and scripts',
+    color: '#d946ef',
+  },
+  {
+    label: 'Deliverability',
+    href: '/dashboard/super-admin/deliverability',
+    icon: Send,
+    description: 'Email and SMS deliverability monitoring',
+    color: '#f97316',
+  },
+];
 
 /* -------------------------------------------------------------------------- */
 /*  Dashboard Page (BAR-237)                                                  */
@@ -89,7 +157,7 @@ export default function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin Dashboard"
+        title="Platform Console"
         description="Platform overview — clients, stores, revenue, and system health"
         icon={<LayoutDashboard className="h-6 w-6" />}
       />

@@ -391,7 +391,7 @@ export default function FeatureFlagsPage() {
                             onClick={() => toggleDefault(flag)}
                             disabled={saving === flag.id}
                             className={`flex items-center gap-2 flex-shrink-0 transition-opacity ${saving === flag.id ? 'opacity-50' : ''}`}
-                            title={flag.defaultEnabled ? 'Default: ON — Click to disable' : 'Default: OFF — Click to enable'}
+                            aria-label={flag.defaultEnabled ? 'Disable default' : 'Enable default'}
                           >
                             {flag.defaultEnabled ? (
                               <ToggleRight className="h-7 w-7 text-emerald-400" />

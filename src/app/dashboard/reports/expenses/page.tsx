@@ -174,7 +174,7 @@ export default function ExpensesReportPage() {
       <PageHeader
         title="Expenses & COGS"
         icon={<Receipt className="h-6 w-6" />}
-        description="Track carrier costs, materials, platform fees, and operating expenses"
+        description="Track costs and expenses."
         actions={<ExportToolbar reportName="Expense_Report" />}
       />
 

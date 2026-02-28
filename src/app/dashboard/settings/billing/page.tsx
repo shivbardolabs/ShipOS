@@ -131,7 +131,7 @@ export default function BillingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Billing & Subscription"
-        description="Manage your subscription plan, payment methods, and invoices"
+        description="Manage plan and payments."
         icon={<CreditCard className="h-6 w-6" />}
       />
 
@@ -173,10 +173,21 @@ export default function BillingPage() {
                 </p>
               </div>
               {tenant.stripeSubscriptionId && (
-                <Button variant="secondary" onClick={handleManageBilling}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Manage Billing
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button variant="secondary" onClick={handleManageBilling}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Manage Billing
+                  </Button>
+                  {/* TASTE: Honest one-click cancel — no dark patterns */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-surface-500 hover:text-accent-rose"
+                    onClick={handleManageBilling}
+                  >
+                    Cancel plan
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

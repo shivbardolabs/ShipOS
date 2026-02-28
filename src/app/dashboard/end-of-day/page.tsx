@@ -71,7 +71,7 @@ export default function EndOfDayPage() {
   const [showManifest, setShowManifest] = useState<string | null>(null);
   const [dayClosed, setDayClosed] = useState(false);
 
-  const todayStr = new Date('2026-02-21').toLocaleDateString('en-US', {
+  const todayStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -113,7 +113,7 @@ export default function EndOfDayPage() {
     <div className="space-y-6">
       <PageHeader
         title="End of Day"
-        description="Manage carrier pickups and close the shipping day"
+        description="Close out the day."
         actions={
           <Button variant="ghost" size="sm" leftIcon={<RotateCcw className="h-4 w-4" />} onClick={handleResetDay}>
             Reset Day
@@ -279,7 +279,7 @@ export default function EndOfDayPage() {
         open={showCloseConfirm}
         onClose={() => setShowCloseConfirm(false)}
         title="Close Shipping Day"
-        description="Review the summary before closing"
+        description="Review before closing."
         size="md"
         footer={
           <>
