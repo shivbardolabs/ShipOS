@@ -19,6 +19,21 @@ import {
 } from 'lucide-react';
 
 
+interface LoyaltyDashboardStats {
+  [key: string]: unknown;
+  totalMembers: number;
+  activeMembers: number;
+  totalPointsInCirculation: number;
+  lifetimePointsEarned: number;
+  tierDistribution: { tier: string; count: number }[];
+  pointsIssuedThisMonth: number;
+  redemptionsThisMonth: number;
+  topCustomers: { name: string; points: number; tier: string }[];
+  recentActivity: { id?: string; points: number; description?: string; type: string; createdAt: string }[];
+}
+
+
+
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -200,7 +215,7 @@ export default function LoyaltyDashboardPage() {
             <p className="text-xs text-surface-500 mt-0.5">By lifetime points</p>
           </div>
           <div className="divide-y divide-surface-800/50">
-            {(stats.topCustomers || []).map((cust: any, i: number) => (
+            {(stats.topCustomers || []).map((cust, i: number) => (
               <div key={i} className="flex items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-800 text-xs font-bold text-surface-300">
@@ -224,7 +239,7 @@ export default function LoyaltyDashboardPage() {
             <p className="text-xs text-surface-500 mt-0.5">Latest point transactions</p>
           </div>
           <div className="divide-y divide-surface-800/50 max-h-[480px] overflow-y-auto">
-            {stats.recentActivity.map((txn: any, i: number) => {
+            {stats.recentActivity.map((txn, i: number) => {
               const isEarn = txn.points > 0;
               return (
                 <div key={txn.id || i} className="flex items-center justify-between px-5 py-3">
