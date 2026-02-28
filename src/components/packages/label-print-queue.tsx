@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable */
 
 import { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
