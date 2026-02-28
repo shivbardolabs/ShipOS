@@ -275,7 +275,25 @@ export default function CheckInPage() {
   const [conditionOther, setConditionOther] = useState('');
   const [notes, setNotes] = useState('');
   const [storageLocation, setStorageLocation] = useState('');
+  const [storageLocationCustom, setStorageLocationCustom] = useState(false); // BAR-326
   const [requiresSignature, setRequiresSignature] = useState(false);
+
+  // BAR-326: Fetch defined storage locations for dropdown
+  const [definedStorageLocations, setDefinedStorageLocations] = useState<{ id: string; name: string; isDefault: boolean }[]>([]);
+  useEffect(() => {
+    fetch('/api/settings/storage-locations')
+      .then((r) => r.json())
+      .then((d) => {
+        const locs = d.locations || [];
+        setDefinedStorageLocations(locs);
+        // Auto-select the default location if one exists and user hasn't typed anything
+        const defaultLoc = locs.find((l: { isDefault: boolean }) => l.isDefault);
+        if (defaultLoc && !storageLocation) {
+          setStorageLocation(defaultLoc.name);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // BAR-245: Popup modals for size/perishable warnings
   const [showSizeWarning, setShowSizeWarning] = useState(false);
@@ -1593,15 +1611,53 @@ export default function CheckInPage() {
               </div>
             )}
 
-            {/* Storage Location */}
+            {/* Storage Location — BAR-326: Dropdown from defined locations + custom entry */}
             <div className="max-w-lg">
-              <Input
-                label="Storage Location"
-                placeholder="e.g. Shelf A3, Bin 12, Rack B-2..."
-                value={storageLocation}
-                onChange={(e) => setStorageLocation(e.target.value)}
-                helperText="Where this package will be stored in your facility"
-              />
+              {definedStorageLocations.length > 0 && !storageLocationCustom ? (
+                <div className="flex flex-col gap-1.5">
+                  <Select
+                    label="Storage Location"
+                    placeholder="Select a location…"
+                    value={storageLocation}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setStorageLocationCustom(true);
+                        setStorageLocation('');
+                      } else {
+                        setStorageLocation(e.target.value);
+                      }
+                    }}
+                    options={[
+                      ...definedStorageLocations.map((l) => ({ value: l.name, label: l.name })),
+                      { value: '__custom__', label: '✏️ Enter custom location…' },
+                    ]}
+                    helperText="Where this package will be stored in your facility"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <Input
+                    label="Storage Location"
+                    placeholder="e.g. Shelf A3, Bin 12, Rack B-2..."
+                    value={storageLocation}
+                    onChange={(e) => setStorageLocation(e.target.value)}
+                    helperText="Where this package will be stored in your facility"
+                  />
+                  {definedStorageLocations.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStorageLocationCustom(false);
+                        const defaultLoc = definedStorageLocations.find((l) => l.isDefault);
+                        setStorageLocation(defaultLoc ? defaultLoc.name : definedStorageLocations[0]?.name || '');
+                      }}
+                      className="text-xs text-primary-400 hover:text-primary-300 text-left"
+                    >
+                      ← Back to predefined locations
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Notes */}

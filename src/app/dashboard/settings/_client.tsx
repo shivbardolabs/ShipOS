@@ -52,7 +52,12 @@ import {
   ScreenShare,
   Monitor,
   Database,
-  ArrowRight } from 'lucide-react';
+  ArrowRight,
+  MapPin,
+  GripVertical,
+  Loader2,
+  ChevronUp,
+  ChevronDown } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -122,6 +127,15 @@ interface PrinterEntry {
   dpi?: number;
 }
 
+// BAR-326: Storage location item type
+interface StorageLocationItem {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
 const mockPrinters: PrinterEntry[] = [
   { id: 'ptr_001', name: 'Front Counter Label Printer', model: 'Zebra ZD420', status: 'online', autoPrint: true, ipAddress: '192.168.1.50', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
   { id: 'ptr_002', name: 'Back Office Printer', model: 'Zebra GK420d', status: 'online', autoPrint: false, ipAddress: '192.168.1.51', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
@@ -161,6 +175,99 @@ export default function SettingsPage() {
       .then((d) => setCarrierRates(d.carrierRates || []))
       .catch(() => {});
   }, []);
+
+  // ─── BAR-326: Storage Locations ─────────────────────────────────────────
+  const [storageLocations, setStorageLocations] = useState<StorageLocationItem[]>([]);
+  const [storageLocLoading, setStorageLocLoading] = useState(true);
+  const [showStorageLocModal, setShowStorageLocModal] = useState(false);
+  const [editingStorageLoc, setEditingStorageLoc] = useState<StorageLocationItem | null>(null);
+  const [storageLocName, setStorageLocName] = useState('');
+  const [storageLocDefault, setStorageLocDefault] = useState(false);
+  const [storageLocSaving, setStorageLocSaving] = useState(false);
+
+  const fetchStorageLocations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings/storage-locations');
+      if (res.ok) {
+        const data = await res.json();
+        setStorageLocations(data.locations || []);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setStorageLocLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchStorageLocations(); }, [fetchStorageLocations]);
+
+  const handleOpenNewStorageLoc = () => {
+    setEditingStorageLoc(null);
+    setStorageLocName('');
+    setStorageLocDefault(false);
+    setShowStorageLocModal(true);
+  };
+
+  const handleOpenEditStorageLoc = (loc: StorageLocationItem) => {
+    setEditingStorageLoc(loc);
+    setStorageLocName(loc.name);
+    setStorageLocDefault(loc.isDefault);
+    setShowStorageLocModal(true);
+  };
+
+  const handleSaveStorageLoc = async () => {
+    if (!storageLocName.trim()) return;
+    setStorageLocSaving(true);
+    try {
+      const method = editingStorageLoc ? 'PATCH' : 'POST';
+      const payload = editingStorageLoc
+        ? { id: editingStorageLoc.id, name: storageLocName, isDefault: storageLocDefault }
+        : { name: storageLocName, isDefault: storageLocDefault };
+
+      const res = await fetch('/api/settings/storage-locations', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setShowStorageLocModal(false);
+        fetchStorageLocations();
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setStorageLocSaving(false);
+    }
+  };
+
+  const handleDeleteStorageLoc = async (id: string) => {
+    if (!confirm('Delete this storage location?')) return;
+    try {
+      await fetch(`/api/settings/storage-locations?id=${id}`, { method: 'DELETE' });
+      fetchStorageLocations();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleMoveStorageLoc = async (index: number, direction: 'up' | 'down') => {
+    const newList = [...storageLocations];
+    const swapIdx = direction === 'up' ? index - 1 : index + 1;
+    if (swapIdx < 0 || swapIdx >= newList.length) return;
+    [newList[index], newList[swapIdx]] = [newList[swapIdx], newList[index]];
+    const order = newList.map((loc, i) => ({ id: loc.id, sortOrder: i }));
+    setStorageLocations(newList);
+    try {
+      await fetch('/api/settings/storage-locations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order }),
+      });
+    } catch {
+      fetchStorageLocations(); // revert on error
+    }
+  };
 
   // Hydrate from tenant context
   useEffect(() => {
@@ -604,25 +711,25 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
 
   const ROLE_TAB_ACCESS: Record<string, Record<string, SettingsTabAccess>> = {
     superadmin: {
-      general: 'full', mailbox: 'full', rates: 'full', dropoff: 'full',
+      general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
     },
     admin: {
-      general: 'full', mailbox: 'full', rates: 'full', dropoff: 'full',
+      general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
     },
     manager: {
-      general: 'view_only', mailbox: 'view_only', rates: 'full', dropoff: 'full',
+      general: 'view_only', mailbox: 'view_only', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
       billing: 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
     },
     employee: {
-      general: 'hidden', mailbox: 'hidden', rates: 'view_only', dropoff: 'hidden',
+      general: 'hidden', mailbox: 'hidden', rates: 'view_only', 'storage-locations': 'view_only', dropoff: 'hidden',
       receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
       billing: 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
       'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
@@ -636,6 +743,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" />, section: 'General' },
     { id: 'mailbox', label: 'Mailbox Config', icon: <Mail className="h-4 w-4" />, section: 'General' },
     { id: 'rates', label: 'Rates & Pricing', icon: <DollarSign className="h-4 w-4" />, section: 'Operations' },
+    { id: 'storage-locations', label: 'Storage Locations', icon: <MapPin className="h-4 w-4" />, section: 'Operations' },
     { id: 'dropoff', label: 'Drop-off Settings', icon: <Truck className="h-4 w-4" />, section: 'Operations' },
     { id: 'receipts', label: 'Receipts', icon: <Receipt className="h-4 w-4" />, section: 'Operations' },
     { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" />, section: 'Hardware' },
@@ -1261,6 +1369,176 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                   </div>
                 </div>
               )}
+            </Modal>
+          </TabPanel>
+
+          {/* ================================================================ */}
+          {/*  BAR-326: STORAGE LOCATIONS                                      */}
+          {/* ================================================================ */}
+          <TabPanel active={activeTab === 'storage-locations'}>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-primary-600" />
+                      Storage Locations
+                    </CardTitle>
+                    {!isViewOnly && (
+                      <Button onClick={handleOpenNewStorageLoc} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Location
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-surface-400 mb-4">
+                    Pre-define storage locations (shelves, bins, racks) so staff can quickly select them during
+                    package check-in instead of typing each time.
+                  </p>
+
+                  {storageLocLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-surface-500" />
+                    </div>
+                  ) : storageLocations.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-surface-700 rounded-lg">
+                      <MapPin className="h-10 w-10 text-surface-600 mx-auto mb-3" />
+                      <h3 className="text-sm font-medium text-surface-300 mb-1">No Storage Locations</h3>
+                      <p className="text-xs text-surface-500 mb-4">
+                        Add locations like &quot;Shelf A1&quot; or &quot;Back Room Bin 3&quot; to speed up check-in.
+                      </p>
+                      {!isViewOnly && (
+                        <Button size="sm" onClick={handleOpenNewStorageLoc}>
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add First Location
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="border border-surface-700 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-surface-800/50">
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-400 uppercase tracking-wider w-10">Order</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-400 uppercase tracking-wider">Name</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-surface-400 uppercase tracking-wider w-24">Default</th>
+                            {!isViewOnly && (
+                              <th className="text-right px-4 py-2.5 text-xs font-medium text-surface-400 uppercase tracking-wider w-40">Actions</th>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-surface-800">
+                          {storageLocations.map((loc, idx) => (
+                            <tr key={loc.id} className="hover:bg-surface-800/30 transition-colors">
+                              <td className="px-4 py-3">
+                                {!isViewOnly && (
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      onClick={() => handleMoveStorageLoc(idx, 'up')}
+                                      disabled={idx === 0}
+                                      className="text-surface-500 hover:text-surface-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      <ChevronUp className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleMoveStorageLoc(idx, 'down')}
+                                      disabled={idx === storageLocations.length - 1}
+                                      className="text-surface-500 hover:text-surface-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      <ChevronDown className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <GripVertical className="h-4 w-4 text-surface-600" />
+                                  <span className="text-surface-200 font-medium">{loc.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {loc.isDefault && (
+                                  <Badge variant="default" className="text-[10px]">
+                                    <Star className="h-3 w-3 mr-1" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </td>
+                              {!isViewOnly && (
+                                <td className="px-4 py-3 text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button size="sm" variant="ghost" onClick={() => handleOpenEditStorageLoc(loc)}>
+                                      <Edit3 className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => handleDeleteStorageLoc(loc.id)}>
+                                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Add/Edit Storage Location Modal */}
+            <Modal
+              open={showStorageLocModal}
+              onClose={() => setShowStorageLocModal(false)}
+              title={editingStorageLoc ? 'Edit Storage Location' : 'Add Storage Location'}
+            >
+              <div className="space-y-4 py-2">
+                <Input
+                  label="Location Name"
+                  value={storageLocName}
+                  onChange={(e) => setStorageLocName(e.target.value)}
+                  placeholder='e.g. "Shelf A1", "Back Room Bin 3"'
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setStorageLocDefault(!storageLocDefault)}
+                  className="flex items-center gap-3 w-full text-left"
+                >
+                  <div
+                    className={`relative flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                      storageLocDefault ? 'bg-primary-600' : 'bg-surface-700'
+                    }`}
+                  >
+                    <div
+                      className={`h-4 w-4 rounded-full bg-white transition-transform shadow-sm ${
+                        storageLocDefault ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-sm text-surface-200">Set as default</span>
+                    <p className="text-xs text-surface-500">Automatically selected during package check-in</p>
+                  </div>
+                </button>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-surface-700">
+                  <Button variant="secondary" onClick={() => setShowStorageLocModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveStorageLoc} disabled={storageLocSaving || !storageLocName.trim()}>
+                    {storageLocSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    {editingStorageLoc ? 'Update' : 'Add'} Location
+                  </Button>
+                </div>
+              </div>
             </Modal>
           </TabPanel>
 
