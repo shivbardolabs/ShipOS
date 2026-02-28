@@ -65,6 +65,7 @@ model Tenant {
   paymentRecords     PaymentRecord[]
   alerts             Alert[]
   carrierEnrollments CarrierProgramEnrollment[]
+  storageLocations   StorageLocation[]
   billingModelConfig BillingModelConfig?
 }
 
@@ -1030,6 +1031,13 @@ model StorageLocation {
   sortOrder Int     @default(0) // For drag-to-reorder
   isDefault Boolean @default(false) // Default location for new packages
   isActive  Boolean @default(true)  // Soft-delete / deactivate
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, isActive])
+  @@index([tenantId, sortOrder])
+}
+
 // ── BAR-305: Billing Model Configuration ─────────────────────────────────────
 
 /// Per-tenant billing model configuration.
