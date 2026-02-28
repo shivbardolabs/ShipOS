@@ -3,11 +3,11 @@ import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 /**
- * GET /api/customers/search?q=xxx&mode=pmb|name|phone|company&limit=10
+ * GET /api/customers/search?q=xxx&mode=pmb|name|phone|company|name_company&limit=10
  *
  * Searches active customers within the current tenant.
- * Used by the Package Check-In wizard (Step 1) to replace mock data
- * with real database queries.
+ * Used by the Package Check-In wizard (Step 1) with unified auto-detect search (BAR-324).
+ * The `name_company` mode searches first name, last name, and business name simultaneously.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -45,6 +45,14 @@ export async function GET(req: NextRequest) {
           break;
         case 'company':
           where.businessName = { contains: query, mode: 'insensitive' };
+          break;
+        case 'name_company':
+          // BAR-324: Unified search — Name + Company simultaneously
+          where.OR = [
+            { firstName: { contains: query, mode: 'insensitive' } },
+            { lastName: { contains: query, mode: 'insensitive' } },
+            { businessName: { contains: query, mode: 'insensitive' } },
+          ];
           break;
         default:
           // General search across all fields

@@ -24,6 +24,8 @@ import {
   Eye,
   RefreshCw,
   Hash,
+  Phone,
+  User,
   Loader2 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
@@ -33,6 +35,7 @@ import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
 // customers now fetched from API
+import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /* -------------------------------------------------------------------------- */
@@ -61,6 +64,45 @@ interface DuplicatePackage {
   checkedInAt: string;
   customerName: string;
   customerPmb: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BAR-324: Unified search — auto-detect search category                     */
+/* -------------------------------------------------------------------------- */
+type SearchCategory = 'pmb' | 'phone' | 'name_company';
+
+const SEARCH_CATEGORY_META: Record<SearchCategory, { label: string; icon: typeof Hash; color: string }> = {
+  pmb:          { label: 'PMB #',          icon: Hash,  color: 'text-primary-400 bg-primary-500/10 border-primary-500/30' },
+  phone:        { label: 'Phone',          icon: Phone, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+  name_company: { label: 'Name / Company', icon: User,  color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+};
+
+/**
+ * Auto-detect the search category from user input.
+ *
+ * Rules:
+ *  - PMB pattern:   starts with "PMB" (with optional dash/space), OR purely numeric
+ *  - Phone pattern: 10+ digits after stripping formatting, OR input is mostly digits (≥7) with common phone chars
+ *  - Default:       Name + Company search
+ */
+function detectSearchCategory(input: string): SearchCategory {
+  const trimmed = input.trim();
+  if (!trimmed) return 'name_company';
+
+  // PMB pattern: "PMB-0003", "PMB 12", "0003", "123", etc.
+  if (/^PMB[-\s]?\d*/i.test(trimmed) || /^\d+$/.test(trimmed)) {
+    return 'pmb';
+  }
+
+  // Phone pattern: strip non-digits, check length
+  const digitsOnly = trimmed.replace(/[^0-9]/g, '');
+  const isPhoneFormatted = /^[\d\s\-\(\)\+\.]+$/.test(trimmed);
+  if (digitsOnly.length >= 10 || (isPhoneFormatted && digitsOnly.length >= 7)) {
+    return 'phone';
+  }
+
+  // Default: search Name + Company
+  return 'name_company';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -180,9 +222,8 @@ export default function CheckInPage() {
   // Step 1 — Package Program (BAR-266)
   const [packageProgram, setPackageProgram] = useState<PackageProgram>('pmb');
 
-  // Step 1 — Customer (BAR-38: enhanced lookup) — used when program = 'pmb'
+  // Step 1 — Customer (BAR-324: unified search with auto-detect)
   const [customerSearch, setCustomerSearch] = useState('');
-  const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'phone' | 'company'>('pmb');
   const [selectedCustomer, setSelectedCustomer] = useState<SearchCustomer | null>(null);
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
@@ -255,19 +296,34 @@ export default function CheckInPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [checkedInPackageId, setCheckedInPackageId] = useState<string | null>(null);
 
-  // Fetch customers from API with debounced search
+  // BAR-324: Derive detected search category from input (no extra state needed)
+  const detectedCategory = detectSearchCategory(customerSearch);
+
+  // Fetch customers from API with debounced search — uses detected category
   const [customers, setCustomers] = useState<Customer[]>([]);
   const customerDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current);
     customerDebounceRef.current = setTimeout(() => {
-      const params = new URLSearchParams({ limit: '10', status: 'active' });
-      if (customerSearch.trim()) params.set('search', customerSearch.trim());
-      fetch(`/api/customers?${params}`)
+      const q = customerSearch.trim();
+      if (!q) {
+        // No query — fetch recent active customers
+        const params = new URLSearchParams({ limit: '10', status: 'active' });
+        fetch(`/api/customers?${params}`)
+          .then((r) => r.json())
+          .then((data) => setCustomers(data.customers ?? []))
+          .catch((err) => console.error('Failed to fetch customers:', err));
+        return;
+      }
+      // Use the dedicated search endpoint with the auto-detected mode
+      const category = detectSearchCategory(q);
+      const searchQuery = category === 'pmb' ? q.replace(/^PMB[-\s]?/i, '') : q;
+      const params = new URLSearchParams({ q: searchQuery, mode: category, limit: '10' });
+      fetch(`/api/customers/search?${params}`)
         .then((r) => r.json())
         .then((data) => setCustomers(data.customers ?? []))
-        .catch((err) => console.error('Failed to fetch customers:', err));
+        .catch((err) => console.error('Failed to search customers:', err));
     }, customerSearch ? 300 : 0);
     return () => { if (customerDebounceRef.current) clearTimeout(customerDebounceRef.current); };
   }, [customerSearch]);
@@ -953,40 +1009,38 @@ export default function CheckInPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Search mode tabs */}
-                    <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl max-w-md">
-                      {([
-                        { id: 'pmb' as const, label: 'PMB #' },
-                        { id: 'name' as const, label: 'Name' },
-                        { id: 'phone' as const, label: 'Phone' },
-                        { id: 'company' as const, label: 'Company' },
-                      ]).map((mode) => (
-                        <button
-                          key={mode.id}
-                          onClick={() => { setSearchMode(mode.id); setCustomerSearch(''); }}
-                          className={cn(
-                            'flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium transition-all',
-                            searchMode === mode.id
-                              ? 'bg-primary-600 text-white shadow-sm'
-                              : 'text-surface-400 hover:text-surface-200 hover:bg-surface-700/50'
-                          )}
-                        >
-                          {mode.label}
-                        </button>
-                      ))}
+                    {/* BAR-324: Unified search box with auto-detect indicator */}
+                    <div className="max-w-lg space-y-2">
+                      <SearchInput
+                        placeholder="Search by PMB #, name, phone, or company..."
+                        value={customerSearch}
+                        onSearch={setCustomerSearch}
+                        autoFocus
+                      />
+                      {/* Detected category indicator — only show when user is typing */}
+                      {customerSearch.trim() && (
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const meta = SEARCH_CATEGORY_META[detectedCategory];
+                            const Icon = meta.icon;
+                            return (
+                              <span className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-all',
+                                meta.color,
+                              )}>
+                                <Icon className="h-3 w-3" />
+                                Searching {meta.label}
+                              </span>
+                            );
+                          })()}
+                          <span className="text-[11px] text-surface-500">
+                            {detectedCategory === 'pmb' && 'Detected number pattern'}
+                            {detectedCategory === 'phone' && 'Detected phone pattern'}
+                            {detectedCategory === 'name_company' && 'Searching name & company'}
+                          </span>
+                        </div>
+                      )}
                     </div>
-
-                    <SearchInput
-                      placeholder={
-                        searchMode === 'pmb' ? 'Enter PMB number or recipient name...' :
-                        searchMode === 'name' ? 'Search by first or last name...' :
-                        searchMode === 'phone' ? 'Search by phone number...' :
-                        'Search by company/business name...'
-                      }
-                      value={customerSearch}
-                      onSearch={setCustomerSearch}
-                      className="max-w-lg"
-                    />
                   </>
                 )}
 
