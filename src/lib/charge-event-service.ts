@@ -20,6 +20,7 @@
 
 import prisma from './prisma';
 import { ensureTables } from './action-pricing-db';
+import { processChargeViaTos } from './tos-billing-service';
 import type { ChargeServiceType } from '@prisma/client';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
@@ -633,57 +634,36 @@ export async function generateDailyStorageCharges(
   return { chargesCreated, errors };
 }
 
-/* ── TosCharge integration ─────────────────────────────────────────────────── */
+/* ── TosCharge integration (BAR-306) ───────────────────────────────────────── */
 
+/**
+ * Routes a charge event through the TOS billing pipeline (BAR-306).
+ * Uses the centralized tos-billing-service which handles:
+ *   - Path A: Immediate charge to card on file
+ *   - Path B: Deferred charge to account balance
+ *   - Failed payment fallback from immediate → deferred
+ */
 async function createTosChargeForEvent(
   tenantId: string,
   customerId: string,
   description: string,
   amount: number,
-  billingConfig: { tosDefaultMode: string; tosPaymentWindow: number; tosAutoInvoice: boolean },
+  _billingConfig: { tosDefaultMode: string; tosPaymentWindow: number; tosAutoInvoice: boolean },
   serviceType: string,
   chargeEventId: string,
 ): Promise<{ id: string }> {
-  // Check customer billing profile for mode override
-  const profile = await prisma.customerBillingProfile.findUnique({
-    where: { customerId },
+  const result = await processChargeViaTos({
+    tenantId,
+    customerId,
+    description,
+    amount,
+    serviceType,
+    chargeEventId,
+    referenceType: serviceType,
+    referenceId: chargeEventId,
   });
 
-  const mode = profile?.tosMode || billingConfig.tosDefaultMode || 'immediate';
-
-  // Calculate due date for deferred charges
-  let dueDate: Date | null = null;
-  if (mode === 'deferred') {
-    const paymentDays = profile?.paymentTermDays ?? billingConfig.tosPaymentWindow ?? 30;
-    dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + paymentDays);
-
-    // Update account balance for deferred charges
-    if (profile) {
-      await prisma.customerBillingProfile.update({
-        where: { customerId },
-        data: { accountBalance: { increment: amount } },
-      });
-    }
-  }
-
-  const charge = await prisma.tosCharge.create({
-    data: {
-      tenantId,
-      customerId,
-      description,
-      amount,
-      tax: 0, // Tax calculated at invoice time
-      total: amount,
-      status: 'pending',
-      mode,
-      dueDate,
-      referenceType: serviceType,
-      referenceId: chargeEventId,
-    },
-  });
-
-  return { id: charge.id };
+  return { id: result.tosChargeId };
 }
 
 /* ── Usage recording integration ───────────────────────────────────────────── */

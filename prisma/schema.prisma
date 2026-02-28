@@ -373,20 +373,43 @@ model DropoffSetting {
 model Invoice {
   id            String   @id @default(cuid())
   invoiceNumber String   @unique
+  tenantId      String?
   customerId    String?
-  type          String // shipping, storage, service
+  type          String // shipping, storage, service, tos_billing, monthly
   amount        Float
   tax           Float    @default(0)
-  status        String   @default("draft") // draft, sent, paid, overdue, void
+  status        String   @default("draft") // draft, sent, paid, overdue, void, partially_paid
   dueDate       DateTime?
   paidAt        DateTime?
-  items         String? // JSON string of line items
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  items         String? // JSON string of line items (legacy)
+  notes         String?
+
+  // Payment tracking
+  amountPaid      Float   @default(0)
+  paymentMethodId String?
+  paymentRef      String?
+
+  // Delivery
+  sentAt          DateTime?
+  sentVia         String?   // email, in_app, print
+
+  // Period covered
+  periodStart     DateTime?
+  periodEnd       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  lineItems   InvoiceLineItem[]
 
   // Migration reference
   sourceId    String? // Original PostalMate CRTOTALXNID
   migrationId String? // Links to MigrationRun
+
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
+  @@index([customerId, status])
 }
 
 model EndOfDayRecord {
@@ -1181,21 +1204,28 @@ model TosCharge {
   amount       Float
   tax          Float   @default(0)
   total        Float   // amount + tax
-  status       String  @default("pending") // pending, paid, invoiced, void, refunded
+  status       String  @default("pending") // pending, authorized, paid, invoiced, void, refunded, failed
   mode         String  @default("immediate") // immediate, deferred
 
   // Payment info (if immediate)
-  paymentMethod String? // stripe, cash, card, post_to_account
-  paymentRef    String? // External payment reference
-  paidAt        DateTime?
+  paymentMethod   String? // card, ach, paypal, cash, post_to_account
+  paymentMethodId String? // FK → PaymentMethod
+  paymentRef      String? // External payment reference
+  paidAt          DateTime?
+
+  // Retry tracking (for failed immediate charges)
+  retryCount    Int     @default(0)
+  lastRetryAt   DateTime?
+  failureReason String?
 
   // Invoice info (if deferred)
   invoiceId String?
   dueDate   DateTime?
 
   // Reference to what generated this charge
-  referenceType String? // package, shipment, service, custom
-  referenceId   String?
+  referenceType  String? // package, shipment, service, custom
+  referenceId    String?
+  chargeEventId  String? // FK → ChargeEvent
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1203,6 +1233,95 @@ model TosCharge {
   @@index([tenantId, customerId])
   @@index([customerId, status])
   @@index([tenantId, status])
+  @@index([tenantId, mode, status])
+}
+
+// ── Payment Methods (BAR-306) ────────────────────────────────────────────────
+
+/// Stored payment method for a customer (card, ACH, PayPal).
+model PaymentMethod {
+  id         String @id @default(cuid())
+  tenantId   String
+  customerId String
+
+  type        String  // card, ach, paypal
+  label       String  // "Visa ****4242", "Bank of America ****1234", "PayPal john@..."
+  isDefault   Boolean @default(false)
+
+  // Card fields (masked)
+  cardBrand   String?  // visa, mastercard, amex, discover
+  cardLast4   String?  // Last 4 digits
+  cardExpMonth Int?
+  cardExpYear  Int?
+
+  // ACH fields (masked)
+  bankName    String?
+  accountLast4 String?
+  routingLast4 String?
+
+  // PayPal
+  paypalEmail String?
+
+  // External reference
+  externalId  String?  // Stripe payment method ID, PayPal billing agreement ID, etc.
+
+  // Status
+  status      String  @default("active") // active, expired, removed
+  verifiedAt  DateTime?
+  expiryAlertSent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, customerId])
+  @@index([customerId, isDefault])
+}
+
+// ── Invoice Line Items (BAR-306) ─────────────────────────────────────────────
+
+/// Individual line item on an invoice.
+model InvoiceLineItem {
+  id        String @id @default(cuid())
+  invoiceId String
+
+  description   String
+  serviceType   String?  // receiving, storage, shipping, etc.
+  quantity      Float    @default(1)
+  unitPrice     Float    @default(0)
+  amount        Float    // quantity * unitPrice
+  chargeEventId String?  // FK → ChargeEvent
+  tosChargeId   String?  // FK → TosCharge
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+// ── Invoice Schedule (BAR-306) ───────────────────────────────────────────────
+
+/// Configurable invoicing schedule per tenant or customer.
+model InvoiceSchedule {
+  id         String  @id @default(cuid())
+  tenantId   String
+  customerId String? // Null = tenant-wide default; set = customer override
+
+  frequency  String  @default("monthly") // weekly, biweekly, monthly, on_demand
+  dayOfWeek  Int?    // 0=Sun..6=Sat (for weekly/biweekly)
+  dayOfMonth Int?    // 1-28 (for monthly)
+  isActive   Boolean @default(true)
+  lastRunAt  DateTime?
+  nextRunAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, customerId])
+  @@index([tenantId])
+  @@index([nextRunAt, isActive])
 }
 
 // ── Return to Sender (BAR-321) ───────────────────────────────────────────────
