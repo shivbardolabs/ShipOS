@@ -29,10 +29,7 @@ import {
   Plus,
   CheckCircle2,
 } from 'lucide-react';
-import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { useActivityLog } from '@/components/activity-log-provider';
-import { packages as rawPackages } from '@/lib/mock-data';
-import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Package as PackageType } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -110,6 +107,14 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
     const timer = setTimeout(onDismiss, 4000);
     return () => clearTimeout(timer);
   }, [onDismiss]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>
+      <span>{toast.message}</span>
+      <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100">✕</button>
+    </div>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Mock data: Extend packages with inventory fields                          */

@@ -608,3 +608,8 @@ export const loyaltyDashboardStats: LoyaltyDashboardStats = {
       tier: a.currentTier!.name,
     })),
 };
+
+// Stub for getCustomerFeeSummary (previously removed, referenced by customer detail page)
+export function getCustomerFeeSummary(customerId: string) {
+  return { monthlyFees: 0, annualFees: 0, totalPaid: 0, outstanding: 0 };
+}
