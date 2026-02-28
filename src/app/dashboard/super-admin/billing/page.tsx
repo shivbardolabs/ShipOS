@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,110 +61,8 @@ interface InvoiceRecord {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mock data                                                                 */
+/*  Data is fetched from /api/super-admin/billing                             */
 /* -------------------------------------------------------------------------- */
-const clientBillingData: ClientBilling[] = [
-  {
-    id: 'c1', clientName: 'Pack & Ship Plus', totalStores: 8, activeStores: 7,
-    subscriptionFee: 125, monthlyRevenue: 875, paymentStatus: 'paid', accountStatus: 'active',
-    lastPaymentDate: '2026-02-01', activatedDate: '2025-06-15',
-    stores: [
-      { name: 'Downtown', status: 'active', revenueContribution: 125 },
-      { name: 'Uptown', status: 'active', revenueContribution: 125 },
-      { name: 'Brooklyn', status: 'active', revenueContribution: 125 },
-      { name: 'Queens', status: 'active', revenueContribution: 125 },
-      { name: 'Bronx', status: 'active', revenueContribution: 125 },
-      { name: 'Staten Island', status: 'active', revenueContribution: 125 },
-      { name: 'Jersey City', status: 'active', revenueContribution: 125 },
-      { name: 'Hoboken', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-  {
-    id: 'c2', clientName: 'MailBox Express', totalStores: 6, activeStores: 5,
-    subscriptionFee: 110, monthlyRevenue: 550, paymentStatus: 'paid', accountStatus: 'active',
-    lastPaymentDate: '2026-02-01', activatedDate: '2025-05-01',
-    stores: [
-      { name: 'Central', status: 'active', revenueContribution: 110 },
-      { name: 'Mission', status: 'active', revenueContribution: 110 },
-      { name: 'Castro', status: 'active', revenueContribution: 110 },
-      { name: 'SOMA', status: 'active', revenueContribution: 110 },
-      { name: 'Marina', status: 'active', revenueContribution: 110 },
-      { name: 'Sunset', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-  {
-    id: 'c3', clientName: 'Metro Mail Hub', totalStores: 5, activeStores: 4,
-    subscriptionFee: 125, monthlyRevenue: 500, paymentStatus: 'pending', accountStatus: 'active',
-    lastPaymentDate: '2026-01-01', activatedDate: '2025-08-10',
-    stores: [
-      { name: 'Midtown', status: 'active', revenueContribution: 125 },
-      { name: 'Financial District', status: 'active', revenueContribution: 125 },
-      { name: 'Harlem', status: 'active', revenueContribution: 125 },
-      { name: 'Chelsea', status: 'active', revenueContribution: 125 },
-      { name: 'SoHo', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-  {
-    id: 'c4', clientName: 'Quick Mail Center', totalStores: 4, activeStores: 3,
-    subscriptionFee: 125, monthlyRevenue: 375, paymentStatus: 'overdue', accountStatus: 'active',
-    lastPaymentDate: '2025-12-01', activatedDate: '2025-09-01',
-    stores: [
-      { name: 'Main Office', status: 'active', revenueContribution: 125 },
-      { name: 'East Side', status: 'active', revenueContribution: 125 },
-      { name: 'West Side', status: 'active', revenueContribution: 125 },
-      { name: 'South', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-  {
-    id: 'c5', clientName: 'Ship N Go', totalStores: 3, activeStores: 3,
-    subscriptionFee: 125, monthlyRevenue: 375, paymentStatus: 'paid', accountStatus: 'active',
-    lastPaymentDate: '2026-02-01', activatedDate: '2025-10-01',
-    stores: [
-      { name: 'Austin HQ', status: 'active', revenueContribution: 125 },
-      { name: 'Dallas', status: 'active', revenueContribution: 125 },
-      { name: 'Houston', status: 'active', revenueContribution: 125 },
-    ],
-  },
-  {
-    id: 'c6', clientName: 'Postal Plus', totalStores: 3, activeStores: 2,
-    subscriptionFee: 125, monthlyRevenue: 250, paymentStatus: 'overdue', accountStatus: 'active',
-    lastPaymentDate: '2025-11-01', activatedDate: '2025-07-15',
-    stores: [
-      { name: 'Denver', status: 'active', revenueContribution: 125 },
-      { name: 'Boulder', status: 'active', revenueContribution: 125 },
-      { name: 'Aspen', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-  {
-    id: 'c7', clientName: 'Mail Stop', totalStores: 2, activeStores: 2,
-    subscriptionFee: 125, monthlyRevenue: 250, paymentStatus: 'paid', accountStatus: 'active',
-    lastPaymentDate: '2026-02-01', activatedDate: '2025-11-01',
-    stores: [
-      { name: 'Seattle', status: 'active', revenueContribution: 125 },
-      { name: 'Portland', status: 'active', revenueContribution: 125 },
-    ],
-  },
-  {
-    id: 'c8', clientName: 'Package Point', totalStores: 2, activeStores: 0,
-    subscriptionFee: 125, monthlyRevenue: 0, paymentStatus: 'overdue', accountStatus: 'inactive',
-    lastPaymentDate: '2025-10-01', activatedDate: '2025-04-01',
-    stores: [
-      { name: 'Miami', status: 'inactive', revenueContribution: 0 },
-      { name: 'Tampa', status: 'inactive', revenueContribution: 0 },
-    ],
-  },
-];
-
-const invoices: InvoiceRecord[] = [
-  { id: 'inv1', invoiceNumber: 'INV-2026-0201', clientName: 'Pack & Ship Plus', amount: 875, status: 'paid', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: '2026-02-03' },
-  { id: 'inv2', invoiceNumber: 'INV-2026-0202', clientName: 'MailBox Express', amount: 550, status: 'paid', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: '2026-02-05' },
-  { id: 'inv3', invoiceNumber: 'INV-2026-0203', clientName: 'Metro Mail Hub', amount: 500, status: 'pending', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: null },
-  { id: 'inv4', invoiceNumber: 'INV-2026-0204', clientName: 'Quick Mail Center', amount: 375, status: 'overdue', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: null },
-  { id: 'inv5', invoiceNumber: 'INV-2026-0205', clientName: 'Ship N Go', amount: 375, status: 'paid', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: '2026-02-02' },
-  { id: 'inv6', invoiceNumber: 'INV-2026-0206', clientName: 'Postal Plus', amount: 250, status: 'overdue', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: null },
-  { id: 'inv7', invoiceNumber: 'INV-2026-0207', clientName: 'Mail Stop', amount: 250, status: 'paid', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: '2026-02-04' },
-  { id: 'inv8', invoiceNumber: 'INV-2026-0208', clientName: 'Package Point', amount: 0, status: 'void', issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: null },
-];
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -196,9 +94,60 @@ export default function BillingReportingPage() {
   const [sortKey, setSortKey] = useState<SortKey>('monthlyRevenue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [dateRange, setDateRange] = useState('current');
-  const [startDate, setStartDate] = useState('2026-02-01');
-  const [endDate, setEndDate] = useState('2026-02-28');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()}`;
+  });
   const [overdueThreshold, setOverdueThreshold] = useState('15');
+  const [clientBillingData, setClientBillingData] = useState<ClientBilling[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [billingLoading, setBillingLoading] = useState(true);
+
+  // Invoices derived from billing data (subscription invoices per client)
+  const invoices: InvoiceRecord[] = useMemo(() => {
+    const d = new Date();
+    const yearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return clientBillingData.map((client, i) => ({
+      id: `inv-${client.id}`,
+      invoiceNumber: `INV-${yearMonth.replace('-', '')}-${String(i + 1).padStart(2, '0')}`,
+      clientName: client.clientName,
+      amount: client.monthlyRevenue,
+      status: client.paymentStatus === 'overdue' ? 'overdue' as const
+        : client.paymentStatus === 'pending' ? 'pending' as const
+        : client.accountStatus !== 'active' ? 'void' as const
+        : 'paid' as const,
+      issuedDate: `${yearMonth}-01`,
+      dueDate: `${yearMonth}-15`,
+      paidDate: client.paymentStatus === 'paid' && client.lastPaymentDate
+        ? client.lastPaymentDate.split('T')[0]
+        : null,
+    }));
+  }, [clientBillingData]);
+
+  const fetchBillingData = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('period', dateRange);
+    if (dateRange === 'custom') {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    }
+    setBillingLoading(true);
+    fetch(`/api/super-admin/billing?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.clients) setClientBillingData(data.clients);
+      })
+      .catch((err) => console.error('Failed to fetch billing data:', err))
+      .finally(() => setBillingLoading(false));
+  }, [dateRange, startDate, endDate]);
+
+  useEffect(() => {
+    fetchBillingData();
+  }, [fetchBillingData]);
 
   // Summary metrics
   const summary = useMemo(() => {
@@ -223,7 +172,7 @@ export default function BillingReportingPage() {
       pendingCount,
       overdueCount,
     };
-  }, []);
+  }, [clientBillingData]);
 
   // Sorted client data
   const sortedClients = useMemo(() => {
@@ -239,7 +188,7 @@ export default function BillingReportingPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return data;
-  }, [sortKey, sortDir]);
+  }, [clientBillingData, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -247,8 +196,12 @@ export default function BillingReportingPage() {
   };
 
   const handleExport = (format: 'csv' | 'xlsx') => {
-    // In production, this would trigger an API call to generate and download the file
-    alert(`Exporting billing report as ${format.toUpperCase()}…`);
+    const params = new URLSearchParams({ format, period: dateRange });
+    if (dateRange === 'custom') {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    }
+    window.open(`/api/super-admin/billing/export?${params}`, '_blank');
   };
 
   return (

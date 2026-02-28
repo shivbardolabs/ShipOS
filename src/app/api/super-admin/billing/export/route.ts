@@ -1,46 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getOrProvisionUser } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/super-admin/billing/export
- * Exports billing report as CSV or XLSX.
+ * Exports billing report as CSV.
  * Query params: ?format=csv|xlsx&period=current|previous|custom&startDate=&endDate=
  */
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const format = searchParams.get('format') || 'csv';
-  const period = searchParams.get('period') || 'current';
+  try {
+    const user = await getOrProvisionUser();
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  // In production, this would:
-  // 1. Fetch all client billing data from Prisma for the given period
-  // 2. Calculate revenue per client (fee × active stores, with proration)
-  // 3. Generate CSV or XLSX file
-  // 4. Return as a downloadable file with proper content-type headers
+    const { searchParams } = new URL(req.url);
+    const format = searchParams.get('format') || 'csv';
+    const period = searchParams.get('period') || 'current';
 
-  if (format === 'csv') {
-    const csvHeader = 'Client,Active Stores,Total Stores,Fee/Store,Monthly Revenue,Payment Status,Account Status';
-    const csvData = [
-      csvHeader,
-      'Pack & Ship Plus,7,8,$125.00,$875.00,Paid,Active',
-      'MailBox Express,5,6,$110.00,$550.00,Paid,Active',
-      'Metro Mail Hub,4,5,$125.00,$500.00,Pending,Active',
-      'Quick Mail Center,3,4,$125.00,$375.00,Overdue,Active',
-      'Ship N Go,3,3,$125.00,$375.00,Paid,Active',
-      'Postal Plus,2,3,$125.00,$250.00,Overdue,Active',
-      'Mail Stop,2,2,$125.00,$250.00,Paid,Active',
-      'Package Point,0,2,$125.00,$0.00,Overdue,Inactive',
-    ].join('\n');
-
-    return new Response(csvData, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="billing-report-${period}.csv"`,
+    // Fetch tenants with stores and subscriptions
+    const tenants = await prisma.tenant.findMany({
+      include: {
+        stores: true,
+        subscriptions: {
+          where: { status: { in: ['active', 'past_due', 'trialing'] } },
+          include: { plan: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
+      orderBy: { name: 'asc' },
     });
-  }
 
-  // For XLSX, we'd use a library like exceljs in production
-  return NextResponse.json(
-    { error: 'XLSX export coming soon. Use CSV for now.' },
-    { status: 501 }
-  );
+    if (format === 'csv') {
+      const csvHeader = 'Client,Active Stores,Total Stores,Fee/Store,Monthly Revenue,Payment Status,Account Status';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = tenants.map((t: any) => {
+        const activeSub = t.subscriptions[0];
+        const fee = activeSub?.plan?.priceMonthly ?? 125;
+        const storeCount = t.stores.length;
+        const revenue = fee * storeCount;
+        const paymentStatus = activeSub?.status === 'past_due' ? 'Overdue' : 'Paid';
+
+        return [
+          `"${t.name}"`,
+          storeCount,
+          storeCount,
+          `$${fee.toFixed(2)}`,
+          `$${revenue.toFixed(2)}`,
+          paymentStatus,
+          t.status.charAt(0).toUpperCase() + t.status.slice(1),
+        ].join(',');
+      });
+
+      const csvData = [csvHeader, ...rows].join('\n');
+
+      return new Response(csvData, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="billing-report-${period}.csv"`,
+        },
+      });
+    }
+
+    // For XLSX, we'd use a library like exceljs
+    return NextResponse.json(
+      { error: 'XLSX export coming soon. Use CSV for now.' },
+      { status: 501 }
+    );
+  } catch (err) {
+    console.error('[GET /api/super-admin/billing/export]', err);
+    return NextResponse.json({ error: 'Failed to export billing data' }, { status: 500 });
+  }
 }
