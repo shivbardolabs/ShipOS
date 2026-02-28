@@ -281,6 +281,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: true,
   },
 
+  // ── Charge Events (BAR-309) ───────────────────────────────────────────────
+  {
+    key: 'charge_events',
+    name: 'Charge Events',
+    description: 'Track per-customer billable charge events with cost basis, markup, and revenue per PMB',
+    category: 'business',
+    defaultEnabled: false,
+  },
+
   // ── Batch 2 Features (Requirements Gaps) ─────────────────────────────────
   {
     key: 'stripe_payments',
