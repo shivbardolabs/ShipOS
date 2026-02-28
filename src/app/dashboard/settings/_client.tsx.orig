@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Modal } from '@/components/ui/modal';
 
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
@@ -53,6 +52,7 @@ import {
   Monitor,
   Database,
   ArrowRight } from 'lucide-react';
+import { Modal } from '@/components/ui/modal';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -109,22 +109,9 @@ interface TenantUser {
 /* -------------------------------------------------------------------------- */
 /*  Mock printers                                                             */
 /* -------------------------------------------------------------------------- */
-interface PrinterEntry {
-  id: string;
-  name: string;
-  model: string;
-  status: 'online' | 'offline';
-  autoPrint: boolean;
-  ipAddress?: string;
-  port?: number;
-  type?: string;
-  paperSize?: string;
-  dpi?: number;
-}
-
-const mockPrinters: PrinterEntry[] = [
-  { id: 'ptr_001', name: 'Front Counter Label Printer', model: 'Zebra ZD420', status: 'online', autoPrint: true, ipAddress: '192.168.1.50', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
-  { id: 'ptr_002', name: 'Back Office Printer', model: 'Zebra GK420d', status: 'online', autoPrint: false, ipAddress: '192.168.1.51', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
+const mockPrinters = [
+  { id: 'ptr_001', name: 'Front Counter Label Printer', model: 'Zebra ZD420', status: 'online', autoPrint: true },
+  { id: 'ptr_002', name: 'Back Office Printer', model: 'Zebra GK420d', status: 'online', autoPrint: false },
   { id: 'ptr_003', name: 'Receipt Printer', model: 'Zebra ZD220', status: 'offline', autoPrint: false },
 ];
 
@@ -431,134 +418,6 @@ export default function SettingsPage() {
   const [printers, setPrinters] = useState(mockPrinters);
   const [addingPrinter, setAddingPrinter] = useState(false);
   const [printerTestResult, setPrinterTestResult] = useState<string | null>(null);
-
-  // ─── BAR-311: Service Agreement Template state ──────────────────────────
-  const DEFAULT_TEMPLATE = `MAILBOX SERVICE AGREEMENT
-
-This Service Agreement ("Agreement") is entered into between {storeName} ("Provider") and {customerName} ("Customer") on {startDate}.
-
-PMB Number: {pmbNumber}
-Billing Cycle: {billingCycle}
-
-TERMS OF SERVICE:
-1. Provider agrees to receive and hold mail and packages for Customer at the assigned PMB number.
-2. Customer agrees to pick up mail within 30 days of receipt.
-3. Customer agrees to notify Provider of any change of address.
-4. This agreement may be terminated by either party with 30 days written notice.
-
-CUSTOMER ACKNOWLEDGMENT:
-By signing below, Customer acknowledges and agrees to the terms set forth in this Agreement.`;
-
-  const [templateContent, setTemplateContent] = useState(DEFAULT_TEMPLATE);
-  const [templateFileName, setTemplateFileName] = useState<string | null>(null);
-  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
-  const [templateSaving, setTemplateSaving] = useState(false);
-  const [templateSaved, setTemplateSaved] = useState(false);
-  const templateFileRef = useRef<HTMLInputElement>(null);
-
-  const handleSaveTemplate = useCallback(async () => {
-    setTemplateSaving(true);
-    try {
-      const res = await fetch('/api/settings/agreement-template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: templateContent }),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      setTemplateSaved(true);
-      setTimeout(() => {
-        setTemplateSaved(false);
-        setShowEditTemplateModal(false);
-      }, 1200);
-    } catch (err) {
-      console.error('Failed to save template', err);
-    } finally {
-      setTemplateSaving(false);
-    }
-  }, [templateContent]);
-
-  const handleUploadTemplate = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setTemplateFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      if (text) setTemplateContent(text);
-    };
-    reader.readAsText(file);
-    // Reset file input so same file can be re-selected
-    if (templateFileRef.current) templateFileRef.current.value = '';
-  }, []);
-
-  // Load saved template on mount
-  useEffect(() => {
-    fetch('/api/settings/agreement-template')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.content) setTemplateContent(d.content);
-      })
-      .catch(() => {});
-  }, []);
-
-  // ─── BAR-312: Rate editing state ────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingRate, setEditingRate] = useState<any | null>(null);
-  const [rateSaving, setRateSaving] = useState(false);
-  const [rateSaved, setRateSaved] = useState(false);
-
-  const handleSaveRate = useCallback(async () => {
-    if (!editingRate) return;
-    setRateSaving(true);
-    try {
-      const res = await fetch('/api/carrier-rates', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingRate.id,
-          retailRate: parseFloat(editingRate.retailRate),
-          marginType: editingRate.marginType,
-          marginValue: parseFloat(editingRate.marginValue),
-          isActive: editingRate.isActive,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      // Update local state
-      setCarrierRates((prev) =>
-        prev.map((r) =>
-          r.id === editingRate.id
-            ? { ...r, retailRate: parseFloat(editingRate.retailRate), marginType: editingRate.marginType, marginValue: parseFloat(editingRate.marginValue), isActive: editingRate.isActive }
-            : r
-        )
-      );
-      setRateSaved(true);
-      setTimeout(() => {
-        setRateSaved(false);
-        setEditingRate(null);
-      }, 1000);
-    } catch (err) {
-      console.error('Failed to save rate', err);
-    } finally {
-      setRateSaving(false);
-    }
-  }, [editingRate]);
-
-  const handleUpdateAllRates = useCallback(async () => {
-    setRateSaving(true);
-    try {
-      await fetch('/api/carrier-rates/refresh', { method: 'POST' });
-      // Reload rates
-      const res = await fetch('/api/carrier-rates');
-      const d = await res.json();
-      setCarrierRates(d.carrierRates || []);
-      setRateSaved(true);
-      setTimeout(() => setRateSaved(false), 2000);
-    } catch (err) {
-      console.error('Failed to update rates', err);
-    } finally {
-      setRateSaving(false);
-    }
-  }, []);
 
   // Mailbox platform toggles (BAR-255)
   const [platformEnabled, setPlatformEnabled] = useState<Record<string, boolean>>({
@@ -1168,7 +1027,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                               )}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <Button variant="ghost" size="sm" iconOnly onClick={() => setEditingRate({ ...rate, retailRate: String(rate.retailRate), marginValue: String(rate.marginValue) })}>
+                              <Button variant="ghost" size="sm" iconOnly>
                                 <Edit3 className="h-3.5 w-3.5" />
                               </Button>
                             </td>
@@ -1180,88 +1039,10 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                 </div>
 
                 <div className="flex justify-end mt-4">
-                  <Button
-                    leftIcon={rateSaved && !editingRate ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                    onClick={handleUpdateAllRates}
-                    loading={rateSaving && !editingRate}
-                    disabled={rateSaving}
-                  >
-                    {rateSaved && !editingRate ? 'Rates Updated!' : 'Update Rates'}
-                  </Button>
+                  <Button leftIcon={<Save className="h-4 w-4" />}>Update Rates</Button>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Rate Edit Modal */}
-            <Modal
-              open={!!editingRate}
-              onClose={() => setEditingRate(null)}
-              title={`Edit Rate — ${editingRate?.service || ''}`}
-              description={editingRate?.addOnName ? `Add-on: ${editingRate.addOnName}` : undefined}
-              size="md"
-              footer={
-                <>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingRate(null)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    leftIcon={rateSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                    onClick={handleSaveRate}
-                    loading={rateSaving}
-                    disabled={rateSaving}
-                  >
-                    {rateSaved ? 'Saved!' : 'Save Changes'}
-                  </Button>
-                </>
-              }
-            >
-              {editingRate && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      label="Wholesale Rate"
-                      value={formatCurrency(editingRate.wholesaleRate)}
-                      readOnly
-                      disabled
-                    />
-                    <Input
-                      label="Retail Rate"
-                      type="number"
-                      step="0.01"
-                      value={editingRate.retailRate}
-                      onChange={(e) => setEditingRate((prev: typeof editingRate) => prev ? { ...prev, retailRate: e.target.value } : prev)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Select
-                      label="Margin Type"
-                      value={editingRate.marginType}
-                      onChange={(e) => setEditingRate((prev: typeof editingRate) => prev ? { ...prev, marginType: e.target.value } : prev)}
-                      options={[
-                        { value: 'markup', label: 'Markup' },
-                        { value: 'margin', label: 'Margin' },
-                      ]}
-                    />
-                    <Input
-                      label="Margin Value (%)"
-                      type="number"
-                      step="0.1"
-                      value={editingRate.marginValue}
-                      onChange={(e) => setEditingRate((prev: typeof editingRate) => prev ? { ...prev, marginValue: e.target.value } : prev)}
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <ToggleSwitch
-                      checked={editingRate.isActive}
-                      onChange={(val) => setEditingRate((prev: typeof editingRate) => prev ? { ...prev, isActive: val } : prev)}
-                      label="Active"
-                      description="Enable or disable this rate for transactions"
-                    />
-                  </div>
-                </div>
-              )}
-            </Modal>
           </TabPanel>
 
           {/* ================================================================ */}
@@ -1574,81 +1355,19 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                       <input type="text" placeholder="e.g. Zebra ZD420" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-model" />
                     </div>
                   </div>
-                  <p className="text-xs font-medium text-surface-400 mt-2 pt-2 border-t border-surface-700/50">Connection Details</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-surface-500 mb-1 block">IP Address</label>
-                      <input type="text" placeholder="e.g. 192.168.1.100" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-ip" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-surface-500 mb-1 block">Port</label>
-                      <input type="number" defaultValue="9100" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-port" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs text-surface-500 mb-1 block">Protocol / Driver</label>
-                      <select className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-type">
-                        <option value="zpl">ZPL (Zebra)</option>
-                        <option value="epl">EPL (Eltron)</option>
-                        <option value="thermal">Thermal / ESC/POS</option>
-                        <option value="laser">Laser / PCL</option>
-                        <option value="ipp">IPP / AirPrint</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-surface-500 mb-1 block">Paper Size</label>
-                      <select className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-paper">
-                        <option value="4x6">4×6″ (Shipping Label)</option>
-                        <option value="4x4">4×4″ (Square Label)</option>
-                        <option value="2.25x1.25">2.25×1.25″ (Barcode)</option>
-                        <option value="letter">Letter (8.5×11″)</option>
-                        <option value="receipt">Receipt (3.125″ roll)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-surface-500 mb-1 block">DPI</label>
-                      <select className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-dpi">
-                        <option value="203">203 DPI</option>
-                        <option value="300">300 DPI</option>
-                        <option value="600">600 DPI</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="flex gap-2">
                     <Button size="sm" onClick={() => {
                       const nameEl = document.getElementById('new-printer-name') as HTMLInputElement;
                       const modelEl = document.getElementById('new-printer-model') as HTMLInputElement;
-                      const ipEl = document.getElementById('new-printer-ip') as HTMLInputElement;
-                      const portEl = document.getElementById('new-printer-port') as HTMLInputElement;
-                      const typeEl = document.getElementById('new-printer-type') as HTMLSelectElement;
-                      const paperEl = document.getElementById('new-printer-paper') as HTMLSelectElement;
-                      const dpiEl = document.getElementById('new-printer-dpi') as HTMLSelectElement;
                       const newPrinter = {
                         id: `ptr_${Date.now()}`,
                         name: nameEl?.value || 'New Printer',
                         model: modelEl?.value || 'Unknown Model',
                         status: 'offline' as const,
                         autoPrint: false,
-                        ipAddress: ipEl?.value || '',
-                        port: parseInt(portEl?.value || '9100', 10),
-                        type: typeEl?.value || 'zpl',
-                        paperSize: paperEl?.value || '4x6',
-                        dpi: parseInt(dpiEl?.value || '203', 10),
                       };
                       setPrinters(prev => [...prev, newPrinter]);
                       setAddingPrinter(false);
-                      // Also persist via API
-                      fetch('/api/settings/printer', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          name: newPrinter.name,
-                          type: newPrinter.type,
-                          ipAddress: newPrinter.ipAddress || null,
-                          port: newPrinter.port,
-                        }),
-                      }).catch(() => {});
                     }} leftIcon={<Save className="h-3.5 w-3.5" />}>
                       Save
                     </Button>
@@ -1686,12 +1405,6 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                       <div>
                         <h3 className="text-sm font-medium text-surface-200">{printer.name}</h3>
                         <p className="text-xs text-surface-500">{printer.model}</p>
-                        {printer.ipAddress && (
-                          <p className="text-xs text-surface-600 mt-0.5 font-mono">
-                            {printer.ipAddress}:{printer.port || 9100} · {printer.type || 'zpl'}
-                            {printer.dpi ? ` · ${printer.dpi} DPI` : ''}
-                          </p>
-                        )}
                       </div>
                     </div>
 
@@ -1751,122 +1464,93 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
           {/* ================================================================ */}
           <TabPanel active={activeTab === 'notifications'}>
             <div className="space-y-6">
-              {/* Notification Preferences — visible to all admins */}
+              {/* SMS-First callout */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-primary-600" />
-                    Notification Preferences
+                    <Smartphone className="h-4 w-4 text-primary-600" />
+                    SMS Notifications
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 border border-primary-500/20">
+                      <Sparkles className="h-3 w-3" />
+                      Recommended
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs text-surface-500 mb-4">Choose which events trigger notifications and how they are delivered.</p>
-                  <div className="space-y-3">
+                  <div className="rounded-lg border border-primary-500/15 bg-primary-500/5 p-3.5 mb-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 flex-shrink-0 mt-0.5">
+                        <TrendingUp className="h-4 w-4 text-primary-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-surface-200">📊 SMS has 98% open rate vs 20% for email</p>
+                        <p className="text-xs text-surface-400 mt-1">
+                          Customers respond 5× faster to SMS. Enable SMS as the default channel for time-sensitive notifications like package arrivals.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
                     <ToggleSwitch
                       checked={smsDefaultArrival}
                       onChange={setSmsDefaultArrival}
                       label="Send SMS by default for package arrivals"
-                      description="Auto-SMS when a package is checked in."
+                      description="Auto-SMS on check-in."
                     />
-                    <ToggleSwitch
-                      checked={emailReceipts}
-                      onChange={setEmailReceipts}
-                      label="Email receipt after checkout"
-                      description="Customers receive an email receipt when a transaction completes."
-                    />
+
+                    <p className="text-xs text-surface-500 mt-2">
+                      SMS notifications are sent via <a href="https://twilio.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Twilio</a>. Configure credentials in your environment variables.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <Input label="Account SID" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_ACCOUNT_SID" />
+                      <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_AUTH_TOKEN" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <Input label="Phone Number" value={process.env.NEXT_PUBLIC_TWILIO_PHONE || '+1 (XXX) XXX-XXXX'} readOnly placeholder="TWILIO_PHONE_NUMBER" />
+                      <Input label="Messaging Service SID (optional)" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_MESSAGING_SERVICE_SID" />
+                    </div>
+                    <p className="text-[11px] text-surface-600 mt-2">
+                      Set via environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
+                    </p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* SMS Provider Config — superadmin only */}
-              {role === 'superadmin' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Smartphone className="h-4 w-4 text-primary-600" />
-                      SMS — Twilio
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 border border-primary-500/20">
-                        <Shield className="h-3 w-3" />
-                        Super Admin
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary-600" />
+                    Email — Resend
+                    {process.env.NEXT_PUBLIC_RESEND_CONFIGURED === 'true' ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 border border-emerald-500/20">
+                        <Wifi className="h-3 w-3" /> Connected
                       </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg border border-primary-500/15 bg-primary-500/5 p-3.5 mb-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 flex-shrink-0 mt-0.5">
-                          <TrendingUp className="h-4 w-4 text-primary-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-surface-200">📊 SMS has 98% open rate vs 20% for email</p>
-                          <p className="text-xs text-surface-400 mt-1">
-                            Customers respond 5× faster to SMS. Enable SMS as the default channel for time-sensitive notifications like package arrivals.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <p className="text-xs text-surface-500 mt-2">
-                        SMS notifications are sent via <a href="https://twilio.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Twilio</a>. Configure credentials in your environment variables.
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                        <Input label="Account SID" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_ACCOUNT_SID" />
-                        <Input label="Auth Token" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_AUTH_TOKEN" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                        <Input label="Phone Number" value={process.env.NEXT_PUBLIC_TWILIO_PHONE || '+1 (XXX) XXX-XXXX'} readOnly placeholder="TWILIO_PHONE_NUMBER" />
-                        <Input label="Messaging Service SID (optional)" value="••••••••••••••••" type="password" readOnly placeholder="TWILIO_MESSAGING_SERVICE_SID" />
-                      </div>
-                      <p className="text-[11px] text-surface-600 mt-2">
-                        Set via environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Email Provider Config — superadmin only */}
-              {role === 'superadmin' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary-600" />
-                      Email — Resend
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-600 border border-primary-500/20">
-                        <Shield className="h-3 w-3" />
-                        Super Admin
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
+                        <WifiOff className="h-3 w-3" /> Not Configured
                       </span>
-                      {process.env.NEXT_PUBLIC_RESEND_CONFIGURED === 'true' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 border border-emerald-500/20">
-                          <Wifi className="h-3 w-3" /> Connected
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
-                          <WifiOff className="h-3 w-3" /> Not Configured
-                        </span>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-surface-500 mb-4">
-                      Email notifications are sent via <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Resend</a> with React Email templates. Configure your API key and sending domain in your environment variables.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input label="API Key" value="••••••••••••••••" type="password" readOnly placeholder="RESEND_API_KEY" />
-                      <Input
-                        label="From Address"
-                        value={smtpFrom}
-                        onChange={(e) => setSmtpFrom(e.target.value)}
-                        placeholder="notifications@shipospro.com"
-                      />
-                    </div>
-                    <p className="text-[11px] text-surface-600 mt-2">
-                      Set via environment variables: RESEND_API_KEY, RESEND_FROM_EMAIL
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-surface-500 mb-4">
+                    Email notifications are sent via <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:underline">Resend</a> with React Email templates. Configure your API key and sending domain in your environment variables.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input label="API Key" value="••••••••••••••••" type="password" readOnly placeholder="RESEND_API_KEY" />
+                    <Input
+                      label="From Address"
+                      value={smtpFrom}
+                      onChange={(e) => setSmtpFrom(e.target.value)}
+                      placeholder="notifications@shipospro.com"
+                    />
+                  </div>
+                  <p className="text-[11px] text-surface-600 mt-2">
+                    Set via environment variables: RESEND_API_KEY, RESEND_FROM_EMAIL
+                  </p>
+                </CardContent>
+              </Card>
 
               <Card>
                 <CardHeader>
