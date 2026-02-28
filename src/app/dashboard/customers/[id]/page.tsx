@@ -682,7 +682,7 @@ export default function CustomerDetailPage() {
                 <div>
                   <h4 className="text-sm font-semibold text-surface-200 mb-3">Recent Transactions</h4>
                   <div className="space-y-2">
-                    {(loyaltyAccount.transactions || []).slice(0, 10).map((txn) => {
+                    {(loyaltyAccount.transactions || []).slice(0, 10).map((txn: { id: string; points: number; type: string; description?: string; createdAt: string }) => {
                       const isEarn = txn.points > 0;
                       return (
                         <div key={txn.id} className="flex items-center justify-between rounded-lg bg-surface-900/50 px-3 py-2.5">
