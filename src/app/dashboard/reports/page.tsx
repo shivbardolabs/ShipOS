@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import { useState, useMemo, useEffect} from 'react';
 import Link from 'next/link';

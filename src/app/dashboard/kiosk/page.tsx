@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';

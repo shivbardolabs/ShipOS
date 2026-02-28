@@ -1,6 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';

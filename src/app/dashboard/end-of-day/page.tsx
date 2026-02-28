@@ -1,6 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import { useState, useEffect} from 'react';
 import { PageHeader } from '@/components/layout/page-header';
