@@ -1018,3 +1018,20 @@ model CarrierProgramCheckout {
   @@index([uploadStatus])
   @@index([batchId])
 }
+
+// ── Storage Locations (BAR-326) ──────────────────────────────────────────────
+
+model StorageLocation {
+  id        String  @id @default(cuid())
+  tenantId  String
+  name      String  // e.g. "Shelf A1", "Back Room Bin 3"
+  sortOrder Int     @default(0) // For drag-to-reorder
+  isDefault Boolean @default(false) // Default location for new packages
+  isActive  Boolean @default(true)  // Soft-delete / deactivate
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, isActive])
+  @@index([tenantId, sortOrder])
+}
