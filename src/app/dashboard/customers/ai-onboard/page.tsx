@@ -79,8 +79,8 @@ const idTypeIcons: Record<IdTypeOption, typeof CreditCard> = {
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
-function getNextPMB(): string {
-  const usedNumbers = customers
+function getNextPMB(customerList: { pmbNumber: string }[]): string {
+  const usedNumbers = customerList
     .map((c) => parseInt(c.pmbNumber.replace('PMB-', ''), 10))
     .filter((n) => !isNaN(n));
   const max = usedNumbers.length > 0 ? Math.max(...usedNumbers) : 0;
@@ -266,7 +266,7 @@ export default function AiOnboardPage() {
       setConfidence(result.confidence);
 
       // Pre-populate form with extracted data
-      const nextPMB = getNextPMB();
+      const nextPMB = getNextPMB(customers);
       setFormData({
         firstName: result.firstName || '',
         lastName: result.lastName || '',
@@ -732,7 +732,7 @@ export default function AiOnboardPage() {
                   leftIcon={<Hash className="h-4 w-4" />}
                 />
                 <p className="text-[11px] text-surface-500 mt-1">
-                  Next available: {getNextPMB()}
+                  Next available: {getNextPMB(customers)}
                 </p>
               </div>
               <Input
