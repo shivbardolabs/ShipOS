@@ -1,11 +1,15 @@
 // Notification service — public API
-export { sendNotification } from './service';
+export { sendNotification, retryFailedNotifications, retrySingleNotification } from './service';
 export type {
   NotificationType,
   NotificationChannel,
   NotificationPayload,
   NotificationResult,
+  RetryResult,
 } from './service';
+
+export { checkRateLimit, recordNotification, resetRateLimit, getRateLimitStatus } from './rate-limiter';
+export type { RateLimitResult } from './rate-limiter';
 
 export { sendEmail, listDomains, verifyDomain } from './resend';
 export type { SendEmailParams, SendEmailResult, EmailCategory, DomainVerification } from './resend';

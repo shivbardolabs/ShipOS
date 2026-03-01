@@ -65,8 +65,9 @@ model Tenant {
   paymentRecords     PaymentRecord[]
   alerts             Alert[]
   carrierEnrollments CarrierProgramEnrollment[]
-  storageLocations   StorageLocation[]
-  billingModelConfig BillingModelConfig?
+  storageLocations      StorageLocation[]
+  billingModelConfig    BillingModelConfig?
+  notificationTemplates NotificationTemplate[]
 }
 
 // ── Users & Roles ────────────────────────────────────────────────────────────
@@ -269,9 +270,10 @@ model MailPiece {
   type      String  @default("letter") // letter, magazine, catalog, legal, other
   sender    String?
   status    String  @default("received") // received, scanned, notified, held, forwarded, discarded
-  scanImage String?
-  action    String? // hold, forward, discard, open_scan
-  notes     String?
+  scanImage     String?
+  scanImageBack String? // Back of envelope scan for digital fulfillment
+  action        String? // hold, forward, discard, open_scan
+  notes         String?
 
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
@@ -323,9 +325,28 @@ model Notification {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
+  retryCount  Int       @default(0)
+  lastRetryAt DateTime?
   sentAt      DateTime?
   deliveredAt DateTime?
   createdAt   DateTime  @default(now())
+}
+
+model NotificationTemplate {
+  id          String  @id @default(cuid())
+  type        String  @unique // package_checkin, package_reminder, id_expiration, mail_received, custom
+  name        String  // Display name
+  subject     String  // Email subject template (supports {{variables}})
+  bodyHtml    String  // Email body HTML template
+  bodySms     String  // SMS body template
+  variables   String? // JSON array of available variable names
+  isActive    Boolean @default(true)
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {

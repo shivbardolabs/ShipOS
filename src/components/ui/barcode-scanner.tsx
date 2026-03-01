@@ -71,8 +71,9 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const BarcodeDetectorClass = (window as any).BarcodeDetector;
+      // BAR-11: 'itf' covers ITF-14 (shipping barcodes). Added 'upc_a', 'upc_e' for retail barcodes.
       const detector = new BarcodeDetectorClass({
-        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'itf', 'codabar'],
+        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code', 'itf', 'codabar'],
       });
 
       const scan = async () => {

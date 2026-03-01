@@ -42,6 +42,7 @@ import type { StagingPackage } from '@/components/packages/queue-jump-modal';
 import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
+import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 // customers now fetched from API
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -691,6 +692,93 @@ export default function CheckInPage() {
     },
     [fetchCarrierApiData, checkDuplicateTracking] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  /* ── BAR-11: Scan feedback state ────────────────────────────────────── */
+  const [scanFeedback, setScanFeedback] = useState<string | null>(null);
+  const scanFeedbackTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  /** Show brief scan success feedback, auto-clears after 2s */
+  const showScanFeedback = useCallback((message: string) => {
+    if (scanFeedbackTimerRef.current) clearTimeout(scanFeedbackTimerRef.current);
+    setScanFeedback(message);
+    scanFeedbackTimerRef.current = setTimeout(() => setScanFeedback(null), 2000);
+  }, []);
+
+  /** Combined scan handler: populate tracking, auto-detect carrier, show feedback */
+  const handleScanResult = useCallback(
+    (value: string) => {
+      handleBarcodeScan(value);
+      const result = detectCarrier(value);
+      const carrierLabel = result ? result.carrierName : 'Unknown carrier';
+      showScanFeedback(`✓ Scanned: ${value.slice(0, 20)}${value.length > 20 ? '…' : ''} (${carrierLabel})`);
+    },
+    [handleBarcodeScan, showScanFeedback]
+  );
+
+  /* ── BAR-11: USB keyboard wedge detection ───────────────────────────── */
+  // Barcode scanners in keyboard-wedge mode send characters rapidly (< 50ms gaps)
+  // followed by Enter. We detect this pattern and treat it as a scan.
+  const wedgeBufferRef = useRef('');
+  const wedgeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const lastKeystrokeRef = useRef(0);
+
+  useEffect(() => {
+    // Only activate wedge detection on Step 2 (Carrier & Sender)
+    if (step !== 2) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in a textarea
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'TEXTAREA') return;
+
+      const now = Date.now();
+      const timeSinceLast = now - lastKeystrokeRef.current;
+      lastKeystrokeRef.current = now;
+
+      // If Enter key and we have a buffer with rapid input — treat as scan
+      if (e.key === 'Enter' && wedgeBufferRef.current.length >= 6) {
+        e.preventDefault();
+        e.stopPropagation();
+        const scanned = wedgeBufferRef.current;
+        wedgeBufferRef.current = '';
+        if (wedgeTimerRef.current) clearTimeout(wedgeTimerRef.current);
+        handleScanResult(scanned);
+        return;
+      }
+
+      // Only accumulate printable single characters arriving rapidly
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (timeSinceLast < 50 || wedgeBufferRef.current.length === 0) {
+          wedgeBufferRef.current += e.key;
+          // Reset buffer if no more rapid input arrives (300ms timeout)
+          if (wedgeTimerRef.current) clearTimeout(wedgeTimerRef.current);
+          wedgeTimerRef.current = setTimeout(() => {
+            wedgeBufferRef.current = '';
+          }, 300);
+        } else {
+          // Too slow — reset buffer, this is manual typing
+          wedgeBufferRef.current = e.key;
+          if (wedgeTimerRef.current) clearTimeout(wedgeTimerRef.current);
+          wedgeTimerRef.current = setTimeout(() => {
+            wedgeBufferRef.current = '';
+          }, 300);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      if (wedgeTimerRef.current) clearTimeout(wedgeTimerRef.current);
+    };
+  }, [step, handleScanResult]);
+
+  // Clean up scan feedback timer on unmount
+  useEffect(() => {
+    return () => {
+      if (scanFeedbackTimerRef.current) clearTimeout(scanFeedbackTimerRef.current);
+    };
+  }, []);
 
   /* ── Resolve display name & PMB for current recipient ──────────────── */
   const resolveRecipient = useCallback(() => {
@@ -1587,14 +1675,36 @@ export default function CheckInPage() {
 
             {/* Tracking Number — moved here from Step 3 (BAR-239) */}
             <div className="max-w-lg">
-              <Input
-                label="Tracking Number"
-                placeholder="Enter or scan tracking number"
-                value={trackingNumber}
-                onChange={(e) => handleTrackingNumberChange(e.target.value)}
-                leftIcon={<ScanBarcode className="h-5 w-5" />}
-                className="!py-3"
-              />
+              <label className="text-sm font-medium text-surface-300 mb-1.5 block">
+                Tracking Number
+              </label>
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Enter or scan tracking number"
+                    value={trackingNumber}
+                    onChange={(e) => handleTrackingNumberChange(e.target.value)}
+                    leftIcon={<ScanBarcode className="h-5 w-5" />}
+                    className="!py-3"
+                  />
+                </div>
+                {/* BAR-11: Camera barcode scanner */}
+                <BarcodeScanner onScan={handleScanResult} className="shrink-0 mt-0.5" />
+              </div>
+
+              {/* BAR-11: Scan success feedback */}
+              {scanFeedback && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 animate-in fade-in-0 duration-200">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <p className="text-xs text-emerald-300 font-medium">{scanFeedback}</p>
+                </div>
+              )}
+
+              {/* BAR-11: Keyboard wedge hint */}
+              <p className="mt-1.5 text-xs text-surface-500">
+                <Camera className="h-3 w-3 inline mr-1" />
+                Tap "Scan Barcode" for camera, or use a USB scanner — it auto-detects
+              </p>
               {trackingNumber.trim() && !selectedCarrier && (
                 <p className="mt-1 text-xs text-amber-400">
                   <AlertTriangle className="h-3 w-3 inline mr-1" />

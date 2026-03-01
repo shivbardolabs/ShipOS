@@ -34,6 +34,8 @@ export interface PackageLabelData {
   perishable?: boolean;
   /** BAR-266: True for carrier programs (UPS AP, FedEx HAL, Amazon) — changes label layout */
   isCarrierProgram?: boolean;
+  /** BAR-194: Physical storage location (shelf, bin, rack) for warehouse staff */
+  storageLocation?: string;
 }
 
 export interface RTSLabelData {
@@ -108,6 +110,9 @@ export function renderPackageLabel(data: PackageLabelData): string {
   .label { font-weight: 700; text-transform: uppercase; font-size: 9pt; color: #555; }
   .value { font-weight: 600; }
   .condition-bar { text-align: center; padding: 0.06in 0.1in; margin: 0.06in 0; border: 2px solid ${isNonGood ? '#000' : '#ccc'}; border-radius: 4px; font-size: 12pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; ${isNonGood ? 'background: #000; color: #fff;' : ''} }
+  .storage-location { text-align: center; padding: 0.06in 0.12in; margin: 0.06in 0; border: 3px solid #000; border-radius: 6px; background: #f0f0f0; }
+  .storage-location .loc-label { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+  .storage-location .loc-value { font-size: 24pt; font-weight: 900; letter-spacing: 1px; line-height: 1.2; }
   .rts-date { margin: 0.08in 0; padding: 0.06in 0.1in; border: 1px solid #000; border-radius: 4px; font-size: 12pt; font-weight: 700; }
   .rts-date-line { display: inline-block; border-bottom: 1px solid #000; min-width: 2in; margin-left: 0.1in; }
   .barcode-area { text-align: center; margin: 0.12in 0; padding: 0.1in; border: 1px solid #ccc; border-radius: 4px; }
@@ -127,6 +132,8 @@ export function renderPackageLabel(data: PackageLabelData): string {
   </div>
 
   <div class="condition-bar">${conditionDisplay ? `⚠ ${escapeHtml(conditionDisplay)}` : 'Good'}</div>
+
+  ${data.storageLocation ? `<div class="storage-location"><div class="loc-label">📍 Storage Location</div><div class="loc-value">${escapeHtml(data.storageLocation)}</div></div>` : ''}
 
   ${data.isCarrierProgram ? '<div class="rts-date">RTS Date: <span class="rts-date-line">&nbsp;</span></div>' : ''}
 
