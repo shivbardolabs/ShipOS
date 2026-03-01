@@ -227,7 +227,10 @@ const packageProgramOptions: {
 /*  Main Component                                                            */
 /* -------------------------------------------------------------------------- */
 export default function CheckInPage() {
-  const { log: logActivity } = useActivityLog();
+  const { log: logActivity, lastActionByVerb } = useActivityLog();
+
+  // Resolve the last check-in activity entry so the PageHeader badge renders
+  const lastCheckIn = lastActionByVerb('package.check_in');
   const {
     queue: labelQueue,
     printMode,
