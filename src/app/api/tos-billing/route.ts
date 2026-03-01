@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, validateBody, validateQuery, ok, created, badRequest, notFound, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import {
   processImmediateCharge,
@@ -7,174 +6,139 @@ import {
   processChargeViaTos,
   retryFailedCharge,
 } from '@/lib/tos-billing-service';
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
 /**
  * GET /api/tos-billing
  *
  * List TOS charges for the tenant with filtering.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user?.tenantId) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get('customerId');
-    const status = searchParams.get('status');
-    const mode = searchParams.get('mode');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
+const GetQuerySchema = z.object({
+  customerId: z.string().optional(),
+  status: z.string().optional(),
+  mode: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { tenantId: user.tenantId };
-    if (customerId) where.customerId = customerId;
-    if (status) where.status = status;
-    if (mode) where.mode = mode;
+export const GET = withApiHandler(async (request, { user }) => {
+  const { customerId, status, mode, limit, offset } = validateQuery(request, GetQuerySchema);
 
-    const [charges, total] = await Promise.all([
-      prisma.tosCharge.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.tosCharge.count({ where }),
-    ]);
+  const where: Prisma.TosChargeWhereInput = { tenantId: user.tenantId! };
+  if (customerId) where.customerId = customerId;
+  if (status) where.status = status;
+  if (mode) where.mode = mode;
 
-    // Summary stats
-    const summary = await prisma.tosCharge.aggregate({
-      where: { tenantId: user.tenantId },
-      _sum: { total: true },
-      _count: true,
-    });
+  const [charges, total] = await Promise.all([
+    prisma.tosCharge.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.tosCharge.count({ where }),
+  ]);
 
-    const pendingDeferred = await prisma.tosCharge.aggregate({
-      where: { tenantId: user.tenantId, mode: 'deferred', status: 'pending' },
-      _sum: { total: true },
-      _count: true,
-    });
+  // Summary stats
+  const summary = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId! },
+    _sum: { total: true },
+    _count: true,
+  });
 
-    const paidImmediate = await prisma.tosCharge.aggregate({
-      where: { tenantId: user.tenantId, mode: 'immediate', status: 'paid' },
-      _sum: { total: true },
-      _count: true,
-    });
+  const pendingDeferred = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId!, mode: 'deferred', status: 'pending' },
+    _sum: { total: true },
+    _count: true,
+  });
 
-    return NextResponse.json({
-      charges,
-      total,
-      limit,
-      offset,
-      summary: {
-        totalCharges: summary._count,
-        totalAmount: summary._sum.total ?? 0,
-        pendingDeferredCount: pendingDeferred._count,
-        pendingDeferredAmount: pendingDeferred._sum.total ?? 0,
-        paidImmediateCount: paidImmediate._count,
-        paidImmediateAmount: paidImmediate._sum.total ?? 0,
-      },
-    });
-  } catch (err) {
-    console.error('[GET /api/tos-billing]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch TOS charges', details: err instanceof Error ? err.message : 'Unknown' },
-      { status: 500 },
-    );
-  }
-}
+  const paidImmediate = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId!, mode: 'immediate', status: 'paid' },
+    _sum: { total: true },
+    _count: true,
+  });
+
+  return ok({
+    charges,
+    total,
+    limit,
+    offset,
+    summary: {
+      totalCharges: summary._count,
+      totalAmount: summary._sum.total ?? 0,
+      pendingDeferredCount: pendingDeferred._count,
+      pendingDeferredAmount: pendingDeferred._sum.total ?? 0,
+      paidImmediateCount: paidImmediate._count,
+      paidImmediateAmount: paidImmediate._sum.total ?? 0,
+    },
+  });
+});
 
 /**
  * POST /api/tos-billing
  *
  * Create a new TOS charge. Automatically routes to immediate or deferred path.
- *
- * Body:
- *   - customerId: string (required)
- *   - description: string (required)
- *   - amount: number (required)
- *   - tax?: number
- *   - mode?: 'immediate' | 'deferred' | 'auto' (default: auto)
- *   - serviceType?: string
- *   - chargeEventId?: string
- *   - paymentMethodId?: string (for immediate)
- *   - referenceType?: string
- *   - referenceId?: string
- *   - action?: 'retry' (to retry a failed charge)
- *   - tosChargeId?: string (for retry)
  */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user?.tenantId) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
+const PostBodySchema = z.object({
+  customerId: z.string().min(1),
+  description: z.string().min(1),
+  amount: z.number().min(0),
+  tax: z.number().min(0).optional(),
+  mode: z.enum(['immediate', 'deferred', 'auto']).optional(),
+  serviceType: z.string().optional(),
+  chargeEventId: z.string().optional(),
+  paymentMethodId: z.string().optional(),
+  referenceType: z.string().optional(),
+  referenceId: z.string().optional(),
+  action: z.literal('retry').optional(),
+  tosChargeId: z.string().optional(),
+});
 
-    const body = await request.json();
-    const { action } = body;
+export const POST = withApiHandler(async (request, { user }) => {
+  if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
+    forbidden('Insufficient permissions');
+  }
 
-    // Handle retry
-    if (action === 'retry' && body.tosChargeId) {
-      const result = await retryFailedCharge(body.tosChargeId);
-      return NextResponse.json({ result }, { status: 200 });
-    }
+  const body = await validateBody(request, PostBodySchema);
 
-    const { customerId, description, amount, tax, mode, serviceType, chargeEventId, paymentMethodId, referenceType, referenceId } = body;
+  // Handle retry
+  if (body.action === 'retry' && body.tosChargeId) {
+    const result = await retryFailedCharge(body.tosChargeId);
+    return ok({ result });
+  }
 
-    if (!customerId || !description || amount === undefined) {
-      return NextResponse.json(
-        { error: 'Missing required fields: customerId, description, amount' },
-        { status: 400 },
-      );
-    }
+  const { customerId, description, amount, tax, mode, serviceType, chargeEventId, paymentMethodId, referenceType, referenceId } = body;
 
-    // Validate customer belongs to tenant
-    const customer = await prisma.customer.findFirst({
-      where: { id: customerId, tenantId: user.tenantId },
+  // Validate customer belongs to tenant
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, tenantId: user.tenantId! },
+  });
+  if (!customer) {
+    notFound('Customer not found');
+  }
+
+  if (mode === 'immediate') {
+    const result = await processImmediateCharge({
+      tenantId: user.tenantId!,
+      customerId,
+      description,
+      amount,
+      tax,
+      serviceType,
+      chargeEventId,
+      paymentMethodId,
+      referenceType,
+      referenceId,
     });
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
+    return created({ result });
+  }
 
-    if (mode === 'immediate') {
-      const result = await processImmediateCharge({
-        tenantId: user.tenantId,
-        customerId,
-        description,
-        amount,
-        tax,
-        serviceType,
-        chargeEventId,
-        paymentMethodId,
-        referenceType,
-        referenceId,
-      });
-      return NextResponse.json({ result }, { status: 201 });
-    }
-
-    if (mode === 'deferred') {
-      const result = await processDeferredCharge({
-        tenantId: user.tenantId,
-        customerId,
-        description,
-        amount,
-        tax,
-        serviceType,
-        chargeEventId,
-        referenceType,
-        referenceId,
-      });
-      return NextResponse.json({ result }, { status: 201 });
-    }
-
-    // Auto mode — let the service decide
-    const result = await processChargeViaTos({
-      tenantId: user.tenantId,
+  if (mode === 'deferred') {
+    const result = await processDeferredCharge({
+      tenantId: user.tenantId!,
       customerId,
       description,
       amount,
@@ -184,12 +148,20 @@ export async function POST(request: NextRequest) {
       referenceType,
       referenceId,
     });
-    return NextResponse.json({ result }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/tos-billing]', err);
-    return NextResponse.json(
-      { error: 'Failed to process TOS charge', details: err instanceof Error ? err.message : 'Unknown' },
-      { status: 500 },
-    );
+    return created({ result });
   }
-}
+
+  // Auto mode — let the service decide
+  const result = await processChargeViaTos({
+    tenantId: user.tenantId!,
+    customerId,
+    description,
+    amount,
+    tax,
+    serviceType,
+    chargeEventId,
+    referenceType,
+    referenceId,
+  });
+  return created({ result });
+});

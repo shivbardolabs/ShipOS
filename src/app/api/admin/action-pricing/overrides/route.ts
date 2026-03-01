@@ -1,66 +1,60 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, validateBody, ok, notFound, forbidden } from '@/lib/api-utils';
+import { z } from 'zod';
 import { upsertOverride, deleteOverride } from '@/lib/action-pricing-db';
+
+/* ── Schemas ───────────────────────────────────────────────────────────────── */
+
+const UpsertOverrideSchema = z.object({
+  actionPriceId: z.string().min(1),
+  targetType: z.string().min(1),
+  targetValue: z.string().min(1),
+  targetLabel: z.string().optional(),
+  retailPrice: z.number().optional(),
+  firstUnitPrice: z.number().optional(),
+  additionalUnitPrice: z.number().optional(),
+  cogs: z.number().optional(),
+  cogsFirstUnit: z.number().optional(),
+  cogsAdditionalUnit: z.number().optional(),
+});
+
+const DeleteOverrideSchema = z.object({
+  id: z.string().min(1),
+});
+
+/* ── Helpers ───────────────────────────────────────────────────────────────── */
+
+function requireAdminRole(role: string) {
+  if (role !== 'admin' && role !== 'superadmin') {
+    forbidden('Superadmin access required');
+  }
+}
 
 /**
  * POST /api/admin/action-pricing/overrides
  *
  * Upsert a price override (segment or customer level).
- * Body: { actionPriceId, targetType, targetValue, targetLabel?,
- *         retailPrice?, firstUnitPrice?, additionalUnitPrice?,
- *         cogs?, cogsFirstUnit?, cogsAdditionalUnit? }
  */
-export async function POST(req: NextRequest) {
-  try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
+export const POST = withApiHandler(async (request, { user }) => {
+  requireAdminRole(user.role);
 
-    const body = await req.json();
-    if (!body.actionPriceId || !body.targetType || !body.targetValue) {
-      return NextResponse.json(
-        { error: 'actionPriceId, targetType, and targetValue are required' },
-        { status: 400 },
-      );
-    }
+  const body = await validateBody(request, UpsertOverrideSchema);
+  const override = await upsertOverride(body.actionPriceId, body);
 
-    const override = await upsertOverride(body.actionPriceId, body);
-    return NextResponse.json(override);
-  } catch (err) {
-    console.error('[POST /api/admin/action-pricing/overrides]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
-  }
-}
+  return ok(override);
+});
 
 /**
  * DELETE /api/admin/action-pricing/overrides
  *
  * Delete a price override.
- * Body: { id }
  */
-export async function DELETE(req: NextRequest) {
-  try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
+export const DELETE = withApiHandler(async (request, { user }) => {
+  requireAdminRole(user.role);
 
-    const { id } = await req.json();
-    if (!id) {
-      return NextResponse.json({ error: 'id is required' }, { status: 400 });
-    }
+  const { id } = await validateBody(request, DeleteOverrideSchema);
 
-    const deleted = await deleteOverride(id);
-    if (!deleted) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
+  const deleted = await deleteOverride(id);
+  if (!deleted) notFound('Not found');
 
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error('[DELETE /api/admin/action-pricing/overrides]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
-  }
-}
+  return ok({ success: true });
+});

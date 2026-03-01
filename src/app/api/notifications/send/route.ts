@@ -1,79 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, created, badRequest } from '@/lib/api-utils';
 import { sendNotification } from '@/lib/notifications';
-import type { NotificationType, NotificationChannel } from '@/lib/notifications';
+import { z } from 'zod';
+
+/* ── Schema ───────────────────────────────────────────────────────────────── */
+
+const SendNotificationBodySchema = z.object({
+  customerId: z.string().min(1),
+  type: z.enum(['package_arrival', 'pickup_reminder', 'storage_warning', 'renewal', 'custom']),
+  channel: z.enum(['email', 'sms', 'push', 'in_app']),
+  message: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
 
 /**
  * POST /api/notifications/send
+ * Send a notification to a customer.
  *
- * Send a notification to a customer via email, SMS, or both.
- *
- * Body:
- *   type:       NotificationType (required)
- *   customerId: string (required)
- *   channel?:   'email' | 'sms' | 'both' (optional — defaults to customer prefs)
- *   subject?:   string (required for 'custom' type)
- *   body?:      string (required for 'custom' type)
- *   data?:      Record<string, unknown> (template-specific data)
+ * SECURITY FIX: Now requires authentication.
  */
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, SendNotificationBodySchema);
 
-    // Validate required fields
-    if (!body.type || !body.customerId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: type, customerId' },
-        { status: 400 }
-      );
-    }
+  const result = await sendNotification({
+    tenantId: user.tenantId!,
+    customerId: body.customerId,
+    type: body.type,
+    channel: body.channel,
+    message: body.message,
+    metadata: body.metadata,
+    sentById: user.id,
+  });
 
-    const validTypes: NotificationType[] = [
-      'package_arrival',
-      'package_reminder',
-      'mail_received',
-      'id_expiring',
-      'renewal_reminder',
-      'shipment_update',
-      'welcome',
-      'custom',
-    ];
-
-    if (!validTypes.includes(body.type)) {
-      return NextResponse.json(
-        { error: `Invalid notification type. Must be one of: ${validTypes.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    if (body.type === 'custom' && (!body.subject || !body.body)) {
-      return NextResponse.json(
-        { error: 'Custom notifications require both subject and body' },
-        { status: 400 }
-      );
-    }
-
-    if (body.channel && !['email', 'sms', 'both'].includes(body.channel)) {
-      return NextResponse.json(
-        { error: 'Invalid channel. Must be: email, sms, or both' },
-        { status: 400 }
-      );
-    }
-
-    const result = await sendNotification({
-      type: body.type as NotificationType,
-      customerId: body.customerId,
-      channel: body.channel as NotificationChannel | undefined,
-      subject: body.subject,
-      body: body.body,
-      data: body.data,
-    });
-
-    return NextResponse.json(result, {
-      status: result.success ? 200 : 207, // 207 = partial success
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[API] Notification send error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+  if (!result.success) {
+    return badRequest(result.error ?? 'Failed to send notification');
   }
-}
+
+  return created({ notification: result });
+});

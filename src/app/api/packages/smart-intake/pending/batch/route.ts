@@ -1,111 +1,98 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, validateBody, ok, badRequest, notFound } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake/pending/batch                             */
 /*  Batch approve or reject multiple pending items at once.                   */
 /* -------------------------------------------------------------------------- */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const body = await request.json();
-    const { action, ids, rejectionReason } = body as {
-      action: 'approve' | 'reject';
-      ids: string[];
-      rejectionReason?: string;
-    };
+const BatchActionSchema = z.object({
+  action: z.enum(['approve', 'reject']),
+  ids: z.array(z.string()).min(1, 'No item IDs provided'),
+  rejectionReason: z.string().optional(),
+});
 
-    if (!action || !['approve', 'reject'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid action — must be "approve" or "reject"' }, { status: 400 });
-    }
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: 'No item IDs provided' }, { status: 400 });
-    }
+export const POST = withApiHandler(async (request, { user }) => {
+  const { action, ids, rejectionReason } = await validateBody(request, BatchActionSchema);
 
-    // Fetch all items that are still pending
-    const items = await prisma.smartIntakePending.findMany({
-      where: { id: { in: ids }, status: 'pending' },
-    });
+  // Fetch all items that are still pending
+  const items = await prisma.smartIntakePending.findMany({
+    where: { id: { in: ids }, status: 'pending' },
+  });
 
-    if (items.length === 0) {
-      return NextResponse.json({ error: 'No pending items found for provided IDs' }, { status: 404 });
-    }
+  if (items.length === 0) {
+    notFound('No pending items found for provided IDs');
+  }
 
-    const results: Array<{ id: string; status: string; packageId?: string; warning?: string }> = [];
+  const results: Array<{ id: string; status: string; packageId?: string; warning?: string }> = [];
 
-    if (action === 'approve') {
-      // Process each approval — create Package records
-      for (const item of items) {
-        let customerId: string | null = null;
-        let warning: string | undefined;
+  if (action === 'approve') {
+    // Process each approval — create Package records
+    for (const item of items) {
+      let customerId: string | null = null;
+      let warning: string | undefined;
 
-        if (item.pmbNumber) {
-          const customer = await prisma.customer.findFirst({
-            where: { pmbNumber: item.pmbNumber, status: 'active' },
-          });
-          customerId = customer?.id ?? null;
-        }
+      if (item.pmbNumber) {
+        const customer = await prisma.customer.findFirst({
+          where: { pmbNumber: item.pmbNumber, status: 'active' },
+        });
+        customerId = customer?.id ?? null;
+      }
 
-        let packageId: string | null = null;
-        if (customerId) {
-          const pkg = await prisma.package.create({
-            data: {
-              trackingNumber: item.trackingNumber,
-              carrier: item.carrier,
-              senderName: item.senderName,
-              packageType: item.packageSize || 'medium',
-              status: 'checked_in',
-              customerId,
-              recipientName: item.recipientName,
-              checkedInById: user.id,
-            },
-          });
-          packageId = pkg.id;
-        } else {
-          warning = 'No matching customer found — package not created';
-        }
-
-        await prisma.smartIntakePending.update({
-          where: { id: item.id },
+      let packageId: string | null = null;
+      if (customerId) {
+        const pkg = await prisma.package.create({
           data: {
-            status: 'approved',
-            reviewedById: user.id,
-            reviewedAt: new Date(),
-            checkedInPackageId: packageId,
+            trackingNumber: item.trackingNumber,
+            carrier: item.carrier,
+            senderName: item.senderName,
+            packageType: item.packageSize || 'medium',
+            status: 'checked_in',
+            customerId,
+            recipientName: item.recipientName,
+            checkedInById: user.id,
           },
         });
-
-        results.push({ id: item.id, status: 'approved', packageId: packageId ?? undefined, warning });
+        packageId = pkg.id;
+      } else {
+        warning = 'No matching customer found — package not created';
       }
-    } else {
-      // Batch reject
-      await prisma.smartIntakePending.updateMany({
-        where: { id: { in: items.map((i) => i.id) } },
+
+      await prisma.smartIntakePending.update({
+        where: { id: item.id },
         data: {
-          status: 'rejected',
+          status: 'approved',
           reviewedById: user.id,
           reviewedAt: new Date(),
-          rejectionReason: rejectionReason || null,
+          checkedInPackageId: packageId,
         },
       });
 
-      for (const item of items) {
-        results.push({ id: item.id, status: 'rejected' });
-      }
+      results.push({ id: item.id, status: 'approved', packageId: packageId ?? undefined, warning });
     }
-
-    return NextResponse.json({
-      success: true,
-      action,
-      processed: results.length,
-      skipped: ids.length - items.length,
-      results,
+  } else {
+    // Batch reject
+    await prisma.smartIntakePending.updateMany({
+      where: { id: { in: items.map((i) => i.id) } },
+      data: {
+        status: 'rejected',
+        reviewedById: user.id,
+        reviewedAt: new Date(),
+        rejectionReason: rejectionReason || null,
+      },
     });
-  } catch (err) {
-    console.error('POST /api/packages/smart-intake/pending/batch error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    for (const item of items) {
+      results.push({ id: item.id, status: 'rejected' });
+    }
   }
-}
+
+  return ok({
+    success: true,
+    action,
+    processed: results.length,
+    skipped: ids.length - items.length,
+    results,
+  });
+});

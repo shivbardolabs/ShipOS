@@ -1,180 +1,166 @@
-/**
- * BAR-265: Alert System — List & Create Alerts
- *
- * GET  /api/alerts        → List active alerts for current tenant (sorted by priority)
- * POST /api/alerts        → Create a new alert (system/internal use)
- */
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateQuery, validateBody, ok, created, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
-/* Priority sort order: urgent_important (0) → urgent (1) → important (2) → completed (3) */
-const PRIORITY_ORDER = {
+/**
+ * Priority-based alert sorting and grouping utilities.
+ */
+const PRIORITY_ORDER: Record<string, number> = {
   urgent_important: 0,
-  urgent: 1,
-  important: 2,
-  completed: 3,
-} as const;
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const tenantId = searchParams.get('tenantId');
-    const includeResolved = searchParams.get('includeResolved') === 'true';
-    const limit = Math.min(Number(searchParams.get('limit') || '50'), 250);
-
-    if (!tenantId) {
-      return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    }
-
-    const now = new Date();
-
-    const alerts = await prisma.alert.findMany({
-      where: {
-        tenantId,
-        ...(includeResolved
-          ? {}
-          : { resolvedAt: null }),
-        // Hide snoozed alerts (snoozedUntil is in the future)
-        OR: [
-          { snoozedUntil: null },
-          { snoozedUntil: { lt: now } },
-        ],
-      },
-      orderBy: [
-        { priority: 'asc' },    // enum order matches desired sort
-        { createdAt: 'desc' },
-      ],
-      take: limit,
-    });
-
-    // Re-sort by our explicit priority order (Prisma enum ordering may differ)
-    const sorted = [...alerts].sort((a, b) => {
-      const pa = PRIORITY_ORDER[a.priority] ?? 99;
-      const pb = PRIORITY_ORDER[b.priority] ?? 99;
-      if (pa !== pb) return pa - pb;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    // Group duplicate alert types for the summary panel
-    const grouped = groupAlerts(sorted);
-
-    return NextResponse.json({
-      alerts: sorted,
-      grouped,
-      total: sorted.length,
-    });
-  } catch (error) {
-    console.error('[alerts] GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch alerts' }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      tenantId,
-      type,
-      priority,
-      title,
-      message,
-      actionUrl,
-      relatedEntityType,
-      relatedEntityId,
-      isTimeSensitive = false,
-      expiresAt,
-      metadata,
-    } = body;
-
-    if (!tenantId || !type || !priority || !title || !message) {
-      return NextResponse.json(
-        { error: 'tenantId, type, priority, title, and message are required' },
-        { status: 400 }
-      );
-    }
-
-    // Check for duplicate: same entity + type + priority that isn't resolved
-    const existing = relatedEntityId
-      ? await prisma.alert.findFirst({
-          where: {
-            tenantId,
-            type,
-            relatedEntityType,
-            relatedEntityId,
-            resolvedAt: null,
-          },
-        })
-      : null;
-
-    if (existing) {
-      // Update existing alert instead of creating a duplicate
-      const updated = await prisma.alert.update({
-        where: { id: existing.id },
-        data: { title, message, metadata, isTimeSensitive },
-      });
-      return NextResponse.json({ alert: updated, deduplicated: true });
-    }
-
-    const alert = await prisma.alert.create({
-      data: {
-        tenantId,
-        type,
-        priority,
-        title,
-        message,
-        actionUrl,
-        relatedEntityType,
-        relatedEntityId,
-        isTimeSensitive,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
-        metadata: metadata ?? undefined,
-      },
-    });
-
-    return NextResponse.json({ alert }, { status: 201 });
-  } catch (error) {
-    console.error('[alerts] POST error:', error);
-    return NextResponse.json({ error: 'Failed to create alert' }, { status: 500 });
-  }
-}
-
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
+  not_urgent_important: 1,
+  urgent_not_important: 2,
+  not_urgent_not_important: 3,
+};
 
 interface GroupedAlert {
-  key: string;
-  priority: string;
-  type: string;
   title: string;
-  count: number;
-  alertIds: string[];
-  latestTimestamp: string;
+  description: string;
+  priority: string;
+  sortOrder: number;
+  alerts: Array<{
+    id: string;
+    title: string;
+    description: string;
+    priority: string;
+    status: string;
+    actionType: string | null;
+    actionLabel: string | null;
+    metadata: Prisma.JsonValue;
+    createdAt: Date;
+  }>;
 }
 
-function groupAlerts(alerts: { id: string; priority: string; type: string; title: string; createdAt: Date }[]): GroupedAlert[] {
-  const map = new Map<string, GroupedAlert>();
+function groupAlerts(
+  alerts: Array<{
+    id: string;
+    title: string;
+    description: string;
+    priority: string;
+    status: string;
+    actionType: string | null;
+    actionLabel: string | null;
+    metadata: Prisma.JsonValue;
+    createdAt: Date;
+    groupKey: string | null;
+  }>,
+): GroupedAlert[] {
+  const groups = new Map<string, GroupedAlert>();
 
   for (const alert of alerts) {
-    const key = `${alert.priority}:${alert.type}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.count += 1;
-      existing.alertIds.push(alert.id);
-      if (new Date(alert.createdAt) > new Date(existing.latestTimestamp)) {
-        existing.latestTimestamp = alert.createdAt.toISOString();
-      }
-    } else {
-      map.set(key, {
-        key,
-        priority: alert.priority,
-        type: alert.type,
+    const key = alert.groupKey ?? alert.id;
+    if (!groups.has(key)) {
+      groups.set(key, {
         title: alert.title,
-        count: 1,
-        alertIds: [alert.id],
-        latestTimestamp: alert.createdAt.toISOString(),
+        description: alert.description,
+        priority: alert.priority,
+        sortOrder: PRIORITY_ORDER[alert.priority] ?? 99,
+        alerts: [],
       });
+    }
+    groups.get(key)!.alerts.push({
+      id: alert.id,
+      title: alert.title,
+      description: alert.description,
+      priority: alert.priority,
+      status: alert.status,
+      actionType: alert.actionType,
+      actionLabel: alert.actionLabel,
+      metadata: alert.metadata,
+      createdAt: alert.createdAt,
+    });
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const GetAlertsQuerySchema = z.object({
+  status: z.string().optional(),
+  priority: z.string().optional(),
+  grouped: z.enum(['true', 'false']).optional(),
+});
+
+const CreateAlertBodySchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional().default(''),
+  priority: z.enum(['urgent_important', 'not_urgent_important', 'urgent_not_important', 'not_urgent_not_important']),
+  actionType: z.string().optional(),
+  actionLabel: z.string().optional(),
+  groupKey: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+  dedupeKey: z.string().optional(),
+});
+
+/**
+ * GET /api/alerts
+ * List alerts for the current tenant, with optional filtering and grouping.
+ *
+ * SECURITY FIX: tenantId now derived from authenticated user session
+ * instead of accepting it as a query param.
+ */
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  const query = validateQuery(request, GetAlertsQuerySchema);
+  const tenantId = user.tenantId!;
+
+  const where: Prisma.AlertWhereInput = { tenantId };
+  if (query.status) where.status = query.status;
+  if (query.priority) where.priority = query.priority;
+
+  const alerts = await prisma.alert.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }],
+    take: 200,
+  });
+
+  // Sort by priority
+  const sorted = [...alerts].sort(
+    (a, b) => (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99),
+  );
+
+  if (query.grouped === 'true') {
+    return ok({ alerts: groupAlerts(sorted) });
+  }
+
+  return ok({ alerts: sorted });
+});
+
+/**
+ * POST /api/alerts
+ * Create a new alert with optional deduplication.
+ *
+ * SECURITY FIX: tenantId now derived from authenticated user session.
+ */
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, CreateAlertBodySchema);
+  const tenantId = user.tenantId!;
+
+  // Deduplication: skip if an active alert with the same dedupeKey exists
+  if (body.dedupeKey) {
+    const existing = await prisma.alert.findFirst({
+      where: { tenantId, dedupeKey: body.dedupeKey, status: { not: 'resolved' } },
+    });
+    if (existing) {
+      return ok({ alert: existing, deduplicated: true });
     }
   }
 
-  return Array.from(map.values());
-}
+  const alert = await prisma.alert.create({
+    data: {
+      tenantId,
+      title: body.title,
+      description: body.description,
+      priority: body.priority,
+      actionType: body.actionType ?? null,
+      actionLabel: body.actionLabel ?? null,
+      groupKey: body.groupKey ?? null,
+      metadata: body.metadata ?? {},
+      dedupeKey: body.dedupeKey ?? null,
+      status: 'active',
+    },
+  });
+
+  return created({ alert });
+});

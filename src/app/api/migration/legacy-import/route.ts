@@ -1,165 +1,175 @@
-/**
- * BAR-196: Legacy Data Migration API
- *
- * POST /api/migration/legacy-import
- * Body: { source: string (raw CSV/JSON), preset?: string, config?: MigrationConfig, mode: 'dry_run' | 'execute' }
- *
- * Supports preset mappings (postalmate, mail_manager, generic_packages)
- * or custom field mappings.
- */
-
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { getSession } from '@auth0/nextjs-auth0';
-import { getOrProvisionUser } from '@/lib/auth';
-import {
-  LEGACY_PRESETS,
-  processMigration,
-  parseSourceData,
-  validateRow,
-  type MigrationConfig,
-} from '@/lib/migration/legacy-import';
+import { z } from 'zod';
 
-export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+/* ── Preset configurations ────────────────────────────────────────────────── */
 
-  const user = await getOrProvisionUser();
-  if (!user || !['admin', 'superadmin'].includes(user.role)) {
-    return NextResponse.json({ error: 'Admin required' }, { status: 403 });
+const PRESETS: Record<string, { name: string; description: string; mappings: Record<string, string> }> = {
+  postalmate: {
+    name: 'PostalMate',
+    description: 'Import from PostalMate database exports (.csv)',
+    mappings: {
+      'Box Number': 'pmbNumber',
+      'First Name': 'firstName',
+      'Last Name': 'lastName',
+      'Email Address': 'email',
+      'Home Phone': 'phone',
+      'Company': 'businessName',
+    },
+  },
+  mail_manager: {
+    name: 'Mail Manager',
+    description: 'Import from Mail Manager exports (.csv)',
+    mappings: {
+      'Mailbox': 'pmbNumber',
+      'FName': 'firstName',
+      'LName': 'lastName',
+      'Email': 'email',
+      'Phone1': 'phone',
+      'Business': 'businessName',
+    },
+  },
+  generic_packages: {
+    name: 'Generic Packages',
+    description: 'Import package history from a generic CSV',
+    mappings: {
+      'Tracking': 'trackingNumber',
+      'Carrier': 'carrier',
+      'PMB': 'pmbNumber',
+      'Date': 'checkedInAt',
+      'Status': 'status',
+    },
+  },
+};
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const LegacyImportBodySchema = z.object({
+  preset: z.string().optional(),
+  customMappings: z.record(z.string()).optional(),
+  csvData: z.string().min(1),
+  mode: z.enum(['dry_run', 'execute']).default('dry_run'),
+});
+
+/**
+ * GET /api/migration/legacy-import
+ * Returns available import presets.
+ */
+export const GET = withApiHandler(async (_request, { user }) => {
+  if (user.role !== 'admin' && user.role !== 'superadmin') {
+    return forbidden('Admin role required');
   }
 
-  try {
-    const body = await req.json();
-    const { source, preset, config: customConfig, mode = 'dry_run' } = body;
-
-    if (!source) {
-      return NextResponse.json({ error: 'source data is required' }, { status: 400 });
-    }
-
-    // Resolve config
-    let config: MigrationConfig;
-    if (preset && LEGACY_PRESETS[preset]) {
-      config = LEGACY_PRESETS[preset];
-    } else if (customConfig) {
-      config = customConfig as MigrationConfig;
-    } else {
-      return NextResponse.json({
-        error: 'Either preset or config is required',
-        availablePresets: Object.keys(LEGACY_PRESETS),
-      }, { status: 400 });
-    }
-
-    // Dry run — validate and return stats
-    const result = processMigration(source, config);
-
-    if (mode === 'dry_run') {
-      return NextResponse.json(result);
-    }
-
-    // Execute mode — actually import
-    if (result.validRows === 0) {
-      return NextResponse.json({ ...result, error: 'No valid rows to import' }, { status: 400 });
-    }
-
-    const rows = parseSourceData(source, config.sourceFormat);
-    const importedIds: string[] = [];
-    const tenantId = user.tenantId;
-
-    for (let i = 0; i < rows.length; i++) {
-      const { mapped, errors } = validateRow(rows[i], config, i + 1);
-      if (errors.length > 0) continue;
-
-      try {
-        if (config.targetModel === 'customer') {
-          const customer = await prisma.customer.create({
-            data: {
-              firstName: String(mapped.firstName ?? ''),
-              lastName: String(mapped.lastName ?? ''),
-              email: String(mapped.email ?? ''),
-              phone: mapped.phone ? String(mapped.phone) : undefined,
-              pmbNumber: String(mapped.pmbNumber ?? `IMPORT-${Date.now()}-${i}`),
-              status: String(mapped.status ?? 'active'),
-              form1583Status: String(mapped.form1583Status ?? 'pending'),
-              idType: mapped.idType ? String(mapped.idType) : undefined,
-              homeAddress: mapped.address ? String(mapped.address) : undefined,
-              homeCity: mapped.city ? String(mapped.city) : undefined,
-              homeState: mapped.state ? String(mapped.state) : undefined,
-              homeZip: mapped.zipCode ? String(mapped.zipCode) : undefined,
-              renewalDate: mapped.renewalDate ? new Date(String(mapped.renewalDate)) : undefined,
-              tenantId,
-            },
-          });
-          importedIds.push(customer.id);
-        } else if (config.targetModel === 'package') {
-          // Resolve customer by PMB if provided
-          let customerId: string | undefined;
-          if (mapped.customerPmb) {
-            const cust = await prisma.customer.findFirst({
-              where: { pmbNumber: String(mapped.customerPmb), tenantId },
-            });
-            customerId = cust?.id;
-          }
-
-          if (!customerId) continue; // Package requires a customerId
-
-          const pkg = await prisma.package.create({
-            data: {
-              trackingNumber: String(mapped.trackingNumber ?? ''),
-              carrier: String(mapped.carrier ?? 'Unknown'),
-              status: String(mapped.status ?? 'checked_in'),
-              storageLocation: mapped.storageLocation ? String(mapped.storageLocation) : undefined,
-              notes: mapped.description ? String(mapped.description) : undefined,
-              checkedInAt: mapped.checkedInAt ? new Date(String(mapped.checkedInAt)) : new Date(),
-              customerId,
-            },
-          });
-          importedIds.push(pkg.id);
-        }
-      } catch (err) {
-        console.error(`Row ${i + 1} import error:`, err);
-      }
-    }
-
-    // Log the migration
-    await prisma.auditLog.create({
-      data: {
-        action: 'LEGACY_MIGRATION',
-        entityType: 'migration',
-        entityId: preset ?? 'custom',
-        details: JSON.stringify({
-          description: `Imported ${importedIds.length} ${config.targetModel}(s) from legacy ${preset ?? 'custom'} format`,
-          preset, totalRows: result.totalRows,
-          imported: importedIds.length, skipped: result.skippedRows,
-        }),
-        userId: user.id,
-      },
-    });
-
-    return NextResponse.json({
-      ...result,
-      mode: 'execute',
-      importedIds,
-      importedCount: importedIds.length,
-    });
-  } catch (error) {
-    console.error('Legacy import error:', error);
-    return NextResponse.json({ error: 'Import failed' }, { status: 500 });
-  }
-}
-
-/** GET /api/migration/legacy-import — returns available presets */
-export async function GET() {
-  const session = await getSession();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  return NextResponse.json({
-    presets: Object.entries(LEGACY_PRESETS).map(([key, config]) => ({
+  return ok({
+    presets: Object.entries(PRESETS).map(([key, preset]) => ({
       key,
-      targetModel: config.targetModel,
-      sourceFormat: config.sourceFormat,
-      fieldCount: config.fieldMappings.length,
-      requiredFields: config.fieldMappings.filter(f => f.required).map(f => f.source),
+      ...preset,
     })),
   });
-}
+});
+
+/**
+ * POST /api/migration/legacy-import
+ * Import data using a preset or custom field mappings.
+ */
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  if (user.role !== 'admin' && user.role !== 'superadmin') {
+    return forbidden('Admin role required');
+  }
+  if (!user.tenantId) return badRequest('No tenant');
+
+  const body = await validateBody(request, LegacyImportBodySchema);
+
+  // Determine mappings
+  let mappings: Record<string, string>;
+  if (body.preset && PRESETS[body.preset]) {
+    mappings = PRESETS[body.preset].mappings;
+  } else if (body.customMappings) {
+    mappings = body.customMappings;
+  } else {
+    return badRequest('Either preset or customMappings is required');
+  }
+
+  // Parse CSV using mappings
+  const lines = body.csvData.split('\n').filter((l) => l.trim());
+  if (lines.length < 2) return badRequest('CSV must have a header row and at least one data row');
+
+  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
+  const records = lines.slice(1).map((line) => {
+    const values = line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''));
+    const record: Record<string, string> = {};
+    headers.forEach((header, i) => {
+      const mappedField = mappings[header];
+      if (mappedField) record[mappedField] = values[i] || '';
+    });
+    return record;
+  });
+
+  if (body.mode === 'dry_run') {
+    return ok({
+      mode: 'dry_run',
+      preset: body.preset ?? 'custom',
+      mappingsUsed: mappings,
+      totalRecords: records.length,
+      preview: records.slice(0, 10),
+    });
+  }
+
+  // Execute
+  const migrationRun = await prisma.migrationRun.create({
+    data: {
+      tenantId: user.tenantId,
+      type: 'legacy_import',
+      status: 'running',
+      recordsTotal: records.length,
+      startedBy: user.id,
+      metadata: JSON.stringify({ preset: body.preset, mappings }),
+    },
+  });
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const record of records) {
+    try {
+      if (record.pmbNumber) {
+        await prisma.customer.create({
+          data: {
+            tenantId: user.tenantId,
+            pmbNumber: record.pmbNumber,
+            firstName: record.firstName || 'Unknown',
+            lastName: record.lastName || '',
+            email: record.email || null,
+            phone: record.phone || null,
+            businessName: record.businessName || null,
+            status: 'active',
+            platform: 'migrated',
+          },
+        });
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    } catch {
+      errorCount++;
+    }
+  }
+
+  await prisma.migrationRun.update({
+    where: { id: migrationRun.id },
+    data: {
+      status: errorCount === 0 ? 'completed' : 'completed_with_errors',
+      recordsSuccess: successCount,
+      recordsFailed: errorCount,
+      completedAt: new Date(),
+    },
+  });
+
+  return created({
+    migrationRunId: migrationRun.id,
+    successCount,
+    errorCount,
+    total: records.length,
+  });
+});

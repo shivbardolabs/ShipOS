@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest, ApiError } from '@/lib/api-utils';
 import {
   processExtractionResults,
   generateValidationReport,
@@ -10,6 +11,7 @@ import type {
   ServiceType,
   FieldValidation,
 } from '@/lib/smart-intake';
+import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake                                           */
@@ -165,183 +167,150 @@ const DEMO_BATCH: SmartIntakeResult[] = [
 
 let demoIndex = 0;
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { image, batch } = body as { image: string; batch?: boolean };
+const SmartIntakeSchema = z.object({
+  image: z.string().min(1, 'No image provided'),
+  batch: z.boolean().optional(),
+});
 
-    if (!image) {
-      return NextResponse.json(
-        { success: false, mode: 'ai', results: [], error: 'No image provided' },
-        { status: 400 }
-      );
-    }
+export const POST = withApiHandler(async (request, { user }) => {
+  const { image, batch } = await validateBody(request, SmartIntakeSchema);
 
-    const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
-    /* ── Demo mode when no API key ─────────────────────────────────────── */
-    if (!apiKey) {
-      // Simulate ~1s processing delay for realism
-      await new Promise((r) => setTimeout(r, 1200));
+  /* ── Demo mode when no API key ─────────────────────────────────────── */
+  if (!apiKey) {
+    // Simulate ~1s processing delay for realism
+    await new Promise((r) => setTimeout(r, 1200));
 
-      if (batch) {
-        return NextResponse.json({
-          success: true,
-          mode: 'demo',
-          results: DEMO_BATCH,
-        } satisfies SmartIntakeResponse);
-      }
-
-      const result = DEMO_RESULTS[demoIndex % DEMO_RESULTS.length];
-      demoIndex++;
-      return NextResponse.json({
+    if (batch) {
+      return ok({
         success: true,
         mode: 'demo',
-        results: result,
+        results: DEMO_BATCH,
       } satisfies SmartIntakeResponse);
     }
 
-    /* ── Real AI Vision call ───────────────────────────────────────────── */
-    // Ensure valid image MIME type — only allow image types
-    let base64Data: string;
-    if (image.startsWith('data:')) {
-      // Validate MIME type prefix
-      const mimeMatch = image.match(/^data:(image\/[a-zA-Z+]+);base64,/);
-      if (!mimeMatch) {
-        return NextResponse.json(
-          { success: false, mode: 'ai' as const, results: [], error: 'Invalid image format. Please upload a JPEG or PNG image.' },
-          { status: 400 }
-        );
-      }
-      base64Data = image;
-    } else {
-      // Assume raw base64 is JPEG
-      base64Data = `data:image/jpeg;base64,${image}`;
-    }
-
-    // Validate the base64 payload is not too small (likely empty/black frame)
-    const payload = base64Data.split(',')[1] || '';
-    if (payload.length < 500) {
-      return NextResponse.json(
-        { success: false, mode: 'ai' as const, results: [], error: 'Image appears to be empty or too small. Please capture again.' },
-        { status: 400 }
-      );
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: ENHANCED_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: batch
-                  ? 'Analyze ALL visible shipping labels in this image. Return one object per label detected.'
-                  : 'Analyze the shipping label in this image and extract the package information.',
-              },
-              {
-                type: 'image_url',
-                image_url: { url: base64Data, detail: 'high' },
-              },
-            ],
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.1,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('OpenAI API error:', response.status, errText);
-
-      // Parse OpenAI error for a user-friendly message
-      let detail = `OpenAI returned ${response.status}`;
-      try {
-        const errJson = JSON.parse(errText);
-        detail = errJson?.error?.message ?? detail;
-      } catch {
-        // keep generic detail
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          results: [],
-          error: `Vision API error: ${detail}`,
-        },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    const content: string = data.choices?.[0]?.message?.content ?? '[]';
-
-    // Parse the JSON from the AI response
-    let rawResults: RawVisionResult[];
-    try {
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      rawResults = JSON.parse(cleaned);
-      if (!Array.isArray(rawResults)) rawResults = [rawResults];
-    } catch {
-      console.error('Failed to parse AI response:', content);
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          results: [],
-          error: 'Failed to parse label data',
-        },
-        { status: 422 }
-      );
-    }
-
-    /* ── BAR-331: Post-process through extraction rules ────────────────── */
-    const processed = processExtractionResults(rawResults);
-
-    // Map processed results to the SmartIntakeResult format
-    const results: SmartIntakeResult[] = processed.map((ext: ExtractionResult, i: number) => {
-      const raw = rawResults[i];
-      const report = generateValidationReport(raw, ext);
-
-      return {
-        carrier: ext.carrier,
-        trackingNumber: ext.trackingNumber,
-        senderName: ext.senderName,
-        senderAddress: ext.senderAddress,
-        recipientName: ext.recipientName,
-        pmbNumber: ext.pmbNumber,
-        packageSize: ext.packageSize,
-        confidence: ext.confidence,
-
-        // BAR-331 enrichment fields
-        trackingNumberValid: ext.trackingNumberValid,
-        carrierConfidence: ext.carrierConfidence,
-        recipientIsBusiness: ext.recipientIsBusiness,
-        serviceType: ext.serviceType,
-        validationReport: report,
-      };
-    });
-
-    return NextResponse.json({
+    const result = DEMO_RESULTS[demoIndex % DEMO_RESULTS.length];
+    demoIndex++;
+    return ok({
       success: true,
-      mode: 'ai',
-      results,
+      mode: 'demo',
+      results: result,
     } satisfies SmartIntakeResponse);
-  } catch (err) {
-    console.error('Smart intake error:', err);
-    return NextResponse.json(
-      { success: false, mode: 'ai' as const, results: [], error: 'Internal server error' },
-      { status: 500 }
-    );
   }
-}
+
+  /* ── Real AI Vision call ───────────────────────────────────────────── */
+  // Ensure valid image MIME type — only allow image types
+  let base64Data: string;
+  if (image.startsWith('data:')) {
+    // Validate MIME type prefix
+    const mimeMatch = image.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+    if (!mimeMatch) {
+      badRequest('Invalid image format. Please upload a JPEG or PNG image.');
+    }
+    base64Data = image;
+  } else {
+    // Assume raw base64 is JPEG
+    base64Data = `data:image/jpeg;base64,${image}`;
+  }
+
+  // Validate the base64 payload is not too small (likely empty/black frame)
+  const payload = base64Data.split(',')[1] || '';
+  if (payload.length < 500) {
+    badRequest('Image appears to be empty or too small. Please capture again.');
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: ENHANCED_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: batch
+                ? 'Analyze ALL visible shipping labels in this image. Return one object per label detected.'
+                : 'Analyze the shipping label in this image and extract the package information.',
+            },
+            {
+              type: 'image_url',
+              image_url: { url: base64Data, detail: 'high' },
+            },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error('OpenAI API error:', response.status, errText);
+
+    // Parse OpenAI error for a user-friendly message
+    let detail = `OpenAI returned ${response.status}`;
+    try {
+      const errJson = JSON.parse(errText);
+      detail = errJson?.error?.message ?? detail;
+    } catch {
+      // keep generic detail
+    }
+
+    throw new ApiError(`Vision API error: ${detail}`, 502);
+  }
+
+  const data = await response.json();
+  const content: string = data.choices?.[0]?.message?.content ?? '[]';
+
+  // Parse the JSON from the AI response
+  let rawResults: RawVisionResult[];
+  try {
+    const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    rawResults = JSON.parse(cleaned);
+    if (!Array.isArray(rawResults)) rawResults = [rawResults];
+  } catch {
+    console.error('Failed to parse AI response:', content);
+    throw new ApiError('Failed to parse label data', 422);
+  }
+
+  /* ── BAR-331: Post-process through extraction rules ────────────────── */
+  const processed = processExtractionResults(rawResults);
+
+  // Map processed results to the SmartIntakeResult format
+  const results: SmartIntakeResult[] = processed.map((ext: ExtractionResult, i: number) => {
+    const raw = rawResults[i];
+    const report = generateValidationReport(raw, ext);
+
+    return {
+      carrier: ext.carrier,
+      trackingNumber: ext.trackingNumber,
+      senderName: ext.senderName,
+      senderAddress: ext.senderAddress,
+      recipientName: ext.recipientName,
+      pmbNumber: ext.pmbNumber,
+      packageSize: ext.packageSize,
+      confidence: ext.confidence,
+
+      // BAR-331 enrichment fields
+      trackingNumberValid: ext.trackingNumberValid,
+      carrierConfidence: ext.carrierConfidence,
+      recipientIsBusiness: ext.recipientIsBusiness,
+      serviceType: ext.serviceType,
+      validationReport: report,
+    };
+  });
+
+  return ok({
+    success: true,
+    mode: 'ai',
+    results,
+  } satisfies SmartIntakeResponse);
+});

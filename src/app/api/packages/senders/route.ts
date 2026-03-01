@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, validateQuery, ok } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
 
 /**
  * GET /api/packages/senders?q=xxx&limit=8
@@ -9,41 +9,33 @@ import prisma from '@/lib/prisma';
  * for the current tenant. Used for sender name autocomplete in
  * Package Check-In Step 2 (BAR-239).
  */
-export async function GET(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(req.url);
-    const query = searchParams.get('q')?.trim() || '';
-    const limit = Math.min(parseInt(searchParams.get('limit') || '8', 10), 20);
+const QuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(8),
+});
 
-    // Get distinct sender names from packages in this tenant's stores
-    const senders = await prisma.package.findMany({
-      where: {
-        senderName: query
-          ? { contains: query, mode: 'insensitive', not: null }
-          : { not: null },
-        customer: { tenantId: user.tenantId },
-      },
-      select: { senderName: true },
-      distinct: ['senderName'],
-      orderBy: { checkedInAt: 'desc' },
-      take: limit,
-    });
+export const GET = withApiHandler(async (request, { user }) => {
+  const { q, limit } = validateQuery(request, QuerySchema);
+  const query = q?.trim() || '';
 
-    return NextResponse.json({
-      senders: senders
-        .map((s) => s.senderName)
-        .filter((name): name is string => !!name),
-    });
-  } catch (err) {
-    console.error('[GET /api/packages/senders]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch sender history' },
-      { status: 500 },
-    );
-  }
-}
+  // Get distinct sender names from packages in this tenant's stores
+  const senders = await prisma.package.findMany({
+    where: {
+      senderName: query
+        ? { contains: query, mode: 'insensitive', not: null }
+        : { not: null },
+      customer: { tenantId: user.tenantId! },
+    },
+    select: { senderName: true },
+    distinct: ['senderName'],
+    orderBy: { checkedInAt: 'desc' },
+    take: limit,
+  });
+
+  return ok({
+    senders: senders
+      .map((s) => s.senderName)
+      .filter((name): name is string => !!name),
+  });
+});

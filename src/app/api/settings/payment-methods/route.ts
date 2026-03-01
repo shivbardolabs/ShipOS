@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest, forbidden } from '@/lib/api-utils';
+import { z } from 'zod';
 import prisma from '@/lib/prisma';
 
 /* -------------------------------------------------------------------------- */
 /*  Payment Methods Configuration                                             */
 /*  BAR-247: Payment Methods Configuration                                    */
 /*                                                                            */
-/*  GET  — Retrieve current payment method settings for a tenant              */
+/*  GET  — Retrieve current payment method settings for the tenant            */
 /*  POST — Update enabled payment methods                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -47,123 +48,99 @@ function parsePaymentMethods(json: string | null): PaymentMethodsConfig {
   }
 }
 
+/* ── Schemas ───────────────────────────────────────────────────────────────── */
+
+const PaymentMethodsSchema = z.object({
+  manualCard: z.boolean().optional(),
+  text2pay: z.boolean().optional(),
+  tapToGlass: z.boolean().optional(),
+  nfcReader: z.boolean().optional(),
+  cash: z.boolean().optional(),
+  postToAccount: z.boolean().optional(),
+  terminalDeviceId: z.string().optional(),
+  processorName: z.string().optional(),
+});
+
+const UpdatePaymentMethodsSchema = z.object({
+  paymentMethods: PaymentMethodsSchema,
+});
+
 /* -------------------------------------------------------------------------- */
-/*  GET /api/settings/payment-methods?tenantId=...                            */
+/*  GET /api/settings/payment-methods                                         */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const tenantId = searchParams.get('tenantId');
+export const GET = withApiHandler(async (request, { user }) => {
+  if (!user.tenantId) badRequest('No tenant found');
 
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: 'tenantId is required' },
-        { status: 400 },
-      );
-    }
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: user.tenantId! },
+    select: { paymentMethods: true },
+  });
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { paymentMethods: true },
-    });
+  if (!tenant) badRequest('Tenant not found');
 
-    if (!tenant) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 },
-      );
-    }
+  const config = parsePaymentMethods(tenant!.paymentMethods);
 
-    const config = parsePaymentMethods(tenant.paymentMethods);
-
-    return NextResponse.json({ paymentMethods: config });
-  } catch (error) {
-    console.error('[settings/payment-methods] GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to load payment methods' },
-      { status: 500 },
-    );
-  }
-}
+  return ok({ paymentMethods: config });
+});
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/settings/payment-methods                                        */
-/*  Body: { tenantId, paymentMethods: PaymentMethodsConfig }                  */
+/*  Body: { paymentMethods: PaymentMethodsConfig }                            */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { tenantId, paymentMethods } = body;
+export const POST = withApiHandler(async (request, { user }) => {
+  if (!user.tenantId) badRequest('No tenant found');
 
-    if (!tenantId || !paymentMethods) {
-      return NextResponse.json(
-        { error: 'tenantId and paymentMethods are required' },
-        { status: 400 },
-      );
-    }
+  const { paymentMethods } = await validateBody(request, UpdatePaymentMethodsSchema);
 
-    // Validate structure
-    const config: PaymentMethodsConfig = {
-      manualCard: !!paymentMethods.manualCard,
-      text2pay: !!paymentMethods.text2pay,
-      tapToGlass: !!paymentMethods.tapToGlass,
-      nfcReader: !!paymentMethods.nfcReader,
-      cash: !!paymentMethods.cash,
-      postToAccount: !!paymentMethods.postToAccount,
-      terminalDeviceId: paymentMethods.terminalDeviceId || undefined,
-      processorName: paymentMethods.processorName || undefined,
-    };
+  // Validate structure
+  const config: PaymentMethodsConfig = {
+    manualCard: !!paymentMethods.manualCard,
+    text2pay: !!paymentMethods.text2pay,
+    tapToGlass: !!paymentMethods.tapToGlass,
+    nfcReader: !!paymentMethods.nfcReader,
+    cash: !!paymentMethods.cash,
+    postToAccount: !!paymentMethods.postToAccount,
+    terminalDeviceId: paymentMethods.terminalDeviceId || undefined,
+    processorName: paymentMethods.processorName || undefined,
+  };
 
-    // Ensure at least one method is enabled
-    const anyEnabled =
-      config.manualCard ||
-      config.text2pay ||
-      config.tapToGlass ||
-      config.nfcReader ||
-      config.cash ||
-      config.postToAccount;
+  // Ensure at least one method is enabled
+  const anyEnabled =
+    config.manualCard ||
+    config.text2pay ||
+    config.tapToGlass ||
+    config.nfcReader ||
+    config.cash ||
+    config.postToAccount;
 
-    if (!anyEnabled) {
-      return NextResponse.json(
-        { error: 'At least one payment method must be enabled' },
-        { status: 400 },
-      );
-    }
-
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: { paymentMethods: JSON.stringify(config) },
-    });
-
-    // Audit log
-    try {
-      const systemUser = await prisma.user.findFirst({ where: { role: 'admin' } });
-      if (systemUser) {
-        await prisma.auditLog.create({
-          data: {
-            action: 'settings.payment_methods_updated',
-            entityType: 'tenant',
-            entityId: tenantId,
-            userId: systemUser.id,
-            details: JSON.stringify({ paymentMethods: config }),
-          },
-        });
-      }
-    } catch {
-      console.error('[settings/payment-methods] Audit log failed');
-    }
-
-    return NextResponse.json({
-      success: true,
-      paymentMethods: config,
-    });
-  } catch (error) {
-    console.error('[settings/payment-methods] POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update payment methods' },
-      { status: 500 },
-    );
+  if (!anyEnabled) {
+    badRequest('At least one payment method must be enabled');
   }
-}
+
+  await prisma.tenant.update({
+    where: { id: user.tenantId! },
+    data: { paymentMethods: JSON.stringify(config) },
+  });
+
+  // Audit log
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action: 'settings.payment_methods_updated',
+        entityType: 'tenant',
+        entityId: user.tenantId!,
+        userId: user.id,
+        details: JSON.stringify({ paymentMethods: config }),
+      },
+    });
+  } catch {
+    console.error('[settings/payment-methods] Audit log failed');
+  }
+
+  return ok({
+    success: true,
+    paymentMethods: config,
+  });
+});
