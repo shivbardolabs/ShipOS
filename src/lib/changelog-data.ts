@@ -21,6 +21,59 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.26.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.26.0',
+    date: '2026-03-01',
+    title: 'Barcode Scanning, Mail Intake, Notification Engine, User Status Management, Firebird Migration Parser',
+    summary:
+      'This release completes 9 backlog items across two batches — finishing the 3 in-progress issues (check-in wizard, customer lookup, RTS workflow) and implementing 6 new features: barcode scanning in check-in, mail scan & assignment, notification infrastructure with retry and rate limiting, user status management with soft delete, package storage location on labels, and a real Firebird backup parser for PostalMate migration.',
+    highlights: ['Barcode Scanning', 'Mail Intake', 'Notification Engine', 'User Status', 'Firebird Parser'],
+    changes: [
+      {
+        text: 'BAR-11 — Barcode scanning in package check-in: camera scanner + USB keyboard wedge detection + auto carrier detection',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-14 — Mail scan & assignment: POST /api/mail with camera/upload for front + back envelope, PMB customer lookup, auto mail_received notifications',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-23 — Notification infrastructure: rate limiter (3/hr, 10/day per customer), retry with exponential backoff, NotificationTemplate CRUD with 5 defaults',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-115 — PostalMate Firebird backup parser: binary .7z/.fbk parser with table detection, Windows-1252→UTF-8 encoding, confidence scoring',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-183 — User status management & soft delete: admin API with status filter, auth blocks inactive/suspended users, Settings UI with audit toggle',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-194 — Package storage location on 4×6 labels (24pt bold), location filter on packages page, location badge on check-out cards',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-9 — Package check-in wizard gaps: cancel flow with draft save, photo capture, multi-package batch, keyboard nav, offline handling, error retry',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-38 — Customer lookup: smart result ranking (exact PMB → starts-with → name → phone → fuzzy), inactive customers with status badges',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-321 — RTS workflow: auto-RTS on PMB closure/expiry with deduplication and audit trail',
+        type: 'improvement',
+      },
+      {
+        text: 'Notification dashboard: customer search filter, "Failed" quick filter, inline retry buttons on failed notifications',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.25.0                                                    */
   /* ------------------------------------------------------------------ */
   {
