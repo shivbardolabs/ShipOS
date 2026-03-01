@@ -1,143 +1,89 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateBody, ok, forbidden, badRequest, notFound } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { hasPermission, type UserRole } from '@/lib/permissions';
-import { withApiHandler } from '@/lib/api-utils';
+import { z } from 'zod';
 
 /**
  * GET /api/users
  * Lists all active (non-deleted) users in the current tenant.
  * Includes status field for user lifecycle management.
- *
- * Query params:
- *   includeDeleted — if "true", includes soft-deleted users for audit view
- *   status         — filter by status: active | inactive | suspended
  */
-export const GET = withApiHandler(async (request, { user }) => {
-  try {
-    if (!user.tenantId) return NextResponse.json([], { status: 200 });
+export const GET = withApiHandler(async (_request, { user }) => {
+  if (!user.tenantId) return ok([]);
 
-    const { searchParams } = new URL(request.url);
-    const includeDeleted = searchParams.get('includeDeleted') === 'true';
-    const statusFilter = searchParams.get('status');
+  const users = await prisma.user.findMany({
+    where: {
+      tenantId: user.tenantId,
+      deletedAt: null, // Filter out soft-deleted users
+    },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      avatar: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { tenantId: user.tenantId };
-
-    // By default filter out soft-deleted users unless includeDeleted=true
-    if (!includeDeleted) {
-      where.deletedAt = null;
-    }
-
-    // Optional status filter
-    if (statusFilter && ['active', 'inactive', 'suspended'].includes(statusFilter)) {
-      where.status = statusFilter;
-    }
-
-    const users = await prisma.user.findMany({
-      where,
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        avatar: true,
-        deletedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return NextResponse.json(users);
-  } catch (err) {
-    console.error('[GET /api/users]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
-  }
+  return ok(users);
 });
 
 /**
  * PUT /api/users  (body: { userId, role?, status? })
  * Updates a user's role and/or status. Admin only.
  */
+
+const UpdateUserSchema = z.object({
+  userId: z.string().min(1, 'userId is required'),
+  role: z.enum(['admin', 'manager', 'employee']).optional(),
+  status: z.enum(['active', 'inactive', 'suspended']).optional(),
+});
+
 export const PUT = withApiHandler(async (request, { user }) => {
-  try {
-    // RBAC permission check — manage_users required for role/status changes
-    if (!hasPermission(user.role as UserRole, 'manage_users')) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    const { userId, role, status, action } = await request.json();
-
-    // Ensure target user belongs to same tenant
-    const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.tenantId !== user.tenantId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Handle restore action — clears deletedAt and reactivates user
-    if (action === 'restore') {
-      if (!target.deletedAt) {
-        return NextResponse.json({ error: 'User is not deleted' }, { status: 400 });
-      }
-      const restored = await prisma.user.update({
-        where: { id: userId },
-        data: { deletedAt: null, status: 'active' },
-        select: {
-          id: true, name: true, email: true, role: true, status: true,
-          avatar: true, deletedAt: true, createdAt: true, updatedAt: true,
-        },
-      });
-      return NextResponse.json(restored);
-    }
-
-    // For non-restore operations, skip deleted users
-    if (target.deletedAt !== null) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Validate role if provided
-    if (role && !['admin', 'manager', 'employee'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-    }
-
-    // Validate status if provided
-    if (status && !['active', 'inactive', 'suspended'].includes(status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-    }
-
-    // Prevent self-deactivation
-    if (userId === user.id && status && status !== 'active') {
-      return NextResponse.json({ error: 'Cannot deactivate yourself' }, { status: 400 });
-    }
-
-    // Build update data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {};
-    if (role) updateData.role = role;
-    if (status) updateData.status = status;
-
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-        avatar: true,
-        deletedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return NextResponse.json(updated);
-  } catch (err) {
-    console.error('[PUT /api/users]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  // RBAC permission check — manage_users required for role/status changes
+  if (!hasPermission(user.role as UserRole, 'manage_users')) {
+    forbidden('Insufficient permissions');
   }
+
+  const { userId, role, status } = await validateBody(request, UpdateUserSchema);
+
+  // Ensure target user belongs to same tenant and is not deleted
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target || target.tenantId !== user.tenantId || target.deletedAt !== null) {
+    notFound('User not found');
+  }
+
+  // Prevent self-deactivation
+  if (userId === user.id && status && status !== 'active') {
+    badRequest('Cannot deactivate yourself');
+  }
+
+  // Build update data
+  const updateData: Prisma.UserUpdateInput = {};
+  if (role) updateData.role = role;
+  if (status) updateData.status = status;
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      avatar: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return ok(updated);
 });
 
 /**
@@ -145,38 +91,38 @@ export const PUT = withApiHandler(async (request, { user }) => {
  * Soft-deletes a user (sets deletedAt). Admin only.
  * User is filtered from all queries but data is preserved.
  */
+
+const DeleteUserSchema = z.object({
+  userId: z.string().min(1, 'userId is required'),
+});
+
 export const DELETE = withApiHandler(async (request, { user }) => {
-  try {
-    // RBAC permission check — deactivate_users required for soft delete
-    if (!hasPermission(user.role as UserRole, 'deactivate_users')) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    const { userId } = await request.json();
-
-    // Cannot soft-delete yourself
-    if (userId === user.id) {
-      return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
-    }
-
-    // Ensure target user belongs to same tenant
-    const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.tenantId !== user.tenantId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Soft delete — set deletedAt and mark as inactive
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        deletedAt: new Date(),
-        status: 'inactive',
-      },
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[DELETE /api/users]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  // RBAC permission check — deactivate_users required for soft delete
+  if (!hasPermission(user.role as UserRole, 'deactivate_users')) {
+    forbidden('Insufficient permissions');
   }
+
+  const { userId } = await validateBody(request, DeleteUserSchema);
+
+  // Cannot soft-delete yourself
+  if (userId === user.id) {
+    badRequest('Cannot delete yourself');
+  }
+
+  // Ensure target user belongs to same tenant
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target || target.tenantId !== user.tenantId) {
+    notFound('User not found');
+  }
+
+  // Soft delete — set deletedAt and mark as inactive
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      deletedAt: new Date(),
+      status: 'inactive',
+    },
+  });
+
+  return ok({ ok: true });
 });

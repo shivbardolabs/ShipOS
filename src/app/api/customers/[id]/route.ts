@@ -1,178 +1,90 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, ok, notFound, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { autoRtsForCustomer } from '@/lib/rts-service';
-import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/customers/[id]
  * Fetch a single customer with all related data.
  */
-export const GET = withApiHandler(async (request, { user, params }) => {
-  try {
+export const GET = withApiHandler(async (_request, { user, params }) => {
+  const id = params?.id;
+  if (!id) badRequest('Missing customer id');
 
-    const { id } = await params;
+  const tenantScope = user.role !== 'superadmin' && user.tenantId
+    ? { tenantId: user.tenantId }
+    : {};
 
-    const tenantScope = user.role !== 'superadmin' && user.tenantId
-      ? { tenantId: user.tenantId }
-      : {};
+  const customer = await prisma.customer.findFirst({
+    where: { id, deletedAt: null, ...tenantScope },
+    include: {
+      packages: { orderBy: { checkedInAt: 'desc' }, take: 50 },
+      mailPieces: { orderBy: { receivedAt: 'desc' }, take: 50 },
+      shipments: { orderBy: { createdAt: 'desc' }, take: 20 },
+      notifications: { orderBy: { createdAt: 'desc' }, take: 20 },
+      loyaltyAccount: { include: { currentTier: true } },
+    },
+  });
 
-    const customer = await prisma.customer.findFirst({
-      where: { id, deletedAt: null, ...tenantScope },
-      include: {
-        packages: { orderBy: { checkedInAt: 'desc' }, take: 50 },
-        mailPieces: { orderBy: { receivedAt: 'desc' }, take: 50 },
-        shipments: { orderBy: { createdAt: 'desc' }, take: 20 },
-        notifications: { orderBy: { createdAt: 'desc' }, take: 20 },
-        loyaltyAccount: { include: { currentTier: true } },
-      },
-    });
+  if (!customer) notFound('Customer not found');
 
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
+  const serialized = {
+    ...customer,
+    dateOpened: customer.dateOpened?.toISOString() ?? null,
+    dateClosed: customer.dateClosed?.toISOString() ?? null,
+    renewalDate: customer.renewalDate?.toISOString() ?? null,
+    idExpiration: customer.idExpiration?.toISOString() ?? null,
+    passportExpiration: customer.passportExpiration?.toISOString() ?? null,
+    form1583Date: customer.form1583Date?.toISOString() ?? null,
+    lastRenewalNotice: customer.lastRenewalNotice?.toISOString() ?? null,
+    agreementSignedAt: customer.agreementSignedAt?.toISOString() ?? null,
+    smsConsentAt: customer.smsConsentAt?.toISOString() ?? null,
+    smsOptOutAt: customer.smsOptOutAt?.toISOString() ?? null,
+    crdUploadDate: customer.crdUploadDate?.toISOString() ?? null,
+    proofOfAddressDateOfIssue: customer.proofOfAddressDateOfIssue?.toISOString() ?? null,
+    createdAt: customer.createdAt.toISOString(),
+    updatedAt: customer.updatedAt.toISOString(),
+    deletedAt: null,
+    // Serialize nested packages
+    packages: customer.packages.map((p) => ({
+      ...p,
+      checkedInAt: p.checkedInAt?.toISOString() ?? null,
+      notifiedAt: p.notifiedAt?.toISOString() ?? null,
+      releasedAt: p.releasedAt?.toISOString() ?? null,
+      holdDeadline: p.holdDeadline?.toISOString() ?? null,
+      carrierUploadedAt: p.carrierUploadedAt?.toISOString() ?? null,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    })),
+    // Serialize nested mail pieces
+    mailPieces: customer.mailPieces.map((m) => ({
+      ...m,
+      receivedAt: m.receivedAt?.toISOString() ?? null,
+      actionAt: m.actionAt?.toISOString() ?? null,
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
+    })),
+    // Serialize nested shipments
+    shipments: customer.shipments.map((s) => ({
+      ...s,
+      shippedAt: s.shippedAt?.toISOString() ?? null,
+      deliveredAt: s.deliveredAt?.toISOString() ?? null,
+      createdAt: s.createdAt.toISOString(),
+      updatedAt: s.updatedAt.toISOString(),
+    })),
+    // Serialize nested notifications
+    notifications: customer.notifications.map((n) => ({
+      ...n,
+      sentAt: n.sentAt?.toISOString() ?? null,
+      deliveredAt: n.deliveredAt?.toISOString() ?? null,
+      createdAt: n.createdAt.toISOString(),
+    })),
+    // Loyalty account (if exists)
+    loyaltyAccount: customer.loyaltyAccount ? {
+      ...customer.loyaltyAccount,
+      createdAt: customer.loyaltyAccount.createdAt?.toISOString() ?? null,
+      updatedAt: customer.loyaltyAccount.updatedAt?.toISOString() ?? null,
+      currentTier: customer.loyaltyAccount.currentTier ?? null,
+    } : null,
+  };
 
-    // Serialize all dates on customer
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = customer as any;
-    const serialized = {
-      ...c,
-      dateOpened: c.dateOpened?.toISOString() ?? null,
-      dateClosed: c.dateClosed?.toISOString() ?? null,
-      renewalDate: c.renewalDate?.toISOString() ?? null,
-      idExpiration: c.idExpiration?.toISOString() ?? null,
-      passportExpiration: c.passportExpiration?.toISOString() ?? null,
-      form1583Date: c.form1583Date?.toISOString() ?? null,
-      lastRenewalNotice: c.lastRenewalNotice?.toISOString() ?? null,
-      agreementSignedAt: c.agreementSignedAt?.toISOString() ?? null,
-      smsConsentAt: c.smsConsentAt?.toISOString() ?? null,
-      smsOptOutAt: c.smsOptOutAt?.toISOString() ?? null,
-      crdUploadDate: c.crdUploadDate?.toISOString() ?? null,
-      proofOfAddressDateOfIssue: c.proofOfAddressDateOfIssue?.toISOString() ?? null,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-      deletedAt: null,
-      // Serialize nested packages
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      packages: c.packages.map((p: any) => ({
-        ...p,
-        checkedInAt: p.checkedInAt?.toISOString() ?? null,
-        notifiedAt: p.notifiedAt?.toISOString() ?? null,
-        releasedAt: p.releasedAt?.toISOString() ?? null,
-        holdDeadline: p.holdDeadline?.toISOString() ?? null,
-        carrierUploadedAt: p.carrierUploadedAt?.toISOString() ?? null,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-      })),
-      // Serialize nested mail pieces
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mailPieces: c.mailPieces.map((m: any) => ({
-        ...m,
-        receivedAt: m.receivedAt?.toISOString() ?? null,
-        actionAt: m.actionAt?.toISOString() ?? null,
-        createdAt: m.createdAt.toISOString(),
-        updatedAt: m.updatedAt.toISOString(),
-      })),
-      // Serialize nested shipments
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      shipments: c.shipments.map((s: any) => ({
-        ...s,
-        shippedAt: s.shippedAt?.toISOString() ?? null,
-        deliveredAt: s.deliveredAt?.toISOString() ?? null,
-        createdAt: s.createdAt.toISOString(),
-        updatedAt: s.updatedAt.toISOString(),
-      })),
-      // Serialize nested notifications
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      notifications: c.notifications.map((n: any) => ({
-        ...n,
-        sentAt: n.sentAt?.toISOString() ?? null,
-        deliveredAt: n.deliveredAt?.toISOString() ?? null,
-        createdAt: n.createdAt.toISOString(),
-      })),
-      // Loyalty account (if exists)
-      loyaltyAccount: c.loyaltyAccount ? {
-        ...c.loyaltyAccount,
-        createdAt: c.loyaltyAccount.createdAt?.toISOString() ?? null,
-        updatedAt: c.loyaltyAccount.updatedAt?.toISOString() ?? null,
-        currentTier: c.loyaltyAccount.currentTier ?? null,
-      } : null,
-    };
-
-    return NextResponse.json(serialized);
-  } catch (err) {
-    console.error('[GET /api/customers/[id]]', err);
-    return NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 });
-  }
-});
-
-/**
- * PATCH /api/customers/[id]
- * Update a customer. If status changes to 'closed' or 'expired',
- * auto-trigger RTS for all their active packages (BAR-321).
- */
-export const PATCH = withApiHandler(async (request, { user, params }) => {
-  try {
-
-    const { id } = await params;
-    const body = await request.json();
-
-    // BAR-393: Strip pmbNumber — it must not be changed via profile edit
-    delete body.pmbNumber;
-
-    const tenantScope = user.role !== 'superadmin' && user.tenantId
-      ? { tenantId: user.tenantId }
-      : {};
-
-    // Fetch current customer to detect status transitions
-    const existing = await prisma.customer.findFirst({
-      where: { id, deletedAt: null, ...tenantScope },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
-
-    // Apply the update
-    const updated = await prisma.customer.update({
-      where: { id },
-      data: {
-        ...body,
-        // Auto-set dateClosed when status moves to 'closed'
-        ...(body.status === 'closed' && !existing.dateClosed
-          ? { dateClosed: new Date() }
-          : {}),
-      },
-    });
-
-    // BAR-321: Auto-RTS when PMB status transitions to closed or expired
-    let rtsResult: { created: number } | null = null;
-    const newStatus = body.status as string | undefined;
-    const statusChanged = newStatus && newStatus !== existing.status;
-    const tenantId = existing.tenantId || user.tenantId;
-
-    if (statusChanged && (newStatus === 'closed' || newStatus === 'expired') && tenantId) {
-      const reason = newStatus === 'closed' ? 'closed_pmb' : 'expired_pmb';
-      rtsResult = await autoRtsForCustomer({
-        customerId: id,
-        tenantId,
-        reason,
-        initiatedById: user.id,
-      });
-    }
-
-    return NextResponse.json({
-      ...updated,
-      createdAt: updated.createdAt.toISOString(),
-      updatedAt: updated.updatedAt.toISOString(),
-      dateOpened: updated.dateOpened?.toISOString() ?? null,
-      dateClosed: updated.dateClosed?.toISOString() ?? null,
-      renewalDate: updated.renewalDate?.toISOString() ?? null,
-      ...(rtsResult && rtsResult.created > 0
-        ? { _rts: { autoCreated: rtsResult.created } }
-        : {}),
-    });
-  } catch (err) {
-    console.error('[PATCH /api/customers/[id]]', err);
-    return NextResponse.json({ error: 'Failed to update customer' }, { status: 500 });
-  }
+  return ok(serialized);
 });
