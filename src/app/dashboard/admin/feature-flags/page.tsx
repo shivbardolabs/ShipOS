@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTenant } from '@/components/tenant-provider';
+import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/input';
@@ -83,6 +84,7 @@ const categoryIcons: Record<string, React.ElementType> = {
 /* -------------------------------------------------------------------------- */
 export default function FeatureFlagsPage() {
   const { localUser } = useTenant();
+  const { toast } = useToast();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [tenants, setTenants] = useState<TenantInfo[]>([]);
   const [users, setUsers] = useState<UserInfo[]>([]);
@@ -117,13 +119,18 @@ export default function FeatureFlagsPage() {
         setFlags(data.flags);
         setTenants(data.tenants);
         setUsers(data.users);
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to load feature flags:', res.status, data);
+        toast(data.error || `Failed to load flags (${res.status})`, 'error');
       }
     } catch (e) {
       console.error('Failed to fetch feature flags', e);
+      toast('Failed to load feature flags — check your connection', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchData();
@@ -190,9 +197,17 @@ export default function FeatureFlagsPage() {
             f.id === flag.id ? { ...f, defaultEnabled: !f.defaultEnabled } : f,
           ),
         );
+        toast(`${flag.name} ${!flag.defaultEnabled ? 'enabled' : 'disabled'}`, 'success');
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Toggle failed:', res.status, data);
+        toast(data.error || `Failed to update flag (${res.status})`, 'error');
+        // Re-fetch to ensure client state matches server
+        fetchData();
       }
     } catch (e) {
       console.error('Failed to toggle default', e);
+      toast('Network error — please check your connection', 'error');
     } finally {
       setSaving(null);
     }
@@ -215,9 +230,14 @@ export default function FeatureFlagsPage() {
               : f,
           ),
         );
+        toast('Override removed', 'success');
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        toast(data.error || `Failed to remove override (${res.status})`, 'error');
       }
     } catch (e) {
       console.error('Failed to delete override', e);
+      toast('Network error — please check your connection', 'error');
     } finally {
       setSaving(null);
     }
@@ -267,8 +287,8 @@ export default function FeatureFlagsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* ── Header ── */}
-      <div>
-        <div className="flex items-center gap-3 mb-1">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15"
           >
@@ -281,6 +301,14 @@ export default function FeatureFlagsPage() {
             </p>
           </div>
         </div>
+        <button
+          onClick={() => { setLoading(true); fetchData(); }}
+          className="flex items-center gap-1.5 text-xs text-surface-400 hover:text-surface-200 transition-colors px-3 py-1.5 rounded-lg border border-surface-700 hover:border-surface-600"
+          title="Refresh flags"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </button>
       </div>
 
       {/* ── Stats ── */}
