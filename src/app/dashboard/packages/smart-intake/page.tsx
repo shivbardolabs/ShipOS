@@ -172,17 +172,9 @@ export default function SmartIntakePage() {
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Wait for the video to actually have data before showing ready state
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().then(() => {
-            setCameraReady(true);
-          }).catch(() => {
-            setCameraError('Could not start video playback.');
-          });
-        };
-      }
+
+      // IMPORTANT: Set cameraActive FIRST so the <video> element renders in the DOM.
+      // The useEffect below will attach the stream once videoRef becomes available.
       setCameraActive(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -195,6 +187,37 @@ export default function SmartIntakePage() {
       }
     }
   }, []);
+
+  // Attach stream to <video> element AFTER it renders in the DOM.
+  // This avoids the race condition where videoRef.current is null because
+  // the <video> element only mounts when cameraActive is true.
+  useEffect(() => {
+    if (!cameraActive || !streamRef.current) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Attach stream
+    video.srcObject = streamRef.current;
+
+    const handleMetadata = () => {
+      video.play().then(() => {
+        setCameraReady(true);
+      }).catch(() => {
+        setCameraError('Could not start video playback.');
+      });
+    };
+
+    // Fast-path: metadata already loaded (some devices)
+    if (video.readyState >= 1) {
+      handleMetadata();
+    } else {
+      video.onloadedmetadata = handleMetadata;
+    }
+
+    return () => {
+      video.onloadedmetadata = null;
+    };
+  }, [cameraActive]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
