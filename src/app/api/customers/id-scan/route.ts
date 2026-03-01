@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiHandler, validateBody } from '@/lib/api-utils';
+import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/customers/id-scan                                               */
 /*  Accepts a base64 image of a government ID and returns structured          */
 /*  customer data extracted via AI vision (OpenAI GPT-4o).                    */
+/*  Now requires authentication (wrapped with withApiHandler).                */
 /* -------------------------------------------------------------------------- */
 
 export interface IdScanResult {
@@ -105,127 +108,116 @@ Return a JSON object with these fields:
 If a field is not visible or unclear, use an empty string (except confidence, which should reflect your overall extraction confidence).
 Always return valid JSON only, no markdown, no explanation.`;
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { image, idType } = body as { image: string; idType?: string };
+const IdScanBodySchema = z.object({
+  image: z.string().min(1, 'No image provided'),
+  idType: z.string().optional(),
+});
 
-    if (!image) {
-      return NextResponse.json(
-        { success: false, mode: 'ai', result: null, error: 'No image provided' },
-        { status: 400 }
-      );
-    }
+export const POST = withApiHandler(async (request) => {
+  const { image, idType } = await validateBody(request, IdScanBodySchema);
 
-    const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
-    /* ── Demo mode when no API key ─────────────────────────────────────── */
-    if (!apiKey) {
-      // Simulate ~1.5s processing delay for realism
-      await new Promise((r) => setTimeout(r, 1500));
+  /* ── Demo mode when no API key ─────────────────────────────────────── */
+  if (!apiKey) {
+    // Simulate ~1.5s processing delay for realism
+    await new Promise((r) => setTimeout(r, 1500));
 
-      const result = DEMO_RESULTS[demoIndex % DEMO_RESULTS.length];
-      demoIndex++;
-      return NextResponse.json({
-        success: true,
-        mode: 'demo',
-        result,
-      } satisfies IdScanResponse);
-    }
-
-    /* ── Real AI Vision call ───────────────────────────────────────────── */
-    const base64Data = image.startsWith('data:')
-      ? image
-      : `data:image/jpeg;base64,${image}`;
-
-    const userPrompt = idType
-      ? `Analyze this ${idType.replace('_', ' ')} and extract the person's information.`
-      : 'Analyze this government-issued ID and extract the person\'s information.';
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: userPrompt,
-              },
-              {
-                type: 'image_url',
-                image_url: { url: base64Data, detail: 'high' },
-              },
-            ],
-          },
-        ],
-        max_tokens: 1500,
-        temperature: 0.1,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('OpenAI API error:', response.status, errText);
-
-      // Parse OpenAI error for a user-friendly message
-      let detail = `OpenAI returned ${response.status}`;
-      try {
-        const errJson = JSON.parse(errText);
-        detail = errJson?.error?.message ?? detail;
-      } catch {
-        // keep generic detail
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          result: null,
-          error: `Vision API error: ${detail}`,
-        },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    const content: string = data.choices?.[0]?.message?.content ?? '{}';
-
-    // Parse the JSON from the AI response
-    let result: IdScanResult;
-    try {
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      result = JSON.parse(cleaned);
-    } catch {
-      console.error('Failed to parse AI response:', content);
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          result: null,
-          error: 'Failed to parse ID data from image',
-        },
-        { status: 422 }
-      );
-    }
-
+    const result = DEMO_RESULTS[demoIndex % DEMO_RESULTS.length];
+    demoIndex++;
     return NextResponse.json({
       success: true,
-      mode: 'ai',
+      mode: 'demo',
       result,
     } satisfies IdScanResponse);
-  } catch (err) {
-    console.error('ID scan error:', err);
+  }
+
+  /* ── Real AI Vision call ───────────────────────────────────────────── */
+  const base64Data = image.startsWith('data:')
+    ? image
+    : `data:image/jpeg;base64,${image}`;
+
+  const userPrompt = idType
+    ? `Analyze this ${idType.replace('_', ' ')} and extract the person's information.`
+    : 'Analyze this government-issued ID and extract the person\'s information.';
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: userPrompt,
+            },
+            {
+              type: 'image_url',
+              image_url: { url: base64Data, detail: 'high' },
+            },
+          ],
+        },
+      ],
+      max_tokens: 1500,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error('OpenAI API error:', response.status, errText);
+
+    // Parse OpenAI error for a user-friendly message
+    let detail = `OpenAI returned ${response.status}`;
+    try {
+      const errJson = JSON.parse(errText);
+      detail = errJson?.error?.message ?? detail;
+    } catch {
+      // keep generic detail
+    }
+
     return NextResponse.json(
-      { success: false, mode: 'ai' as const, result: null, error: 'Internal server error' },
-      { status: 500 }
+      {
+        success: false,
+        mode: 'ai' as const,
+        result: null,
+        error: `Vision API error: ${detail}`,
+      },
+      { status: 502 }
     );
   }
-}
+
+  const data = await response.json();
+  const content: string = data.choices?.[0]?.message?.content ?? '{}';
+
+  // Parse the JSON from the AI response
+  let result: IdScanResult;
+  try {
+    const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    result = JSON.parse(cleaned);
+  } catch {
+    console.error('Failed to parse AI response:', content);
+    return NextResponse.json(
+      {
+        success: false,
+        mode: 'ai' as const,
+        result: null,
+        error: 'Failed to parse ID data from image',
+      },
+      { status: 422 }
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    mode: 'ai',
+    result,
+  } satisfies IdScanResponse);
+});
