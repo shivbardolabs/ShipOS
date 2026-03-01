@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, validateBody, validateQuery, ok, created, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { CARRIER_PROGRAMS, PROGRAM_IDS } from '@/lib/carrier-programs';
+import { CARRIER_PROGRAMS, PROGRAM_IDS } from '@/lib/carrier-program';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { parsePMToolsExport } from '@/lib/migration/pm-tools-parser';
+import { parsePMToolsExport } from '@/lib/migration/csv-parser';
 import { z } from 'zod';
 
 /* ── Schema ───────────────────────────────────────────────────────────────── */

@@ -5,7 +5,7 @@ import {
   recordInvoicePayment,
   sendInvoice,
   voidInvoice,
-} from '@/lib/invoicing-service';
+} from '@/lib/invoice-service';
 import { z } from 'zod';
 
 /* ── Schema ───────────────────────────────────────────────────────────────── */

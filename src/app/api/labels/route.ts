@@ -3,9 +3,9 @@ import { withApiHandler, validateBody, badRequest } from '@/lib/api-utils';
 import { NextResponse } from 'next/server';
 import {
   renderPackageLabel,
-  renderRtsLabel,
+  renderRTSLabel,
   renderContactLabel,
-  renderSignatureLabel,
+  renderSignatureTag,
 } from '@/lib/labels';
 import { z } from 'zod';
 
@@ -34,13 +34,13 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       html = renderPackageLabel(body.data);
       break;
     case 'rts':
-      html = renderRtsLabel(body.data);
+      html = renderRTSLabel(body.data);
       break;
     case 'contact':
       html = renderContactLabel(body.data);
       break;
     case 'signature':
-      html = renderSignatureLabel(body.data);
+      html = renderSignatureTag(body.data);
       break;
     default:
       return badRequest('Unknown template');

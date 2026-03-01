@@ -5,7 +5,7 @@ import {
   generateInvoiceForCustomer,
   generateBatchInvoices,
   getInvoiceSummary,
-} from '@/lib/invoicing-service';
+} from '@/lib/invoice-service';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 

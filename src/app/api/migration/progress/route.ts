@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, validateQuery, ok, badRequest } from '@/lib/api-utils';
-import { getMigrationProgress } from '@/lib/migration/progress';
+import { getMigrationProgress } from '@/lib/migration/engine';
 import { z } from 'zod';
 
 const ProgressQuerySchema = z.object({
