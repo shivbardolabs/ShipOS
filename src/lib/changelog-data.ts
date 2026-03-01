@@ -21,6 +21,59 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.27.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.27.0',
+    date: '2026-03-01',
+    title: 'Camera-Based Package Dimension Measurement, Mailbox Account Lifecycle',
+    summary:
+      'AI-powered package dimension measurement during check-in — staff photographs a package and GPT-4o Vision estimates L × W × H in inches. Plus complete mailbox account lifecycle: Form 1583 tracking, change guards, registration API, automated renewals, PMB closure workflow, and core module tab navigation.',
+    highlights: ['📐 Camera Measure', 'Form 1583', 'PMB Lifecycle', 'Tab Navigation'],
+    changes: [
+      {
+        text: 'BAR-341 — Camera-based package dimension measurement: photograph a package during check-in, GPT-4o Vision estimates L×W×H with confidence scoring, inline editing, DIM weight calculation',
+        type: 'feature',
+      },
+      {
+        text: 'New Package fields: lengthIn, widthIn, heightIn, weightLbs, dimensionSource, measurePhoto — full dimension tracking on every package',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-19 — Form 1583 status tracking: full PS1583 lifecycle per customer with status badges, notarization tracking, 1-year expiry, version history',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-235 — PS1583 change guard: warning dialog on protected field edits (name, address, ID) with old→new diff, auto-flags for re-filing',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-77 — Mailbox registration API: wired wizard to POST /api/mailboxes/register with PMB uniqueness check and available number inventory',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-191 — Automated renewal processing: auto-renew with 1583+ID validation, manual renew with re-filing trigger, configurable 1-24mo terms',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-234 — PMB closure & non-renewal: multi-step closure (preflight → retention offer → confirm → post-closure), auto-RTS packages, 6mo doc retention',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-114 — Core module tab navigation with ⌘1-6 keyboard shortcuts, persistent across sub-screens',
+        type: 'improvement',
+      },
+      {
+        text: 'Demo mode for camera measurement: cycles through realistic sample data when OPENAI_API_KEY is not configured',
+        type: 'improvement',
+      },
+      {
+        text: 'Feature flag: camera_measure_dimensions (category: ai) — controls visibility of dimension measurement in check-in',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.26.0                                                           */
   /* ------------------------------------------------------------------ */
   {
