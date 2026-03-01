@@ -476,6 +476,15 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     defaultEnabled: true,
   },
 
+  // ── Camera Measure Dimensions ────────────────────────────────────────────
+  {
+    key: 'camera_measure_dimensions',
+    name: 'Camera Measure Dimensions',
+    description: 'AI-powered package dimension measurement using device camera — estimates L × W × H from a photo during check-in',
+    category: 'ai',
+    defaultEnabled: false,
+  },
+
   // ── PMB Plan Features (BAR-307) ──────────────────────────────────────────
   {
     key: 'pmb_plan_features',
