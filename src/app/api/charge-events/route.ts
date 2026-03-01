@@ -1,234 +1,125 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateQuery, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const GetChargeEventsQuerySchema = z.object({
+  customerId: z.string().optional(),
+  status: z.string().optional(),
+  type: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+const CreateChargeEventBodySchema = z.object({
+  customerId: z.string().min(1),
+  type: z.string().min(1),
+  description: z.string().min(1),
+  amount: z.number().min(0),
+  tax: z.number().optional().default(0),
+  referenceType: z.string().optional(),
+  referenceId: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
 
 /**
  * GET /api/charge-events
- *
- * Returns charge events for the authenticated tenant.
- *
- * Query params:
- *   - customerId: filter by customer
- *   - status: filter by status (pending, posted, invoiced, paid, void, disputed)
- *   - serviceType: filter by service type
- *   - from: ISO date — start of date range
- *   - to: ISO date — end of date range
- *   - limit: number (defaults to 50, max 200)
- *   - offset: number (defaults to 0)
+ * List charge events with filtering, pagination, and summary aggregates.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    if (!user.tenantId) {
-      return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-    }
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  const query = validateQuery(request, GetChargeEventsQuerySchema);
+  const tenantId = user.tenantId!;
+  const skip = (query.page - 1) * query.limit;
 
-    const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get('customerId');
-    const status = searchParams.get('status');
-    const serviceType = searchParams.get('serviceType');
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const where: Prisma.ChargeEventWhereInput = { tenantId };
+  if (query.customerId) where.customerId = query.customerId;
+  if (query.status) where.status = query.status;
+  if (query.type) where.type = query.type;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = {
-      tenantId: user.tenantId,
-    };
-
-    if (customerId) where.customerId = customerId;
-    if (status) where.status = status;
-    if (serviceType) where.serviceType = serviceType;
-    if (from || to) {
-      where.createdAt = {};
-      if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
-    }
-
-    const [chargeEvents, total] = await Promise.all([
-      prisma.chargeEvent.findMany({
-        where,
-        include: {
-          customer: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              pmbNumber: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.chargeEvent.count({ where }),
-    ]);
-
-    // Calculate summary totals
-    const summary = await prisma.chargeEvent.aggregate({
+  const [chargeEvents, total] = await Promise.all([
+    prisma.chargeEvent.findMany({
       where,
-      _sum: {
-        totalCharge: true,
-        costBasis: true,
-        markup: true,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: query.limit,
+      include: {
+        customer: {
+          select: { id: true, firstName: true, lastName: true, pmbNumber: true },
+        },
       },
-      _count: true,
-    });
+    }),
+    prisma.chargeEvent.count({ where }),
+  ]);
 
-    return NextResponse.json({
-      chargeEvents,
-      total,
-      limit,
-      offset,
-      summary: {
-        count: summary._count,
-        totalCharge: summary._sum.totalCharge || 0,
-        totalCost: summary._sum.costBasis || 0,
-        totalMarkup: summary._sum.markup || 0,
-      },
-    });
-  } catch (err) {
-    console.error('[GET /api/charge-events]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch charge events', details: err instanceof Error ? err.message : 'Unknown' },
-      { status: 500 },
-    );
-  }
-}
+  // Summary aggregates
+  const summary = await prisma.chargeEvent.aggregate({
+    where: { tenantId },
+    _sum: { amount: true, tax: true },
+    _count: true,
+  });
+
+  const pendingSummary = await prisma.chargeEvent.aggregate({
+    where: { tenantId, status: 'pending' },
+    _sum: { amount: true },
+    _count: true,
+  });
+
+  return ok({
+    chargeEvents,
+    total,
+    page: query.page,
+    limit: query.limit,
+    summary: {
+      totalCount: summary._count,
+      totalAmount: summary._sum.amount ?? 0,
+      totalTax: summary._sum.tax ?? 0,
+      pendingCount: pendingSummary._count,
+      pendingAmount: pendingSummary._sum.amount ?? 0,
+    },
+  });
+});
 
 /**
  * POST /api/charge-events
- *
- * Create a new charge event. Requires admin or superadmin role.
- *
- * Body:
- *   - customerId: string (required)
- *   - serviceType: enum string (required)
- *   - description: string (required)
- *   - quantity: number (defaults to 1)
- *   - unitRate: number (defaults to 0)
- *   - costBasis: number (defaults to 0)
- *   - markup: number (defaults to 0)
- *   - packageId?: string
- *   - shipmentId?: string
- *   - mailPieceId?: string
- *   - notes?: string
+ * Create a new charge event (admin only).
  */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    if (!user.tenantId) {
-      return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-    }
-
-    // Require admin or superadmin to create charges
-    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const {
-      customerId,
-      serviceType,
-      description,
-      quantity = 1,
-      unitRate = 0,
-      costBasis = 0,
-      markup = 0,
-      packageId,
-      shipmentId,
-      mailPieceId,
-      notes,
-    } = body;
-
-    // Validate required fields
-    if (!customerId || !serviceType || !description) {
-      return NextResponse.json(
-        { error: 'Missing required fields: customerId, serviceType, description' },
-        { status: 400 },
-      );
-    }
-
-    // Validate service type
-    const validServiceTypes = [
-      'receiving', 'storage', 'forwarding', 'scanning',
-      'pickup', 'disposal', 'shipping', 'custom',
-    ];
-    if (!validServiceTypes.includes(serviceType)) {
-      return NextResponse.json(
-        { error: `Invalid serviceType. Must be one of: ${validServiceTypes.join(', ')}` },
-        { status: 400 },
-      );
-    }
-
-    // Look up the customer to get pmbNumber and validate ownership
-    const customer = await prisma.customer.findFirst({
-      where: {
-        id: customerId,
-        tenantId: user.tenantId,
-      },
-      select: { id: true, pmbNumber: true },
-    });
-
-    if (!customer) {
-      return NextResponse.json(
-        { error: 'Customer not found or does not belong to your tenant' },
-        { status: 404 },
-      );
-    }
-
-    // Calculate totalCharge: costBasis + markup, or quantity * unitRate if those are zero
-    const calculatedTotal = costBasis + markup > 0
-      ? costBasis + markup
-      : quantity * unitRate;
-
-    const chargeEvent = await prisma.chargeEvent.create({
-      data: {
-        tenantId: user.tenantId,
-        customerId,
-        pmbNumber: customer.pmbNumber,
-        serviceType,
-        description,
-        quantity,
-        unitRate,
-        costBasis,
-        markup,
-        totalCharge: calculatedTotal,
-        status: 'pending',
-        packageId: packageId || null,
-        shipmentId: shipmentId || null,
-        mailPieceId: mailPieceId || null,
-        createdById: user.id,
-        notes: notes || null,
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            pmbNumber: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({ chargeEvent }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/charge-events]', err);
-    return NextResponse.json(
-      { error: 'Failed to create charge event', details: err instanceof Error ? err.message : 'Unknown' },
-      { status: 500 },
-    );
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'superadmin', 'manager'].includes(user.role)) {
+    return forbidden('Admin role required');
   }
-}
+
+  const body = await validateBody(request, CreateChargeEventBodySchema);
+  const tenantId = user.tenantId!;
+
+  // Verify customer belongs to tenant
+  const customer = await prisma.customer.findFirst({
+    where: { id: body.customerId, tenantId },
+  });
+  if (!customer) return badRequest('Customer not found');
+
+  const chargeEvent = await prisma.chargeEvent.create({
+    data: {
+      tenantId,
+      customerId: body.customerId,
+      type: body.type,
+      description: body.description,
+      amount: body.amount,
+      tax: body.tax,
+      status: 'pending',
+      referenceType: body.referenceType ?? null,
+      referenceId: body.referenceId ?? null,
+      metadata: body.metadata ?? {},
+      createdById: user.id,
+    },
+    include: {
+      customer: {
+        select: { id: true, firstName: true, lastName: true, pmbNumber: true },
+      },
+    },
+  });
+
+  return created({ chargeEvent });
+});

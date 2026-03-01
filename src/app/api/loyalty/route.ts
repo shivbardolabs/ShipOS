@@ -1,105 +1,76 @@
-import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, ok, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 
 /**
  * GET /api/loyalty
- * Returns loyalty program config, tiers, rewards, and member accounts.
+ * Returns the full loyalty program state for the current tenant:
+ *   - Program config + tiers + rewards
+ *   - Customer accounts with balances
+ *   - Stats (total points, active accounts, monthly transaction aggregates)
  */
-export async function GET() {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+export const GET = withApiHandler(async (_request, { user }) => {
+  if (!user.tenantId) return badRequest('No tenant');
 
-    const tenantFilter =
-      user.role !== 'superadmin' && user.tenantId ? { tenantId: user.tenantId } : {};
+  const tenantId = user.tenantId;
 
-    const [program, tiers, rewards, accounts] = await Promise.all([
-      prisma.loyaltyProgram.findFirst({
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.loyaltyTier.findMany({
-        orderBy: { sortOrder: 'asc' },
-      }),
-      prisma.loyaltyReward.findMany({
-        where: { isActive: true },
-        orderBy: { pointsCost: 'asc' },
-      }),
-      prisma.loyaltyAccount.findMany({
-        where: { customer: { ...tenantFilter, deletedAt: null } },
-        include: {
-          customer: { select: { id: true, firstName: true, lastName: true, pmbNumber: true, status: true } },
-          currentTier: true,
+  // Parallel fetch
+  const [program, tiers, rewards, accounts, totalAccounts] = await Promise.all([
+    prisma.loyaltyProgram.findFirst({ where: { tenantId, isActive: true } }),
+    prisma.loyaltyTier.findMany({ where: { tenantId }, orderBy: { minPoints: 'asc' } }),
+    prisma.loyaltyReward.findMany({ where: { tenantId, isActive: true }, orderBy: { pointsCost: 'asc' } }),
+    prisma.loyaltyAccount.findMany({
+      where: { customer: { tenantId } },
+      orderBy: { pointsBalance: 'desc' },
+      take: 100,
+      include: {
+        customer: {
+          select: { id: true, firstName: true, lastName: true, pmbNumber: true },
         },
-        orderBy: { lifetimePoints: 'desc' },
-        take: 200,
-      }),
-    ]);
-
-    // Compute dashboard stats
-    const totalMembers = accounts.length;
-    const activeMembers = accounts.filter(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (a: any) => a.customer?.status === 'active',
-    ).length;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalPoints = accounts.reduce((sum: number, a: any) => sum + a.currentPoints, 0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lifetimePoints = accounts.reduce((sum: number, a: any) => sum + a.lifetimePoints, 0);
-
-    const tierDistribution = tiers.map((t) => ({
-      tier: t.name,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      count: accounts.filter((a: any) => a.currentTierId === t.id).length,
-    }));
-
-    // Top customers by lifetime points
-    const topCustomers = accounts
-      .slice(0, 10)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((a: any) => ({
-        name: a.customer ? `${a.customer.firstName} ${a.customer.lastName}` : 'Unknown',
-        points: a.lifetimePoints,
-        tier: a.currentTier?.name ?? 'Bronze',
-      }));
-
-    // Count this month's transactions and get recent activity
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const [pointsIssued, redemptions, recentActivity] = await Promise.all([
-      prisma.loyaltyTransaction.aggregate({
-        where: { createdAt: { gte: startOfMonth }, type: 'earn' },
-        _sum: { points: true },
-      }),
-      prisma.loyaltyTransaction.count({
-        where: { createdAt: { gte: startOfMonth }, type: 'redeem' },
-      }),
-      prisma.loyaltyTransaction.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      }),
-    ]);
-
-    return NextResponse.json({
-      program,
-      tiers,
-      rewards,
-      accounts,
-      stats: {
-        totalMembers,
-        activeMembers,
-        totalPointsInCirculation: totalPoints,
-        lifetimePointsEarned: lifetimePoints,
-        tierDistribution,
-        topCustomers,
-        pointsIssuedThisMonth: pointsIssued._sum.points ?? 0,
-        redemptionsThisMonth: redemptions,
-        recentActivity,
       },
-    });
-  } catch (err) {
-    console.error('[GET /api/loyalty]', err);
-    return NextResponse.json({ error: 'Failed to fetch loyalty data' }, { status: 500 });
+    }),
+    prisma.loyaltyAccount.count({ where: { customer: { tenantId } } }),
+  ]);
+
+  // Aggregate account stats
+  const totalPoints = accounts.reduce((sum, a) => sum + a.pointsBalance, 0);
+  const totalLifetimePoints = accounts.reduce((sum, a) => sum + a.lifetimePoints, 0);
+
+  // Monthly transaction aggregates (last 6 months)
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+
+  const recentTransactions = await prisma.loyaltyTransaction.findMany({
+    where: {
+      account: { customer: { tenantId } },
+      createdAt: { gte: sixMonthsAgo },
+    },
+    orderBy: { createdAt: 'desc' },
+    select: { type: true, points: true, createdAt: true },
+  });
+
+  // Group by month
+  const monthlyAggregates: Record<string, { earned: number; redeemed: number; expired: number }> = {};
+  for (const tx of recentTransactions) {
+    const monthKey = `${tx.createdAt.getFullYear()}-${String(tx.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthlyAggregates[monthKey]) {
+      monthlyAggregates[monthKey] = { earned: 0, redeemed: 0, expired: 0 };
+    }
+    const agg = monthlyAggregates[monthKey];
+    if (tx.type === 'earn') agg.earned += tx.points;
+    else if (tx.type === 'redeem') agg.redeemed += Math.abs(tx.points);
+    else if (tx.type === 'expire') agg.expired += Math.abs(tx.points);
   }
-}
+
+  return ok({
+    program,
+    tiers,
+    rewards,
+    accounts,
+    stats: {
+      totalAccounts,
+      totalPointsOutstanding: totalPoints,
+      totalLifetimePoints,
+      monthlyAggregates,
+    },
+  });
+});

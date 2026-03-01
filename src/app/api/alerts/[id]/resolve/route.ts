@@ -1,44 +1,38 @@
-/**
- * BAR-265: Alert System — Resolve Alert
- *
- * PATCH /api/alerts/:id/resolve
- *
- * Body: { userId?: string }
- */
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, notFound } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    const { userId } = body as { userId?: string };
+const ResolveBodySchema = z.object({
+  resolution: z.string().optional(),
+});
 
-    const alert = await prisma.alert.findUnique({ where: { id } });
-    if (!alert) {
-      return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
-    }
+/**
+ * PATCH /api/alerts/[id]/resolve
+ * Resolve an alert.
+ *
+ * SECURITY FIX: Now requires authentication, derives userId from session,
+ * and scopes alert lookup to tenant.
+ */
+export const PATCH = withApiHandler(async (request: NextRequest, { user, params }) => {
+  const { id } = await params;
+  const body = await validateBody(request, ResolveBodySchema);
 
-    if (alert.resolvedAt) {
-      return NextResponse.json({ alert, alreadyResolved: true });
-    }
+  const alert = await prisma.alert.findFirst({
+    where: { id, tenantId: user.tenantId! },
+  });
 
-    const updated = await prisma.alert.update({
-      where: { id },
-      data: {
-        resolvedAt: new Date(),
-        acknowledgedBy: userId || alert.acknowledgedBy || 'system',
-        acknowledgementAction: 'resolve',
-      },
-    });
+  if (!alert) return notFound('Alert not found');
 
-    return NextResponse.json({ alert: updated });
-  } catch (error) {
-    console.error('[alerts] PATCH resolve error:', error);
-    return NextResponse.json({ error: 'Failed to resolve alert' }, { status: 500 });
-  }
-}
+  const updated = await prisma.alert.update({
+    where: { id },
+    data: {
+      status: 'resolved',
+      resolvedAt: new Date(),
+      acknowledgedBy: alert.acknowledgedBy ?? user.id,
+      resolution: body.resolution ?? null,
+    },
+  });
+
+  return ok({ alert: updated });
+});

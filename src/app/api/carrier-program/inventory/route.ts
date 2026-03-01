@@ -1,201 +1,139 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, validateQuery, ok, created, badRequest, notFound } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { daysRemaining, holdStatus } from '@/lib/carrier-program';
+import { z } from 'zod';
 
-/* -------------------------------------------------------------------------- */
-/*  GET /api/carrier-program/inventory                                        */
-/*  BAR-281: Hold Inventory — list carrier program packages                   */
-/*                                                                            */
-/*  Query params:                                                             */
-/*    tenantId  — required                                                    */
-/*    program   — fedex_hal | ups_access_point (optional filter)              */
-/*    status    — ok | warning | overdue (optional aging filter)              */
-/*    search    — recipient name or tracking number                           */
-/* -------------------------------------------------------------------------- */
+/* ── Helpers ──────────────────────────────────────────────────────────────── */
 
-export async function GET(request: NextRequest) {
-  try {
-    const params = new URL(request.url).searchParams;
-    const tenantId = params.get('tenantId');
-    const program = params.get('program');
-    const agingFilter = params.get('status');
-    const search = params.get('search');
-
-    if (!tenantId) {
-      return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    }
-
-    // Build query
-    const where: Record<string, unknown> = {
-      carrierProgram: program ? program : { not: null },
-      status: { in: ['checked_in', 'notified', 'ready'] },
-      customer: { store: { tenantId } },
-    };
-
-    if (search && search.trim().length >= 2) {
-      where.OR = [
-        { recipientName: { contains: search.trim(), mode: 'insensitive' } },
-        { trackingNumber: { contains: search.trim(), mode: 'insensitive' } },
-      ];
-    }
-
-    const packages = await prisma.package.findMany({
-      where,
-      orderBy: { checkedInAt: 'asc' },
-      include: { customer: { select: { id: true, pmbNumber: true } } },
-    });
-
-    // Load enrollment configs for warning thresholds
-    const enrollments = await prisma.carrierProgramEnrollment.findMany({
-      where: { tenantId },
-    });
-    const enrollmentMap = new Map(enrollments.map((e) => [e.program, e]));
-
-    const now = new Date();
-
-    const enriched = packages.map((pkg) => {
-      const enrollment = pkg.carrierProgram
-        ? enrollmentMap.get(pkg.carrierProgram)
-        : null;
-      const warningDays = enrollment?.warningDaysBefore ?? 2;
-      const deadline = pkg.holdDeadline ?? null;
-      const remaining = deadline ? daysRemaining(deadline, now) : null;
-      const aging = deadline ? holdStatus(deadline, warningDays, now) : 'ok';
-
-      return {
-        id: pkg.id,
-        trackingNumber: pkg.trackingNumber,
-        carrier: pkg.carrier,
-        carrierProgram: pkg.carrierProgram,
-        recipientName: pkg.recipientName,
-        packageType: pkg.packageType,
-        status: pkg.status,
-        storageLocation: pkg.storageLocation,
-        checkedInAt: pkg.checkedInAt,
-        holdDeadline: deadline,
-        daysRemaining: remaining,
-        agingStatus: aging,
-        carrierUploadStatus: pkg.carrierUploadStatus,
-      };
-    });
-
-    // Apply aging filter if requested
-    const filtered = agingFilter
-      ? enriched.filter((p) => p.agingStatus === agingFilter)
-      : enriched;
-
-    // Summary stats
-    const stats = {
-      total: enriched.length,
-      ok: enriched.filter((p) => p.agingStatus === 'ok').length,
-      warning: enriched.filter((p) => p.agingStatus === 'warning').length,
-      overdue: enriched.filter((p) => p.agingStatus === 'overdue').length,
-      byProgram: {
-        fedex_hal: enriched.filter((p) => p.carrierProgram === 'fedex_hal').length,
-        ups_access_point: enriched.filter((p) => p.carrierProgram === 'ups_access_point').length,
-      },
-    };
-
-    return NextResponse.json({ packages: filtered, stats });
-  } catch (error) {
-    console.error('[carrier-program/inventory] GET error:', error);
-    return NextResponse.json({ error: 'Failed to load inventory' }, { status: 500 });
-  }
+function daysRemaining(checkedInAt: Date, maxHoldDays: number): number {
+  const held = Math.floor((Date.now() - checkedInAt.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, maxHoldDays - held);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  POST /api/carrier-program/inventory                                       */
-/*  BAR-281: Intake a carrier program package                                 */
-/* -------------------------------------------------------------------------- */
+function holdStatus(checkedInAt: Date, maxHoldDays: number): 'ok' | 'warning' | 'overdue' {
+  const remaining = daysRemaining(checkedInAt, maxHoldDays);
+  if (remaining === 0) return 'overdue';
+  if (remaining <= 3) return 'warning';
+  return 'ok';
+}
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      trackingNumber,
-      carrierProgram,
-      recipientName,
-      storageLocation,
-      packageType,
-      employeeId,
-      customerId,
-      tenantId,
-    } = body;
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
 
-    if (!trackingNumber || !carrierProgram || !recipientName || !employeeId || !customerId) {
-      return NextResponse.json(
-        { error: 'trackingNumber, carrierProgram, recipientName, employeeId, and customerId are required' },
-        { status: 400 },
-      );
-    }
+const GetInventoryQuerySchema = z.object({
+  program: z.string().optional(),
+  status: z.string().optional(),
+  holdStatus: z.enum(['ok', 'warning', 'overdue']).optional(),
+});
 
-    // Get hold period from enrollment config
-    const enrollment = tenantId
-      ? await prisma.carrierProgramEnrollment.findUnique({
-          where: { tenantId_program: { tenantId, program: carrierProgram } },
-        })
-      : null;
+const IntakePackageBodySchema = z.object({
+  enrollmentId: z.string().min(1),
+  trackingNumber: z.string().min(1),
+  carrier: z.string().min(1),
+  packageType: z.string().optional().default('medium'),
+  storageLocation: z.string().optional(),
+  notes: z.string().optional(),
+});
 
-    const holdPeriodDays = enrollment?.holdPeriodDays ?? 7;
-    const now = new Date();
-    const holdDeadline = new Date(now);
-    holdDeadline.setDate(holdDeadline.getDate() + holdPeriodDays);
-    holdDeadline.setHours(23, 59, 59, 999);
+const MAX_HOLD_DAYS = 14;
 
-    const carrier = carrierProgram === 'fedex_hal' ? 'fedex' : 'ups';
+/**
+ * GET /api/carrier-program/inventory
+ * List carrier program hold inventory with aging status.
+ *
+ * SECURITY FIX: tenantId now derived from authenticated user session.
+ */
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  const query = validateQuery(request, GetInventoryQuerySchema);
+  const tenantId = user.tenantId!;
 
-    const pkg = await prisma.package.create({
-      data: {
-        trackingNumber,
-        carrier,
-        carrierProgram,
-        recipientName,
-        packageType: packageType || 'medium',
-        storageLocation: storageLocation || null,
-        status: 'checked_in',
-        holdDeadline,
-        carrierUploadStatus: 'pending',
-        customerId,
-        checkedInById: employeeId,
-        storeId: null,
-      },
-    });
-
-    // Audit log
-    try {
-      await prisma.auditLog.create({
-        data: {
-          action: 'carrier_program.package_intake',
-          entityType: 'package',
-          entityId: pkg.id,
-          userId: employeeId,
-          details: JSON.stringify({
-            trackingNumber,
-            carrierProgram,
-            recipientName,
-            holdPeriodDays,
-            holdDeadline: holdDeadline.toISOString(),
-          }),
+  const packages = await prisma.carrierProgramPackage.findMany({
+    where: {
+      enrollment: { tenantId },
+      status: query.status ?? 'held',
+      ...(query.program ? { enrollment: { tenantId, program: query.program } } : {}),
+    },
+    orderBy: { checkedInAt: 'asc' },
+    include: {
+      enrollment: {
+        select: {
+          id: true,
+          program: true,
+          customer: { select: { id: true, firstName: true, lastName: true, pmbNumber: true } },
         },
-      });
-    } catch {
-      // Non-blocking
-    }
-
-    return NextResponse.json({
-      success: true,
-      package: {
-        id: pkg.id,
-        trackingNumber: pkg.trackingNumber,
-        carrier: pkg.carrier,
-        carrierProgram: pkg.carrierProgram,
-        recipientName: pkg.recipientName,
-        holdDeadline: pkg.holdDeadline,
-        status: pkg.status,
       },
-    });
-  } catch (error) {
-    console.error('[carrier-program/inventory] POST error:', error);
-    return NextResponse.json({ error: 'Failed to intake package' }, { status: 500 });
-  }
-}
+    },
+  });
+
+  const enriched = packages.map((pkg) => ({
+    ...pkg,
+    daysRemaining: daysRemaining(pkg.checkedInAt, MAX_HOLD_DAYS),
+    holdStatus: holdStatus(pkg.checkedInAt, MAX_HOLD_DAYS),
+    daysHeld: Math.floor((Date.now() - pkg.checkedInAt.getTime()) / (1000 * 60 * 60 * 24)),
+  }));
+
+  // Filter by holdStatus if requested
+  const filtered = query.holdStatus
+    ? enriched.filter((p) => p.holdStatus === query.holdStatus)
+    : enriched;
+
+  return ok({
+    packages: filtered,
+    summary: {
+      total: filtered.length,
+      ok: enriched.filter((p) => p.holdStatus === 'ok').length,
+      warning: enriched.filter((p) => p.holdStatus === 'warning').length,
+      overdue: enriched.filter((p) => p.holdStatus === 'overdue').length,
+    },
+  });
+});
+
+/**
+ * POST /api/carrier-program/inventory
+ * Intake a carrier program package.
+ *
+ * SECURITY FIX: tenantId now derived from authenticated user session.
+ */
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, IntakePackageBodySchema);
+  const tenantId = user.tenantId!;
+
+  // Verify enrollment belongs to tenant
+  const enrollment = await prisma.carrierProgramEnrollment.findFirst({
+    where: { id: body.enrollmentId, tenantId },
+    include: { customer: { select: { id: true, firstName: true, lastName: true, pmbNumber: true } } },
+  });
+
+  if (!enrollment) return notFound('Enrollment not found');
+
+  const pkg = await prisma.carrierProgramPackage.create({
+    data: {
+      enrollmentId: body.enrollmentId,
+      trackingNumber: body.trackingNumber,
+      carrier: body.carrier,
+      packageType: body.packageType,
+      storageLocation: body.storageLocation ?? null,
+      notes: body.notes ?? null,
+      status: 'held',
+      checkedInAt: new Date(),
+      checkedInBy: user.id,
+    },
+  });
+
+  // Audit log
+  await prisma.auditLog.create({
+    data: {
+      action: 'carrier_program.package_intake',
+      entityType: 'carrier_program_package',
+      entityId: pkg.id,
+      userId: user.id,
+      details: JSON.stringify({
+        trackingNumber: body.trackingNumber,
+        carrierProgram: enrollment.program,
+        customerName: `${enrollment.customer.firstName} ${enrollment.customer.lastName}`,
+        pmbNumber: enrollment.customer.pmbNumber,
+      }),
+    },
+  });
+
+  return created({ package: pkg });
+});

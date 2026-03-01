@@ -1,30 +1,20 @@
-/**
- * BAR-265: Alert System — Single Alert Detail
- *
- * GET /api/alerts/:id → Get a single alert by ID
- */
-
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, ok, notFound } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
+/**
+ * GET /api/alerts/[id]
+ * Get a single alert by ID.
+ *
+ * SECURITY FIX: Now requires authentication and scopes to tenant.
+ */
+export const GET = withApiHandler(async (_request, { user, params }) => {
+  const { id } = await params;
 
-    const alert = await prisma.alert.findUnique({
-      where: { id },
-    });
+  const alert = await prisma.alert.findFirst({
+    where: { id, tenantId: user.tenantId! },
+  });
 
-    if (!alert) {
-      return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
-    }
+  if (!alert) return notFound('Alert not found');
 
-    return NextResponse.json({ alert });
-  } catch (error) {
-    console.error('[alerts] GET :id error:', error);
-    return NextResponse.json({ error: 'Failed to fetch alert' }, { status: 500 });
-  }
-}
+  return ok({ alert });
+});

@@ -1,123 +1,125 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
-import { stringify } from 'csv-stringify/sync';
+import { withApiHandler, validateQuery, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { stringify } from 'csv-stringify/sync';
+import { z } from 'zod';
+
+/* ── Schema ───────────────────────────────────────────────────────────────── */
+
+const ExportQuerySchema = z.object({
+  type: z.enum(['packages', 'customers', 'revenue']),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+});
 
 /**
- * GET /api/reports/export?type=packages|customers|revenue&format=csv
- * Export report data as CSV.
+ * GET /api/reports/export?type=packages|customers|revenue
+ * Returns a CSV download.
  */
-export async function GET(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    if (!user.tenantId) {
-      return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-    }
-
-    const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type') || 'packages';
-    const format = searchParams.get('format') || 'csv';
-
-    if (format !== 'csv') {
-      return NextResponse.json({ error: 'Only CSV format is currently supported' }, { status: 400 });
-    }
-
-    let csvContent: string;
-    let filename: string;
-
-    switch (type) {
-      case 'packages': {
-        const packages = await prisma.package.findMany({
-          where: { customer: { tenantId: user.tenantId } },
-          include: { customer: true, checkedInBy: true, checkedOutBy: true },
-          orderBy: { checkedInAt: 'desc' },
-          take: 5000,
-        });
-
-        csvContent = stringify(
-          packages.map((p) => ({
-            'Tracking Number': p.trackingNumber || '',
-            Carrier: p.carrier,
-            Status: p.status,
-            Customer: `${p.customer.firstName} ${p.customer.lastName}`,
-            'PMB Number': p.customer.pmbNumber,
-            'Package Type': p.packageType,
-            'Storage Fee': p.storageFee,
-            'Receiving Fee': p.receivingFee,
-            'Checked In': p.checkedInAt?.toISOString() || '',
-            'Released': p.releasedAt?.toISOString() || '',
-            'Checked In By': p.checkedInBy?.name || '',
-            'Checked Out By': p.checkedOutBy?.name || '',
-          })),
-          { header: true },
-        );
-        filename = `packages-export-${new Date().toISOString().split('T')[0]}.csv`;
-        break;
-      }
-
-      case 'customers': {
-        const customers = await prisma.customer.findMany({
-          where: { tenantId: user.tenantId },
-          orderBy: { createdAt: 'desc' },
-          take: 5000,
-        });
-
-        csvContent = stringify(
-          customers.map((c) => ({
-            'PMB Number': c.pmbNumber,
-            'First Name': c.firstName,
-            'Last Name': c.lastName,
-            Email: c.email || '',
-            Phone: c.phone || '',
-            Business: c.businessName || '',
-            Platform: c.platform,
-            Status: c.status,
-            'Date Opened': c.dateOpened?.toISOString() || '',
-            'Form 1583 Status': c.form1583Status || '',
-          })),
-          { header: true },
-        );
-        filename = `customers-export-${new Date().toISOString().split('T')[0]}.csv`;
-        break;
-      }
-
-      case 'revenue': {
-        const payments = await prisma.paymentRecord.findMany({
-          where: { tenantId: user.tenantId },
-          orderBy: { createdAt: 'desc' },
-          take: 5000,
-        });
-
-        csvContent = stringify(
-          payments.map((p) => ({
-            Date: p.createdAt.toISOString(),
-            Amount: p.amount,
-            Currency: p.currency,
-            Status: p.status,
-            Method: p.method,
-            Description: p.description || '',
-          })),
-          { header: true },
-        );
-        filename = `revenue-export-${new Date().toISOString().split('T')[0]}.csv`;
-        break;
-      }
-
-      default:
-        return NextResponse.json({ error: `Unknown report type: ${type}` }, { status: 400 });
-    }
-
-    return new NextResponse(csvContent, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      },
-    });
-  } catch (err) {
-    console.error('[GET /api/reports/export]', err);
-    return NextResponse.json({ error: 'Failed to export report' }, { status: 500 });
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'superadmin', 'manager'].includes(user.role)) {
+    return forbidden('Admin role required');
   }
-}
+  if (!user.tenantId) return badRequest('No tenant');
+
+  const query = validateQuery(request, ExportQuerySchema);
+  const tenantId = user.tenantId;
+
+  const dateFrom = query.dateFrom ? new Date(query.dateFrom) : undefined;
+  const dateTo = query.dateTo ? new Date(query.dateTo) : undefined;
+
+  let csvContent: string;
+  let filename: string;
+
+  if (query.type === 'packages') {
+    const packages = await prisma.package.findMany({
+      where: {
+        customer: { tenantId },
+        ...(dateFrom || dateTo ? {
+          checkedInAt: {
+            ...(dateFrom ? { gte: dateFrom } : {}),
+            ...(dateTo ? { lte: dateTo } : {}),
+          },
+        } : {}),
+      },
+      include: { customer: { select: { firstName: true, lastName: true, pmbNumber: true } } },
+      orderBy: { checkedInAt: 'desc' },
+    });
+
+    csvContent = stringify(
+      packages.map((p) => ({
+        'Tracking Number': p.trackingNumber,
+        Carrier: p.carrier,
+        Status: p.status,
+        'Package Type': p.packageType,
+        Customer: `${p.customer?.firstName ?? ''} ${p.customer?.lastName ?? ''}`.trim(),
+        PMB: p.customer?.pmbNumber ?? '',
+        'Storage Location': p.storageLocation ?? '',
+        'Checked In': p.checkedInAt?.toISOString() ?? '',
+        Released: p.releasedAt?.toISOString() ?? '',
+      })),
+      { header: true },
+    );
+    filename = `packages-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  } else if (query.type === 'customers') {
+    const customers = await prisma.customer.findMany({
+      where: { tenantId, deletedAt: null },
+      orderBy: { lastName: 'asc' },
+    });
+
+    csvContent = stringify(
+      customers.map((c) => ({
+        PMB: c.pmbNumber,
+        'First Name': c.firstName,
+        'Last Name': c.lastName,
+        Email: c.email ?? '',
+        Phone: c.phone ?? '',
+        Status: c.status,
+        'Form 1583': c.form1583Status ?? '',
+        'Renewal Date': c.renewalDate?.toISOString() ?? '',
+        'Created At': c.createdAt.toISOString(),
+      })),
+      { header: true },
+    );
+    filename = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  } else {
+    // revenue
+    const charges = await prisma.chargeEvent.findMany({
+      where: {
+        tenantId,
+        status: { in: ['approved', 'paid'] },
+        ...(dateFrom || dateTo ? {
+          createdAt: {
+            ...(dateFrom ? { gte: dateFrom } : {}),
+            ...(dateTo ? { lte: dateTo } : {}),
+          },
+        } : {}),
+      },
+      include: { customer: { select: { firstName: true, lastName: true, pmbNumber: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    csvContent = stringify(
+      charges.map((c) => ({
+        Date: c.createdAt.toISOString(),
+        Type: c.type,
+        Description: c.description,
+        Customer: `${c.customer?.firstName ?? ''} ${c.customer?.lastName ?? ''}`.trim(),
+        PMB: c.customer?.pmbNumber ?? '',
+        Amount: c.amount.toFixed(2),
+        Tax: (c.tax ?? 0).toFixed(2),
+        Status: c.status,
+      })),
+      { header: true },
+    );
+    filename = `revenue-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  }
+
+  return new NextResponse(csvContent, {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+});

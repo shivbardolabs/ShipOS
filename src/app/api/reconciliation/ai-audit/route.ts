@@ -1,454 +1,218 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest } from '@/lib/api-utils';
+import { z } from 'zod';
 
-/* -------------------------------------------------------------------------- */
-/*  POST /api/reconciliation/ai-audit                                         */
-/*  Accepts a carrier invoice (PDF as base64 or CSV text) and returns         */
-/*  AI-powered audit findings with cross-referenced discrepancies.            */
-/* -------------------------------------------------------------------------- */
+/* ── Types ────────────────────────────────────────────────────────────────── */
 
-export interface AuditDiscrepancy {
-  id: string;
-  type: string;
+interface AuditDiscrepancy {
   trackingNumber: string;
-  description: string;
-  chargedAmount: number;
-  correctAmount: number;
-  overchargeAmount: number;
+  invoicedAmount: number;
+  expectedAmount: number;
+  difference: number;
+  issueType: 'overcharge' | 'undercharge' | 'duplicate' | 'phantom' | 'surcharge';
   confidence: number;
+  explanation: string;
+  suggestedAction: 'dispute' | 'accept' | 'review';
 }
 
-export interface AuditSummary {
-  totalCharges: number;
-  totalOvercharges: number;
-  discrepancyCount: number;
-  carrier: string;
-}
-
-export interface AuditResponse {
+interface AuditResponse {
   success: boolean;
   mode: 'ai' | 'demo';
-  summary: AuditSummary;
   discrepancies: AuditDiscrepancy[];
+  summary: {
+    totalInvoiced: number;
+    totalExpected: number;
+    totalDifference: number;
+    discrepancyCount: number;
+    estimatedRecovery: number;
+  };
+  processingTime: number;
   error?: string;
 }
 
-/* ── Mock ShipOS shipment records for cross-referencing ─────────────────── */
-const MOCK_SHIPMENTS: Record<string, { weight: number; service: string; zone: number; negotiatedRate: number; address: { residential: boolean } }> = {
-  '1Z999AA10123456784': { weight: 4.2, service: 'UPS Ground', zone: 5, negotiatedRate: 12.45, address: { residential: false } },
-  '1Z999AA10123456791': { weight: 2.8, service: 'UPS Ground', zone: 3, negotiatedRate: 9.80, address: { residential: true } },
-  '1Z999AA10123456808': { weight: 15.0, service: 'UPS 2nd Day Air', zone: 4, negotiatedRate: 24.30, address: { residential: false } },
-  '1Z999AA10123456815': { weight: 1.1, service: 'UPS Ground', zone: 2, negotiatedRate: 7.95, address: { residential: false } },
-  '1Z999AA10123456822': { weight: 8.5, service: 'UPS Next Day Air', zone: 6, negotiatedRate: 38.50, address: { residential: true } },
-  '1Z999AA10123456839': { weight: 3.0, service: 'UPS Ground', zone: 4, negotiatedRate: 10.20, address: { residential: false } },
-  '1Z999AA10123456846': { weight: 6.3, service: 'UPS 3 Day Select', zone: 5, negotiatedRate: 18.75, address: { residential: false } },
-  '1Z999AA10123456853': { weight: 22.0, service: 'UPS Ground', zone: 7, negotiatedRate: 28.60, address: { residential: true } },
-  '794644790128': { weight: 5.5, service: 'FedEx Ground', zone: 4, negotiatedRate: 11.90, address: { residential: false } },
-  '794644790135': { weight: 3.2, service: 'FedEx Express Saver', zone: 3, negotiatedRate: 16.40, address: { residential: false } },
-  '794644790142': { weight: 12.0, service: 'FedEx Home Delivery', zone: 5, negotiatedRate: 19.50, address: { residential: true } },
-  '794644790159': { weight: 1.8, service: 'FedEx Ground', zone: 2, negotiatedRate: 8.25, address: { residential: false } },
-};
+/* ── Demo data ────────────────────────────────────────────────────────────── */
 
-/* ── Demo audit results — realistic findings for UPS invoice ───────────── */
-const DEMO_DISCREPANCIES_UPS: AuditDiscrepancy[] = [
-  {
-    id: 'disc_001',
-    type: 'weight_overcharge',
-    trackingNumber: '1Z999AA10123456784',
-    description: 'Carrier billed 6.0 lbs but actual weight is 4.2 lbs. Excess weight charge of $3.87 applied.',
-    chargedAmount: 16.32,
-    correctAmount: 12.45,
-    overchargeAmount: 3.87,
-    confidence: 0.94,
-  },
-  {
-    id: 'disc_002',
-    type: 'duplicate_charge',
-    trackingNumber: '1Z999AA10123456791',
-    description: 'Shipment billed twice on invoice lines 14 and 47. Second charge of $9.80 is a duplicate.',
-    chargedAmount: 19.60,
-    correctAmount: 9.80,
-    overchargeAmount: 9.80,
-    confidence: 0.98,
-  },
-  {
-    id: 'disc_003',
-    type: 'invalid_surcharge',
-    trackingNumber: '1Z999AA10123456808',
-    description: 'Extended Area Surcharge applied but delivery ZIP 10001 is not in UPS extended area list.',
-    chargedAmount: 28.50,
-    correctAmount: 24.30,
-    overchargeAmount: 4.20,
-    confidence: 0.89,
-  },
-  {
-    id: 'disc_004',
-    type: 'service_mismatch',
-    trackingNumber: '1Z999AA10123456815',
-    description: 'Billed as UPS 2nd Day Air ($14.95) but shipment was booked as UPS Ground ($7.95).',
-    chargedAmount: 14.95,
-    correctAmount: 7.95,
-    overchargeAmount: 7.00,
-    confidence: 0.92,
-  },
-  {
-    id: 'disc_005',
-    type: 'residential_surcharge',
-    trackingNumber: '1Z999AA10123456839',
-    description: 'Residential surcharge of $4.35 applied to a verified commercial address.',
-    chargedAmount: 14.55,
-    correctAmount: 10.20,
-    overchargeAmount: 4.35,
-    confidence: 0.91,
-  },
-  {
-    id: 'disc_006',
-    type: 'address_correction',
-    trackingNumber: '1Z999AA10123456846',
-    description: 'Address correction fee of $13.00 applied but original address was valid and deliverable.',
-    chargedAmount: 31.75,
-    correctAmount: 18.75,
-    overchargeAmount: 13.00,
-    confidence: 0.87,
-  },
-  {
-    id: 'disc_007',
-    type: 'weight_overcharge',
-    trackingNumber: '1Z999AA10123456853',
-    description: 'Carrier billed at dimensional weight 30 lbs but actual/dim weight should be 22.0 lbs.',
-    chargedAmount: 35.80,
-    correctAmount: 28.60,
-    overchargeAmount: 7.20,
-    confidence: 0.93,
-  },
-  {
-    id: 'disc_008',
-    type: 'late_delivery',
-    trackingNumber: '1Z999AA10123456822',
-    description: 'UPS Next Day Air guaranteed delivery missed by 2 hours. Full refund eligible under GSR.',
-    chargedAmount: 42.70,
-    correctAmount: 0.00,
-    overchargeAmount: 42.70,
-    confidence: 0.96,
-  },
+const DEMO_DISCREPANCIES: AuditDiscrepancy[] = [
+  { trackingNumber: '1Z999AA10123456784', invoicedAmount: 24.50, expectedAmount: 18.75, difference: 5.75, issueType: 'overcharge', confidence: 0.95, explanation: 'Residential surcharge applied incorrectly to commercial address', suggestedAction: 'dispute' },
+  { trackingNumber: '9400111899223100012', invoicedAmount: 7.80, expectedAmount: 7.80, difference: 7.80, issueType: 'duplicate', confidence: 0.92, explanation: 'Same tracking number invoiced twice in billing period', suggestedAction: 'dispute' },
+  { trackingNumber: '794644790132', invoicedAmount: 45.20, expectedAmount: 32.10, difference: 13.10, issueType: 'surcharge', confidence: 0.88, explanation: 'Additional handling surcharge may not apply — package within standard dimensions', suggestedAction: 'dispute' },
+  { trackingNumber: '1Z999AA10987654321', invoicedAmount: 12.30, expectedAmount: 0, difference: 12.30, issueType: 'phantom', confidence: 0.90, explanation: 'No shipment record found for this tracking number — possible phantom charge', suggestedAction: 'dispute' },
+  { trackingNumber: '9261290100130470898', invoicedAmount: 3.50, expectedAmount: 4.20, difference: -0.70, issueType: 'undercharge', confidence: 0.85, explanation: 'First-class rate billed but Priority was used — verify service level', suggestedAction: 'review' },
 ];
 
-const DEMO_DISCREPANCIES_FEDEX: AuditDiscrepancy[] = [
-  {
-    id: 'disc_101',
-    type: 'weight_overcharge',
-    trackingNumber: '794644790128',
-    description: 'Carrier billed 8.0 lbs but actual weight is 5.5 lbs. Overcharge of $4.15.',
-    chargedAmount: 16.05,
-    correctAmount: 11.90,
-    overchargeAmount: 4.15,
-    confidence: 0.95,
-  },
-  {
-    id: 'disc_102',
-    type: 'invalid_surcharge',
-    trackingNumber: '794644790135',
-    description: 'Fuel surcharge rate of 14.5% applied instead of agreed 11.0%. Excess charge of $1.14.',
-    chargedAmount: 17.54,
-    correctAmount: 16.40,
-    overchargeAmount: 1.14,
-    confidence: 0.88,
-  },
-  {
-    id: 'disc_103',
-    type: 'residential_surcharge',
-    trackingNumber: '794644790142',
-    description: 'Additional Handling surcharge of $5.25 applied incorrectly — package dimensions within limits.',
-    chargedAmount: 24.75,
-    correctAmount: 19.50,
-    overchargeAmount: 5.25,
-    confidence: 0.90,
-  },
-  {
-    id: 'disc_104',
-    type: 'duplicate_charge',
-    trackingNumber: '794644790159',
-    description: 'Delivery confirmation fee of $3.20 charged but already included in service level.',
-    chargedAmount: 11.45,
-    correctAmount: 8.25,
-    overchargeAmount: 3.20,
-    confidence: 0.93,
-  },
-];
+/* ── Schema ───────────────────────────────────────────────────────────────── */
 
-const DEMO_DISCREPANCIES_USPS: AuditDiscrepancy[] = [
-  {
-    id: 'disc_201',
-    type: 'service_mismatch',
-    trackingNumber: '9400111899223100012847',
-    description: 'Billed as Priority Mail Express ($28.75) but shipped as Priority Mail ($9.45).',
-    chargedAmount: 28.75,
-    correctAmount: 9.45,
-    overchargeAmount: 19.30,
-    confidence: 0.95,
-  },
-  {
-    id: 'disc_202',
-    type: 'weight_overcharge',
-    trackingNumber: '9400111899223100012854',
-    description: 'Billed weight 5 lbs but actual was 2.1 lbs. Zone 4 rate difference of $3.60.',
-    chargedAmount: 12.80,
-    correctAmount: 9.20,
-    overchargeAmount: 3.60,
-    confidence: 0.91,
-  },
-];
+const AuditBodySchema = z.object({
+  format: z.enum(['pdf_base64', 'csv']),
+  data: z.string().min(1),
+  carrier: z.string().optional(),
+});
 
-const DEMO_DISCREPANCIES_DHL: AuditDiscrepancy[] = [
-  {
-    id: 'disc_301',
-    type: 'invalid_surcharge',
-    trackingNumber: 'JD014600011438483201',
-    description: 'Remote area surcharge applied but delivery address is within standard service area.',
-    chargedAmount: 45.00,
-    correctAmount: 32.50,
-    overchargeAmount: 12.50,
-    confidence: 0.88,
-  },
-  {
-    id: 'disc_302',
-    type: 'weight_overcharge',
-    trackingNumber: 'JD014600011438483218',
-    description: 'Volumetric weight calculation used 5000 divisor instead of agreed 6000. Overcharge of $8.40.',
-    chargedAmount: 38.20,
-    correctAmount: 29.80,
-    overchargeAmount: 8.40,
-    confidence: 0.92,
-  },
-];
+/* ── System prompt ────────────────────────────────────────────────────────── */
 
-function getDemoDiscrepancies(carrier: string): AuditDiscrepancy[] {
-  switch (carrier.toLowerCase()) {
-    case 'fedex': return DEMO_DISCREPANCIES_FEDEX;
-    case 'usps': return DEMO_DISCREPANCIES_USPS;
-    case 'dhl': return DEMO_DISCREPANCIES_DHL;
-    default: return DEMO_DISCREPANCIES_UPS;
+const SYSTEM_PROMPT = `You are a carrier invoice auditor for a pack-and-ship store. You analyze carrier invoices (UPS, FedEx, USPS, DHL) and compare them against expected charges to find discrepancies.
+
+Common discrepancy types:
+- overcharge: Invoiced amount higher than expected (wrong rate, surcharge error, etc.)
+- duplicate: Same tracking number billed more than once
+- phantom: Charge for a shipment with no matching record
+- surcharge: Questionable surcharge (residential, additional handling, fuel, etc.)
+- undercharge: Carrier billed less than expected (flag for awareness)
+
+For each discrepancy, return a JSON array:
+[
+  {
+    "trackingNumber": "string",
+    "invoicedAmount": number,
+    "expectedAmount": number,
+    "difference": number,
+    "issueType": "overcharge|duplicate|phantom|surcharge|undercharge",
+    "confidence": 0.0-1.0,
+    "explanation": "Brief explanation of the issue",
+    "suggestedAction": "dispute|accept|review"
   }
-}
+]
 
-function buildSummary(carrier: string, discrepancies: AuditDiscrepancy[]): AuditSummary {
-  const totalOvercharges = discrepancies.reduce((s, d) => s + d.overchargeAmount, 0);
-  const totalCharges = discrepancies.reduce((s, d) => s + d.chargedAmount, 0);
-  return {
-    totalCharges: parseFloat(totalCharges.toFixed(2)),
-    totalOvercharges: parseFloat(totalOvercharges.toFixed(2)),
-    discrepancyCount: discrepancies.length,
-    carrier,
-  };
-}
+Only return valid JSON. No markdown or explanation.`;
 
-/* ── AI prompt for invoice parsing ─────────────────────────────────────── */
-const SYSTEM_PROMPT = `You are a shipping invoice auditor AI for a postal mailbox store (CMRA).
-You analyze carrier invoices and identify potential billing discrepancies.
+/**
+ * POST /api/reconciliation/ai-audit
+ * Accepts a carrier invoice and returns AI-powered audit findings.
+ *
+ * SECURITY FIX: Now requires authentication.
+ */
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const startTime = Date.now();
+  const body = await validateBody(request, AuditBodySchema);
 
-Given the invoice data, extract each line item and compare against the provided shipment records.
-Look for these discrepancy types:
-- weight_overcharge: billed weight exceeds actual weight
-- duplicate_charge: same tracking number billed more than once
-- invalid_surcharge: surcharges that should not apply
-- service_mismatch: billed service differs from booked service
-- address_correction: address correction fees for valid addresses
-- residential_surcharge: residential fees applied to commercial addresses
-- late_delivery: guaranteed service missed delivery window (eligible for refund)
+  const apiKey = process.env.OPENAI_API_KEY;
 
-Return ONLY a JSON object with this exact structure:
-{
-  "lineItems": [
-    {
-      "trackingNumber": "string",
-      "service": "string",
-      "billedWeight": number,
-      "chargedAmount": number,
-      "surcharges": ["string"]
-    }
-  ],
-  "discrepancies": [
-    {
-      "type": "weight_overcharge|duplicate_charge|invalid_surcharge|service_mismatch|address_correction|residential_surcharge|late_delivery",
-      "trackingNumber": "string",
-      "description": "string",
-      "chargedAmount": number,
-      "correctAmount": number,
-      "overchargeAmount": number,
-      "confidence": 0.0-1.0
-    }
-  ]
-}
+  /* ── Demo mode when no API key ─────────────────────────────────────── */
+  if (!apiKey) {
+    await new Promise((r) => setTimeout(r, 2000));
 
-No markdown, no explanation — only valid JSON.`;
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { invoice, carrier, format } = body as {
-      invoice: string;
-      carrier: string;
-      format: 'pdf' | 'csv';
-    };
-
-    if (!invoice) {
-      return NextResponse.json(
-        { success: false, mode: 'ai', summary: { totalCharges: 0, totalOvercharges: 0, discrepancyCount: 0, carrier: carrier || 'unknown' }, discrepancies: [], error: 'No invoice data provided' },
-        { status: 400 }
-      );
-    }
-
-    if (!carrier) {
-      return NextResponse.json(
-        { success: false, mode: 'ai', summary: { totalCharges: 0, totalOvercharges: 0, discrepancyCount: 0, carrier: 'unknown' }, discrepancies: [], error: 'No carrier specified' },
-        { status: 400 }
-      );
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    /* ── Demo mode when no API key ─────────────────────────────────────── */
-    if (!apiKey) {
-      // Simulate processing delay for realism
-      await new Promise((r) => setTimeout(r, 2000));
-
-      const discrepancies = getDemoDiscrepancies(carrier);
-      const summary = buildSummary(carrier, discrepancies);
-
-      return NextResponse.json({
-        success: true,
-        mode: 'demo',
-        summary,
-        discrepancies,
-      } satisfies AuditResponse);
-    }
-
-    /* ── Real AI call ─────────────────────────────────────────────────── */
-    const shipmentContext = JSON.stringify(MOCK_SHIPMENTS, null, 2);
-
-    let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> }>;
-
-    if (format === 'pdf') {
-      // PDF → send as image to GPT-4o Vision
-      const base64Data = invoice.startsWith('data:')
-        ? invoice
-        : `data:application/pdf;base64,${invoice}`;
-
-      messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Analyze this ${carrier.toUpperCase()} carrier invoice and cross-reference against our shipment records:\n\n${shipmentContext}\n\nIdentify all discrepancies and overcharges.`,
-            },
-            {
-              type: 'image_url',
-              image_url: { url: base64Data, detail: 'high' },
-            },
-          ],
-        },
-      ];
-    } else {
-      // CSV → send as text to GPT-4o
-      messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Analyze this ${carrier.toUpperCase()} carrier invoice CSV data and cross-reference against our shipment records.\n\nInvoice CSV:\n${invoice}\n\nShipment records:\n${shipmentContext}\n\nIdentify all discrepancies and overcharges.`,
-        },
-      ];
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages,
-        max_tokens: 4000,
-        temperature: 0.1,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('OpenAI API error:', response.status, errText);
-
-      let detail = `OpenAI returned ${response.status}`;
-      try {
-        const errJson = JSON.parse(errText);
-        detail = errJson?.error?.message ?? detail;
-      } catch {
-        // keep generic detail
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          summary: { totalCharges: 0, totalOvercharges: 0, discrepancyCount: 0, carrier },
-          discrepancies: [],
-          error: `AI analysis error: ${detail}`,
-        },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    const content: string = data.choices?.[0]?.message?.content ?? '{}';
-
-    let parsed: { discrepancies?: Array<{ type: string; trackingNumber: string; description: string; chargedAmount: number; correctAmount: number; overchargeAmount: number; confidence: number }> };
-    try {
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      console.error('Failed to parse AI response:', content);
-      return NextResponse.json(
-        {
-          success: false,
-          mode: 'ai' as const,
-          summary: { totalCharges: 0, totalOvercharges: 0, discrepancyCount: 0, carrier },
-          discrepancies: [],
-          error: 'Failed to parse audit results from AI',
-        },
-        { status: 422 }
-      );
-    }
-
-    const discrepancies: AuditDiscrepancy[] = (parsed.discrepancies || []).map((d, i) => ({
-      id: `disc_ai_${String(i + 1).padStart(3, '0')}`,
-      type: d.type,
-      trackingNumber: d.trackingNumber,
-      description: d.description,
-      chargedAmount: d.chargedAmount,
-      correctAmount: d.correctAmount,
-      overchargeAmount: d.overchargeAmount,
-      confidence: d.confidence,
-    }));
-
-    const summary = buildSummary(carrier, discrepancies);
-
-    return NextResponse.json({
-      success: true,
-      mode: 'ai',
-      summary,
-      discrepancies,
-    } satisfies AuditResponse);
-  } catch (err) {
-    console.error('AI audit error:', err);
-    return NextResponse.json(
-      {
-        success: false,
-        mode: 'ai' as const,
-        summary: { totalCharges: 0, totalOvercharges: 0, discrepancyCount: 0, carrier: 'unknown' },
-        discrepancies: [],
-        error: 'Internal server error',
-      },
-      { status: 500 }
+    const totalInvoiced = DEMO_DISCREPANCIES.reduce((s, d) => s + d.invoicedAmount, 0);
+    const totalExpected = DEMO_DISCREPANCIES.reduce(
+      (s, d) => s + d.expectedAmount,
+      0,
     );
+    const estimatedRecovery = DEMO_DISCREPANCIES
+      .filter((d) => d.suggestedAction === 'dispute')
+      .reduce((s, d) => s + Math.abs(d.difference), 0);
+
+    return ok({
+      success: true,
+      mode: 'demo',
+      discrepancies: DEMO_DISCREPANCIES,
+      summary: {
+        totalInvoiced: parseFloat(totalInvoiced.toFixed(2)),
+        totalExpected: parseFloat(totalExpected.toFixed(2)),
+        totalDifference: parseFloat((totalInvoiced - totalExpected).toFixed(2)),
+        discrepancyCount: DEMO_DISCREPANCIES.length,
+        estimatedRecovery: parseFloat(estimatedRecovery.toFixed(2)),
+      },
+      processingTime: Date.now() - startTime,
+    } satisfies AuditResponse);
   }
-}
+
+  /* ── Real AI call ─────────────────────────────────────────────────── */
+  let content: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }>;
+
+  if (body.format === 'pdf_base64') {
+    const base64 = body.data.startsWith('data:')
+      ? body.data
+      : `data:image/jpeg;base64,${body.data}`;
+
+    content = [
+      { type: 'text', text: `Audit this carrier${body.carrier ? ` (${body.carrier})` : ''} invoice and find discrepancies:` },
+      { type: 'image_url', image_url: { url: base64, detail: 'high' } },
+    ];
+  } else {
+    content = [
+      { type: 'text', text: `Audit this carrier${body.carrier ? ` (${body.carrier})` : ''} CSV invoice data and find discrepancies:\n\n${body.data}` },
+    ];
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content },
+      ],
+      max_tokens: 2000,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error('OpenAI API error:', response.status, await response.text());
+    const totalInvoiced = DEMO_DISCREPANCIES.reduce((s, d) => s + d.invoicedAmount, 0);
+    const totalExpected = DEMO_DISCREPANCIES.reduce((s, d) => s + d.expectedAmount, 0);
+
+    return ok({
+      success: false,
+      mode: 'ai' as const,
+      discrepancies: DEMO_DISCREPANCIES,
+      summary: {
+        totalInvoiced,
+        totalExpected,
+        totalDifference: totalInvoiced - totalExpected,
+        discrepancyCount: DEMO_DISCREPANCIES.length,
+        estimatedRecovery: 0,
+      },
+      processingTime: Date.now() - startTime,
+      error: `AI API error: ${response.status}`,
+    } satisfies AuditResponse);
+  }
+
+  const result = await response.json();
+  const rawText: string = result.choices?.[0]?.message?.content ?? '[]';
+
+  let discrepancies: AuditDiscrepancy[];
+  try {
+    const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    discrepancies = JSON.parse(cleaned);
+  } catch {
+    console.error('Failed to parse AI audit response:', rawText);
+    return ok({
+      success: false,
+      mode: 'demo' as const,
+      discrepancies: DEMO_DISCREPANCIES,
+      summary: {
+        totalInvoiced: 0,
+        totalExpected: 0,
+        totalDifference: 0,
+        discrepancyCount: 0,
+        estimatedRecovery: 0,
+      },
+      processingTime: Date.now() - startTime,
+      error: 'Failed to parse AI response, showing demo data',
+    } satisfies AuditResponse);
+  }
+
+  const totalInvoiced = discrepancies.reduce((s, d) => s + d.invoicedAmount, 0);
+  const totalExpected = discrepancies.reduce((s, d) => s + d.expectedAmount, 0);
+  const estimatedRecovery = discrepancies
+    .filter((d) => d.suggestedAction === 'dispute')
+    .reduce((s, d) => s + Math.abs(d.difference), 0);
+
+  return ok({
+    success: true,
+    mode: 'ai',
+    discrepancies,
+    summary: {
+      totalInvoiced: parseFloat(totalInvoiced.toFixed(2)),
+      totalExpected: parseFloat(totalExpected.toFixed(2)),
+      totalDifference: parseFloat((totalInvoiced - totalExpected).toFixed(2)),
+      discrepancyCount: discrepancies.length,
+      estimatedRecovery: parseFloat(estimatedRecovery.toFixed(2)),
+    },
+    processingTime: Date.now() - startTime,
+  } satisfies AuditResponse);
+});

@@ -1,169 +1,124 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateQuery, validateBody, ok, notFound, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { onMailAction } from '@/lib/charge-event-service';
+import { z } from 'zod';
+import { onMailActionPerformed } from '@/lib/charge-event-service';
+import type { Prisma } from '@prisma/client';
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const GetMailQuerySchema = z.object({
+  status: z.string().optional(),
+  customerId: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+const PatchMailBodySchema = z.object({
+  id: z.string().min(1),
+  action: z.enum(['forward', 'scan', 'shred', 'hold', 'return']),
+  notes: z.string().optional(),
+  forwardAddress: z.string().optional(),
+});
 
 /**
  * GET /api/mail
- * List mail pieces with search, filtering, and pagination.
- * Query params: search?, type?, status?, page?, limit?
+ * List mail pieces for the tenant with filtering and pagination.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  const query = validateQuery(request, GetMailQuerySchema);
 
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const type = searchParams.get('type');
-    const status = searchParams.get('status');
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
-    const skip = (page - 1) * limit;
+  const where: Prisma.MailPieceWhereInput = {
+    customer: { tenantId: user.tenantId! },
+  };
+  if (query.status) where.status = query.status;
+  if (query.customerId) where.customerId = query.customerId;
 
-    const tenantScope = user.role !== 'superadmin' && user.tenantId
-      ? { customer: { tenantId: user.tenantId } }
-      : {};
+  const skip = (query.page - 1) * query.limit;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { ...tenantScope };
-    if (type) where.type = type;
-    if (status) where.status = status;
-    if (search) {
-      where.OR = [
-        { sender: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const [mailPieces, total] = await Promise.all([
-      prisma.mailPiece.findMany({
-        where,
-        orderBy: { receivedAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          customer: {
-            select: { id: true, firstName: true, lastName: true, pmbNumber: true },
-          },
-        },
-      }),
-      prisma.mailPiece.count({ where }),
-    ]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serialized = mailPieces.map((m: any) => ({
-      ...m,
-      receivedAt: m.receivedAt?.toISOString() ?? null,
-      actionAt: m.actionAt?.toISOString() ?? null,
-      createdAt: m.createdAt.toISOString(),
-      updatedAt: m.updatedAt.toISOString(),
-    }));
-
-    return NextResponse.json({ mailPieces: serialized, total, page, limit });
-  } catch (err) {
-    console.error('[GET /api/mail]', err);
-    return NextResponse.json({ error: 'Failed to fetch mail' }, { status: 500 });
-  }
-}
-
-/**
- * PATCH /api/mail
- * Update a mail piece action and auto-generate charge event (BAR-308).
- * Body: { id, action: 'scan'|'forward'|'discard', scanImage?, notes?, pageCount? }
- */
-export async function PATCH(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-
-    const body = await request.json();
-    const { id, action, scanImage, notes, pageCount } = body;
-
-    if (!id || !action) {
-      return NextResponse.json({ error: 'id and action are required' }, { status: 400 });
-    }
-
-    const validActions = ['scan', 'forward', 'discard', 'hold'];
-    if (!validActions.includes(action)) {
-      return NextResponse.json(
-        { error: `Invalid action. Must be one of: ${validActions.join(', ')}` },
-        { status: 400 },
-      );
-    }
-
-    // Find the mail piece and verify tenant ownership
-    const mailPiece = await prisma.mailPiece.findFirst({
-      where: {
-        id,
-        customer: { tenantId: user.tenantId },
-      },
-      include: {
-        customer: {
-          select: { id: true, pmbNumber: true, tenantId: true },
-        },
-      },
-    });
-
-    if (!mailPiece) {
-      return NextResponse.json({ error: 'Mail piece not found' }, { status: 404 });
-    }
-
-    // Map action to status
-    const statusMap: Record<string, string> = {
-      scan: 'scanned',
-      forward: 'forwarded',
-      discard: 'discarded',
-      hold: 'held',
-    };
-
-    const updated = await prisma.mailPiece.update({
-      where: { id },
-      data: {
-        action,
-        status: statusMap[action] || mailPiece.status,
-        scanImage: scanImage || mailPiece.scanImage,
-        notes: notes || mailPiece.notes,
-        actionAt: new Date(),
-      },
+  const [mailPieces, total] = await Promise.all([
+    prisma.mailPiece.findMany({
+      where,
+      orderBy: { receivedAt: 'desc' },
+      skip,
+      take: query.limit,
       include: {
         customer: {
           select: { id: true, firstName: true, lastName: true, pmbNumber: true },
         },
       },
-    });
+    }),
+    prisma.mailPiece.count({ where }),
+  ]);
 
-    // --- BAR-308: Auto-generate charge event for billable mail actions ---
-    let chargeEvent: { chargeEventId: string; totalCharge: number } | null = null;
-    const billableActions = ['scan', 'forward', 'discard'];
-    if (billableActions.includes(action) && mailPiece.customer.tenantId) {
-      try {
-        chargeEvent = await onMailAction({
-          tenantId: mailPiece.customer.tenantId,
-          customerId: mailPiece.customer.id,
-          pmbNumber: mailPiece.customer.pmbNumber,
-          mailPieceId: id,
-          action: action as 'scan' | 'forward' | 'discard',
-          pageCount: pageCount || 1,
-          createdById: user.id,
-        });
-      } catch (err) {
-        console.error('[mail] Charge event generation failed:', err);
-      }
-    }
+  const serialized = mailPieces.map((m) => ({
+    ...m,
+    receivedAt: m.receivedAt?.toISOString() ?? null,
+    actionedAt: m.actionedAt?.toISOString() ?? null,
+    createdAt: m.createdAt.toISOString(),
+    updatedAt: m.updatedAt.toISOString(),
+  }));
 
-    return NextResponse.json({
-      mailPiece: {
-        ...updated,
-        receivedAt: updated.receivedAt?.toISOString() ?? null,
-        actionAt: updated.actionAt?.toISOString() ?? null,
-        createdAt: updated.createdAt.toISOString(),
-        updatedAt: updated.updatedAt.toISOString(),
-      },
-      ...(chargeEvent && { chargeEvent }),
-    });
-  } catch (err) {
-    console.error('[PATCH /api/mail]', err);
-    return NextResponse.json({ error: 'Failed to update mail piece' }, { status: 500 });
+  return ok({
+    mailPieces: serialized,
+    total,
+    page: query.page,
+    limit: query.limit,
+  });
+});
+
+/**
+ * PATCH /api/mail
+ * Update a mail piece action (forward, scan, shred, hold, return).
+ * BAR-308: Auto-generates charge event for billable actions.
+ */
+export const PATCH = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, PatchMailBodySchema);
+
+  const mailPiece = await prisma.mailPiece.findFirst({
+    where: { id: body.id, customer: { tenantId: user.tenantId! } },
+    include: { customer: { select: { id: true, pmbNumber: true } } },
+  });
+
+  if (!mailPiece) return notFound('Mail piece not found');
+
+  if (mailPiece.status === 'actioned') {
+    return badRequest('Mail piece has already been actioned');
   }
-}
+
+  const updateData: Prisma.MailPieceUpdateInput = {
+    action: body.action,
+    status: 'actioned',
+    actionedAt: new Date(),
+    actionedById: user.id,
+    notes: body.notes ?? null,
+  };
+
+  if (body.action === 'forward' && body.forwardAddress) {
+    updateData.forwardAddress = body.forwardAddress;
+  }
+
+  const updated = await prisma.mailPiece.update({
+    where: { id: body.id },
+    data: updateData,
+  });
+
+  // BAR-308: Auto-generate charge event for billable mail actions
+  const billableActions = ['forward', 'scan', 'shred'];
+  if (billableActions.includes(body.action) && mailPiece.customer) {
+    try {
+      await onMailActionPerformed({
+        tenantId: user.tenantId!,
+        customerId: mailPiece.customer.id,
+        pmbNumber: mailPiece.customer.pmbNumber,
+        mailPieceId: mailPiece.id,
+        action: body.action,
+        createdById: user.id,
+      });
+    } catch (err) {
+      console.error('[mail] Charge event generation failed:', err);
+    }
+  }
+
+  return ok({ mailPiece: { ...updated, actionedAt: updated.actionedAt?.toISOString() ?? null } });
+});

@@ -1,32 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getMigrationProgress } from '@/lib/migration/engine';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateQuery, ok, badRequest } from '@/lib/api-utils';
+import { getMigrationProgress } from '@/lib/migration/progress';
+import { z } from 'zod';
+
+const ProgressQuerySchema = z.object({
+  id: z.string().min(1, 'Migration run id is required'),
+});
 
 /**
- * GET /api/migration/progress?id=mig_xxx
+ * GET /api/migration/progress?id=...
+ * Returns progress for a migration run.
  *
- * Returns the current progress of a running migration.
+ * SECURITY FIX: Now requires authentication.
  */
-export async function GET(request: NextRequest) {
-  const migrationId = request.nextUrl.searchParams.get('id');
+export const GET = withApiHandler(async (request: NextRequest) => {
+  const query = validateQuery(request, ProgressQuerySchema);
 
-  if (!migrationId) {
-    return NextResponse.json(
-      { error: 'Missing migration ID' },
-      { status: 400 }
-    );
-  }
+  const progress = await getMigrationProgress(query.id);
+  if (!progress) return badRequest('Migration run not found');
 
-  const progress = getMigrationProgress(migrationId);
-
-  if (!progress) {
-    return NextResponse.json(
-      { error: 'Migration not found' },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    progress,
-  });
-}
+  return ok({ progress });
+});

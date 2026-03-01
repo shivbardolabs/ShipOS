@@ -1,60 +1,57 @@
-import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+
+/* ── Schema ───────────────────────────────────────────────────────────────── */
+
+const UpdateRateBodySchema = z.object({
+  id: z.string().min(1),
+  retailMarkup: z.number().optional(),
+  isActive: z.boolean().optional(),
+  notes: z.string().optional(),
+});
 
 /**
  * GET /api/carrier-rates
- * List all carrier rates.
+ * List carrier rates for the current tenant.
  */
-export async function GET() {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+export const GET = withApiHandler(async (_request, { user }) => {
+  const tenantId = user.tenantId!;
 
-    const rates = await prisma.carrierRate.findMany({
-      orderBy: [{ carrier: 'asc' }, { service: 'asc' }],
-    });
+  const rates = await prisma.carrierRate.findMany({
+    where: { tenantId },
+    orderBy: [{ carrier: 'asc' }, { service: 'asc' }],
+  });
 
-    return NextResponse.json({ carrierRates: rates });
-  } catch (err) {
-    console.error('[GET /api/carrier-rates]', err);
-    return NextResponse.json({ error: 'Failed to fetch carrier rates' }, { status: 500 });
-  }
-}
+  return ok({ rates });
+});
 
 /**
  * PUT /api/carrier-rates
- * Update an individual carrier rate.
+ * Update a carrier rate (admin/manager only).
  */
-export async function PUT(request: Request) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { id, retailRate, marginType, marginValue, isActive } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Rate ID is required' }, { status: 400 });
-    }
-
-    const rate = await prisma.carrierRate.update({
-      where: { id },
-      data: {
-        retailRate: retailRate !== undefined ? retailRate : undefined,
-        marginType: marginType || undefined,
-        marginValue: marginValue !== undefined ? marginValue : undefined,
-        isActive: isActive !== undefined ? isActive : undefined,
-        lastUpdated: new Date(),
-      },
-    });
-
-    return NextResponse.json({ rate });
-  } catch (err) {
-    console.error('[PUT /api/carrier-rates]', err);
-    return NextResponse.json({ error: 'Failed to update rate' }, { status: 500 });
+export const PUT = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'manager', 'superadmin'].includes(user.role)) {
+    return forbidden('Admin or manager role required');
   }
-}
+
+  const body = await validateBody(request, UpdateRateBodySchema);
+
+  // Verify rate belongs to tenant
+  const existing = await prisma.carrierRate.findFirst({
+    where: { id: body.id, tenantId: user.tenantId! },
+  });
+  if (!existing) return badRequest('Rate not found');
+
+  const rate = await prisma.carrierRate.update({
+    where: { id: body.id },
+    data: {
+      ...(body.retailMarkup !== undefined && { retailMarkup: body.retailMarkup }),
+      ...(body.isActive !== undefined && { isActive: body.isActive }),
+      ...(body.notes !== undefined && { notes: body.notes }),
+    },
+  });
+
+  return ok({ rate });
+});

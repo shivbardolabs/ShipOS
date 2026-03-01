@@ -1,52 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest } from '@/lib/api-utils';
+import { z } from 'zod';
+
+const RollbackBodySchema = z.object({
+  migrationId: z.string().min(1),
+});
 
 /**
  * POST /api/migration/rollback
+ * Rollback a migration run.
  *
- * Rolls back a completed migration by deleting all records
- * tagged with the given migrationId.
- *
- * In production, this would:
- * 1. Delete all Customer records where migrationId = X
- * 2. Delete all Shipment records where migrationId = X
- * 3. Delete all Package records where migrationId = X
- * 4. Delete all ShipToAddress records where migrationId = X
- * 5. Delete all Invoice records where migrationId = X
- * 6. Update the MigrationRun status to 'rolled_back'
+ * SECURITY FIX: Now requires authentication.
+ * NOTE: Production rollback logic is currently stubbed.
  */
-export async function POST(request: NextRequest) {
-  try {
-    const { migrationId } = await request.json();
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const body = await validateBody(request, RollbackBodySchema);
 
-    if (!migrationId) {
-      return NextResponse.json(
-        { error: 'Missing migration ID' },
-        { status: 400 }
-      );
-    }
+  // TODO: Implement production rollback logic
+  // The actual rollback would:
+  // 1. Look up the MigrationRun by id
+  // 2. Find all records created during that run
+  // 3. Delete or revert them
+  // 4. Update the MigrationRun status to 'rolled_back'
 
-    // In production with Prisma:
-    // await prisma.$transaction([
-    //   prisma.shipToAddress.deleteMany({ where: { migrationId } }),
-    //   prisma.invoice.deleteMany({ where: { migrationId } }),
-    //   prisma.package.deleteMany({ where: { migrationId } }),
-    //   prisma.shipment.deleteMany({ where: { migrationId } }),
-    //   prisma.customer.deleteMany({ where: { migrationId } }),
-    //   prisma.migrationRun.update({
-    //     where: { id: migrationId },
-    //     data: { status: 'rolled_back' },
-    //   }),
-    // ]);
-
-    return NextResponse.json({
-      success: true,
-      message: `Migration ${migrationId} has been rolled back.`,
-    });
-  } catch (error) {
-    console.error('Rollback error:', error);
-    return NextResponse.json(
-      { error: 'Failed to rollback migration.' },
-      { status: 500 }
-    );
-  }
-}
+  return ok({
+    migrationId: body.migrationId,
+    status: 'rollback_not_implemented',
+    message: 'Migration rollback is not yet implemented in production.',
+  });
+});

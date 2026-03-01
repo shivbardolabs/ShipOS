@@ -1,171 +1,147 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateQuery, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { onShipmentCreated } from '@/lib/charge-event-service';
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const GetShipmentsQuerySchema = z.object({
+  search: z.string().optional(),
+  customerId: z.string().optional(),
+  status: z.string().optional(),
+  carrier: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+const CreateShipmentBodySchema = z.object({
+  customerId: z.string().min(1),
+  carrier: z.string().min(1),
+  service: z.string().min(1),
+  trackingNumber: z.string().optional(),
+  weight: z.number().optional(),
+  dimensions: z.object({
+    length: z.number(),
+    width: z.number(),
+    height: z.number(),
+  }).optional(),
+  toName: z.string().min(1),
+  toAddress: z.string().min(1),
+  toCity: z.string().min(1),
+  toState: z.string().min(1),
+  toZip: z.string().min(1),
+  toCountry: z.string().optional().default('US'),
+  retailPrice: z.number().min(0),
+  cost: z.number().min(0).optional(),
+  declared_value: z.number().optional(),
+  insurance: z.boolean().optional().default(false),
+  notes: z.string().optional(),
+});
 
 /**
  * GET /api/shipments
  * List shipments with search, filtering, and pagination.
- * Query params: search?, status?, paymentStatus?, page?, limit?
  */
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+export const GET = withApiHandler(async (request: NextRequest, { user }) => {
+  const query = validateQuery(request, GetShipmentsQuerySchema);
+  const tenantId = user.tenantId!;
+  const skip = (query.page - 1) * query.limit;
 
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const status = searchParams.get('status');
-    const paymentStatus = searchParams.get('paymentStatus');
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
-    const skip = (page - 1) * limit;
+  const where: Prisma.ShipmentWhereInput = {
+    customer: { tenantId },
+  };
 
-    const tenantScope = user.role !== 'superadmin' && user.tenantId
-      ? { customer: { tenantId: user.tenantId } }
-      : {};
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { ...tenantScope };
-    if (status) where.status = status;
-    if (paymentStatus) where.paymentStatus = paymentStatus;
-    if (search) {
-      where.OR = [
-        { trackingNumber: { contains: search, mode: 'insensitive' } },
-        { destination: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const [shipments, total] = await Promise.all([
-      prisma.shipment.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          customer: {
-            select: { id: true, firstName: true, lastName: true, pmbNumber: true },
-          },
-        },
-      }),
-      prisma.shipment.count({ where }),
-    ]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serialized = shipments.map((s: any) => ({
-      ...s,
-      shippedAt: s.shippedAt?.toISOString() ?? null,
-      deliveredAt: s.deliveredAt?.toISOString() ?? null,
-      createdAt: s.createdAt.toISOString(),
-      updatedAt: s.updatedAt.toISOString(),
-    }));
-
-    return NextResponse.json({ shipments: serialized, total, page, limit });
-  } catch (err) {
-    console.error('[GET /api/shipments]', err);
-    return NextResponse.json({ error: 'Failed to fetch shipments' }, { status: 500 });
+  if (query.search) {
+    where.OR = [
+      { trackingNumber: { contains: query.search, mode: 'insensitive' } },
+      { customer: { tenantId, firstName: { contains: query.search, mode: 'insensitive' } } },
+      { customer: { tenantId, lastName: { contains: query.search, mode: 'insensitive' } } },
+      { customer: { tenantId, pmbNumber: { contains: query.search, mode: 'insensitive' } } },
+    ];
   }
-}
+  if (query.customerId) where.customerId = query.customerId;
+  if (query.status) where.status = query.status;
+  if (query.carrier) where.carrier = query.carrier;
 
-/**
- * POST /api/shipments
- * Create a new shipment and auto-generate a shipping charge event (BAR-308).
- * Body: { customerId, carrier, service?, trackingNumber?, destination?,
- *         weight?, dimensions?, wholesaleCost?, retailPrice?, insuranceCost?, packingCost? }
- */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-
-    const body = await request.json();
-    const {
-      customerId,
-      carrier,
-      service,
-      trackingNumber,
-      destination,
-      weight,
-      dimensions,
-      wholesaleCost = 0,
-      retailPrice = 0,
-      insuranceCost = 0,
-      packingCost = 0,
-    } = body;
-
-    if (!customerId || !carrier) {
-      return NextResponse.json(
-        { error: 'customerId and carrier are required' },
-        { status: 400 },
-      );
-    }
-
-    // Verify customer belongs to tenant
-    const customer = await prisma.customer.findFirst({
-      where: { id: customerId, tenantId: user.tenantId },
-      select: { id: true, pmbNumber: true },
-    });
-
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
-
-    const shipment = await prisma.shipment.create({
-      data: {
-        customerId,
-        carrier,
-        service: service || null,
-        trackingNumber: trackingNumber || null,
-        destination: destination || null,
-        weight: weight ?? null,
-        dimensions: dimensions || null,
-        wholesaleCost,
-        retailPrice,
-        insuranceCost,
-        packingCost,
-        status: 'label_created',
-        paymentStatus: 'unpaid',
-      },
+  const [shipments, total] = await Promise.all([
+    prisma.shipment.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: query.limit,
       include: {
         customer: {
           select: { id: true, firstName: true, lastName: true, pmbNumber: true },
         },
       },
-    });
+    }),
+    prisma.shipment.count({ where }),
+  ]);
 
-    // --- BAR-308: Auto-generate shipping charge event ---
-    let chargeEvent: { chargeEventId: string; totalCharge: number } | null = null;
-    if (retailPrice > 0) {
-      try {
-        chargeEvent = await onShipmentCreated({
-          tenantId: user.tenantId,
-          customerId,
-          pmbNumber: customer.pmbNumber,
-          shipmentId: shipment.id,
-          carrier,
-          service,
-          retailPrice,
-          wholesaleCost,
-          createdById: user.id,
-        });
-      } catch (err) {
-        console.error('[shipments] Charge event generation failed:', err);
-      }
-    }
+  return ok({ shipments, total, page: query.page, limit: query.limit });
+});
 
-    return NextResponse.json({
-      shipment: {
-        ...shipment,
-        createdAt: shipment.createdAt.toISOString(),
-        updatedAt: shipment.updatedAt.toISOString(),
-        shippedAt: shipment.shippedAt?.toISOString() ?? null,
-        deliveredAt: shipment.deliveredAt?.toISOString() ?? null,
+/**
+ * POST /api/shipments
+ * Create a new shipment. Auto-generates a charge event (BAR-308).
+ */
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, CreateShipmentBodySchema);
+  const tenantId = user.tenantId!;
+
+  // Verify customer belongs to tenant
+  const customer = await prisma.customer.findFirst({
+    where: { id: body.customerId, tenantId },
+  });
+  if (!customer) return badRequest('Customer not found');
+
+  const shipment = await prisma.shipment.create({
+    data: {
+      customerId: body.customerId,
+      carrier: body.carrier,
+      service: body.service,
+      trackingNumber: body.trackingNumber ?? null,
+      weight: body.weight ?? null,
+      length: body.dimensions?.length ?? null,
+      width: body.dimensions?.width ?? null,
+      height: body.dimensions?.height ?? null,
+      toName: body.toName,
+      toAddress: body.toAddress,
+      toCity: body.toCity,
+      toState: body.toState,
+      toZip: body.toZip,
+      toCountry: body.toCountry,
+      retailPrice: body.retailPrice,
+      cost: body.cost ?? null,
+      declaredValue: body.declared_value ?? null,
+      insured: body.insurance,
+      notes: body.notes ?? null,
+      status: 'pending',
+      createdById: user.id,
+    },
+    include: {
+      customer: {
+        select: { id: true, firstName: true, lastName: true, pmbNumber: true },
       },
-      ...(chargeEvent && { chargeEvent }),
-    }, { status: 201 });
+    },
+  });
+
+  // BAR-308: Auto-generate charge event for the shipment
+  try {
+    await onShipmentCreated({
+      tenantId,
+      shipmentId: shipment.id,
+      customerId: body.customerId,
+      retailPrice: body.retailPrice,
+      carrier: body.carrier,
+      service: body.service,
+      createdById: user.id,
+    });
   } catch (err) {
-    console.error('[POST /api/shipments]', err);
-    return NextResponse.json({ error: 'Failed to create shipment' }, { status: 500 });
+    console.error('[shipments] Charge event generation failed:', err);
   }
-}
+
+  return created({ shipment });
+});

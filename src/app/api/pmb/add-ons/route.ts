@@ -1,139 +1,119 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { DEFAULT_ADDONS } from '@/lib/pmb-billing/add-ons';
-import { calculateAddOnProration } from '@/lib/pmb-billing/add-ons';
+import { z } from 'zod';
+
+/* ── Schema ───────────────────────────────────────────────────────────────── */
+
+const CreateAddOnBodySchema = z.object({
+  // Admin creating a new add-on definition
+  name: z.string().optional(),
+  slug: z.string().optional(),
+  description: z.string().optional(),
+  priceMonthly: z.number().optional(),
+  priceAnnual: z.number().optional(),
+  category: z.string().optional(),
+
+  // Customer activation
+  customerId: z.string().optional(),
+  addOnId: z.string().optional(),
+  billingCycle: z.enum(['monthly', 'annual']).optional(),
+});
 
 /**
  * GET /api/pmb/add-ons
- * List available add-ons and optionally customer's active add-ons.
+ * List PMB add-ons for the tenant. Seeds defaults if none exist.
  */
-export async function GET(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
+export const GET = withApiHandler(async (_request, { user }) => {
+  const tenantId = user.tenantId!;
 
-    const customerId = req.nextUrl.searchParams.get('customerId');
+  let addOns = await prisma.pmbAddOn.findMany({
+    where: { tenantId, isActive: true },
+    orderBy: { sortOrder: 'asc' },
+  });
 
-    // Get available add-ons
-    let addOns = await prisma.pmbAddOn.findMany({
-      where: { tenantId: user.tenantId, isActive: true },
-      orderBy: { sortOrder: 'asc' },
+  // Seed defaults if none exist
+  if (addOns.length === 0) {
+    const defaults = [
+      { name: 'Package Notification SMS', slug: 'sms_notify', priceMonthly: 5, priceAnnual: 50, category: 'notifications' },
+      { name: 'Mail Scanning', slug: 'mail_scan', priceMonthly: 15, priceAnnual: 150, category: 'mail' },
+      { name: 'Package Forwarding', slug: 'pkg_forward', priceMonthly: 10, priceAnnual: 100, category: 'packages' },
+      { name: 'Mail Shredding', slug: 'mail_shred', priceMonthly: 8, priceAnnual: 80, category: 'mail' },
+    ];
+
+    await prisma.pmbAddOn.createMany({
+      data: defaults.map((d, i) => ({ ...d, tenantId, sortOrder: i })),
     });
 
-    // Seed defaults if none exist
-    if (addOns.length === 0) {
-      await prisma.pmbAddOn.createMany({
-        data: DEFAULT_ADDONS.map((a, i) => ({
-          tenantId: user.tenantId!,
-          name: a.name,
-          slug: a.slug,
-          description: a.description,
-          priceMonthly: a.priceMonthly,
-          priceAnnual: a.priceAnnual,
-          unit: a.unit,
-          quotaType: a.quotaType,
-          quotaAmount: a.quotaAmount,
-          sortOrder: i,
-        })),
-      });
-      addOns = await prisma.pmbAddOn.findMany({
-        where: { tenantId: user.tenantId, isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      });
-    }
-
-    // Optionally include customer's active add-ons
-    let customerAddOns: { addOnId: string; status: string; activatedAt: Date; price: number }[] = [];
-    if (customerId) {
-      customerAddOns = await prisma.pmbCustomerAddOn.findMany({
-        where: { tenantId: user.tenantId, customerId, status: 'active' },
-        select: { addOnId: true, status: true, activatedAt: true, price: true },
-      });
-    }
-
-    return NextResponse.json({ addOns, customerAddOns });
-  } catch (err) {
-    console.error('[GET /api/pmb/add-ons]', err);
-    return NextResponse.json({ error: 'Failed to fetch add-ons' }, { status: 500 });
+    addOns = await prisma.pmbAddOn.findMany({
+      where: { tenantId, isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
   }
-}
+
+  return ok({ addOns });
+});
 
 /**
  * POST /api/pmb/add-ons
- * Create/update an add-on definition, or activate an add-on for a customer.
+ * Create a new add-on definition (admin) or activate an add-on for a customer.
  */
-export async function POST(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  const body = await validateBody(request, CreateAddOnBodySchema);
+  const tenantId = user.tenantId!;
 
-    const body = await req.json();
+  // Customer activation
+  if (body.customerId && body.addOnId) {
+    const addOn = await prisma.pmbAddOn.findFirst({
+      where: { id: body.addOnId, tenantId },
+    });
+    if (!addOn) return badRequest('Add-on not found');
 
-    // If customerId is provided, this is an activation
-    if (body.customerId && body.addOnId) {
-      const { customerId, addOnId, planTierId, billingCycle = 'monthly' } = body;
+    // Calculate proration
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remainingDays = daysInMonth - now.getDate();
+    const price = body.billingCycle === 'annual' ? addOn.priceAnnual : addOn.priceMonthly;
+    const proratedAmount = body.billingCycle === 'annual'
+      ? price
+      : parseFloat(((price / daysInMonth) * remainingDays).toFixed(2));
 
-      const addOn = await prisma.pmbAddOn.findUnique({ where: { id: addOnId } });
-      if (!addOn) return NextResponse.json({ error: 'Add-on not found' }, { status: 404 });
+    const activation = await prisma.pmbAddOnActivation.create({
+      data: {
+        tenantId,
+        customerId: body.customerId,
+        addOnId: body.addOnId,
+        billingCycle: body.billingCycle ?? 'monthly',
+        price,
+        proratedAmount,
+        status: 'active',
+        activatedAt: now,
+      },
+    });
 
-      // Calculate prorated price for mid-cycle activation
-      const now = new Date();
-      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      const proration = calculateAddOnProration(addOn.priceMonthly, now, periodEnd);
-
-      const customerAddOn = await prisma.pmbCustomerAddOn.create({
-        data: {
-          tenantId: user.tenantId,
-          customerId,
-          addOnId,
-          planTierId: planTierId ?? null,
-          billingCycle,
-          price: proration.proratedPrice,
-          prorated: proration.daysRemaining < proration.daysInPeriod,
-          proratedFrom: now,
-          status: 'active',
-        },
-      });
-
-      return NextResponse.json({ customerAddOn, proration });
-    }
-
-    // Otherwise, create/update add-on definition (admin)
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const { id, name, slug, description, priceMonthly, priceAnnual, unit, quotaType, quotaAmount, sortOrder } = body;
-    if (!name || !slug) {
-      return NextResponse.json({ error: 'name and slug are required' }, { status: 400 });
-    }
-
-    const data = {
-      tenantId: user.tenantId,
-      name,
-      slug,
-      description: description ?? null,
-      priceMonthly: priceMonthly ?? 0,
-      priceAnnual: priceAnnual ?? null,
-      unit: unit ?? 'month',
-      quotaType: quotaType ?? null,
-      quotaAmount: quotaAmount ?? 0,
-      sortOrder: sortOrder ?? 0,
-    };
-
-    let addOn;
-    if (id) {
-      addOn = await prisma.pmbAddOn.update({ where: { id }, data });
-    } else {
-      addOn = await prisma.pmbAddOn.create({ data });
-    }
-
-    return NextResponse.json({ addOn });
-  } catch (err) {
-    console.error('[POST /api/pmb/add-ons]', err);
-    return NextResponse.json({ error: 'Failed to save add-on' }, { status: 500 });
+    return created({ activation, proratedAmount });
   }
-}
+
+  // Admin creating a new add-on definition
+  if (!['admin', 'superadmin'].includes(user.role)) {
+    return forbidden('Admin role required');
+  }
+
+  if (!body.name || !body.slug) {
+    return badRequest('name and slug are required for creating an add-on');
+  }
+
+  const addOn = await prisma.pmbAddOn.create({
+    data: {
+      tenantId,
+      name: body.name,
+      slug: body.slug,
+      description: body.description ?? null,
+      priceMonthly: body.priceMonthly ?? 0,
+      priceAnnual: body.priceAnnual ?? 0,
+      category: body.category ?? 'general',
+    },
+  });
+
+  return created({ addOn });
+});

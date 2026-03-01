@@ -1,139 +1,114 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, created, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { generateChargeEvent, generateDailyStorageCharges } from '@/lib/charge-event-service';
+import { z } from 'zod';
 
-type ChargeServiceType =
-  | 'receiving' | 'storage' | 'forwarding' | 'scanning'
-  | 'pickup' | 'disposal' | 'shipping' | 'custom';
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const GenerateSingleSchema = z.object({
+  mode: z.literal('single'),
+  customerId: z.string().min(1),
+  type: z.string().min(1),
+  description: z.string().min(1),
+  amount: z.number().min(0),
+  tax: z.number().optional().default(0),
+  referenceType: z.string().optional(),
+  referenceId: z.string().optional(),
+});
+
+const GenerateBatchStorageSchema = z.object({
+  mode: z.literal('batch_storage'),
+  cutoffDays: z.number().int().min(1).default(5),
+  dailyRate: z.number().min(0).default(1.0),
+});
+
+const GenerateChargeEventBodySchema = z.discriminatedUnion('mode', [
+  GenerateSingleSchema,
+  GenerateBatchStorageSchema,
+]);
 
 /**
  * POST /api/charge-events/generate
- *
- * BAR-308: Manual charge event generation endpoint.
- *
- * Supports two modes:
- *   1. Single: Generate a charge event for a specific service action
- *      Body: { mode: 'single', customerId, serviceType, description, quantity?, packageId?, ... }
- *
- *   2. Batch storage: Generate daily storage charges for all qualifying packages
- *      Body: { mode: 'batch_storage' }
- *
- * Requires admin/superadmin role.
+ * Generate charge events. Two modes:
+ *   - single: Create a charge for a specific customer
+ *   - batch_storage: Auto-generate storage charges for packages held past cutoff
  */
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    if (!user.tenantId) {
-      return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
-    }
-    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'superadmin'].includes(user.role)) {
+    return forbidden('Admin role required');
+  }
 
-    const body = await request.json();
-    const { mode = 'single' } = body;
+  const tenantId = user.tenantId!;
+  const body = await validateBody(request, GenerateChargeEventBodySchema);
 
-    // ── Batch storage mode ───────────────────────────────────────────────
-    if (mode === 'batch_storage') {
-      const result = await generateDailyStorageCharges(user.tenantId);
-      return NextResponse.json({
-        mode: 'batch_storage',
-        chargesCreated: result.chargesCreated,
-        errors: result.errors,
-      });
-    }
-
-    // ── Single charge mode ───────────────────────────────────────────────
-    const {
-      customerId,
-      serviceType,
-      description,
-      quantity = 1,
-      packageId,
-      shipmentId,
-      mailPieceId,
-      notes,
-    } = body;
-
-    if (!customerId || !serviceType || !description) {
-      return NextResponse.json(
-        { error: 'customerId, serviceType, and description are required' },
-        { status: 400 },
-      );
-    }
-
-    // Validate serviceType
-    const validTypes: ChargeServiceType[] = [
-      'receiving', 'storage', 'forwarding', 'scanning',
-      'pickup', 'disposal', 'shipping', 'custom',
-    ];
-    if (!validTypes.includes(serviceType)) {
-      return NextResponse.json(
-        { error: `Invalid serviceType. Must be one of: ${validTypes.join(', ')}` },
-        { status: 400 },
-      );
-    }
-
-    // Look up customer
+  if (body.mode === 'single') {
+    // Verify customer belongs to tenant
     const customer = await prisma.customer.findFirst({
-      where: { id: customerId, tenantId: user.tenantId },
-      select: { id: true, pmbNumber: true },
+      where: { id: body.customerId, tenantId },
     });
+    if (!customer) return badRequest('Customer not found');
 
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
-
-    const result = await generateChargeEvent({
-      tenantId: user.tenantId,
-      customerId,
-      pmbNumber: customer.pmbNumber,
-      serviceType,
-      description,
-      quantity,
-      packageId,
-      shipmentId,
-      mailPieceId,
-      createdById: user.id,
-      notes,
-    });
-
-    if (!result) {
-      return NextResponse.json({ message: 'No charge generated (zero amount)' });
-    }
-
-    // Fetch the full charge event for the response
-    const chargeEvent = await prisma.chargeEvent.findUnique({
-      where: { id: result.chargeEventId },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            pmbNumber: true,
-            email: true,
-          },
-        },
+    const chargeEvent = await prisma.chargeEvent.create({
+      data: {
+        tenantId,
+        customerId: body.customerId,
+        type: body.type,
+        description: body.description,
+        amount: body.amount,
+        tax: body.tax,
+        status: 'pending',
+        referenceType: body.referenceType ?? null,
+        referenceId: body.referenceId ?? null,
+        createdById: user.id,
       },
     });
 
-    return NextResponse.json({
-      mode: 'single',
-      chargeEvent,
-      pricing: result.pricing,
-      tosChargeId: result.tosChargeId || null,
-      usageRecordId: result.usageRecordId || null,
-    }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/charge-events/generate]', err);
-    return NextResponse.json(
-      { error: 'Failed to generate charge event', details: err instanceof Error ? err.message : 'Unknown' },
-      { status: 500 },
-    );
+    return created({ chargeEvent });
   }
-}
+
+  // batch_storage mode
+  const cutoffDate = new Date(Date.now() - body.cutoffDays * 24 * 60 * 60 * 1000);
+
+  const packages = await prisma.package.findMany({
+    where: {
+      customer: { tenantId },
+      status: { in: ['checked_in', 'notified', 'ready'] },
+      checkedInAt: { lte: cutoffDate },
+    },
+    include: {
+      customer: { select: { id: true, pmbNumber: true } },
+    },
+  });
+
+  const events: Array<{ customerId: string; amount: number; days: number }> = [];
+
+  for (const pkg of packages) {
+    const daysHeld = Math.floor((Date.now() - pkg.checkedInAt!.getTime()) / (1000 * 60 * 60 * 24));
+    const chargeableDays = daysHeld - body.cutoffDays;
+    if (chargeableDays <= 0) continue;
+
+    const amount = parseFloat((chargeableDays * body.dailyRate).toFixed(2));
+
+    await prisma.chargeEvent.create({
+      data: {
+        tenantId,
+        customerId: pkg.customer.id,
+        type: 'storage_fee',
+        description: `Storage fee: ${chargeableDays} days beyond ${body.cutoffDays}-day hold period`,
+        amount,
+        status: 'pending',
+        referenceType: 'package',
+        referenceId: pkg.id,
+        createdById: user.id,
+      },
+    });
+
+    events.push({ customerId: pkg.customer.id, amount, days: chargeableDays });
+  }
+
+  return created({
+    generated: events.length,
+    totalAmount: events.reduce((s, e) => s + e.amount, 0),
+    events,
+  });
+});

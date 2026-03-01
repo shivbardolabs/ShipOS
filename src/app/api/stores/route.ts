@@ -1,151 +1,142 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { withApiHandler, validateBody, validateQuery, ok, created, notFound, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+
+/* ── Schemas ──────────────────────────────────────────────────────────────── */
+
+const CreateStoreBodySchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  timezone: z.string().optional().default('America/New_York'),
+});
+
+const UpdateStoreBodySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  timezone: z.string().optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+});
+
+const DeleteStoreQuerySchema = z.object({
+  id: z.string().min(1),
+});
 
 /**
- * GET /api/stores — List stores for the current tenant
- * POST /api/stores — Create a new store
- * PATCH /api/stores — Update a store
- * DELETE /api/stores — Delete a store
+ * GET /api/stores
+ * List all stores (tenants) the current user can see.
+ * Superadmin: all. Admin: own tenant only.
  */
-export async function GET() {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
-
-    const stores = await prisma.store.findMany({
-      where: { tenantId: user.tenantId },
-      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
-      include: {
-        _count: {
-          select: { users: true, customers: true, packages: true },
-        },
-      },
+export const GET = withApiHandler(async (_request, { user }) => {
+  if (user.role === 'superadmin') {
+    const stores = await prisma.tenant.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { users: true, customers: true } } },
     });
-
-    return NextResponse.json({ stores });
-  } catch (err) {
-    console.error('[GET /api/stores]', err);
-    return NextResponse.json({ error: 'Failed to fetch stores' }, { status: 500 });
+    return ok({ stores });
   }
-}
 
-export async function POST(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
+  if (!user.tenantId) return badRequest('No tenant');
 
-    const body = await req.json();
-    const { name, address, city, state, zipCode, phone, isDefault } = body;
+  const store = await prisma.tenant.findUnique({
+    where: { id: user.tenantId },
+    include: { _count: { select: { users: true, customers: true } } },
+  });
 
-    if (!name) {
-      return NextResponse.json({ error: 'Store name is required' }, { status: 400 });
-    }
+  if (!store) return notFound('Store not found');
+  return ok({ stores: [store] });
+});
 
-    // If this is the default store, unset others
-    if (isDefault) {
-      await prisma.store.updateMany({
-        where: { tenantId: user.tenantId },
-        data: { isDefault: false },
-      });
-    }
-
-    const store = await prisma.store.create({
-      data: {
-        name,
-        address: address || null,
-        city: city || null,
-        state: state || null,
-        zipCode: zipCode || null,
-        phone: phone || null,
-        isDefault: isDefault || false,
-        tenantId: user.tenantId,
-      },
-    });
-
-    return NextResponse.json({ store }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/stores]', err);
-    return NextResponse.json({ error: 'Failed to create store' }, { status: 500 });
+/**
+ * POST /api/stores
+ * Create a new store (superadmin/admin only).
+ */
+export const POST = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'superadmin'].includes(user.role)) {
+    return forbidden('Admin role required');
   }
-}
 
-export async function PATCH(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+  const body = await validateBody(request, CreateStoreBodySchema);
 
-    const body = await req.json();
-    const { id, name, address, city, state, zipCode, phone, isDefault } = body;
+  const store = await prisma.tenant.create({
+    data: {
+      name: body.name,
+      slug: body.slug,
+      address: body.address ?? null,
+      city: body.city ?? null,
+      state: body.state ?? null,
+      zipCode: body.zipCode ?? null,
+      phone: body.phone ?? null,
+      email: body.email ?? null,
+      timezone: body.timezone,
+      status: 'active',
+    },
+  });
 
-    if (!id) return NextResponse.json({ error: 'Store id is required' }, { status: 400 });
+  return created({ store });
+});
 
-    // Verify store belongs to tenant
-    const existing = await prisma.store.findFirst({
-      where: { id, tenantId: user.tenantId! },
-    });
-    if (!existing) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-
-    if (isDefault) {
-      await prisma.store.updateMany({
-        where: { tenantId: user.tenantId! },
-        data: { isDefault: false },
-      });
-    }
-
-    const store = await prisma.store.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(address !== undefined && { address }),
-        ...(city !== undefined && { city }),
-        ...(state !== undefined && { state }),
-        ...(zipCode !== undefined && { zipCode }),
-        ...(phone !== undefined && { phone }),
-        ...(isDefault !== undefined && { isDefault }),
-      },
-    });
-
-    return NextResponse.json({ store });
-  } catch (err) {
-    console.error('[PATCH /api/stores]', err);
-    return NextResponse.json({ error: 'Failed to update store' }, { status: 500 });
+/**
+ * PATCH /api/stores
+ * Update a store's settings (admin only).
+ */
+export const PATCH = withApiHandler(async (request: NextRequest, { user }) => {
+  if (!['admin', 'superadmin'].includes(user.role)) {
+    return forbidden('Admin role required');
   }
-}
 
-export async function DELETE(req: NextRequest) {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+  const body = await validateBody(request, UpdateStoreBodySchema);
 
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ error: 'Store id is required' }, { status: 400 });
-
-    const existing = await prisma.store.findFirst({
-      where: { id, tenantId: user.tenantId! },
-    });
-    if (!existing) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-    if (existing.isDefault) {
-      return NextResponse.json({ error: 'Cannot delete the default store' }, { status: 400 });
-    }
-
-    await prisma.store.delete({ where: { id } });
-
-    return NextResponse.json({ deleted: true });
-  } catch (err) {
-    console.error('[DELETE /api/stores]', err);
-    return NextResponse.json({ error: 'Failed to delete store' }, { status: 500 });
+  // Verify access
+  if (user.role !== 'superadmin' && body.id !== user.tenantId) {
+    return forbidden('Cannot update a store you do not belong to');
   }
-}
+
+  const store = await prisma.tenant.update({
+    where: { id: body.id },
+    data: {
+      ...(body.name !== undefined && { name: body.name }),
+      ...(body.address !== undefined && { address: body.address }),
+      ...(body.city !== undefined && { city: body.city }),
+      ...(body.state !== undefined && { state: body.state }),
+      ...(body.zipCode !== undefined && { zipCode: body.zipCode }),
+      ...(body.phone !== undefined && { phone: body.phone }),
+      ...(body.email !== undefined && { email: body.email }),
+      ...(body.timezone !== undefined && { timezone: body.timezone }),
+      ...(body.status !== undefined && { status: body.status }),
+    },
+  });
+
+  return ok({ store });
+});
+
+/**
+ * DELETE /api/stores?id=xxx
+ * Deactivate a store (superadmin only).
+ */
+export const DELETE = withApiHandler(async (request: NextRequest, { user }) => {
+  if (user.role !== 'superadmin') {
+    return forbidden('Superadmin role required');
+  }
+
+  const query = validateQuery(request, DeleteStoreQuerySchema);
+
+  await prisma.tenant.update({
+    where: { id: query.id },
+    data: { status: 'inactive' },
+  });
+
+  return ok({ success: true });
+});

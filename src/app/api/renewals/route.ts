@@ -1,77 +1,58 @@
-import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler, ok, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 
 /**
  * GET /api/renewals
- * Returns renewal pipeline data for the current tenant.
+ * Returns the renewal pipeline — customers with approaching or past-due renewals.
+ * Status is computed dynamically from renewalDate relative to today.
  */
-export async function GET() {
-  try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+export const GET = withApiHandler(async (_request, { user }) => {
+  if (!user.tenantId) return badRequest('No tenant');
 
-    const where = {
-      ...(user.role !== 'superadmin' && user.tenantId ? { tenantId: user.tenantId } : {}),
-      deletedAt: null,
-      renewalDate: { not: null as null },
+  const customers = await prisma.customer.findMany({
+    where: { tenantId: user.tenantId, status: 'active', deletedAt: null, renewalDate: { not: null } },
+    orderBy: { renewalDate: 'asc' },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      pmbNumber: true,
+      email: true,
+      renewalDate: true,
+      renewalReminderSent: true,
+      planTierId: true,
+      billingCycle: true,
+    },
+  });
+
+  const now = new Date();
+
+  const pipeline = customers.map((c) => {
+    const renewalDate = new Date(c.renewalDate!);
+    const daysUntil = Math.ceil((renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    let status: 'overdue' | 'due_this_week' | 'due_this_month' | 'upcoming';
+    if (daysUntil < 0) status = 'overdue';
+    else if (daysUntil <= 7) status = 'due_this_week';
+    else if (daysUntil <= 30) status = 'due_this_month';
+    else status = 'upcoming';
+
+    return {
+      ...c,
+      renewalDate: renewalDate.toISOString(),
+      daysUntilRenewal: daysUntil,
+      status,
     };
+  });
 
-    const customers = await prisma.customer.findMany({
-      where,
-      orderBy: { renewalDate: 'asc' },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        pmbNumber: true,
-        email: true,
-        phone: true,
-        renewalDate: true,
-        renewalStatus: true,
-        lastRenewalNotice: true,
-        status: true,
-      },
-    });
+  // Group counts
+  const summary = {
+    overdue: pipeline.filter((p) => p.status === 'overdue').length,
+    dueThisWeek: pipeline.filter((p) => p.status === 'due_this_week').length,
+    dueThisMonth: pipeline.filter((p) => p.status === 'due_this_month').length,
+    upcoming: pipeline.filter((p) => p.status === 'upcoming').length,
+    total: pipeline.length,
+  };
 
-    const now = new Date();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enriched = customers.map((c: any) => {
-      const daysUntilRenewal = c.renewalDate
-        ? Math.ceil((c.renewalDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        : 0;
-
-      // Compute renewalStatus dynamically from daysUntilRenewal so the
-      // pipeline always reflects reality, even before the cron runs.
-      let renewalStatus = c.renewalStatus;
-      if (c.renewalDate) {
-        if (c.status === 'suspended' || renewalStatus === 'suspended') {
-          renewalStatus = 'suspended';
-        } else if (daysUntilRenewal < -15) {
-          renewalStatus = 'suspended';
-        } else if (daysUntilRenewal < 0) {
-          renewalStatus = 'past_due';
-        } else if (daysUntilRenewal <= 30) {
-          renewalStatus = 'due_soon';
-        } else {
-          renewalStatus = 'current';
-        }
-      }
-
-      return {
-        ...c,
-        renewalDate: c.renewalDate?.toISOString() ?? null,
-        lastRenewalNotice: c.lastRenewalNotice?.toISOString() ?? null,
-        daysUntilRenewal,
-        renewalStatus,
-      };
-    });
-
-    return NextResponse.json({ customers: enriched });
-  } catch (err) {
-    console.error('[GET /api/renewals]', err);
-    return NextResponse.json({ error: 'Failed to fetch renewals' }, { status: 500 });
-  }
-}
+  return ok({ pipeline, summary });
+});
