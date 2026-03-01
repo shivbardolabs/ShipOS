@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Dependabot — Automated Dependency Updates
+# Checks npm packages and GitHub Actions for security vulnerabilities weekly.
+# ═══════════════════════════════════════════════════════════════════════════════
+version: 2
+
+updates:
+  # ── npm dependencies ──────────────────────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "shivbardolabs"
+    labels:
+      - "dependencies"
+      - "security"
+    # Group minor/patch updates to reduce PR noise
+    groups:
+      production-deps:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript"
+          - "jest"
+          - "ts-jest"
+          - "@playwright/*"
+          - "tailwindcss"
+          - "postcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-deps:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript"
+          - "jest"
+          - "ts-jest"
+          - "@playwright/*"
+          - "tailwindcss"
+          - "postcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Always allow security updates regardless of version
+    allow:
+      - dependency-type: "all"
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "shivbardolabs"
+    labels:
+      - "dependencies"
+      - "ci"
