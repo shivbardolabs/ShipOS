@@ -27,7 +27,11 @@ import {
   Phone,
   User,
   Loader2,
-  Undo2 } from 'lucide-react';
+  Undo2,
+  UserPlus,
+  Camera,
+  X as XIcon,
+  WifiOff } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
@@ -58,6 +62,7 @@ interface SearchCustomer {
   status: string;
   notifyEmail: boolean;
   notifySms: boolean;
+  photoUrl?: string | null;
   activePackageCount?: number;
 }
 
@@ -340,6 +345,23 @@ export default function CheckInPage() {
   const [checkedInPackageId, setCheckedInPackageId] = useState<string | null>(null);
   const [showRtsDialog, setShowRtsDialog] = useState(false);
 
+  // BAR-9: Cancel modal with Save Progress / Clear
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // BAR-9: Photo capture for package condition
+  const [photos, setPhotos] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // BAR-9: Multi-package batch tracking
+  const [batchCount, setBatchCount] = useState(0);
+
+  // BAR-9: Offline detection
+  const [isOnline, setIsOnline] = useState(true);
+
+  // BAR-9: Error retry state for label print & notification
+  const [labelPrintFailed, setLabelPrintFailed] = useState(false);
+  const [notificationFailed, setNotificationFailed] = useState(false);
+
   // BAR-324: Derive detected search category from input (no extra state needed)
   const detectedCategory = detectSearchCategory(customerSearch);
 
@@ -573,6 +595,71 @@ export default function CheckInPage() {
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
   }, []);
+
+  // BAR-9 Gap 5: Offline detection
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // BAR-9 Gap 1: Restore saved draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('shipos_checkin_draft');
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.step) setStep(draft.step);
+        if (draft.packageProgram) setPackageProgram(draft.packageProgram);
+        if (draft.selectedCustomer) setSelectedCustomer(draft.selectedCustomer);
+        if (draft.isWalkIn) setIsWalkIn(draft.isWalkIn);
+        if (draft.walkInName) setWalkInName(draft.walkInName);
+        if (draft.trackingNumber) setTrackingNumber(draft.trackingNumber);
+        if (draft.selectedCarrier) setSelectedCarrier(draft.selectedCarrier);
+        if (draft.senderName) setSenderName(draft.senderName);
+        if (draft.customCarrierName) setCustomCarrierName(draft.customCarrierName);
+        if (draft.packageType) setPackageType(draft.packageType);
+        if (draft.condition) setCondition(draft.condition);
+        if (draft.conditionOther) setConditionOther(draft.conditionOther);
+        if (draft.notes) setNotes(draft.notes);
+        if (draft.storageLocation) setStorageLocation(draft.storageLocation);
+        if (draft.hazardous) setHazardous(draft.hazardous);
+        if (draft.perishable) setPerishable(draft.perishable);
+        if (draft.requiresSignature) setRequiresSignature(draft.requiresSignature);
+        // Clear the draft after restoring
+        localStorage.removeItem('shipos_checkin_draft');
+      }
+    } catch {
+      // Fail silently if localStorage is unavailable
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // BAR-9 Gap 4: Keyboard navigation — Enter to advance / submit
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      // Don't trigger if user is typing in a textarea or if a modal is open
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA') return;
+      if (showCancelModal || showDuplicateModal || showSizeWarning || showPerishableWarning || showSuccess) return;
+
+      if (step < 4 && canProceed) {
+        e.preventDefault();
+        setStep(step + 1);
+      } else if (step === 4 && !isSubmitting) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, canProceed, isSubmitting, showCancelModal, showDuplicateModal, showSizeWarning, showPerishableWarning, showSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle carrier selection with auto-fill sender
   const handleCarrierSelect = (carrierId: string) => {
@@ -883,6 +970,13 @@ export default function CheckInPage() {
           carrierApiEnriched: !!carrierApiData,
         },
       });
+
+      // BAR-9 Gap 6: Track label print / notification failures from API response
+      if (data.labelPrintError) setLabelPrintFailed(true);
+      if (data.notificationError) setNotificationFailed(true);
+
+      // Show success modal
+      setShowSuccess(true);
     } catch (err) {
       // Log activity with error flag as fallback
       logActivity({
@@ -949,6 +1043,127 @@ export default function CheckInPage() {
     setDuplicateOverrideReason('');
     setSizeWarningAcked(false);
     setPerishableWarningAcked(false);
+    setPhotos([]);
+    setBatchCount(0);
+    setLabelPrintFailed(false);
+    setNotificationFailed(false);
+  };
+
+  // BAR-9 Gap 1: Save current wizard state to localStorage as a draft
+  const handleSaveDraft = () => {
+    try {
+      const draft = {
+        step,
+        packageProgram,
+        selectedCustomer,
+        isWalkIn,
+        walkInName,
+        trackingNumber,
+        selectedCarrier,
+        senderName,
+        customCarrierName,
+        packageType,
+        condition,
+        conditionOther,
+        notes,
+        storageLocation,
+        hazardous,
+        perishable,
+        requiresSignature,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('shipos_checkin_draft', JSON.stringify(draft));
+    } catch {
+      // Fail silently
+    }
+    setShowCancelModal(false);
+    window.location.href = '/dashboard/packages';
+  };
+
+  // BAR-9 Gap 1: Clear draft and reset
+  const handleClearAndReset = () => {
+    try { localStorage.removeItem('shipos_checkin_draft'); } catch {}
+    setShowCancelModal(false);
+    handleReset();
+  };
+
+  // BAR-9 Gap 3: Check in another package for the same customer
+  const handleCheckInAnother = () => {
+    // Preserve Step 1 state: selectedCustomer, packageProgram, isWalkIn, walkInName
+    // Reset Steps 2-4
+    setTrackingNumber('');
+    setSelectedCarrier('');
+    setCarrierAutoSuggested(false);
+    setCarrierDetectionResult(null);
+    setCarrierApiData(null);
+    setCustomCarrierName('');
+    setSenderName('');
+    setSenderSuggestions([]);
+    setPackageType('');
+    setHazardous(false);
+    setPerishable(false);
+    setRequiresSignature(false);
+    setCondition('good');
+    setConditionOther('');
+    setNotes('');
+    setStorageLocation('');
+    setPrintLabel(true);
+    setSendEmail(true);
+    setSendSms(true);
+    setShowSuccess(false);
+    setSubmitError(null);
+    setCheckedInPackageId(null);
+    setDuplicatePackage(null);
+    setDuplicateAcknowledged(false);
+    setDuplicateOverrideReason('');
+    setSizeWarningAcked(false);
+    setPerishableWarningAcked(false);
+    setPhotos([]);
+    setLabelPrintFailed(false);
+    setNotificationFailed(false);
+    setBatchCount((prev) => prev + 1);
+    setStep(2);
+  };
+
+  // BAR-9 Gap 2: Handle photo capture
+  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setPhotos((prev) => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset input so the same file can be selected again
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  // BAR-9 Gap 6: Retry label print
+  const handleRetryLabelPrint = async () => {
+    if (!checkedInPackageId) return;
+    try {
+      setLabelPrintFailed(false);
+      // Re-attempt label print via API
+      await fetch(`/api/packages/${checkedInPackageId}/print-label`, { method: 'POST' });
+    } catch {
+      setLabelPrintFailed(true);
+    }
+  };
+
+  // BAR-9 Gap 6: Retry notification
+  const handleRetryNotification = async () => {
+    if (!checkedInPackageId) return;
+    try {
+      setNotificationFailed(false);
+      // Re-attempt notification via API
+      await fetch(`/api/packages/${checkedInPackageId}/notify`, { method: 'POST' });
+    } catch {
+      setNotificationFailed(true);
+    }
   };
 
   // Generate a unique tracking number (BAR-245 + BAR-328)
@@ -987,6 +1202,25 @@ export default function CheckInPage() {
             Back to Packages
           </Button>
         }
+      />
+
+      {/* BAR-9 Gap 5: Offline banner */}
+      {!isOnline && (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+          <WifiOff className="h-4 w-4 shrink-0" />
+          <span>You&apos;re offline. Package data is preserved, but check-in will be disabled until you reconnect.</span>
+        </div>
+      )}
+
+      {/* Hidden file input for photo capture (BAR-9 Gap 2) */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        className="hidden"
+        onChange={handlePhotoCapture}
       />
 
       {/* Step Progress Indicator */}
@@ -1190,6 +1424,15 @@ export default function CheckInPage() {
                               >
                                 {cust.platform}
                               </Badge>
+                              {/* BAR-38: Status badge for non-active customers */}
+                              {cust.status !== 'active' && (
+                                <Badge
+                                  variant={cust.status === 'suspended' ? 'warning' : 'default'}
+                                  dot={false}
+                                >
+                                  {cust.status === 'suspended' ? 'Suspended' : 'Closed'}
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-3 mt-0.5">
                               <span className="text-xs font-mono text-primary-600">
@@ -1215,14 +1458,25 @@ export default function CheckInPage() {
                         <p className="text-xs text-surface-600 mt-2">
                           If no customer can be matched, you can return this package to the sender.
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowRtsDialog(true)}
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/30 transition-colors"
-                        >
-                          <Undo2 className="h-3.5 w-3.5" />
-                          Return to Sender
-                        </button>
+                        <div className="mt-3 flex items-center justify-center gap-3">
+                          <a
+                            href="/dashboard/customers/new"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary-900/20 text-primary-400 hover:bg-primary-900/30 border border-primary-800/30 transition-colors"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            Create New Customer
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setShowRtsDialog(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/30 transition-colors"
+                          >
+                            <Undo2 className="h-3.5 w-3.5" />
+                            Return to Sender
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1611,25 +1865,62 @@ export default function CheckInPage() {
               </div>
             )}
 
-            {/* Condition */}
-            <div className="max-w-xs">
-              <Select
-                label="Condition"
-                value={condition}
-                onChange={(e) => {
-                  setCondition(e.target.value);
-                  if (e.target.value !== 'other') setConditionOther('');
-                }}
-                options={[
-                  { value: 'good', label: 'Good' },
-                  { value: 'damaged', label: 'Damaged' },
-                  { value: 'wet', label: 'Wet' },
-                  { value: 'opened', label: 'Opened' },
-                  { value: 'partially_opened', label: 'Partially Opened' },
-                  { value: 'other', label: 'Other' },
-                ]}
-              />
+            {/* Condition + Photo Capture (BAR-9 Gap 2) */}
+            <div className="flex items-end gap-3">
+              <div className="max-w-xs flex-1">
+                <Select
+                  label="Condition"
+                  value={condition}
+                  onChange={(e) => {
+                    setCondition(e.target.value);
+                    if (e.target.value !== 'other') setConditionOther('');
+                  }}
+                  options={[
+                    { value: 'good', label: 'Good' },
+                    { value: 'damaged', label: 'Damaged' },
+                    { value: 'wet', label: 'Wet' },
+                    { value: 'opened', label: 'Opened' },
+                    { value: 'partially_opened', label: 'Partially Opened' },
+                    { value: 'other', label: 'Other' },
+                  ]}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className={cn(
+                  'flex h-10 w-10 items-center justify-center rounded-lg border transition-all',
+                  condition !== 'good'
+                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-400 animate-pulse hover:bg-amber-500/20'
+                    : 'border-surface-600/50 bg-surface-800/50 text-surface-400 hover:border-surface-500 hover:text-surface-300'
+                )}
+                title="Take photo of package condition"
+              >
+                <Camera className="h-5 w-5" />
+              </button>
             </div>
+
+            {/* Photo previews (BAR-9 Gap 2) */}
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {photos.map((photo, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={photo}
+                      alt={`Condition photo ${idx + 1}`}
+                      className="h-16 w-16 rounded-lg object-cover border border-surface-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                      className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {condition === 'other' && (
               <div className="max-w-lg">
@@ -1890,20 +2181,31 @@ export default function CheckInPage() {
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation (BAR-9: added Cancel button + offline disable) */}
         <div className="flex items-center justify-between pt-6 mt-6 border-t border-surface-800">
-          <Button
-            variant="ghost"
-            leftIcon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => {
-              // BAR-325: Cancel any pending auto-advance when going back
-              if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
-              setStep(Math.max(1, step - 1));
-            }}
-            disabled={step === 1}
-          >
-            Back
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* BAR-9 Gap 1: Cancel button */}
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-700/50 bg-surface-800/50 text-surface-400 hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 transition-all"
+              title="Cancel check-in"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+            <Button
+              variant="ghost"
+              leftIcon={<ArrowLeft className="h-4 w-4" />}
+              onClick={() => {
+                // BAR-325: Cancel any pending auto-advance when going back
+                if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+                setStep(Math.max(1, step - 1));
+              }}
+              disabled={step === 1}
+            >
+              Back
+            </Button>
+          </div>
           <span className="text-xs text-surface-500">
             Step {step} of {STEPS.length}
           </span>
@@ -1919,9 +2221,9 @@ export default function CheckInPage() {
             <Button
               leftIcon={isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isOnline}
             >
-              {isSubmitting ? 'Saving...' : 'Check In Package'}
+              {isSubmitting ? 'Saving...' : !isOnline ? 'Offline' : 'Check In Package'}
             </Button>
           )}
         </div>
@@ -2107,17 +2409,47 @@ export default function CheckInPage() {
         size="sm"
         persistent
         footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => (window.location.href = checkedInPackageId
-                ? `/dashboard/packages?id=${checkedInPackageId}`
-                : '/dashboard/packages')}
-            >
-              View Package
-            </Button>
-            <Button onClick={handleReset}>Check In Another</Button>
-          </>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => (window.location.href = checkedInPackageId
+                  ? `/dashboard/packages?id=${checkedInPackageId}`
+                  : '/dashboard/packages')}
+                className="flex-1"
+              >
+                View Package
+              </Button>
+              <Button onClick={handleReset} variant="secondary" className="flex-1">New Check-In</Button>
+            </div>
+            {/* BAR-9 Gap 3: Check in another for same customer */}
+            {(selectedCustomer || isWalkIn) && (
+              <Button onClick={handleCheckInAnother} className="w-full">
+                <Package className="h-4 w-4 mr-2" />
+                Check in another for this customer
+              </Button>
+            )}
+            {/* BAR-9 Gap 3: Done — send consolidated notification */}
+            {batchCount > 0 && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  // Send consolidated notification and exit
+                  if (checkedInPackageId) {
+                    fetch(`/api/packages/batch-notify`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ customerId: selectedCustomer?.id }),
+                    }).catch(() => {});
+                  }
+                  window.location.href = '/dashboard/packages';
+                }}
+                className="w-full"
+              >
+                Done — Send consolidated notification
+              </Button>
+            )}
+          </div>
         }
       >
         <div className="flex flex-col items-center text-center py-4">
@@ -2127,6 +2459,12 @@ export default function CheckInPage() {
           <h3 className="text-lg font-semibold text-surface-100 mb-1">
             Successfully Checked In!
           </h3>
+          {/* BAR-9 Gap 3: Show batch count */}
+          {batchCount > 0 && (
+            <p className="text-xs text-primary-400 mb-2">
+              📦 {batchCount + 1} packages checked in this session
+            </p>
+          )}
           <p className="text-sm text-surface-400 max-w-xs">
             Package for{' '}
             <span className="text-surface-200 font-medium">
@@ -2146,6 +2484,80 @@ export default function CheckInPage() {
               {trackingNumber}
             </p>
           )}
+
+          {/* BAR-9 Gap 6: Retry buttons for failed operations */}
+          {(labelPrintFailed || notificationFailed) && (
+            <div className="mt-4 w-full space-y-2">
+              {labelPrintFailed && (
+                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
+                  <span className="text-amber-400 flex items-center gap-2">
+                    <Printer className="h-4 w-4" />
+                    Label print failed
+                  </span>
+                  <div className="flex gap-2">
+                    <button onClick={handleRetryLabelPrint} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
+                      Retry
+                    </button>
+                    <button onClick={() => setLabelPrintFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
+                      Skip
+                    </button>
+                  </div>
+                </div>
+              )}
+              {notificationFailed && (
+                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
+                  <span className="text-amber-400 flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Notification failed
+                  </span>
+                  <div className="flex gap-2">
+                    <button onClick={handleRetryNotification} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
+                      Retry
+                    </button>
+                    <button onClick={() => setNotificationFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
+                      Skip
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* ================================================================== */}
+      {/*  BAR-9 Gap 1: Cancel Confirmation Modal                             */}
+      {/* ================================================================== */}
+      <Modal
+        open={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Check-In?"
+        size="sm"
+        footer={
+          <div className="flex gap-2 w-full">
+            <Button variant="secondary" onClick={() => setShowCancelModal(false)} className="flex-1">
+              Continue Editing
+            </Button>
+            <Button variant="secondary" onClick={handleSaveDraft} className="flex-1">
+              Save Progress
+            </Button>
+            <Button
+              onClick={handleClearAndReset}
+              className="flex-1 !bg-red-600 hover:!bg-red-700 !text-white"
+            >
+              Clear
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-2">
+          <p className="text-sm text-surface-300 mb-3">
+            What would you like to do with your current progress?
+          </p>
+          <div className="space-y-2 text-xs text-surface-400">
+            <p>• <strong className="text-surface-300">Save Progress</strong> — saves your current entries as a draft. You can resume later.</p>
+            <p>• <strong className="text-surface-300">Clear</strong> — discards all entries and starts over from Step 1.</p>
+          </div>
         </div>
       </Modal>
 
