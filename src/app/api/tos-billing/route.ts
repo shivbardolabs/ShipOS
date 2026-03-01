@@ -1,135 +1,167 @@
-import { NextRequest } from 'next/server';
-import { withApiHandler, validateQuery, validateBody, ok, created, badRequest, forbidden } from '@/lib/api-utils';
+import { withApiHandler, validateBody, validateQuery, ok, created, badRequest, notFound, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import {
-  chargeImmediately,
-  deferCharge,
-  autoCharge,
-  retryCharge,
-  getTosBillingSummary,
+  processImmediateCharge,
+  processDeferredCharge,
+  processChargeViaTos,
+  retryFailedCharge,
 } from '@/lib/tos-billing-service';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 
-/* ── Schemas ──────────────────────────────────────────────────────────────── */
-
-const GetTosBillingQuerySchema = z.object({
-  customerId: z.string().optional(),
-  status: z.string().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
-});
-
-const TosBillingBodySchema = z.object({
-  action: z.enum(['immediate', 'deferred', 'auto', 'retry']),
-  // For immediate / deferred / auto
-  customerId: z.string().optional(),
-  chargeEventId: z.string().optional(),
-  amount: z.number().optional(),
-  paymentMethodId: z.string().optional(),
-  deferUntil: z.string().optional(), // ISO date for deferred
-  // For retry
-  billingAttemptId: z.string().optional(),
-});
-
 /**
  * GET /api/tos-billing
- * List billing records with filtering, pagination, and summary stats.
+ *
+ * List TOS charges for the tenant with filtering.
  */
-export const GET = withApiHandler(async (request: NextRequest, { user }) => {
-  const query = validateQuery(request, GetTosBillingQuerySchema);
-  const tenantId = user.tenantId!;
-  const skip = (query.page - 1) * query.limit;
 
-  const where: Prisma.BillingAttemptWhereInput = { tenantId };
-  if (query.customerId) where.customerId = query.customerId;
-  if (query.status) where.status = query.status;
+const GetQuerySchema = z.object({
+  customerId: z.string().optional(),
+  status: z.string().optional(),
+  mode: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
-  const [records, total] = await Promise.all([
-    prisma.billingAttempt.findMany({
+export const GET = withApiHandler(async (request, { user }) => {
+  const { customerId, status, mode, limit, offset } = validateQuery(request, GetQuerySchema);
+
+  const where: Prisma.TosChargeWhereInput = { tenantId: user.tenantId! };
+  if (customerId) where.customerId = customerId;
+  if (status) where.status = status;
+  if (mode) where.mode = mode;
+
+  const [charges, total] = await Promise.all([
+    prisma.tosCharge.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      skip,
-      take: query.limit,
-      include: {
-        customer: {
-          select: { id: true, firstName: true, lastName: true, pmbNumber: true },
-        },
-        chargeEvent: { select: { id: true, type: true, description: true, amount: true } },
-      },
+      take: limit,
+      skip: offset,
     }),
-    prisma.billingAttempt.count({ where }),
+    prisma.tosCharge.count({ where }),
   ]);
 
-  const summary = await getTosBillingSummary(tenantId);
+  // Summary stats
+  const summary = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId! },
+    _sum: { total: true },
+    _count: true,
+  });
 
-  return ok({ records, total, page: query.page, limit: query.limit, summary });
+  const pendingDeferred = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId!, mode: 'deferred', status: 'pending' },
+    _sum: { total: true },
+    _count: true,
+  });
+
+  const paidImmediate = await prisma.tosCharge.aggregate({
+    where: { tenantId: user.tenantId!, mode: 'immediate', status: 'paid' },
+    _sum: { total: true },
+    _count: true,
+  });
+
+  return ok({
+    charges,
+    total,
+    limit,
+    offset,
+    summary: {
+      totalCharges: summary._count,
+      totalAmount: summary._sum.total ?? 0,
+      pendingDeferredCount: pendingDeferred._count,
+      pendingDeferredAmount: pendingDeferred._sum.total ?? 0,
+      paidImmediateCount: paidImmediate._count,
+      paidImmediateAmount: paidImmediate._sum.total ?? 0,
+    },
+  });
 });
 
 /**
  * POST /api/tos-billing
- * Process a billing action: immediate charge, deferred, auto, or retry.
+ *
+ * Create a new TOS charge. Automatically routes to immediate or deferred path.
  */
-export const POST = withApiHandler(async (request: NextRequest, { user }) => {
-  if (!['admin', 'superadmin', 'manager'].includes(user.role)) {
-    return forbidden('Admin role required');
+
+const PostBodySchema = z.object({
+  customerId: z.string().min(1),
+  description: z.string().min(1),
+  amount: z.number().min(0),
+  tax: z.number().min(0).optional(),
+  mode: z.enum(['immediate', 'deferred', 'auto']).optional(),
+  serviceType: z.string().optional(),
+  chargeEventId: z.string().optional(),
+  paymentMethodId: z.string().optional(),
+  referenceType: z.string().optional(),
+  referenceId: z.string().optional(),
+  action: z.literal('retry').optional(),
+  tosChargeId: z.string().optional(),
+});
+
+export const POST = withApiHandler(async (request, { user }) => {
+  if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
+    forbidden('Insufficient permissions');
   }
 
-  const body = await validateBody(request, TosBillingBodySchema);
-  const tenantId = user.tenantId!;
+  const body = await validateBody(request, PostBodySchema);
 
-  if (body.action === 'immediate') {
-    if (!body.customerId || !body.chargeEventId) {
-      return badRequest('customerId and chargeEventId required for immediate charge');
-    }
-    const result = await chargeImmediately({
-      tenantId,
-      customerId: body.customerId,
-      chargeEventId: body.chargeEventId,
-      amount: body.amount,
-      paymentMethodId: body.paymentMethodId,
-      processedById: user.id,
+  // Handle retry
+  if (body.action === 'retry' && body.tosChargeId) {
+    const result = await retryFailedCharge(body.tosChargeId);
+    return ok({ result });
+  }
+
+  const { customerId, description, amount, tax, mode, serviceType, chargeEventId, paymentMethodId, referenceType, referenceId } = body;
+
+  // Validate customer belongs to tenant
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, tenantId: user.tenantId! },
+  });
+  if (!customer) {
+    notFound('Customer not found');
+  }
+
+  if (mode === 'immediate') {
+    const result = await processImmediateCharge({
+      tenantId: user.tenantId!,
+      customerId,
+      description,
+      amount,
+      tax,
+      serviceType,
+      chargeEventId,
+      paymentMethodId,
+      referenceType,
+      referenceId,
     });
-    return created({ billing: result });
+    return created({ result });
   }
 
-  if (body.action === 'deferred') {
-    if (!body.customerId || !body.chargeEventId) {
-      return badRequest('customerId and chargeEventId required for deferred charge');
-    }
-    const result = await deferCharge({
-      tenantId,
-      customerId: body.customerId,
-      chargeEventId: body.chargeEventId,
-      deferUntil: body.deferUntil ? new Date(body.deferUntil) : undefined,
-      processedById: user.id,
+  if (mode === 'deferred') {
+    const result = await processDeferredCharge({
+      tenantId: user.tenantId!,
+      customerId,
+      description,
+      amount,
+      tax,
+      serviceType,
+      chargeEventId,
+      referenceType,
+      referenceId,
     });
-    return created({ billing: result });
+    return created({ result });
   }
 
-  if (body.action === 'auto') {
-    if (!body.customerId || !body.chargeEventId) {
-      return badRequest('customerId and chargeEventId required for auto charge');
-    }
-    const result = await autoCharge({
-      tenantId,
-      customerId: body.customerId,
-      chargeEventId: body.chargeEventId,
-      processedById: user.id,
-    });
-    return created({ billing: result });
-  }
-
-  if (body.action === 'retry') {
-    if (!body.billingAttemptId) {
-      return badRequest('billingAttemptId required for retry');
-    }
-    const result = await retryCharge({
-      billingAttemptId: body.billingAttemptId,
-      processedById: user.id,
-    });
-    return ok({ billing: result });
-  }
-
-  return badRequest('Unknown action');
+  // Auto mode — let the service decide
+  const result = await processChargeViaTos({
+    tenantId: user.tenantId!,
+    customerId,
+    description,
+    amount,
+    tax,
+    serviceType,
+    chargeEventId,
+    referenceType,
+    referenceId,
+  });
+  return created({ result });
 });

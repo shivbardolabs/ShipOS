@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { withApiHandler, validateQuery, validateBody, ok, notFound, badRequest, forbidden } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { onMailActionPerformed } from '@/lib/charge-event-service';
+import { onMailAction } from '@/lib/charge-event-service';
 import type { Prisma } from '@prisma/client';
 
 /* ── Schemas ──────────────────────────────────────────────────────────────── */
@@ -107,7 +107,7 @@ export const PATCH = withApiHandler(async (request: NextRequest, { user }) => {
   const billableActions = ['forward', 'scan', 'shred'];
   if (billableActions.includes(body.action) && mailPiece.customer) {
     try {
-      await onMailActionPerformed({
+      await onMailAction({
         tenantId: user.tenantId!,
         customerId: mailPiece.customer.id,
         pmbNumber: mailPiece.customer.pmbNumber,
