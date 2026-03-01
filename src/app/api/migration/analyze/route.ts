@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MigrationAnalysis } from '@/lib/migration/types';
+import { parseFirebirdBackup } from '@/lib/migration/firebird-parser';
+import type { MigrationAnalysis } from '@/lib/migration/types';
 
 /**
  * POST /api/migration/analyze
  *
- * Accepts a PostalMate .7z backup file, extracts it,
+ * Accepts a PostalMate .7z backup file, parses its structure,
  * and returns an analysis of the data to be migrated.
  *
- * In production, this would:
- * 1. Save the uploaded .7z file to a temp directory
- * 2. Extract using 7z CLI
- * 3. Restore Firebird backup using gbak
- * 4. Query the database for record counts
- * 5. Return the analysis
- *
- * For the initial version, we detect the file structure and
- * return analysis data based on the backup metadata.
+ * Flow:
+ * 1. Validate the uploaded file (.7z extension)
+ * 2. Read the file into a buffer
+ * 3. Parse using the Firebird binary parser
+ * 4. Map parser results to the MigrationAnalysis format
+ * 5. Return analysis with table counts and confidence level
  */
 export async function POST(request: NextRequest) {
   try {
@@ -30,54 +28,59 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (!file.name.endsWith('.7z')) {
+    if (!file.name.endsWith('.7z') && !file.name.endsWith('.fbk') && !file.name.endsWith('.gbk')) {
       return NextResponse.json(
-        { error: 'Invalid file format. Please upload a PostalMate .7z backup file.' },
+        { error: 'Invalid file format. Please upload a PostalMate .7z backup, .fbk, or .gbk file.' },
         { status: 400 }
       );
     }
 
     const fileSizeMB = file.size / (1024 * 1024);
 
-    // Read file header to verify it's a valid 7z archive
-    const headerBuffer = await file.slice(0, 6).arrayBuffer();
-    const header = new Uint8Array(headerBuffer);
-    const is7z = header[0] === 0x37 && header[1] === 0x7A &&
-                 header[2] === 0xBC && header[3] === 0xAF &&
-                 header[4] === 0x27 && header[5] === 0x1C;
+    // Read file into buffer for parsing
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    if (!is7z) {
+    // Parse using the Firebird binary parser
+    const parseResult = await parseFirebirdBackup(buffer, file.name);
+
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'File does not appear to be a valid 7z archive.' },
+        {
+          error: 'Failed to parse backup file.',
+          details: parseResult.errors,
+          fileInfo: parseResult.fileInfo,
+        },
         { status: 400 }
       );
     }
 
-    // In production: save file, extract, restore Firebird DB, query counts.
-    // For now, we return a realistic analysis based on the PostalMate backup
-    // structure we've analyzed. When the full Firebird integration is ready,
-    // this will query the actual database.
+    // Map parser results to MigrationAnalysis format for UI compatibility
+    const tableCountMap: Record<string, number> = {};
+    for (const table of parseResult.tables) {
+      tableCountMap[table.name] = table.recordCount;
+    }
 
     const analysis: MigrationAnalysis = {
       sourceFile: file.name,
-      databaseVersion: '14.7.2',
+      databaseVersion: parseResult.databaseVersion || 'Unknown',
       dateRange: {
-        min: '2007-05-21',
+        min: '2007-05-21', // PostalMate typical start date
         max: new Date().toISOString().split('T')[0],
       },
       counts: {
-        customers: 0,
-        shipToAddresses: 0,
-        shipments: 0,
-        packages: 0,
-        packageCheckins: 0,
-        products: 0,
-        transactions: 0,
-        lineItems: 0,
-        payments: 0,
-        mailboxes: 0,
-        carriers: 0,
-        departments: 0,
+        customers: tableCountMap['CUSTOMER'] ?? 0,
+        shipToAddresses: tableCountMap['SHIPTO'] ?? 0,
+        shipments: tableCountMap['SHIPMENTXN'] ?? 0,
+        packages: tableCountMap['PACKAGEXN'] ?? 0,
+        packageCheckins: tableCountMap['PKGRECVXN'] ?? 0,
+        products: tableCountMap['PRODUCTTBL'] ?? 0,
+        transactions: tableCountMap['INVOICETBL'] ?? 0,
+        lineItems: tableCountMap['INVOICEITEM'] ?? 0,
+        payments: tableCountMap['PAYMENTTBL'] ?? 0,
+        mailboxes: tableCountMap['MBDETAIL'] ?? 0,
+        carriers: tableCountMap['CARRIER'] ?? 0,
+        departments: tableCountMap['DEPARTMENT'] ?? 0,
       },
       carriers: [
         { id: 2, name: 'United Parcel Service', status: 'A' },
@@ -89,32 +92,31 @@ export async function POST(request: NextRequest) {
       departments: [],
     };
 
-    // Estimate record counts from file size
-    // These ratios are based on the analyzed PostalMate backup:
-    // ~758 MB compressed → specific record counts
-    const sizeRatio = fileSizeMB / 758;
-    analysis.counts = {
-      customers: Math.round(90140 * sizeRatio),
-      shipToAddresses: Math.round(358534 * sizeRatio),
-      shipments: Math.round(739928 * sizeRatio),
-      packages: Math.round(747103 * sizeRatio),
-      packageCheckins: Math.round(4472 * sizeRatio),
-      products: Math.round(5470 * sizeRatio),
-      transactions: Math.round(734545 * sizeRatio),
-      lineItems: Math.round(1516804 * sizeRatio),
-      payments: Math.round(735412 * sizeRatio),
-      mailboxes: Math.round(1606 * sizeRatio),
-      carriers: Math.round(52 * sizeRatio),
-      departments: Math.round(88 * sizeRatio),
-    };
+    // Include detailed table info for the advanced view
+    const tables = parseResult.tables.map((t) => ({
+      name: t.name,
+      recordCount: t.recordCount,
+      columns: t.columns,
+      sampleRecordCount: t.sampleRecords.length,
+    }));
 
     return NextResponse.json({
       success: true,
       analysis,
+      tables,
+      parseInfo: {
+        mode: parseResult.parseMode,
+        confidence: parseResult.confidence,
+        format: parseResult.fileInfo.format,
+        containedFiles: parseResult.fileInfo.containedFiles,
+        warnings: parseResult.errors,
+      },
       fileInfo: {
         name: file.name,
         sizeMB: Math.round(fileSizeMB * 10) / 10,
-        format: '7z (PostalMate Firebird Backup)',
+        format: parseResult.fileInfo.format === '7z'
+          ? '7z (PostalMate Firebird Backup)'
+          : `Firebird Backup (${parseResult.fileInfo.format})`,
       },
     });
   } catch (error) {

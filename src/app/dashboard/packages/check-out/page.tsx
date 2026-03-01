@@ -1011,6 +1011,15 @@ export default function CheckOutPage() {
                           </p>
                         </div>
 
+                        {/* BAR-194: Storage location */}
+                        {pkg.storageLocation && (
+                          <div className="shrink-0">
+                            <span className="inline-flex items-center gap-1 text-xs font-mono font-medium text-surface-300 bg-surface-800 border border-surface-700 px-2 py-1 rounded-md">
+                              📍 {pkg.storageLocation}
+                            </span>
+                          </div>
+                        )}
+
                         {/* Days held */}
                         <div className="shrink-0 text-center">
                           <span

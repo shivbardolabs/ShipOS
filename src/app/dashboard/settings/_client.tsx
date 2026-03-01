@@ -58,6 +58,7 @@ import {
   Loader2,
   ChevronUp,
   ChevronDown,
+  Eye,
   Layers } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -108,6 +109,7 @@ interface TenantUser {
   role: string;
   status: string;
   avatar: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -326,14 +328,15 @@ export default function SettingsPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/users');
+      const url = showDeletedUsers ? '/api/users?includeDeleted=true' : '/api/users';
+      const res = await fetch(url);
       if (res.ok) setTeamUsers(await res.json());
     } catch (e) {
       console.error('Failed to fetch users', e);
     } finally {
       setUsersLoading(false);
     }
-  }, []);
+  }, [showDeletedUsers]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -392,14 +395,45 @@ export default function SettingsPage() {
         body: JSON.stringify({ userId }),
       });
       if (res.ok) {
-        setTeamUsers(prev => prev.filter(u => u.id !== userId));
+        // Re-fetch users to get updated list (may need to keep deleted if showing audit view)
+        fetchUsers();
       }
     } catch (e) {
       console.error('Soft delete failed', e);
     } finally {
       setDeletingUser(null);
     }
-  }, []);
+  }, [fetchUsers]);
+
+  // ─── Show deleted users toggle (audit view) ──────────────────────────────
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
+
+  // Re-fetch when showDeletedUsers toggles
+  useEffect(() => {
+    fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDeletedUsers]);
+
+  // ─── Restore soft-deleted user ────────────────────────────────────────────
+  const [restoringUser, setRestoringUser] = useState<string | null>(null);
+
+  const handleRestoreUser = useCallback(async (userId: string) => {
+    setRestoringUser(userId);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'restore' }),
+      });
+      if (res.ok) {
+        fetchUsers();
+      }
+    } catch (e) {
+      console.error('Restore failed', e);
+    } finally {
+      setRestoringUser(null);
+    }
+  }, [fetchUsers]);
 
   // ─── Invite user state ──────────────────────────────────────────────────
   interface PendingInvitation {
@@ -2231,7 +2265,24 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
           {/* ================================================================ */}
           <TabPanel active={activeTab === 'users'}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-surface-200">Team Members</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-sm font-semibold text-surface-200">Team Members</h2>
+                {/* Show deleted users toggle for audit view */}
+                {(localUser?.role === 'admin' || localUser?.role === 'superadmin') && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletedUsers(!showDeletedUsers)}
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-md border transition-all ${
+                      showDeletedUsers
+                        ? 'bg-surface-700/50 text-surface-300 border-surface-600'
+                        : 'text-surface-500 border-surface-700/50 hover:bg-surface-800'
+                    }`}
+                  >
+                    <Eye className="h-3 w-3" />
+                    {showDeletedUsers ? 'Showing deleted' : 'Show deleted'}
+                  </button>
+                )}
+              </div>
               <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => { setShowInviteModal(true); setInviteError(''); setInviteSuccess(false); }}>
                 Invite User
               </Button>
@@ -2299,22 +2350,31 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          {/* User status badge */}
+                          {/* User status badge — green=active, yellow=suspended, red=inactive, gray=deleted */}
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                              member.status === 'active'
+                              member.deletedAt
+                                ? 'bg-surface-700/30 text-surface-500 border-surface-600/30'
+                                : member.status === 'active'
                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                 : member.status === 'suspended'
-                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                : 'bg-surface-500/10 text-surface-400 border-surface-500/20'
+                                ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                : 'bg-red-500/10 text-red-400 border-red-500/20'
                             }`}
                           >
                             <span className={`h-1.5 w-1.5 rounded-full ${
-                              member.status === 'active' ? 'bg-emerald-400' : member.status === 'suspended' ? 'bg-red-400' : 'bg-surface-400'
+                              member.deletedAt
+                                ? 'bg-surface-500'
+                                : member.status === 'active'
+                                ? 'bg-emerald-400'
+                                : member.status === 'suspended'
+                                ? 'bg-yellow-400'
+                                : 'bg-red-400'
                             }`} />
-                            {member.status === 'active' ? 'Active' : member.status === 'suspended' ? 'Suspended' : 'Inactive'}
+                            {member.deletedAt ? 'Deleted' : member.status === 'active' ? 'Active' : member.status === 'suspended' ? 'Suspended' : 'Inactive'}
                           </span>
-                          {(localUser?.role === 'admin' || localUser?.role === 'superadmin') ? (
+                          {/* Role selector — disabled for deleted users */}
+                          {(localUser?.role === 'admin' || localUser?.role === 'superadmin') && !member.deletedAt ? (
                             <select
                               value={member.role}
                               disabled={roleUpdating === member.id}
@@ -2325,36 +2385,60 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
                               <option value="manager">Manager</option>
                               <option value="employee">Employee</option>
                             </select>
-                          ) : (
+                          ) : !member.deletedAt ? (
                             <Badge variant={roleColor as 'default' | 'warning' | 'muted'} dot>
                               {member.role}
                             </Badge>
+                          ) : (
+                            <span className="text-[10px] text-surface-600 italic">{member.role}</span>
                           )}
-                          {/* Status toggle and soft delete — admin only, cannot self-modify */}
+                          {/* Status dropdown, soft-delete, or restore — admin only, cannot self-modify */}
                           {(localUser?.role === 'admin' || localUser?.role === 'superadmin') && !isMe && (
                             <>
-                              <button
-                                onClick={() => handleStatusToggle(member.id, member.status === 'active' ? 'inactive' : 'active')}
-                                disabled={statusUpdating === member.id}
-                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border transition-all disabled:opacity-50 ${
-                                  member.status === 'active'
-                                    ? 'text-amber-400 border-amber-500/20 hover:bg-amber-500/10'
-                                    : 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'
-                                }`}
-                              >
-                                {member.status === 'active' ? 'Deactivate' : 'Activate'}
-                              </button>
-                              <button
-                                onClick={() => handleSoftDelete(member.id)}
-                                disabled={deletingUser === member.id}
-                                className="text-[10px] font-semibold px-2 py-1 rounded-md border text-red-400 border-red-500/20 hover:bg-red-500/10 transition-all disabled:opacity-50"
-                              >
-                                Remove
-                              </button>
+                              {member.deletedAt ? (
+                                /* Restore button for deleted users */
+                                <button
+                                  onClick={() => handleRestoreUser(member.id)}
+                                  disabled={restoringUser === member.id}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-md border text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 transition-all disabled:opacity-50"
+                                >
+                                  {restoringUser === member.id ? 'Restoring…' : 'Restore'}
+                                </button>
+                              ) : (
+                                <>
+                                  {/* Status toggle dropdown — Activate / Suspend / Deactivate */}
+                                  <select
+                                    value={member.status}
+                                    disabled={statusUpdating === member.id}
+                                    onChange={(e) => handleStatusToggle(member.id, e.target.value)}
+                                    className={`text-[10px] font-semibold rounded-md border px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50 bg-surface-900 ${
+                                      member.status === 'active'
+                                        ? 'text-emerald-400 border-emerald-500/20'
+                                        : member.status === 'suspended'
+                                        ? 'text-yellow-400 border-yellow-500/20'
+                                        : 'text-red-400 border-red-500/20'
+                                    }`}
+                                  >
+                                    <option value="active">Active</option>
+                                    <option value="suspended">Suspended</option>
+                                    <option value="inactive">Inactive</option>
+                                  </select>
+                                  {/* Soft delete button */}
+                                  <button
+                                    onClick={() => handleSoftDelete(member.id)}
+                                    disabled={deletingUser === member.id}
+                                    className="text-[10px] font-semibold px-2 py-1 rounded-md border text-red-400 border-red-500/20 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                                  >
+                                    Remove
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                           <span className="text-xs text-surface-500">
-                            Joined {new Date(member.createdAt).toLocaleDateString()}
+                            {member.deletedAt
+                              ? `Removed ${new Date(member.deletedAt).toLocaleDateString()}`
+                              : `Joined ${new Date(member.createdAt).toLocaleDateString()}`}
                           </span>
                         </div>
                       </div>

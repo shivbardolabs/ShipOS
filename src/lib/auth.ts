@@ -72,6 +72,11 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
   });
 
   if (user) {
+    // Block inactive, suspended, or soft-deleted users from logging in
+    if (user.status !== 'active' || user.deletedAt) {
+      return null;
+    }
+
     // Ensure superadmin role is enforced for designated emails
     const targetRole = isSuperadmin ? 'superadmin' : user.role;
     if (user.role !== targetRole) {
@@ -92,6 +97,11 @@ export async function getOrProvisionUser(): Promise<LocalUser | null> {
   });
 
   if (user) {
+    // Block inactive, suspended, or soft-deleted users from logging in
+    if (user.status !== 'active' || user.deletedAt) {
+      return null;
+    }
+
     // Link existing user to Auth0
     const targetRole = isSuperadmin ? 'superadmin' : user.role;
     user = await prisma.user.update({

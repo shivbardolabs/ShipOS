@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { sendEmail } from './resend';
 import { sendSms, formatPhoneE164 } from './twilio';
+import { checkRateLimit, recordNotification } from './rate-limiter';
 import { prisma } from '@/lib/prisma';
 
 // Email templates
@@ -35,6 +36,8 @@ export interface NotificationPayload {
   subject?: string;              // required for custom type
   body?: string;                 // required for custom type
   data?: Record<string, unknown>; // type-specific template data
+  /** If true, skip rate limit check (used for retries) */
+  skipRateLimit?: boolean;
 }
 
 export interface NotificationResult {
@@ -42,7 +45,19 @@ export interface NotificationResult {
   notificationId: string;
   emailResult?: { success: boolean; messageId?: string; error?: string };
   smsResult?: { success: boolean; messageSid?: string; error?: string };
+  rateLimited?: boolean;
+  retryAfter?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Retry configuration — exponential backoff
+// ---------------------------------------------------------------------------
+
+/** Maximum number of retry attempts for a failed notification */
+const MAX_RETRIES = 3;
+
+/** Backoff intervals in minutes: 5min, 15min, 45min */
+const RETRY_BACKOFF_MINUTES = [5, 15, 45];
 
 // ---------------------------------------------------------------------------
 // SMS templates (plain text)
@@ -192,14 +207,41 @@ function getEmailTemplate(
 /**
  * Send a notification to a customer via their preferred channels.
  *
- * 1. Looks up the customer from DB
- * 2. Determines channel based on customer preferences (or explicit override)
- * 3. Sends email and/or SMS
- * 4. Records the notification in the database
+ * 1. Checks rate limit for the customer
+ * 2. Looks up the customer from DB
+ * 3. Determines channel based on customer preferences (or explicit override)
+ * 4. Sends email and/or SMS
+ * 5. Records the notification in the database
+ * 6. Tracks the send in the rate limiter
  */
 export async function sendNotification(
   payload: NotificationPayload
 ): Promise<NotificationResult> {
+  // 0. Check rate limit (unless explicitly skipped for retries)
+  if (!payload.skipRateLimit) {
+    const rateCheck = checkRateLimit(payload.customerId);
+    if (!rateCheck.allowed) {
+      // Create a record marked as rate-limited for visibility
+      const notification = await prisma.notification.create({
+        data: {
+          type: payload.type,
+          channel: payload.channel || 'email',
+          status: 'failed',
+          subject: payload.subject || `Rate limited: ${payload.type}`,
+          body: rateCheck.reason || 'Rate limit exceeded',
+          customerId: payload.customerId,
+        },
+      });
+
+      return {
+        success: false,
+        notificationId: notification.id,
+        rateLimited: true,
+        retryAfter: rateCheck.retryAfter,
+      };
+    }
+  }
+
   // 1. Fetch customer
   const customer = await prisma.customer.findUnique({
     where: { id: payload.customerId },
@@ -303,10 +345,207 @@ export async function sendNotification(
     },
   });
 
+  // 9. Record in rate limiter on success
+  if (overallSuccess) {
+    recordNotification(payload.customerId);
+  }
+
   return {
     success: !!overallSuccess,
     notificationId: notification.id,
     emailResult,
     smsResult,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Retry failed notifications
+// ---------------------------------------------------------------------------
+
+export interface RetryResult {
+  total: number;
+  retried: number;
+  succeeded: number;
+  stillFailed: number;
+  skippedRateLimit: number;
+  results: Array<{
+    notificationId: string;
+    customerId: string;
+    success: boolean;
+    error?: string;
+  }>;
+}
+
+/**
+ * Query failed notifications that haven't exceeded the retry limit
+ * and attempt to resend them with exponential backoff.
+ *
+ * Backoff schedule (from last attempt):
+ *   - Retry 1: after 5 minutes
+ *   - Retry 2: after 15 minutes
+ *   - Retry 3: after 45 minutes
+ *
+ * After 3 failed retries, the notification is left as failed.
+ */
+export async function retryFailedNotifications(): Promise<RetryResult> {
+  const now = new Date();
+
+  // Find failed notifications eligible for retry
+  const failedNotifications = await prisma.notification.findMany({
+    where: {
+      status: 'failed',
+      retryCount: { lt: MAX_RETRIES },
+    },
+    include: {
+      customer: {
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+    take: 50, // Process in batches to avoid overload
+  });
+
+  const result: RetryResult = {
+    total: failedNotifications.length,
+    retried: 0,
+    succeeded: 0,
+    stillFailed: 0,
+    skippedRateLimit: 0,
+    results: [],
+  };
+
+  for (const notif of failedNotifications) {
+    // Check backoff timing — don't retry too soon
+    const backoffMinutes = RETRY_BACKOFF_MINUTES[notif.retryCount] ?? RETRY_BACKOFF_MINUTES[RETRY_BACKOFF_MINUTES.length - 1];
+    const backoffMs = backoffMinutes * 60 * 1000;
+    const lastAttempt = notif.lastRetryAt || notif.createdAt;
+    const nextAllowed = new Date(lastAttempt.getTime() + backoffMs);
+
+    if (now < nextAllowed) {
+      // Not yet time to retry this one
+      continue;
+    }
+
+    // Check rate limit before retrying
+    const rateCheck = checkRateLimit(notif.customerId);
+    if (!rateCheck.allowed) {
+      result.skippedRateLimit++;
+      result.results.push({
+        notificationId: notif.id,
+        customerId: notif.customerId,
+        success: false,
+        error: `Rate limited: ${rateCheck.reason}`,
+      });
+      continue;
+    }
+
+    // Increment retry count and update lastRetryAt
+    await prisma.notification.update({
+      where: { id: notif.id },
+      data: {
+        retryCount: { increment: 1 },
+        lastRetryAt: now,
+      },
+    });
+
+    result.retried++;
+
+    try {
+      // Attempt to resend
+      const sendResult = await sendNotification({
+        type: notif.type as NotificationType,
+        customerId: notif.customerId,
+        channel: notif.channel as NotificationChannel,
+        subject: notif.subject || undefined,
+        body: notif.body || undefined,
+        skipRateLimit: true, // Already checked above
+      });
+
+      if (sendResult.success) {
+        // Mark the original notification as sent
+        await prisma.notification.update({
+          where: { id: notif.id },
+          data: {
+            status: 'sent',
+            sentAt: new Date(),
+          },
+        });
+        result.succeeded++;
+      } else {
+        result.stillFailed++;
+      }
+
+      result.results.push({
+        notificationId: notif.id,
+        customerId: notif.customerId,
+        success: sendResult.success,
+        error: sendResult.success ? undefined : 'Retry send failed',
+      });
+    } catch (err) {
+      result.stillFailed++;
+      result.results.push({
+        notificationId: notif.id,
+        customerId: notif.customerId,
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error during retry',
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Retry a single notification by ID (for the "Retry" button in the UI).
+ */
+export async function retrySingleNotification(
+  notificationId: string
+): Promise<NotificationResult> {
+  const notif = await prisma.notification.findUnique({
+    where: { id: notificationId },
+  });
+
+  if (!notif) {
+    throw new Error(`Notification not found: ${notificationId}`);
+  }
+
+  if (notif.status !== 'failed') {
+    throw new Error(`Notification ${notificationId} is not in failed state (current: ${notif.status})`);
+  }
+
+  if (notif.retryCount >= MAX_RETRIES) {
+    throw new Error(`Notification ${notificationId} has exceeded maximum retries (${MAX_RETRIES})`);
+  }
+
+  // Increment retry count
+  await prisma.notification.update({
+    where: { id: notificationId },
+    data: {
+      retryCount: { increment: 1 },
+      lastRetryAt: new Date(),
+    },
+  });
+
+  // Resend
+  const result = await sendNotification({
+    type: notif.type as NotificationType,
+    customerId: notif.customerId,
+    channel: notif.channel as NotificationChannel,
+    subject: notif.subject || undefined,
+    body: notif.body || undefined,
+    skipRateLimit: false, // Check rate limit for manual retries
+  });
+
+  // Update original notification on success
+  if (result.success) {
+    await prisma.notification.update({
+      where: { id: notificationId },
+      data: {
+        status: 'sent',
+        sentAt: new Date(),
+      },
+    });
+  }
+
+  return result;
 }

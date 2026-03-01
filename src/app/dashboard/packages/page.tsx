@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Tabs } from '@/components/ui/tabs';
 import { Modal } from '@/components/ui/modal';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
@@ -396,10 +397,23 @@ function PackagesContent() {
       .finally(() => setPackagesLoading(false));
   }, []);
 
+  /* ── BAR-194: Fetch storage locations for filter dropdown ─────── */
+  useEffect(() => {
+    fetch('/api/settings/storage-locations')
+      .then((r) => r.json())
+      .then((data) => {
+        const locs = (data.locations || []).filter((l: { isActive: boolean }) => l.isActive);
+        setStorageLocations(locs);
+      })
+      .catch(() => {});
+  }, []);
+
   // Filters
   const [activeTab, setActiveTab] = useState('all');
   const [programFilter, setProgramFilter] = useState<string>('all');
   const [carrierFilter, setCarrierFilter] = useState<string>('all');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [storageLocations, setStorageLocations] = useState<{ id: string; name: string }[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
@@ -558,8 +572,17 @@ function PackagesContent() {
       );
     }
 
+    // BAR-194: Storage location filter
+    if (locationFilter !== 'all') {
+      if (locationFilter === 'unassigned') {
+        data = data.filter((p) => !p.storageLocation);
+      } else {
+        data = data.filter((p) => p.storageLocation === locationFilter);
+      }
+    }
+
     return data;
-  }, [activeTab, search, packages]);
+  }, [activeTab, search, locationFilter, packages]);
 
   /* ── Sorted data (BAR-338) ──────────────────────────────────── */
   const sorted = useMemo(() => {
@@ -678,6 +701,19 @@ function PackagesContent() {
             onSearch={handleSearch}
             className="w-80"
           />
+          {/* BAR-194: Storage location filter dropdown */}
+          {storageLocations.length > 0 && (
+            <Select
+              value={locationFilter}
+              onChange={(e) => { setLocationFilter(e.target.value); setPage(0); }}
+              options={[
+                { value: 'all', label: 'All Locations' },
+                ...storageLocations.map((loc) => ({ value: loc.name, label: loc.name })),
+                { value: 'unassigned', label: 'Unassigned' },
+              ]}
+              className="w-44"
+            />
+          )}
           <div className="ml-auto flex items-center gap-2">
             <Button variant="ghost" size="sm" leftIcon={<Download className="h-4 w-4" />}>
               Export

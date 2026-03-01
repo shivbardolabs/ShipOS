@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,11 @@ import {
   CheckCircle2,
   Plus,
   Hash,
+  Upload,
+  Camera,
+  Search,
+  X,
+  Loader2,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -527,21 +532,38 @@ function MailContent() {
 
   const [detailModal, setDetailModal] = useState<MailPiece | null>(null);
 
+  /* ── Scan New Mail form state ─────────────────────────────── */
+  const [scanCustomerId, setScanCustomerId] = useState('');
+  const [scanMailType, setScanMailType] = useState('letter');
+  const [scanSender, setScanSender] = useState('');
+  const [scanNotes, setScanNotes] = useState('');
+  const [scanImage, setScanImage] = useState<string | null>(null);
+  const [scanImageBack, setScanImageBack] = useState<string | null>(null);
+  const [scanSubmitting, setScanSubmitting] = useState(false);
+  const [scanError, setScanError] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const frontInputRef = useRef<HTMLInputElement>(null);
+  const backInputRef = useRef<HTMLInputElement>(null);
+
   /* ── Fetch mail + customers from API ────────────────────────── */
   const [mailPieces, setMailPieces] = useState<MailPiece[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customers, setCustomers] = useState<any[]>([]);
 
-  useEffect(() => {
+  const refreshMailPieces = useCallback(() => {
     fetch('/api/mail?limit=100')
       .then((r) => r.json())
       .then((data) => setMailPieces(data.mailPieces ?? []))
       .catch((err) => console.error('Failed to fetch mail:', err));
+  }, []);
+
+  useEffect(() => {
+    refreshMailPieces();
     fetch('/api/customers?limit=200&status=active')
       .then((r) => r.json())
       .then((data) => setCustomers(data.customers ?? []))
       .catch((err) => console.error('Failed to fetch customers:', err));
-  }, []);
+  }, [refreshMailPieces]);
 
   // Auto-open detail modal when navigated with ?highlight={id}
   useEffect(() => {
@@ -589,12 +611,31 @@ function MailContent() {
     },
   ];
 
-  /* ------ Insert mail handlers ------ */
+  /* ------ File to base64 helper ------ */
+  const fileToBase64 = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  /* ------ Insert / Scan mail handlers ------ */
 
   const handleOpenInsertModal = useCallback(() => {
     setInsertStep('form');
     setGeneratedCode('');
     setCodeCopied(false);
+    setScanCustomerId('');
+    setScanMailType('letter');
+    setScanSender('');
+    setScanNotes('');
+    setScanImage(null);
+    setScanImageBack(null);
+    setScanError('');
+    setScanSubmitting(false);
+    setCustomerSearch('');
     setInsertModalOpen(true);
   }, []);
 
@@ -605,11 +646,79 @@ function MailContent() {
     setCodeCopied(false);
   }, []);
 
-  const handleConfirmInsert = useCallback(() => {
-    const code = generateUniqueMailCode();
-    setGeneratedCode(code);
-    setInsertStep('success');
-  }, []);
+  const handleFrontImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const base64 = await fileToBase64(file);
+      setScanImage(base64);
+    }
+  }, [fileToBase64]);
+
+  const handleBackImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const base64 = await fileToBase64(file);
+      setScanImageBack(base64);
+    }
+  }, [fileToBase64]);
+
+  // Filtered customers for PMB lookup
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return [];
+    const q = customerSearch.toLowerCase();
+    return customers
+      .filter(
+        (c) =>
+          c.pmbNumber?.toLowerCase().includes(q) ||
+          `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+          c.phone?.toLowerCase().includes(q) ||
+          c.email?.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [customerSearch, customers]);
+
+  const selectedCustomer = useMemo(
+    () => customers.find((c) => c.id === scanCustomerId),
+    [scanCustomerId, customers],
+  );
+
+  const handleConfirmInsert = useCallback(async () => {
+    if (!scanCustomerId) {
+      setScanError('Please select a customer.');
+      return;
+    }
+    setScanSubmitting(true);
+    setScanError('');
+    try {
+      const res = await fetch('/api/mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: scanMailType,
+          sender: scanSender || undefined,
+          customerId: scanCustomerId,
+          scanImage: scanImage || undefined,
+          scanImageBack: scanImageBack || undefined,
+          notes: scanNotes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setScanError(err.error || 'Failed to create mail piece');
+        setScanSubmitting(false);
+        return;
+      }
+      const code = generateUniqueMailCode();
+      setGeneratedCode(code);
+      setInsertStep('success');
+      // Refresh mail list
+      refreshMailPieces();
+    } catch {
+      setScanError('Network error. Please try again.');
+    } finally {
+      setScanSubmitting(false);
+    }
+  }, [scanCustomerId, scanMailType, scanSender, scanImage, scanImageBack, scanNotes, refreshMailPieces]);
 
   const handleCopyCode = useCallback(async () => {
     try {
@@ -634,10 +743,10 @@ function MailContent() {
         description="Process and route incoming mail."
         actions={
           <Button
-            leftIcon={<Plus className="h-4 w-4" />}
+            leftIcon={<ScanLine className="h-4 w-4" />}
             onClick={handleOpenInsertModal}
           >
-            Insert Mail
+            Scan New Mail
           </Button>
         }
       />
@@ -824,21 +933,21 @@ function MailContent() {
         )}
       </Modal>
 
-      {/* Insert Mail Modal */}
+      {/* Scan New Mail Modal */}
       <Modal
         open={insertModalOpen}
         onClose={handleCloseInsertModal}
         title={
           insertStep === 'form'
-            ? 'Insert Mail'
-            : 'Mail Inserted Successfully'
+            ? 'Scan New Mail'
+            : 'Mail Created Successfully'
         }
         description={
           insertStep === 'form'
-            ? 'Enter a new mail piece into the system for a customer'
+            ? 'Scan incoming mail, assign to a customer, and notify them automatically'
             : undefined
         }
-        size="md"
+        size="lg"
         footer={
           insertStep === 'form' ? (
             <>
@@ -849,10 +958,11 @@ function MailContent() {
                 Cancel
               </Button>
               <Button
-                leftIcon={<ScanLine className="h-4 w-4" />}
+                leftIcon={scanSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanLine className="h-4 w-4" />}
                 onClick={handleConfirmInsert}
+                disabled={scanSubmitting || !scanCustomerId}
               >
-                Confirm &amp; Upload
+                {scanSubmitting ? 'Creating…' : 'Create Mail Piece'}
               </Button>
             </>
           ) : (
@@ -861,33 +971,205 @@ function MailContent() {
         }
       >
         {insertStep === 'form' ? (
-          <div className="space-y-4">
-            <Select
-              label="Customer"
-              placeholder="Select customer..."
-              options={customers
-                .filter((c) => c.status === 'active')
-                .map((c) => ({
-                  value: c.id,
-                  label: `${c.firstName} ${c.lastName} (${c.pmbNumber})`,
-                }))}
-            />
+          <div className="space-y-5">
+            {/* ── Front & Back Scan Upload ────────────────────── */}
+            <div>
+              <label className="block text-xs font-medium text-surface-400 mb-2">Mail Scan Images</label>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Front scan */}
+                <div
+                  className={`relative group rounded-xl border-2 border-dashed transition-colors cursor-pointer ${
+                    scanImage
+                      ? 'border-brand-500/30 bg-brand-500/5'
+                      : 'border-surface-700 hover:border-surface-500 bg-surface-800/30'
+                  }`}
+                  onClick={() => frontInputRef.current?.click()}
+                >
+                  <input
+                    ref={frontInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleFrontImageUpload}
+                  />
+                  {scanImage ? (
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={scanImage} alt="Front scan" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-xs text-white font-medium">Replace</span>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setScanImage(null); }}
+                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 px-4">
+                      <Camera className="h-6 w-6 text-surface-500 mb-2" />
+                      <p className="text-xs text-surface-400 font-medium">Front Scan</p>
+                      <p className="text-[10px] text-surface-600 mt-0.5">Tap to capture or upload</p>
+                    </div>
+                  )}
+                </div>
+                {/* Back scan (optional) */}
+                <div
+                  className={`relative group rounded-xl border-2 border-dashed transition-colors cursor-pointer ${
+                    scanImageBack
+                      ? 'border-brand-500/30 bg-brand-500/5'
+                      : 'border-surface-700 hover:border-surface-500 bg-surface-800/30'
+                  }`}
+                  onClick={() => backInputRef.current?.click()}
+                >
+                  <input
+                    ref={backInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleBackImageUpload}
+                  />
+                  {scanImageBack ? (
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={scanImageBack} alt="Back scan" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-xs text-white font-medium">Replace</span>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setScanImageBack(null); }}
+                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 px-4">
+                      <Upload className="h-6 w-6 text-surface-500 mb-2" />
+                      <p className="text-xs text-surface-400 font-medium">Back Scan</p>
+                      <p className="text-[10px] text-surface-600 mt-0.5">Optional</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Customer PMB Lookup ─────────────────────────── */}
+            <div>
+              <label className="block text-xs font-medium text-surface-400 mb-1.5">
+                Customer <span className="text-red-400">*</span>
+              </label>
+              {selectedCustomer ? (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/20 text-brand-400 text-xs font-bold">
+                      {selectedCustomer.firstName?.[0]}{selectedCustomer.lastName?.[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-surface-200">
+                        {selectedCustomer.firstName} {selectedCustomer.lastName}
+                      </p>
+                      <p className="text-xs text-surface-500">PMB {selectedCustomer.pmbNumber}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setScanCustomerId(''); setCustomerSearch(''); }}
+                    className="text-xs text-surface-400 hover:text-surface-200 px-2 py-1 rounded-md hover:bg-surface-700 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500">
+                    <Search className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Search by PMB number, name, or phone..."
+                    className="w-full rounded-lg border border-surface-700 bg-surface-800 pl-10 pr-3.5 py-2.5 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-colors"
+                    autoFocus
+                  />
+                  {/* Search results dropdown */}
+                  {customerSearch.trim() && filteredCustomers.length > 0 && (
+                    <div className="absolute z-20 top-full mt-1 w-full bg-surface-800 border border-surface-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                      {filteredCustomers.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setScanCustomerId(c.id);
+                            setCustomerSearch('');
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-surface-700/50 transition-colors"
+                        >
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-600 text-[10px] font-bold text-surface-200">
+                            {c.firstName?.[0]}{c.lastName?.[0]}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-surface-200 truncate">
+                              {c.firstName} {c.lastName}
+                            </p>
+                            <p className="text-[10px] text-surface-500">
+                              PMB {c.pmbNumber}
+                              {c.phone && ` · ${c.phone}`}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {customerSearch.trim() && filteredCustomers.length === 0 && (
+                    <div className="absolute z-20 top-full mt-1 w-full bg-surface-800 border border-surface-700 rounded-lg shadow-xl px-4 py-3">
+                      <p className="text-xs text-surface-500">No matching customers found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Mail Type ───────────────────────────────────── */}
             <Select
               label="Mail Type"
-              placeholder="Select type..."
+              value={scanMailType}
+              onChange={(e) => setScanMailType(e.target.value)}
               options={[
-                { value: 'letter', label: 'Letter' },
-                { value: 'magazine', label: 'Magazine' },
-                { value: 'catalog', label: 'Catalog' },
-                { value: 'legal', label: 'Legal' },
-                { value: 'other', label: 'Other' },
+                { value: 'letter', label: '✉️ Letter' },
+                { value: 'magazine', label: '📖 Magazine' },
+                { value: 'catalog', label: '📜 Catalog' },
+                { value: 'legal', label: '📄 Legal' },
+                { value: 'other', label: '📬 Other' },
               ]}
             />
-            <Input label="Sender" placeholder="e.g. IRS, Chase Bank..." />
+
+            {/* ── Sender (optional) ───────────────────────────── */}
+            <Input
+              label="Sender"
+              value={scanSender}
+              onChange={(e) => setScanSender(e.target.value)}
+              placeholder="e.g. IRS, Chase Bank, Amazon..."
+            />
+
+            {/* ── Notes (optional) ────────────────────────────── */}
             <Textarea
               label="Notes"
+              value={scanNotes}
+              onChange={(e) => setScanNotes(e.target.value)}
               placeholder="Any additional notes about this mail piece..."
             />
+
+            {/* ── Error ───────────────────────────────────────── */}
+            {scanError && (
+              <div className="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2.5">
+                <X className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-400">{scanError}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-5 py-2">
@@ -899,8 +1181,8 @@ function MailContent() {
             </div>
 
             <p className="text-center text-sm text-surface-300">
-              Mail piece has been uploaded to the platform. Write the code
-              below on the physical mail piece.
+              Mail piece has been created and the customer has been notified.
+              Write the code below on the physical mail piece.
             </p>
 
             {/* Generated Code Display */}

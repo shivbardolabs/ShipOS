@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,9 @@ import {
   UserPlus,
   MoreVertical,
   MailOpen,
-  Smartphone } from 'lucide-react';
+  Smartphone,
+  Search,
+  Filter } from 'lucide-react';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 
 /* -------------------------------------------------------------------------- */
@@ -68,22 +70,48 @@ export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<Notification | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   /* ── Fetch notifications + customers from API ───────────────── */
   const [notifications, setNotifications] = useState<Notification[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customers, setCustomers] = useState<any[]>([]);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     fetch('/api/notifications?limit=100')
       .then((r) => r.json())
       .then((data) => setNotifications(data.notifications ?? []))
       .catch((err) => console.error('Failed to fetch notifications:', err));
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
     fetch('/api/customers?limit=200&status=active')
       .then((r) => r.json())
       .then((data) => setCustomers(data.customers ?? []))
       .catch((err) => console.error('Failed to fetch customers:', err));
-  }, []);
+  }, [fetchNotifications]);
+
+  /* ── Retry handler ──────────────────────────────────────────── */
+  const handleRetry = useCallback(async (notificationId: string) => {
+    setRetryingId(notificationId);
+    try {
+      const res = await fetch(`/api/notifications/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ retryNotificationId: notificationId }),
+      });
+      if (res.ok) {
+        // Refresh notifications list
+        fetchNotifications();
+      }
+    } catch (err) {
+      console.error('Retry failed:', err);
+    } finally {
+      setRetryingId(null);
+    }
+  }, [fetchNotifications]);
 
   // Stats
   const stats = useMemo(() => {
@@ -95,14 +123,31 @@ export default function NotificationsPage() {
     return { total, delivered, failed, pending, sent };
   }, [notifications]);
 
-  // Filtered data
+  // Filtered data — apply tab filter + customer search
   const filtered = useMemo<NotifRow[]>(() => {
-    if (activeTab === 'all') return notifications as NotifRow[];
+    let data = notifications as NotifRow[];
+
+    // Tab filter
     if (activeTab === 'failed') {
-      return notifications.filter((n) => n.status === 'failed' || n.status === 'bounced') as NotifRow[];
+      data = data.filter((n) => n.status === 'failed' || n.status === 'bounced');
+    } else if (activeTab !== 'all') {
+      data = data.filter((n) => n.status === activeTab);
     }
-    return notifications.filter((n) => n.status === activeTab) as NotifRow[];
-  }, [activeTab, notifications]);
+
+    // Customer search filter — match by name or PMB number
+    if (customerSearch.trim()) {
+      const query = customerSearch.toLowerCase().trim();
+      data = data.filter((n) => {
+        const c = n.customer;
+        if (!c) return false;
+        const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+        const pmb = (c.pmbNumber || '').toLowerCase();
+        return fullName.includes(query) || pmb.includes(query);
+      });
+    }
+
+    return data;
+  }, [activeTab, notifications, customerSearch]);
 
   // Tabs
   const tabs = [
@@ -187,17 +232,31 @@ export default function NotificationsPage() {
       align: 'right',
       width: 'w-12',
       render: (row) => (
-        <DropdownMenu
-          trigger={
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
-              <MoreVertical className="h-4 w-4" />
-            </div>
-          }
-          items={[
-            { id: 'view', label: 'View Details', icon: <Eye className="h-4 w-4" />, onClick: () => setDetailModal(row) },
-            { id: 'resend', label: 'Resend', icon: <RefreshCw className="h-4 w-4" /> },
-          ]}
-        />
+        <div className="flex items-center gap-1">
+          {/* Retry button for failed notifications */}
+          {(row.status === 'failed' || row.status === 'bounced') && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleRetry(row.id); }}
+              disabled={retryingId === row.id}
+              className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+              title="Retry sending this notification"
+            >
+              <RefreshCw className={`h-3 w-3 ${retryingId === row.id ? 'animate-spin' : ''}`} />
+              Retry
+            </button>
+          )}
+          <DropdownMenu
+            trigger={
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-colors">
+                <MoreVertical className="h-4 w-4" />
+              </div>
+            }
+            items={[
+              { id: 'view', label: 'View Details', icon: <Eye className="h-4 w-4" />, onClick: () => setDetailModal(row) },
+              { id: 'resend', label: 'Resend', icon: <RefreshCw className="h-4 w-4" />, onClick: () => handleRetry(row.id) },
+            ]}
+          />
+        </div>
       ) },
   ];
 
@@ -238,8 +297,58 @@ export default function NotificationsPage() {
         />
       </div>
 
-      {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {/* Tabs + Customer Search Filter */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+
+        <div className="flex items-center gap-2">
+          {/* Quick "Failed" filter button */}
+          <Button
+            variant={activeTab === 'failed' ? 'primary' : 'outline'}
+            size="sm"
+            leftIcon={<XCircle className="h-3.5 w-3.5" />}
+            onClick={() => setActiveTab(activeTab === 'failed' ? 'all' : 'failed')}
+          >
+            Failed ({stats.failed})
+          </Button>
+
+          {/* Customer search input */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-500" />
+            <input
+              type="text"
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              placeholder="Search customer or PMB..."
+              className="h-8 w-[200px] rounded-lg border border-surface-700 bg-surface-800 pl-8 pr-3 text-xs text-surface-200 placeholder:text-surface-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/30 transition-colors"
+            />
+            {customerSearch && (
+              <button
+                onClick={() => setCustomerSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Active filter indicator */}
+      {customerSearch && (
+        <div className="flex items-center gap-2 text-xs text-surface-400">
+          <Filter className="h-3.5 w-3.5" />
+          <span>Filtering by customer: &ldquo;{customerSearch}&rdquo;</span>
+          <span className="text-surface-500">·</span>
+          <span>{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
+          <button
+            onClick={() => setCustomerSearch('')}
+            className="text-primary-400 hover:text-primary-300 underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Notification Log */}
       <DataTable
@@ -262,7 +371,19 @@ export default function NotificationsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setDetailModal(null)}>Close</Button>
-            <Button variant="outline" leftIcon={<RefreshCw className="h-4 w-4" />}>Resend</Button>
+            {detailModal && (detailModal.status === 'failed' || detailModal.status === 'bounced') && (
+              <Button
+                variant="outline"
+                leftIcon={<RefreshCw className={`h-4 w-4 ${retryingId === detailModal.id ? 'animate-spin' : ''}`} />}
+                disabled={retryingId === detailModal.id}
+                onClick={() => handleRetry(detailModal.id)}
+              >
+                Retry
+              </Button>
+            )}
+            {detailModal && detailModal.status !== 'failed' && detailModal.status !== 'bounced' && (
+              <Button variant="outline" leftIcon={<RefreshCw className="h-4 w-4" />}>Resend</Button>
+            )}
           </>
         }
       >

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { onMailAction } from '@/lib/charge-event-service';
+import { sendNotification } from '@/lib/notifications/service';
 
 /**
  * GET /api/mail
@@ -165,5 +166,92 @@ export async function PATCH(request: NextRequest) {
   } catch (err) {
     console.error('[PATCH /api/mail]', err);
     return NextResponse.json({ error: 'Failed to update mail piece' }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/mail
+ * Create a new mail piece (scan & assign to customer).
+ * Body: { type, sender?, customerId, scanImage?, scanImageBack?, notes? }
+ *
+ * Automatically triggers a `mail_received` notification to the customer.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getOrProvisionUser();
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
+
+    const body = await request.json();
+    const { type, sender, customerId, scanImage, scanImageBack, notes } = body;
+
+    // Validate required fields
+    if (!customerId) {
+      return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
+    }
+
+    const validTypes = ['letter', 'magazine', 'catalog', 'legal', 'other'];
+    const mailType = validTypes.includes(type) ? type : 'letter';
+
+    // Verify the customer exists and belongs to the user's tenant
+    const customer = await prisma.customer.findFirst({
+      where: {
+        id: customerId,
+        tenantId: user.tenantId,
+        deletedAt: null,
+      },
+      select: { id: true, firstName: true, lastName: true, pmbNumber: true },
+    });
+
+    if (!customer) {
+      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    }
+
+    // Create the mail piece
+    const mailPiece = await prisma.mailPiece.create({
+      data: {
+        type: mailType,
+        sender: sender || null,
+        status: 'received',
+        scanImage: scanImage || null,
+        scanImageBack: scanImageBack || null,
+        notes: notes || null,
+        customerId: customer.id,
+        receivedAt: new Date(),
+      },
+      include: {
+        customer: {
+          select: { id: true, firstName: true, lastName: true, pmbNumber: true },
+        },
+      },
+    });
+
+    // Auto-trigger mail_received notification (fire and forget)
+    try {
+      await sendNotification({
+        type: 'mail_received',
+        customerId: customer.id,
+        data: {
+          mailType,
+          sender: sender || undefined,
+        },
+      });
+    } catch (err) {
+      // Don't fail the request if notification fails
+      console.error('[POST /api/mail] Notification failed:', err);
+    }
+
+    return NextResponse.json({
+      mailPiece: {
+        ...mailPiece,
+        receivedAt: mailPiece.receivedAt?.toISOString() ?? null,
+        actionAt: mailPiece.actionAt?.toISOString() ?? null,
+        createdAt: mailPiece.createdAt.toISOString(),
+        updatedAt: mailPiece.updatedAt.toISOString(),
+      },
+    }, { status: 201 });
+  } catch (err) {
+    console.error('[POST /api/mail]', err);
+    return NextResponse.json({ error: 'Failed to create mail piece' }, { status: 500 });
   }
 }
