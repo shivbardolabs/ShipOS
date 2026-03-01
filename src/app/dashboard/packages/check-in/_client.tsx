@@ -33,6 +33,8 @@ import {
   X as XIcon,
   WifiOff } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
+import { CameraMeasure } from '@/components/packages/camera-measure';
+import type { PackageDimensions } from '@/components/packages/camera-measure';
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 import { PerformedBy } from '@/components/ui/performed-by';
 import { useActivityLog } from '@/components/activity-log-provider';
@@ -297,6 +299,9 @@ export default function CheckInPage() {
   } | null>(null);
 
   // Step 3 — Package Details (BAR-245: conditional popups, duplicate tracking)
+  const [packageDimensions, setPackageDimensions] = useState<PackageDimensions>({
+    lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null,
+  });
   const [packageType, setPackageType] = useState('');
   const [hazardous, setHazardous] = useState(false);
   const [perishable, setPerishable] = useState(false);
@@ -1009,6 +1014,12 @@ export default function CheckInPage() {
           sendEmail: printMode === 'batch' ? false : sendEmail, // BAR-41: delay notifications in batch mode
           sendSms: printMode === 'batch' ? false : sendSms,
           printLabel: printLabelEnabled,
+          // Camera measure dimensions
+          lengthIn: packageDimensions.lengthIn || undefined,
+          widthIn: packageDimensions.widthIn || undefined,
+          heightIn: packageDimensions.heightIn || undefined,
+          weightLbs: packageDimensions.weightLbs || undefined,
+          dimensionSource: packageDimensions.source || undefined,
           // BAR-240: Include enrichment data
           carrierApiData: carrierApiData ? {
             senderName: carrierApiData.sender?.name,
@@ -1132,6 +1143,7 @@ export default function CheckInPage() {
     setConditionOther('');
     setNotes('');
     setStorageLocation('');
+    setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
     setPrintLabel(true);
     setSendEmail(true);
     setSendSms(true);
@@ -1207,6 +1219,7 @@ export default function CheckInPage() {
     setConditionOther('');
     setNotes('');
     setStorageLocation('');
+    setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
     setPrintLabel(true);
     setSendEmail(true);
     setSendSms(true);
@@ -2131,6 +2144,18 @@ export default function CheckInPage() {
                 rows={3}
               />
             </div>
+
+            {/* Camera Measure Dimensions */}
+            <div className="max-w-lg">
+              <CameraMeasure
+                dimensions={packageDimensions}
+                onChange={setPackageDimensions}
+                onSuggestPackageType={(type) => {
+                  // Auto-select package type from AI suggestion if not already set
+                  if (!packageType) setPackageType(type);
+                }}
+              />
+            </div>
           </div>
         )}
 
@@ -2221,6 +2246,14 @@ export default function CheckInPage() {
                   />
                 )}
               </div>
+              {(packageDimensions.lengthIn || packageDimensions.widthIn || packageDimensions.heightIn) && (
+                <div className="pt-3 border-t border-surface-800">
+                  <SummaryField
+                    label="Dimensions"
+                    value={`${packageDimensions.lengthIn || '–'} × ${packageDimensions.widthIn || '–'} × ${packageDimensions.heightIn || '–'} in${packageDimensions.weightLbs ? ` • ${packageDimensions.weightLbs} lbs` : ''}${packageDimensions.source === 'camera_ai' ? ' (📐 AI measured)' : ''}`}
+                  />
+                </div>
+              )}
               {notes && (
                 <div className="pt-3 border-t border-surface-800">
                   <SummaryField label="Notes" value={notes} />

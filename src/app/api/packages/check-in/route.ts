@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
       duplicateOverride,
       duplicateOverrideReason,
       duplicateOriginalPackageId,
+      // Camera measure dimensions
+      lengthIn,
+      widthIn,
+      heightIn,
+      weightLbs,
+      dimensionSource,
     } = body;
 
     // --- Validation ---
@@ -185,6 +191,12 @@ export async function POST(req: NextRequest) {
         condition: resolvedCondition,
         notes: resolvedNotes,
         storageLocation: storageLocation?.trim() || null,
+        // Camera measure dimensions
+        lengthIn: lengthIn != null ? parseFloat(lengthIn) || null : null,
+        widthIn: widthIn != null ? parseFloat(widthIn) || null : null,
+        heightIn: heightIn != null ? parseFloat(heightIn) || null : null,
+        weightLbs: weightLbs != null ? parseFloat(weightLbs) || null : null,
+        dimensionSource: dimensionSource || null,
         customerId: customer.id,
         checkedInById: user.id,
         // BAR-328: Duplicate override tracking
@@ -232,6 +244,8 @@ export async function POST(req: NextRequest) {
           perishable: pkg.perishable,
           storageLocation: pkg.storageLocation,
           isWalkIn: !!isWalkIn,
+          // Dimension data
+          ...(lengthIn && { lengthIn, widthIn, heightIn, weightLbs, dimensionSource }),
           // BAR-328: Log duplicate override details
           ...(duplicateOverride && {
             duplicateOverride: true,
@@ -335,6 +349,12 @@ export async function POST(req: NextRequest) {
         perishable: pkg.perishable,
         storageLocation: pkg.storageLocation,
         checkedInAt: pkg.checkedInAt.toISOString(),
+        // Dimensions
+        lengthIn: pkg.lengthIn,
+        widthIn: pkg.widthIn,
+        heightIn: pkg.heightIn,
+        weightLbs: pkg.weightLbs,
+        dimensionSource: pkg.dimensionSource,
         customer: {
           id: pkg.customer.id,
           name: `${pkg.customer.firstName} ${pkg.customer.lastName}`,

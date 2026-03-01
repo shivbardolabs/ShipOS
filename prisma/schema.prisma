@@ -271,6 +271,14 @@ model Package {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Dimensions — camera measure or manual entry
+  lengthIn        Float?   // Length in inches
+  widthIn         Float?   // Width in inches
+  heightIn        Float?   // Height in inches
+  weightLbs       Float?   // Weight in pounds (manual entry)
+  dimensionSource String?  // manual, camera_ai — how dimensions were captured
+  measurePhoto    String?  // Base64 thumbnail of the measurement photo (optional)
+
   // Duplicate override (BAR-328)
   duplicateOverride          Boolean  @default(false) // True if user overrode duplicate warning
   duplicateOverrideReason    String?  // Reason for override (e.g. "Re-delivery", "Replacement")
