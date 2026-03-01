@@ -1,0 +1,10 @@
+# Snyk policy file — https://snyk.io/docs/snyk-policy/
+# Use `snyk wizard` to update or `snyk ignore` to add exceptions.
+version: v1.25.0
+
+# Patches and ignores go here. Example:
+# ignore:
+#   SNYK-JS-EXAMPLE-12345:
+#     - '*':
+#         reason: 'No fix available, mitigated by input validation'
+#         expires: 2026-06-01T00:00:00.000Z
