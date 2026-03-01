@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload API test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-test-results
           path: test-results/
@@ -205,7 +205,7 @@ jobs:
 
       - name: Upload E2E results & traces
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-test-results
           path: |
