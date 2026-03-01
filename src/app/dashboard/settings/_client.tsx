@@ -325,6 +325,8 @@ export default function SettingsPage() {
   const [teamUsers, setTeamUsers] = useState<TenantUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
+  const [restoringUser, setRestoringUser] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -405,18 +407,7 @@ export default function SettingsPage() {
     }
   }, [fetchUsers]);
 
-  // ─── Show deleted users toggle (audit view) ──────────────────────────────
-  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
-
-  // Re-fetch when showDeletedUsers toggles
-  useEffect(() => {
-    fetchUsers();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDeletedUsers]);
-
   // ─── Restore soft-deleted user ────────────────────────────────────────────
-  const [restoringUser, setRestoringUser] = useState<string | null>(null);
-
   const handleRestoreUser = useCallback(async (userId: string) => {
     setRestoringUser(userId);
     try {
