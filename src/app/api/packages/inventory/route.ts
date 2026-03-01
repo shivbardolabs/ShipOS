@@ -12,42 +12,39 @@
  * Also returns summary stats for the dashboard.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateQuery, ok } from '@/lib/api-utils';
+import { z } from 'zod';
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+const QuerySchema = z.object({
+  programType: z.string().optional(),
+  status: z.string().optional(),
+  carrier: z.string().optional(),
+  ageBracket: z.enum(['fresh', 'aging', 'overdue', 'critical']).optional(),
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
-  const programType = searchParams.get('programType');
-  const status = searchParams.get('status');
-  const carrier = searchParams.get('carrier');
-  const ageBracket = searchParams.get('ageBracket'); // fresh, aging, overdue, critical
-  const search = searchParams.get('search');
-  // Pagination params (used with real DB)
-  void searchParams.get('page');
-  void searchParams.get('limit');
+export const GET = withApiHandler(async (request, { user }) => {
+  const query = validateQuery(request, QuerySchema);
 
-  // In production: query database with filters
+  // In production: query database with filters using user.tenantId! for scoping
   // const where: Prisma.PackageWhereInput = {
+  //   customer: { tenantId: user.tenantId! },
   //   status: { not: 'released' },
-  //   ...(programType && { carrierProgram: programType === 'pmb' ? null : programType }),
-  //   ...(status && { status }),
-  //   ...(carrier && { carrier: { equals: carrier, mode: 'insensitive' } }),
-  //   ...(search && {
+  //   ...(query.programType && { carrierProgram: query.programType === 'pmb' ? null : query.programType }),
+  //   ...(query.status && { status: query.status }),
+  //   ...(query.carrier && { carrier: { equals: query.carrier, mode: 'insensitive' } }),
+  //   ...(query.search && {
   //     OR: [
-  //       { trackingNumber: { contains: search, mode: 'insensitive' } },
-  //       { customer: { firstName: { contains: search, mode: 'insensitive' } } },
-  //       { customer: { pmbNumber: { contains: search, mode: 'insensitive' } } },
+  //       { trackingNumber: { contains: query.search, mode: 'insensitive' } },
+  //       { customer: { firstName: { contains: query.search, mode: 'insensitive' } } },
+  //       { customer: { pmbNumber: { contains: query.search, mode: 'insensitive' } } },
   //     ],
   //   }),
   // };
 
-  void programType;
-  void status;
-  void carrier;
-  void ageBracket;
-  void search;
-
-  return NextResponse.json({
+  return ok({
     packages: [],
     total: 0,
     stats: {
@@ -60,4 +57,4 @@ export async function GET(request: NextRequest) {
       byProgram: {},
     },
   });
-}
+});
