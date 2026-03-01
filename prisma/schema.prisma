@@ -1642,6 +1642,26 @@ model FranchiseLocation {
   @@index([franchiseId])
 }
 
+/// Per-tier pricing overrides for a franchise group.
+/// Allows structured pricing configuration instead of raw JSON.
+model FranchisePricingOverride {
+  id          String @id @default(cuid())
+  franchiseId String
+  tierSlug    String // e.g. "bronze", "silver", "gold", "platinum"
+
+  priceMonthly Float? // Override monthly rate for this tier
+  priceAnnual  Float? // Override annual rate for this tier
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  franchise FranchiseGroup @relation(fields: [franchiseId], references: [id])
+
+  @@unique([franchiseId, tierSlug])
+  @@index([franchiseId])
+}
+
 
 /// BAR-336: Pending Check-In Queue — packages scanned via Smart Intake awaiting clerk approval.
 model SmartIntakePending {
