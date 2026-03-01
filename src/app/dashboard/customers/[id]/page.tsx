@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
+import { Form1583Panel } from '@/components/customer/form1583-panel';
+import { PmbClosureDialog } from '@/components/customer/pmb-closure-dialog';
 import { cn, formatDate, formatCurrency, formatDateTime } from '@/lib/utils';
 import { auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
 import {
@@ -152,6 +154,7 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('packages');
+  const [showClosureDialog, setShowClosureDialog] = useState(false);
 
   /* ── Fetch customer + relations from API ───────────────────── */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -310,8 +313,8 @@ export default function CustomerDetailPage() {
             <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />}>
               Send Notification
             </Button>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-300 hover:bg-red-50" leftIcon={<UserX className="h-3.5 w-3.5" />}>
-              Deactivate
+            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-300 hover:bg-red-50" leftIcon={<UserX className="h-3.5 w-3.5" />} onClick={() => setShowClosureDialog(true)}>
+              {customer.status === 'closed' ? 'Closure Details' : 'Close PMB'}
             </Button>
           </div>
         </div>
@@ -669,6 +672,9 @@ export default function CustomerDetailPage() {
             </CardContent>
           </Card>
 
+          {/* PS Form 1583 Panel (BAR-19) */}
+          <Form1583Panel customerId={customer.id} />
+
           {/* CMRA Compliance */}
           <Card>
             <CardHeader>
@@ -831,6 +837,14 @@ export default function CustomerDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* PMB Closure Dialog (BAR-234) */}
+      <PmbClosureDialog
+        customerId={customer.id}
+        open={showClosureDialog}
+        onClose={() => setShowClosureDialog(false)}
+        onStatusChange={() => fetchCustomer()}
+      />
     </div>
   );
 }
