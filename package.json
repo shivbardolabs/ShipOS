@@ -46,7 +46,7 @@
     "@playwright/test": "^1.50.0",
     "@tailwindcss/postcss": "^4.0.6",
     "@types/google.maps": "^3.58.1",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
