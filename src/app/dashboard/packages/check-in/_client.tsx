@@ -47,6 +47,7 @@ import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { RtsInitiateDialog } from '@/components/packages/rts-initiate-dialog';
+import { BatchSessionSummary } from '@/components/packages/batch-session-summary';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -358,6 +359,14 @@ export default function CheckInPage() {
 
   // BAR-9: Multi-package batch tracking
   const [batchCount, setBatchCount] = useState(0);
+
+  // BAR-40: Batch session package list for session summary
+  const [batchSessionPackages, setBatchSessionPackages] = useState<{
+    id: string; trackingNumber?: string; carrier: string; customerName: string;
+    pmbNumber: string; packageType: string; checkedInAt: string; labelPrinted: boolean; notified: boolean;
+  }[]>([]);
+  const [showBatchSummary, setShowBatchSummary] = useState(false);
+  const [batchSessionStart] = useState<Date>(new Date());
 
   // BAR-9: Offline detection
   const [isOnline, setIsOnline] = useState(true);
@@ -1213,6 +1222,23 @@ export default function CheckInPage() {
     setLabelPrintFailed(false);
     setNotificationFailed(false);
     setBatchCount((prev) => prev + 1);
+    // BAR-40: Track package in batch session list
+    setBatchSessionPackages((prev) => [
+      ...prev,
+      {
+        id: checkedInPackageId || `temp-${Date.now()}`,
+        trackingNumber: trackingNumber || undefined,
+        carrier: selectedCarrier || 'other',
+        customerName: selectedCustomer
+          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+          : (walkInName || 'Walk-in'),
+        pmbNumber: selectedCustomer?.pmbNumber || 'N/A',
+        packageType: selectedSize || 'medium',
+        checkedInAt: new Date().toISOString(),
+        labelPrinted: true,
+        notified: sendEmail || sendSms,
+      },
+    ]);
     setStep(2);
   };
 
@@ -2542,24 +2568,44 @@ export default function CheckInPage() {
                 Check in another for this customer
               </Button>
             )}
-            {/* BAR-9 Gap 3: Done — send consolidated notification */}
+            {/* BAR-40: Done — show batch session summary */}
             {batchCount > 0 && (
               <Button
                 variant="ghost"
                 onClick={() => {
-                  // Send consolidated notification and exit
-                  if (checkedInPackageId) {
+                  // Add the last package to session list
+                  if (checkedInPackageId && !batchSessionPackages.find((p) => p.id === checkedInPackageId)) {
+                    setBatchSessionPackages((prev) => [
+                      ...prev,
+                      {
+                        id: checkedInPackageId,
+                        trackingNumber: trackingNumber || undefined,
+                        carrier: selectedCarrier || 'other',
+                        customerName: selectedCustomer
+                          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+                          : (walkInName || 'Walk-in'),
+                        pmbNumber: selectedCustomer?.pmbNumber || 'N/A',
+                        packageType: selectedSize || 'medium',
+                        checkedInAt: new Date().toISOString(),
+                        labelPrinted: true,
+                        notified: sendEmail || sendSms,
+                      },
+                    ]);
+                  }
+                  // Send consolidated notification
+                  if (selectedCustomer?.id) {
                     fetch(`/api/packages/batch-notify`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ customerId: selectedCustomer?.id }),
+                      body: JSON.stringify({ customerId: selectedCustomer.id }),
                     }).catch(() => {});
                   }
-                  window.location.href = '/dashboard/packages';
+                  setShowBatchSummary(true);
+                  setShowSuccess(false);
                 }}
                 className="w-full"
               >
-                Done — Send consolidated notification
+                Done — View Session Summary ({batchCount + 1} packages)
               </Button>
             )}
           </div>
@@ -2684,6 +2730,28 @@ export default function CheckInPage() {
           }}
           prefillReason="no_matching_customer"
         />
+      )}
+
+      {/* BAR-40: Batch Session Summary Modal */}
+      {showBatchSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-xl">
+            <BatchSessionSummary
+              packages={batchSessionPackages}
+              sessionStart={batchSessionStart}
+              sessionEnd={new Date()}
+              onDismiss={() => {
+                setShowBatchSummary(false);
+                setBatchSessionPackages([]);
+                setBatchCount(0);
+                handleReset();
+              }}
+              onGoToPackages={() => {
+                window.location.href = '/dashboard/packages';
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

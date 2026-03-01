@@ -43,6 +43,7 @@ import { Modal } from '@/components/ui/modal';
 // customers and packages now fetched from API
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import type { Customer, Package as PackageType, VerificationStatus, PutBackReason } from '@/lib/types';
+import { CheckoutInventoryTable } from '@/components/packages/checkout-inventory-table';
 
 /* -------------------------------------------------------------------------- */
 /*  Carrier badge                                                             */
@@ -202,6 +203,8 @@ export default function CheckOutPage() {
 
   /* ---- Tab state ---- */
   const [activeTab, setActiveTab] = useState('packages');
+  /* BAR-97: Table vs card view toggle */
+  const [inventoryView, setInventoryView] = useState<'cards' | 'table'>('cards');
 
   /* ---- Add-on state ---- */
   const [enabledAddOns, setEnabledAddOns] = useState<Set<string>>(new Set());
@@ -933,7 +936,7 @@ export default function CheckOutPage() {
               {/*  Tab 1: Packages                                             */}
               {/* ============================================================ */}
               <TabPanel active={activeTab === 'packages'}>
-                {/* Select / Deselect controls */}
+                {/* Select / Deselect controls + BAR-97 view toggle */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Button
@@ -952,14 +955,66 @@ export default function CheckOutPage() {
                     >
                       Deselect All
                     </Button>
+                    <div className="h-5 w-px bg-surface-700 mx-1" />
+                    <div className="flex rounded-lg border border-surface-700 overflow-hidden">
+                      <button
+                        className={cn(
+                          'px-2.5 py-1 text-xs font-medium transition-colors',
+                          inventoryView === 'cards' ? 'bg-primary-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'
+                        )}
+                        onClick={() => setInventoryView('cards')}
+                      >
+                        Cards
+                      </button>
+                      <button
+                        className={cn(
+                          'px-2.5 py-1 text-xs font-medium transition-colors',
+                          inventoryView === 'table' ? 'bg-primary-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'
+                        )}
+                        onClick={() => setInventoryView('table')}
+                      >
+                        Table
+                      </button>
+                    </div>
                   </div>
                   <p className="text-sm text-surface-400">
                     <span className="text-surface-100 font-semibold">{selectedIds.size}</span> of {customerPackages.length} selected
                   </p>
                 </div>
 
-                {/* Package list — large touch targets */}
-                <div className="space-y-2">
+                {/* BAR-97: Table view */}
+                {inventoryView === 'table' && (
+                  <CheckoutInventoryTable
+                    packages={customerPackages.map((p) => ({
+                      id: p.id,
+                      trackingNumber: p.trackingNumber,
+                      carrier: p.carrier,
+                      senderName: p.senderName,
+                      packageType: p.packageType,
+                      status: p.status,
+                      notes: p.notes,
+                      storageFee: (Math.max(0, Math.floor((Date.now() - new Date(p.checkedInAt).getTime()) / 86400000)) > 5) ? 5 : 0,
+                      storageLocation: p.storageLocation,
+                      checkedInAt: p.checkedInAt,
+                      customerId: p.customerId,
+                    }))}
+                    selectedIds={selectedIds}
+                    onToggleSelect={(id) => {
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        next.has(id) ? next.delete(id) : next.add(id);
+                        return next;
+                      });
+                    }}
+                    onToggleAll={() => {
+                      selectedIds.size === customerPackages.length ? deselectAll() : selectAll();
+                    }}
+                    className="mb-4"
+                  />
+                )}
+
+                {/* Package list — large touch targets (card view) */}
+                {inventoryView === 'cards' && <div className="space-y-2">
                   {customerPackages.map((pkg) => {
                     const isSelected = selectedIds.has(pkg.id);
                     const held = daysHeld(pkg.checkedInAt);
@@ -1067,7 +1122,7 @@ export default function CheckOutPage() {
                       </div>
                     );
                   })}
-                </div>
+                </div>}
 
                 {/* BAR-246: Label Verification Scan */}
                 {selectedIds.size > 0 && (
