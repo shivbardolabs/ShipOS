@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { autoRtsForCustomer } from '@/lib/rts-service';
 
 /**
  * GET /api/customers/[id]
@@ -106,5 +107,79 @@ export async function GET(
   } catch (err) {
     console.error('[GET /api/customers/[id]]', err);
     return NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/customers/[id]
+ * Update a customer. If status changes to 'closed' or 'expired',
+ * auto-trigger RTS for all their active packages (BAR-321).
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getOrProvisionUser();
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+    const { id } = await params;
+    const body = await request.json();
+
+    const tenantScope = user.role !== 'superadmin' && user.tenantId
+      ? { tenantId: user.tenantId }
+      : {};
+
+    // Fetch current customer to detect status transitions
+    const existing = await prisma.customer.findFirst({
+      where: { id, deletedAt: null, ...tenantScope },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    }
+
+    // Apply the update
+    const updated = await prisma.customer.update({
+      where: { id },
+      data: {
+        ...body,
+        // Auto-set dateClosed when status moves to 'closed'
+        ...(body.status === 'closed' && !existing.dateClosed
+          ? { dateClosed: new Date() }
+          : {}),
+      },
+    });
+
+    // BAR-321: Auto-RTS when PMB status transitions to closed or expired
+    let rtsResult: { created: number } | null = null;
+    const newStatus = body.status as string | undefined;
+    const statusChanged = newStatus && newStatus !== existing.status;
+    const tenantId = existing.tenantId || user.tenantId;
+
+    if (statusChanged && (newStatus === 'closed' || newStatus === 'expired') && tenantId) {
+      const reason = newStatus === 'closed' ? 'closed_pmb' : 'expired_pmb';
+      rtsResult = await autoRtsForCustomer({
+        customerId: id,
+        tenantId,
+        reason,
+        initiatedById: user.id,
+      });
+    }
+
+    return NextResponse.json({
+      ...updated,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
+      dateOpened: updated.dateOpened?.toISOString() ?? null,
+      dateClosed: updated.dateClosed?.toISOString() ?? null,
+      renewalDate: updated.renewalDate?.toISOString() ?? null,
+      ...(rtsResult && rtsResult.created > 0
+        ? { _rts: { autoCreated: rtsResult.created } }
+        : {}),
+    });
+  } catch (err) {
+    console.error('[PATCH /api/customers/[id]]', err);
+    return NextResponse.json({ error: 'Failed to update customer' }, { status: 500 });
   }
 }
