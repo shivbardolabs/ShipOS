@@ -338,14 +338,15 @@ export default function ComplianceDashboardPage() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-full sm:w-48"
-        >
-          <option value="all">All Statuses</option>
-          <option value="compliant">Compliant</option>
-          <option value="warning">Warning</option>
-          <option value="critical">Critical</option>
-          <option value="expired">Expired</option>
-          <option value="missing">Missing</option>
-        </Select>
+          options={[
+            { value: 'all', label: 'All Statuses' },
+            { value: 'compliant', label: 'Compliant' },
+            { value: 'warning', label: 'Warning' },
+            { value: 'critical', label: 'Critical' },
+            { value: 'expired', label: 'Expired' },
+            { value: 'missing', label: 'Missing' },
+          ]}
+        />
         <div className="text-xs text-surface-500 ml-auto">
           {filteredRecords.length} of {records.length} customers
         </div>
@@ -446,7 +447,7 @@ export default function ComplianceDashboardPage() {
                       <td className="px-4 py-3">
                         {record.issues.length > 0 ? (
                           <div className="flex items-center gap-1">
-                            <Badge variant="destructive" className="text-[10px]">
+                            <Badge variant="danger" className="text-[10px]">
                               {record.issues.length}
                             </Badge>
                             <span className="text-[10px] text-surface-500 max-w-[120px] truncate">
