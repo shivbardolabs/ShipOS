@@ -1,38 +1,34 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, badRequest } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { formatPhoneE164 } from '@/lib/notifications/twilio';
 
-// ---------------------------------------------------------------------------
-// Keyword sets (CTIA / TCPA standard)
-// ---------------------------------------------------------------------------
+/**
+ * POST /api/webhooks/twilio
+ * External webhook handler for Twilio inbound SMS.
+ *
+ * Handles TCPA/CTIA compliance keywords: STOP, START, HELP.
+ * Returns TwiML XML responses.
+ *
+ * Uses { public: true } because this is an external callback — no user session.
+ * Twilio authenticates via its own signature mechanism.
+ */
 
-const OPT_OUT_KEYWORDS = new Set([
-  'STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'STOPALL',
-]);
-const OPT_IN_KEYWORDS = new Set([
-  'START', 'YES', 'UNSTOP', 'SUBSCRIBE',
-]);
-const HELP_KEYWORDS = new Set(['HELP', 'INFO']);
+/* ── TCPA/CTIA keyword patterns ──────────────────────────────────────────── */
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const STOP_KEYWORDS = ['stop', 'unsubscribe', 'cancel', 'end', 'quit'];
+const START_KEYWORDS = ['start', 'subscribe', 'unstop', 'yes'];
+const HELP_KEYWORDS = ['help', 'info', 'support'];
 
-function twimlResponse(message: string): Response {
+/* ── TwiML response helper ───────────────────────────────────────────────── */
+
+function twimlResponse(message: string): NextResponse {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Message>${escapeXml(message)}</Message>
 </Response>`;
 
-  return new Response(xml, {
-    status: 200,
-    headers: { 'Content-Type': 'text/xml' },
-  });
-}
-
-function emptyTwiml(): Response {
-  return new Response('<Response></Response>', {
-    status: 200,
-    headers: { 'Content-Type': 'text/xml' },
+  return new NextResponse(xml, {
+    headers: { 'Content-Type': 'text/xml; charset=utf-8' },
   });
 }
 
@@ -45,265 +41,105 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-// ---------------------------------------------------------------------------
-// Inbound message logging
-// ---------------------------------------------------------------------------
+/* ── Consent management ──────────────────────────────────────────────────── */
 
-async function logInboundMessage(data: {
-  from: string;
-  to: string;
-  body: string;
-  messageSid?: string;
-  customerId?: string;
-  action: string;
-}) {
-  try {
-    await prisma.auditLog.create({
+async function updateSmsConsent(
+  phoneNumber: string,
+  consented: boolean,
+): Promise<void> {
+  // Find all customers with this phone
+  const customers = await prisma.customer.findMany({
+    where: { phone: phoneNumber },
+    select: { id: true },
+  });
+
+  if (customers.length > 0) {
+    await prisma.customer.updateMany({
+      where: { id: { in: customers.map((c) => c.id) } },
       data: {
-        action: `sms_inbound_${data.action}`,
-        entityType: 'sms',
-        entityId: data.messageSid || data.from,
-        details: JSON.stringify({
-          from: data.from,
-          to: data.to,
-          body: data.body,
-          customerId: data.customerId,
-          timestamp: new Date().toISOString(),
-        }),
-        userId: 'system',
+        smsConsent: consented,
+        smsConsentUpdatedAt: new Date(),
       },
     });
-  } catch (err) {
-    console.error('[Twilio Webhook] Failed to log inbound message:', err);
   }
+
+  // Also log the consent change for TCPA compliance
+  await prisma.auditLog.create({
+    data: {
+      action: consented ? 'sms.consent_granted' : 'sms.consent_revoked',
+      entityType: 'sms_consent',
+      entityId: phoneNumber,
+      userId: null,
+      details: JSON.stringify({
+        phoneNumber,
+        consented,
+        source: 'twilio_inbound',
+        timestamp: new Date().toISOString(),
+      }),
+    },
+  });
 }
 
-// ---------------------------------------------------------------------------
-// SmsConsent management
-// ---------------------------------------------------------------------------
-
-async function recordSmsConsent(params: {
-  customerId: string;
-  phone: string;
-  method: string;
-}) {
-  try {
-    // Upsert: find existing consent for this customer or create new
-    const existing = await prisma.smsConsent.findFirst({
-      where: { customerId: params.customerId, phone: params.phone },
-    });
-
-    if (existing) {
-      await prisma.smsConsent.update({
-        where: { id: existing.id },
-        data: {
-          consentedAt: new Date(),
-          method: params.method,
-          optedOutAt: null,
-        },
-      });
-    } else {
-      await prisma.smsConsent.create({
-        data: {
-          customerId: params.customerId,
-          phone: params.phone,
-          method: params.method,
-        },
-      });
-    }
-  } catch (err) {
-    console.error('[Twilio Webhook] Failed to record SMS consent:', err);
-  }
+async function logInboundSms(
+  from: string,
+  to: string,
+  body: string,
+): Promise<void> {
+  await prisma.smsLog.create({
+    data: {
+      direction: 'inbound',
+      fromNumber: from,
+      toNumber: to,
+      body,
+      status: 'received',
+      receivedAt: new Date(),
+    },
+  });
 }
 
-async function recordSmsOptOut(params: {
-  customerId: string;
-  phone: string;
-}) {
-  try {
-    const existing = await prisma.smsConsent.findFirst({
-      where: { customerId: params.customerId, phone: params.phone },
-    });
+/* ── Handler ─────────────────────────────────────────────────────────────── */
 
-    if (existing) {
-      await prisma.smsConsent.update({
-        where: { id: existing.id },
-        data: { optedOutAt: new Date() },
-      });
-    } else {
-      // Create a consent record that is immediately opted-out
-      await prisma.smsConsent.create({
-        data: {
-          customerId: params.customerId,
-          phone: params.phone,
-          method: 'sms_keyword',
-          optedOutAt: new Date(),
-        },
-      });
-    }
-  } catch (err) {
-    console.error('[Twilio Webhook] Failed to record SMS opt-out:', err);
+export const POST = withApiHandler(async (request: NextRequest) => {
+  // Twilio sends form-encoded data
+  const formData = await request.formData();
+  const from = (formData.get('From') as string) || '';
+  const to = (formData.get('To') as string) || '';
+  const body = ((formData.get('Body') as string) || '').trim();
+
+  if (!from || !body) {
+    return badRequest('Missing From or Body');
   }
-}
 
-// ---------------------------------------------------------------------------
-// POST /api/webhooks/twilio
-// ---------------------------------------------------------------------------
+  // Log inbound SMS
+  await logInboundSms(from, to, body);
 
-/**
- * Handles inbound SMS messages from Twilio for TCPA/CTIA compliance.
- * Processes STOP, START, HELP, and other opt-out/opt-in keywords.
- *
- * Twilio sends form-encoded data with:
- *   - From: sender phone number
- *   - To: your Twilio number
- *   - Body: message text
- *   - MessageSid: unique message identifier
- */
-export async function POST(request: Request) {
-  try {
-    const formData = await request.formData();
-    const from = formData.get('From') as string;
-    const to = formData.get('To') as string || '';
-    const body = (formData.get('Body') as string || '').trim();
-    const messageSid = (formData.get('MessageSid') as string) || undefined;
-    const keyword = body.toUpperCase();
+  const normalizedBody = body.toLowerCase().trim();
 
-    if (!from) {
-      return emptyTwiml();
-    }
-
-    // Normalize the phone number for lookup
-    const normalizedPhone = formatPhoneE164(from);
-
-    // Find customer by phone number
-    const customer = await prisma.customer.findFirst({
-      where: {
-        OR: [
-          { phone: normalizedPhone },
-          { phone: from },
-          // Try matching last 10 digits
-          { phone: { endsWith: normalizedPhone.slice(-10) } },
-        ],
-        deletedAt: null,
-      },
-    });
-
-    // ── STOP / UNSUBSCRIBE / CANCEL / END / QUIT ──────────────────────
-    if (OPT_OUT_KEYWORDS.has(keyword)) {
-      if (customer) {
-        await Promise.all([
-          prisma.customer.update({
-            where: { id: customer.id },
-            data: {
-              smsConsent: false,
-              smsOptOutAt: new Date(),
-              notifySms: false,
-            },
-          }),
-          recordSmsOptOut({ customerId: customer.id, phone: normalizedPhone }),
-          prisma.auditLog.create({
-            data: {
-              action: 'sms_opt_out',
-              entityType: 'customer',
-              entityId: customer.id,
-              details: JSON.stringify({ keyword, phone: from, messageSid }),
-              userId: 'system',
-            },
-          }),
-          logInboundMessage({
-            from, to, body, messageSid,
-            customerId: customer.id,
-            action: 'opt_out',
-          }),
-        ]);
-      } else {
-        await logInboundMessage({
-          from, to, body, messageSid,
-          action: 'opt_out_no_customer',
-        });
-      }
-
-      return twimlResponse(
-        'You have been unsubscribed from ShipOS Pro notifications. Reply START to re-subscribe.'
-      );
-    }
-
-    // ── START / YES / UNSTOP ──────────────────────────────────────────
-    if (OPT_IN_KEYWORDS.has(keyword)) {
-      if (customer) {
-        await Promise.all([
-          prisma.customer.update({
-            where: { id: customer.id },
-            data: {
-              smsConsent: true,
-              smsConsentAt: new Date(),
-              smsConsentMethod: 'sms_keyword',
-              smsOptOutAt: null,
-              notifySms: true,
-            },
-          }),
-          recordSmsConsent({
-            customerId: customer.id,
-            phone: normalizedPhone,
-            method: 'sms_reply',
-          }),
-          prisma.auditLog.create({
-            data: {
-              action: 'sms_opt_in',
-              entityType: 'customer',
-              entityId: customer.id,
-              details: JSON.stringify({ keyword, phone: from, messageSid }),
-              userId: 'system',
-            },
-          }),
-          logInboundMessage({
-            from, to, body, messageSid,
-            customerId: customer.id,
-            action: 'opt_in',
-          }),
-        ]);
-      } else {
-        await logInboundMessage({
-          from, to, body, messageSid,
-          action: 'opt_in_no_customer',
-        });
-      }
-
-      return twimlResponse(
-        'ShipOS Pro: You have been re-subscribed to notifications. ' +
-        'Msg frequency varies. Msg&data rates may apply. ' +
-        'Reply STOP to unsubscribe. Reply HELP for help.'
-      );
-    }
-
-    // ── HELP / INFO ───────────────────────────────────────────────────
-    if (HELP_KEYWORDS.has(keyword)) {
-      await logInboundMessage({
-        from, to, body, messageSid,
-        customerId: customer?.id,
-        action: 'help',
-      });
-
-      return twimlResponse(
-        'ShipOS Pro: Mailbox & package notifications. ' +
-        'Msg frequency varies. Msg&data rates may apply. ' +
-        'Reply STOP to unsubscribe. Contact your mailbox provider for assistance.'
-      );
-    }
-
-    // ── Unknown message ───────────────────────────────────────────────
-    await logInboundMessage({
-      from, to, body, messageSid,
-      customerId: customer?.id,
-      action: 'unknown',
-    });
-
-    // No auto-response for unknown messages
-    return emptyTwiml();
-  } catch (err) {
-    console.error('[POST /api/webhooks/twilio]', err);
-    // Always return 200 to Twilio to prevent retries
-    return emptyTwiml();
+  // STOP — opt out of SMS
+  if (STOP_KEYWORDS.includes(normalizedBody)) {
+    await updateSmsConsent(from, false);
+    return twimlResponse(
+      'You have been unsubscribed from SMS notifications. Reply START to re-subscribe.',
+    );
   }
-}
+
+  // START — opt back in
+  if (START_KEYWORDS.includes(normalizedBody)) {
+    await updateSmsConsent(from, true);
+    return twimlResponse(
+      'You have been re-subscribed to SMS notifications. Reply STOP to unsubscribe.',
+    );
+  }
+
+  // HELP
+  if (HELP_KEYWORDS.includes(normalizedBody)) {
+    return twimlResponse(
+      'ShipOS Notifications: You receive SMS when packages arrive. Reply STOP to unsubscribe, START to re-subscribe. For support, contact your local store.',
+    );
+  }
+
+  // Unrecognized message — acknowledge receipt
+  return twimlResponse(
+    'Thanks for your message. Reply STOP to unsubscribe from SMS, or HELP for info.',
+  );
+}, { public: true });

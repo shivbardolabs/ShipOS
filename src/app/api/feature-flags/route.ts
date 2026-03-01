@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
+import { withApiHandler, ok } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
-import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/feature-flags
@@ -14,59 +13,52 @@ import { withApiHandler } from '@/lib/api-utils';
  *   3. Tenant-level override → second priority
  *   4. Flag defaultEnabled → fallback
  */
-export const GET = withApiHandler(async (request, { user }) => {
-  try {
+export const GET = withApiHandler(async (_request, { user }) => {
+  // Superadmin always sees everything
+  if (user.role === 'superadmin') {
+    const flags = await prisma.featureFlag.findMany({ select: { key: true } });
+    const result: Record<string, boolean> = {};
+    for (const f of flags) result[f.key] = true;
+    return ok(result);
+  }
 
-    // Superadmin always sees everything
-    if (user.role === 'superadmin') {
-      const flags = await prisma.featureFlag.findMany({ select: { key: true } });
-      const result: Record<string, boolean> = {};
-      for (const f of flags) result[f.key] = true;
-      return NextResponse.json(result);
-    }
-
-    // Fetch all flags with their overrides for this user & tenant
-    const flags = await prisma.featureFlag.findMany({
-      include: {
-        overrides: {
-          where: {
-            OR: [
-              { targetType: 'user', targetId: user.id },
-              ...(user.tenantId ? [{ targetType: 'tenant', targetId: user.tenantId }] : []),
-            ],
-          },
+  // Fetch all flags with their overrides for this user & tenant
+  const flags = await prisma.featureFlag.findMany({
+    include: {
+      overrides: {
+        where: {
+          OR: [
+            { targetType: 'user', targetId: user.id },
+            ...(user.tenantId ? [{ targetType: 'tenant' as const, targetId: user.tenantId }] : []),
+          ],
         },
       },
-    });
+    },
+  });
 
-    const result: Record<string, boolean> = {};
-    for (const flag of flags) {
-      // Check user-level override first
-      const userOverride = flag.overrides.find(
-        (o) => o.targetType === 'user' && o.targetId === user.id,
-      );
-      if (userOverride) {
-        result[flag.key] = userOverride.enabled;
-        continue;
-      }
-
-      // Check tenant-level override
-      const tenantOverride = flag.overrides.find(
-        (o) => o.targetType === 'tenant' && o.targetId === user.tenantId,
-      );
-      if (tenantOverride) {
-        result[flag.key] = tenantOverride.enabled;
-        continue;
-      }
-
-      // Fall back to default
-      result[flag.key] = flag.defaultEnabled;
+  const result: Record<string, boolean> = {};
+  for (const flag of flags) {
+    // Check user-level override first
+    const userOverride = flag.overrides.find(
+      (o) => o.targetType === 'user' && o.targetId === user.id,
+    );
+    if (userOverride) {
+      result[flag.key] = userOverride.enabled;
+      continue;
     }
 
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error('[GET /api/feature-flags]', err);
-    // On error, return empty map (don't block the app)
-    return NextResponse.json({});
+    // Check tenant-level override
+    const tenantOverride = flag.overrides.find(
+      (o) => o.targetType === 'tenant' && o.targetId === user.tenantId,
+    );
+    if (tenantOverride) {
+      result[flag.key] = tenantOverride.enabled;
+      continue;
+    }
+
+    // Fall back to default
+    result[flag.key] = flag.defaultEnabled;
   }
+
+  return ok(result);
 });
