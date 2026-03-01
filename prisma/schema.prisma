@@ -159,6 +159,25 @@ model Customer {
   // Renewal tracking
   renewalStatus      String?   @default("current") // current, due_soon, past_due, suspended
   lastRenewalNotice  DateTime? // Last time a renewal notification was sent
+  renewalTermMonths  Int?      // Renewal term length in months
+  autoRenew          Boolean   @default(false) // Auto-renew using existing PS1583
+
+  // PS1583 Change Guard
+  form1583FileUrl    String?   // Uploaded PS1583 document URL
+  form1583SignatureUrl String? // Signature capture data URL
+  form1583NotarizedAt DateTime? // Notarization date
+  form1583ExpiresAt  DateTime? // When current 1583 expires (1 yr from notarization)
+  form1583Version    Int       @default(0) // Incremented on re-filing
+
+  // PMB Closure workflow
+  closureReason      String?   // voluntary, non_payment, deceased, other
+  closureInitiatedAt DateTime? // When closure was initiated
+  retentionOfferSent Boolean   @default(false)
+  retentionOfferResult String? // accepted, declined, no_response
+  mailHoldUntil      DateTime? // Post-closure mail hold deadline
+  crdClosureStatus   String?   // pending, submitted, confirmed
+  crdClosureDate     DateTime? // When CRD was closed
+  documentRetentionUntil DateTime? // 6-month USPIS retention deadline
 
   // SMS Compliance
   smsConsent         Boolean   @default(false)
@@ -622,6 +641,21 @@ model MailboxRange {
 }
 
 // ── Customer Documents (ID Scans) ────────────────────────────────────────
+
+// ── PS1583 Change Audit Log ──────────────────────────────────────────────
+
+model Form1583AuditLog {
+  id          String   @id @default(cuid())
+  customerId  String
+  fieldName   String   // Which PS1583-protected field was changed
+  oldValue    String?  // Previous value
+  newValue    String?  // New value
+  changedById String   // User who made the change
+  wasWarned   Boolean  @default(true) // Whether the user saw the warning dialog
+  action      String   // edit, re_filing_triggered, status_change
+  notes       String?
+  createdAt   DateTime @default(now())
+}
 
 model CustomerDocument {
   id            String  @id @default(cuid())

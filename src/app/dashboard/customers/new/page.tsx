@@ -185,6 +185,8 @@ export default function NewCustomerPage() {
   const [agreementSigned, setAgreementSigned] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isBusinessPmb = customerForm.businessName.trim().length > 0;
   const WIZARD_STEPS: Step[] = [
@@ -311,7 +313,45 @@ export default function NewCustomerPage() {
     if (validateStep(step)) setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
   }, [step, validateStep]);
   const handleBack = useCallback(() => { setStep((s) => Math.max(s - 1, 0)); }, []);
-  const handleCreate = useCallback(() => { setCreated(true); }, []);
+  const handleCreate = useCallback(async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/mailboxes/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: customerForm.firstName,
+          lastName: customerForm.lastName,
+          email: customerForm.email,
+          phone: customerForm.phone,
+          businessName: customerForm.businessName,
+          pmbNumber: customerForm.pmbNumber ? `PMB ${customerForm.pmbNumber}` : undefined,
+          platform: customerForm.platform || 'physical',
+          billingTerms: customerForm.billingTerms,
+          renewalTermMonths: 12,
+          autoRenew: false,
+          homeAddress: customerForm.homeAddress,
+          homeCity: customerForm.homeCity,
+          homeState: customerForm.homeState,
+          homeZip: customerForm.homeZip,
+          form1583SignatureUrl: signatureDataUrl,
+          agreementSignatureUrl: agreementSigned ? signatureDataUrl : undefined,
+          notes: customerForm.notes,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCreated(true);
+      } else {
+        setSubmitError(data.error || 'Failed to register mailbox');
+      }
+    } catch (e) {
+      setSubmitError('Network error — please try again');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [customerForm, signatureDataUrl, agreementSigned]);
 
   if (created) {
     return (
