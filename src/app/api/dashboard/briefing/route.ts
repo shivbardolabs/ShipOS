@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getOrProvisionUser } from '@/lib/auth';
+import { getOrProvisionUser, type LocalUser } from '@/lib/auth';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/dashboard/briefing                                               */
@@ -39,8 +39,7 @@ export interface BriefingResponse {
 
 /* ── Data aggregation helpers ───────────────────────────────────────────── */
 
-async function aggregateStoreData() {
-  const user = await getOrProvisionUser();
+async function aggregateStoreData(user: LocalUser) {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 86_400_000);
@@ -161,8 +160,8 @@ Guidelines:
 
 /* ── Demo briefing ──────────────────────────────────────────────────────── */
 
-async function getDemoBriefing(): Promise<Briefing> {
-  const data = await aggregateStoreData();
+async function getDemoBriefing(user: LocalUser): Promise<Briefing> {
+  const data = await aggregateStoreData(user);
 
   return {
     greeting: 'Good morning! ☀️',
@@ -239,6 +238,15 @@ async function getDemoBriefing(): Promise<Briefing> {
 /* ── GET handler ────────────────────────────────────────────────────────── */
 
 export async function GET() {
+  /* ── Auth guard ───────────────────────────────────────────────────────── */
+  const user = await getOrProvisionUser();
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 },
+    );
+  }
+
   try {
     const apiKey = process.env.OPENAI_API_KEY;
 
@@ -247,12 +255,12 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: await getDemoBriefing(),
+        briefing: await getDemoBriefing(user),
       } satisfies BriefingResponse);
     }
 
     /* Aggregate store data */
-    const data = await aggregateStoreData();
+    const data = await aggregateStoreData(user);
 
     /* Call GPT-4o */
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -291,7 +299,7 @@ export async function GET() {
         {
           success: false,
           mode: 'ai' as const,
-          briefing: await getDemoBriefing(),
+          briefing: await getDemoBriefing(user),
           error: `AI API error: ${detail}`,
         } satisfies BriefingResponse,
         { status: 502 }
@@ -314,7 +322,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         mode: 'demo',
-        briefing: await getDemoBriefing(),
+        briefing: await getDemoBriefing(user),
         error: 'Failed to parse AI response, using demo briefing',
       } satisfies BriefingResponse);
     }
@@ -330,7 +338,7 @@ export async function GET() {
       {
         success: false,
         mode: 'demo' as const,
-        briefing: await getDemoBriefing(),
+        briefing: await getDemoBriefing(user),
         error: 'Internal server error',
       } satisfies BriefingResponse,
       { status: 500 }
