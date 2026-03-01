@@ -25,7 +25,11 @@ import {
   MoreHorizontal,
   Eye,
   Printer,
-  Copy } from 'lucide-react';
+  Copy,
+  CheckCircle2,
+  Globe,
+  Zap,
+  Loader2 } from 'lucide-react';
 import { CarrierLogo } from '@/components/carriers/carrier-logos';
 
 /* -------------------------------------------------------------------------- */
@@ -246,13 +250,46 @@ export default function ShippingPage() {
           </Button>
           {actionRow === row.id && (
             <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-surface-700 bg-surface-900 shadow-xl py-1">
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
+              <button
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
+                onClick={() => { setDetailShipment(row as Shipment & Record<string, unknown>); setShowDetail(true); setActionRow(null); }}
+              >
                 <Eye className="h-3.5 w-3.5" /> View Details
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
+              <button
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
+                onClick={() => { if (row.trackingNumber) navigator.clipboard.writeText(row.trackingNumber); setActionRow(null); }}
+              >
                 <Copy className="h-3.5 w-3.5" /> Copy Tracking
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800">
+              {(row.status === 'label_created' || row.status === 'pending') && (
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-400 hover:bg-surface-800"
+                  onClick={() => { handleStatusUpdate(row.id, 'shipped'); setActionRow(null); }}
+                >
+                  <Truck className="h-3.5 w-3.5" /> Mark Shipped
+                </button>
+              )}
+              {row.status === 'shipped' && (
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-400 hover:bg-surface-800"
+                  onClick={() => { handleStatusUpdate(row.id, 'delivered'); setActionRow(null); }}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Mark Delivered
+                </button>
+              )}
+              {row.paymentStatus === 'unpaid' && (
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-yellow-400 hover:bg-surface-800"
+                  onClick={() => { handlePaymentUpdate(row.id, 'paid'); setActionRow(null); }}
+                >
+                  <DollarSign className="h-3.5 w-3.5" /> Mark Paid
+                </button>
+              )}
+              <button
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
+                onClick={() => { setActionRow(null); }}
+              >
                 <Printer className="h-3.5 w-3.5" /> Print Label
               </button>
             </div>
@@ -261,26 +298,147 @@ export default function ShippingPage() {
       ) },
   ];
 
+  // BAR-16: Rate estimation state
+  const [estimatedRates, setEstimatedRates] = useState<{ carrier: string; service: string; estimatedCost: number; transitDays: string }[]>([]);
+  const [loadingRates, setLoadingRates] = useState(false);
+  const [selectedRate, setSelectedRate] = useState<number | null>(null);
+  const [isInternational, setIsInternational] = useState(false);
+  const [harmonizedCode, setHarmonizedCode] = useState('');
+
+  // BAR-16: Shipment detail modal
+  const [detailShipment, setDetailShipment] = useState<(Shipment & Record<string, unknown>) | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  // BAR-16: Payment declined re-charge modal
+  const [rechargeShipment, setRechargeShipment] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleFormChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    // In production, this would create a real shipment
-    setShowNewShipment(false);
-    setFormData({
-      customerId: '',
-      carrier: '',
-      service: '',
-      destination: '',
-      weight: '',
-      length: '',
-      width: '',
-      height: '',
-      wholesaleCost: '',
-      marginPercent: '40',
-      insurance: false,
-      insuranceAmount: '' });
+  // BAR-16: Fetch carrier rates
+  const handleGetRates = async () => {
+    setLoadingRates(true);
+    setSelectedRate(null);
+    try {
+      const res = await fetch('/api/shipments/rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weight: parseFloat(formData.weight) || 1,
+          length: parseFloat(formData.length) || 10,
+          width: parseFloat(formData.width) || 8,
+          height: parseFloat(formData.height) || 6,
+          destination: formData.destination,
+          international: isInternational,
+        }),
+      });
+      const data = await res.json();
+      setEstimatedRates(data.rates || []);
+    } catch {
+      console.error('Failed to fetch rates');
+    } finally {
+      setLoadingRates(false);
+    }
+  };
+
+  // BAR-16: Select a rate and auto-fill carrier/service/cost
+  const handleSelectRate = (index: number) => {
+    setSelectedRate(index);
+    const rate = estimatedRates[index];
+    if (rate) {
+      setFormData((prev) => ({
+        ...prev,
+        carrier: rate.carrier,
+        service: rate.service.toLowerCase().replace(/\s+/g, '_'),
+        wholesaleCost: rate.estimatedCost.toFixed(2),
+      }));
+    }
+  };
+
+  // BAR-16: Submit shipment to API
+  const handleSubmit = async () => {
+    if (!formData.customerId || !formData.carrier) return;
+    setIsSubmitting(true);
+    try {
+      const dimensions = (formData.length && formData.width && formData.height)
+        ? `${formData.length}x${formData.width}x${formData.height}`
+        : undefined;
+      const insuranceCost = formData.insurance ? parseFloat(formData.insuranceAmount) || 0 : 0;
+
+      const res = await fetch('/api/shipments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: formData.customerId,
+          carrier: formData.carrier,
+          service: formData.service || undefined,
+          destination: formData.destination || undefined,
+          weight: parseFloat(formData.weight) || undefined,
+          dimensions,
+          wholesaleCost: parseFloat(formData.wholesaleCost) || 0,
+          retailPrice,
+          insuranceCost,
+          packingCost: 0,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setShipments((prev) => [data.shipment, ...prev]);
+        setShowNewShipment(false);
+        setFormData({
+          customerId: '', carrier: '', service: '', destination: '',
+          weight: '', length: '', width: '', height: '',
+          wholesaleCost: '', marginPercent: '40', insurance: false, insuranceAmount: '',
+        });
+        setEstimatedRates([]);
+        setSelectedRate(null);
+        setIsInternational(false);
+        setHarmonizedCode('');
+      }
+    } catch (err) {
+      console.error('Failed to create shipment:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // BAR-16: Update shipment status
+  const handleStatusUpdate = async (shipmentId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/shipments/${shipmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setShipments((prev) => prev.map((s) => (s.id === shipmentId ? updated : s)));
+        setShowDetail(false);
+      }
+    } catch {
+      console.error('Failed to update shipment status');
+    }
+  };
+
+  // BAR-16: Update payment status
+  const handlePaymentUpdate = async (shipmentId: string, paymentStatus: string) => {
+    try {
+      const res = await fetch(`/api/shipments/${shipmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setShipments((prev) => prev.map((s) => (s.id === shipmentId ? updated : s)));
+        setRechargeShipment(null);
+      }
+    } catch {
+      console.error('Failed to update payment status');
+    }
   };
 
   return (
@@ -471,6 +629,28 @@ export default function ShippingPage() {
             </div>
           </div>
 
+          {/* BAR-16: International flag + harmonized code */}
+          <div className="flex items-center gap-4 p-4 rounded-lg border border-surface-700/50 bg-surface-800/30">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isInternational}
+                onChange={(e) => setIsInternational(e.target.checked)}
+                className="h-4 w-4 rounded border-surface-600 bg-surface-800 text-primary-600 focus:ring-primary-500/30"
+              />
+              <Globe className="h-4 w-4 text-surface-400" />
+              <span className="text-sm text-surface-200">International Shipment</span>
+            </label>
+            {isInternational && (
+              <Input
+                placeholder="Harmonized code (HS)"
+                className="w-48"
+                value={harmonizedCode}
+                onChange={(e) => setHarmonizedCode(e.target.value)}
+              />
+            )}
+          </div>
+
           {/* Insurance */}
           <div className="flex items-center gap-4 p-4 rounded-lg border border-surface-700/50 bg-surface-800/30">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -492,7 +672,191 @@ export default function ShippingPage() {
               />
             )}
           </div>
+
+          {/* BAR-16: Rate Estimation */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-surface-200">Rate Estimation</h4>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleGetRates}
+                disabled={loadingRates}
+                leftIcon={loadingRates ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+              >
+                {loadingRates ? 'Fetching...' : 'Get Rates'}
+              </Button>
+            </div>
+            {estimatedRates.length > 0 && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {estimatedRates.map((rate, i) => (
+                  <button
+                    key={`${rate.carrier}-${rate.service}`}
+                    onClick={() => handleSelectRate(i)}
+                    className={`flex w-full items-center justify-between p-3 rounded-lg border transition-all ${
+                      selectedRate === i
+                        ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500/30'
+                        : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <CarrierLogo carrier={rate.carrier} size={20} />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-surface-200">{rate.carrier.toUpperCase()} {rate.service}</p>
+                        <p className="text-xs text-surface-500">{rate.transitDays} business days</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-surface-100">{formatCurrency(rate.estimatedCost)}</span>
+                      {selectedRate === i && <CheckCircle2 className="h-4 w-4 text-primary-500" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      </Modal>
+
+      {/* BAR-16: Shipment Detail Modal */}
+      <Modal
+        open={showDetail}
+        onClose={() => setShowDetail(false)}
+        title="Shipment Details"
+        description={detailShipment?.trackingNumber || ''}
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDetail(false)}>Close</Button>
+            {detailShipment && (detailShipment.status === 'pending' || detailShipment.status === 'label_created') && (
+              <Button onClick={() => handleStatusUpdate(detailShipment.id, 'shipped')} leftIcon={<Truck className="h-4 w-4" />}>
+                Mark Shipped
+              </Button>
+            )}
+            {detailShipment && detailShipment.status === 'shipped' && (
+              <Button onClick={() => handleStatusUpdate(detailShipment.id, 'delivered')} leftIcon={<CheckCircle2 className="h-4 w-4" />}>
+                Mark Delivered
+              </Button>
+            )}
+          </>
+        }
+      >
+        {detailShipment && (
+          <div className="space-y-4">
+            {/* Status + Payment row */}
+            <div className="flex items-center gap-3">
+              <Badge status={detailShipment.status} dot>{String(detailShipment.status).replace('_', ' ')}</Badge>
+              <Badge status={detailShipment.paymentStatus} dot>{String(detailShipment.paymentStatus)}</Badge>
+              {detailShipment.paymentStatus === 'declined' && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => { setRechargeShipment(detailShipment.id); setShowDetail(false); }}
+                >
+                  Re-charge
+                </Button>
+              )}
+            </div>
+
+            {/* Details grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                <p className="text-xs text-surface-500 mb-1">Carrier / Service</p>
+                <div className="flex items-center gap-2">
+                  <CarrierLogo carrier={detailShipment.carrier} size={18} />
+                  <span className="text-sm font-medium text-surface-200">{String(detailShipment.carrier).toUpperCase()} {detailShipment.service || ''}</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                <p className="text-xs text-surface-500 mb-1">Destination</p>
+                <p className="text-sm text-surface-200">{String(detailShipment.destination) || '—'}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                <p className="text-xs text-surface-500 mb-1">Weight</p>
+                <p className="text-sm text-surface-200">{detailShipment.weight ? `${detailShipment.weight} lbs` : '—'}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+                <p className="text-xs text-surface-500 mb-1">Customer</p>
+                <p className="text-sm text-surface-200">
+                  {detailShipment.customer ? `${(detailShipment.customer as { firstName: string; lastName: string }).firstName} ${(detailShipment.customer as { firstName: string; lastName: string }).lastName}` : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Financials */}
+            <div className="p-4 rounded-lg bg-surface-800/50 border border-surface-700/50">
+              <h4 className="text-xs text-surface-500 uppercase tracking-wider mb-3">Financials</h4>
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-surface-500">Wholesale</p>
+                  <p className="text-lg font-bold text-surface-300">{formatCurrency(Number(detailShipment.wholesaleCost))}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500">Retail</p>
+                  <p className="text-lg font-bold text-surface-100">{formatCurrency(Number(detailShipment.retailPrice))}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500">Profit</p>
+                  <p className={`text-lg font-bold ${Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost) > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {formatCurrency(Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500">Margin</p>
+                  <p className="text-lg font-bold text-surface-200">
+                    {Number(detailShipment.retailPrice) > 0
+                      ? `${(((Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost)) / Number(detailShipment.retailPrice)) * 100).toFixed(1)}%`
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="p-4 rounded-lg bg-surface-800/50 border border-surface-700/50">
+              <h4 className="text-xs text-surface-500 uppercase tracking-wider mb-3">Timeline</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-surface-400" />
+                  <span className="text-xs text-surface-400">Created: {formatDate(String(detailShipment.createdAt))}</span>
+                </div>
+                {detailShipment.shippedAt && (
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-blue-400" />
+                    <span className="text-xs text-surface-400">Shipped: {formatDate(String(detailShipment.shippedAt))}</span>
+                  </div>
+                )}
+                {detailShipment.deliveredAt && (
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <span className="text-xs text-surface-400">Delivered: {formatDate(String(detailShipment.deliveredAt))}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* BAR-16: Re-charge Modal */}
+      <Modal
+        open={!!rechargeShipment}
+        onClose={() => setRechargeShipment(null)}
+        title="Payment Re-charge"
+        description="Attempt to re-charge the declined payment"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRechargeShipment(null)}>Cancel</Button>
+            <Button onClick={() => rechargeShipment && handlePaymentUpdate(rechargeShipment, 'paid')}>
+              Confirm Payment
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-surface-300">
+          Mark this shipment as paid? In production, this would initiate a re-charge through the payment processor.
+        </p>
       </Modal>
     </div>
   );

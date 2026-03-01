@@ -301,6 +301,10 @@ model Shipment {
   status        String @default("pending") // pending, label_created, shipped, delivered, returned
   paymentStatus String @default("unpaid") // unpaid, paid, invoiced
 
+  // BAR-16: International shipment fields
+  internationalFlag Boolean @default(false)
+  harmonizedCode    String? // HS code for customs
+
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
