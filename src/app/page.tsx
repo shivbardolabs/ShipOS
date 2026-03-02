@@ -34,29 +34,29 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             <a
               href="/pricing"
-              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
+              className="hidden sm:block px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
             >
               Pricing
             </a>
             <a
               href="/support"
-              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
+              className="hidden sm:block px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors"
             >
               Support
             </a>
             <a
               href="/api/auth/login"
-              className="px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 text-surface-300 hover:text-surface-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               <LogIn className="w-4 h-4" />
               Log In
             </a>
             <a
               href="/api/auth/signup"
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
+              className="px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
             >
               Sign Up Free
               <ArrowRight className="w-4 h-4" />
@@ -68,9 +68,9 @@ export default function Home() {
       {/* Hero */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl font-extrabold text-surface-100 mb-4">
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-surface-100 mb-4">
             Your postal store,{" "}
-            <em className="brand-italic text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#4F46E5" }}>
+            <em className="brand-italic text-3xl sm:text-5xl not-italic" style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: "italic", color: "#4F46E5" }}>
               fully managed
             </em>
           </h2>
@@ -142,7 +142,7 @@ export default function Home() {
                 Platform Ready
               </span>
             </div>
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               {[
                 { label: "Package Check-in", value: "✓" },
                 { label: "Customer Mgmt", value: "✓" },
