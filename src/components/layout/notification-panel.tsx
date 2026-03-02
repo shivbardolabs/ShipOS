@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { notifications } from '@/lib/mock-data';
+import type { Notification } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import {
   Bell,
@@ -15,6 +15,7 @@ import {
   UserPlus,
   ExternalLink,
   CheckCheck,
+  Loader2,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -55,14 +56,45 @@ function timeAgo(dateStr: string): string {
 export function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  /* Fetch notifications from the real API */
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/notifications?limit=8');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setNotifications(data.notifications ?? []);
+    } catch {
+      setError('Could not load notifications');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /* Fetch on mount and refresh every 60 s */
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  /* Also refresh whenever the panel is opened */
+  useEffect(() => {
+    if (open) fetchNotifications();
+  }, [open, fetchNotifications]);
 
   // Show recent 8 notifications, sorted by createdAt (newest first)
   const recent = useMemo(() => {
     return [...notifications]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 8);
-  }, []);
+  }, [notifications]);
 
   const unreadCount = useMemo(() => {
     return recent.filter((n) => !readIds.has(n.id)).length;
@@ -136,7 +168,17 @@ export function NotificationPanel() {
 
           {/* Notification list */}
           <div className="max-h-[400px] overflow-y-auto">
-            {recent.length === 0 ? (
+            {loading && notifications.length === 0 ? (
+              <div className="py-10 text-center">
+                <Loader2 className="h-6 w-6 text-surface-500 mx-auto mb-2 animate-spin" />
+                <p className="text-sm text-surface-500">Loading…</p>
+              </div>
+            ) : error && notifications.length === 0 ? (
+              <div className="py-10 text-center">
+                <AlertTriangle className="h-8 w-8 text-surface-700 mx-auto mb-2" />
+                <p className="text-sm text-surface-500">{error}</p>
+              </div>
+            ) : recent.length === 0 ? (
               <div className="py-10 text-center">
                 <Bell className="h-8 w-8 text-surface-700 mx-auto mb-2" />
                 <p className="text-sm text-surface-500">No notifications yet</p>
