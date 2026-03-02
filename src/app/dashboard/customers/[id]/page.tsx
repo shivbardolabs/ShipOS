@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
+import { SendNotificationModal } from '@/components/customer/send-notification-modal';
 import { Form1583Panel } from '@/components/customer/form1583-panel';
 import { PmbClosureDialog } from '@/components/customer/pmb-closure-dialog';
 import { cn, formatDate, formatCurrency, formatDateTime } from '@/lib/utils';
@@ -154,6 +155,9 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('packages');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSaved, setEditSaved] = useState(false);
+  const [showNotifModal, setShowNotifModal] = useState(false);
   const [showClosureDialog, setShowClosureDialog] = useState(false);
 
   /* ── Fetch customer + relations from API ───────────────────── */
@@ -161,7 +165,7 @@ export default function CustomerDetailPage() {
   const [customerData, setCustomerData] = useState<any>(null);
   const [customerLoading, setCustomerLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchCustomer = useCallback(() => {
     if (!params.id) return;
     setCustomerLoading(true);
     fetch(`/api/customers/${params.id}`)
@@ -170,6 +174,10 @@ export default function CustomerDetailPage() {
       .catch((err) => console.error('Failed to fetch customer:', err))
       .finally(() => setCustomerLoading(false));
   }, [params.id]);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [fetchCustomer]);
 
   const customer = customerData;
 
@@ -307,10 +315,10 @@ export default function CustomerDetailPage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
+            <Button variant="secondary" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />} onClick={() => { setEditSaved(false); setShowEditModal(true); }}>
               Edit
             </Button>
-            <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />}>
+            <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />} onClick={() => setShowNotifModal(true)}>
               Send Notification
             </Button>
             <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-300 hover:bg-red-50" leftIcon={<UserX className="h-3.5 w-3.5" />} onClick={() => setShowClosureDialog(true)}>
@@ -837,6 +845,27 @@ export default function CustomerDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Customer Modal */}
+      <EditCustomerModal
+        customer={customer}
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        saved={editSaved}
+        onSave={async () => {
+          setEditSaved(true);
+          fetchCustomer();
+          setTimeout(() => setShowEditModal(false), 1200);
+        }}
+      />
+
+      {/* Send Notification Modal */}
+      <SendNotificationModal
+        customer={customer}
+        open={showNotifModal}
+        onClose={() => setShowNotifModal(false)}
+        onSent={() => fetchCustomer()}
+      />
 
       {/* PMB Closure Dialog (BAR-234) */}
       <PmbClosureDialog
