@@ -46,7 +46,7 @@ import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
 import { printLabel, renderPackageLabel } from '@/lib/labels';
 import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 // customers now fetched from API
-import type { Customer } from '@/lib/types';
+import type { Customer, ConditionTag } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { RtsInitiateDialog } from '@/components/packages/rts-initiate-dialog';
 import { BatchSessionSummary } from '@/components/packages/batch-session-summary';
@@ -311,6 +311,12 @@ export default function CheckInPage() {
   const [storageLocation, setStorageLocation] = useState('');
   const [storageLocationCustom, setStorageLocationCustom] = useState(false); // BAR-326
   const [requiresSignature, setRequiresSignature] = useState(false);
+
+  // Condition details (tags, notes, photos)
+  const [conditionTags, setConditionTags] = useState<ConditionTag[]>([]);
+  const [customerNote, setCustomerNote] = useState('');
+  const [internalNote, setInternalNote] = useState('');
+  const [conditionPhotos, setConditionPhotos] = useState<string[]>([]);
 
   // BAR-326: Fetch defined storage locations for dropdown
   const [definedStorageLocations, setDefinedStorageLocations] = useState<{ id: string; name: string; isDefault: boolean }[]>([]);
@@ -1141,6 +1147,10 @@ export default function CheckInPage() {
     setRequiresSignature(false);
     setCondition('good');
     setConditionOther('');
+    setConditionTags([]);
+    setCustomerNote('');
+    setInternalNote('');
+    setConditionPhotos([]);
     setNotes('');
     setStorageLocation('');
     setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
@@ -1217,6 +1227,10 @@ export default function CheckInPage() {
     setRequiresSignature(false);
     setCondition('good');
     setConditionOther('');
+    setConditionTags([]);
+    setCustomerNote('');
+    setInternalNote('');
+    setConditionPhotos([]);
     setNotes('');
     setStorageLocation('');
     setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
