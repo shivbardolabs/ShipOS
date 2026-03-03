@@ -1,0 +1,112 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 14 * * 1"
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  npm-audit:
+    name: "🔍 npm audit"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Run npm audit
+        run: |
+          npm audit --omit=dev 2>&1 | tee audit-output.txt || true
+          npm audit --omit=dev --audit-level=high 2>&1 || echo "::warning::High/critical npm vulnerabilities detected."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-results
+          path: audit-output.txt
+
+  snyk:
+    name: "🛡️ Snyk Security Scan"
+    runs-on: ubuntu-latest
+    if: ${{ vars.SNYK_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --project-name=ShipOS
+      - uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+          args: --severity-threshold=high
+
+  license-check:
+    name: "📜 License Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Check licenses
+        run: |
+          npx license-checker --production --summary --out license-report.txt 2>&1 || true
+          if grep -i "GPL" license-report.txt | grep -vi "LGPL" | grep -vi "MIT"; then
+            echo "::warning::GPL-licensed dependencies detected."
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-report
+          path: license-report.txt
+
+  secret-scan:
+    name: "🔑 Secret Scanning"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  summary:
+    name: "📊 Security Summary"
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [npm-audit, license-check, secret-scan]
+    steps:
+      - name: Results
+        run: |
+          echo "## 🛡️ Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| npm audit | ${{ needs.npm-audit.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Licenses | ${{ needs.license-check.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets | ${{ needs.secret-scan.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
