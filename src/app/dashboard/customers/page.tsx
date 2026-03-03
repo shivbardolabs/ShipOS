@@ -158,6 +158,7 @@ export default function CustomersPage() {
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importedCount, setImportedCount] = useState(0);
+  const [importSaving, setImportSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -285,13 +286,48 @@ export default function CustomersPage() {
     setImportErrors([]); return true;
   }, [importPreview]);
 
-  const handleImportConfirm = useCallback(() => {
+  const handleImportConfirm = useCallback(async () => {
     if (!importPreview) return;
-    setImportedCount(importPreview.rows.length); setImportStep('done');
-  }, [importPreview]);
+    setImportSaving(true);
+    setImportErrors([]);
+    try {
+      // Build customer records from the mapped CSV rows
+      const customers = importPreview.rows.map((row) => {
+        const mapped: Record<string, string> = {};
+        for (const [csvCol, field] of Object.entries(importPreview.mapping)) {
+          if (row[csvCol]) mapped[field] = row[csvCol];
+        }
+        return mapped;
+      });
+
+      const res = await fetch('/api/customers/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customers }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setImportErrors([data.error || 'Import failed. Please try again.']);
+        return;
+      }
+
+      setImportedCount(data.created ?? 0);
+      if (data.errors?.length > 0) {
+        setImportErrors(data.errors.map((e: { row: number; message: string }) => `Row ${e.row}: ${e.message}`));
+      }
+      setImportStep('done');
+      // Refresh the customer list
+      fetchCustomers();
+    } catch {
+      setImportErrors(['Network error — please check your connection and try again.']);
+    } finally {
+      setImportSaving(false);
+    }
+  }, [importPreview, fetchCustomers]);
 
   const resetImport = useCallback(() => {
-    setImportStep('upload'); setImportPreview(null); setImportErrors([]); setImportedCount(0);
+    setImportStep('upload'); setImportPreview(null); setImportErrors([]); setImportedCount(0); setImportSaving(false);
   }, []);
 
   const downloadTemplate = useCallback(() => {
@@ -528,7 +564,7 @@ export default function CustomersPage() {
           ) : importStep === 'map' ? (
             <><Button variant="secondary" onClick={() => { setImportStep('upload'); setImportPreview(null); setImportErrors([]); }}>Back</Button><Button onClick={() => { if (validateImportMapping()) setImportStep('preview'); }}>Next: Preview</Button></>
           ) : importStep === 'preview' ? (
-            <><Button variant="secondary" onClick={() => setImportStep('map')}>Back</Button><Button leftIcon={<Upload className="h-4 w-4" />} onClick={handleImportConfirm}>Import {importPreview?.rows.length} Customer{importPreview && importPreview.rows.length !== 1 ? 's' : ''}</Button></>
+            <><Button variant="secondary" onClick={() => setImportStep('map')} disabled={importSaving}>Back</Button><Button leftIcon={importSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} onClick={handleImportConfirm} disabled={importSaving}>{importSaving ? 'Importing…' : `Import ${importPreview?.rows.length} Customer${importPreview && importPreview.rows.length !== 1 ? 's' : ''}`}</Button></>
           ) : (<Button onClick={() => { setShowImportModal(false); resetImport(); }}>Done</Button>)
         }>
 
@@ -648,6 +684,12 @@ export default function CustomersPage() {
               </table>
             </div>
             {importPreview.rows.length > 20 && <p className="text-xs text-surface-500 text-center">Showing first 20 of {importPreview.rows.length} rows</p>}
+            {importErrors.length > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="text-sm text-red-400 space-y-1">{importErrors.map((err, i) => <p key={i}>{err}</p>)}</div>
+              </div>
+            )}
           </div>
         )}
 
@@ -656,6 +698,15 @@ export default function CustomersPage() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4"><CheckCircle2 className="h-8 w-8 text-emerald-600" /></div>
             <h3 className="text-lg font-semibold text-surface-100 mb-1">Import Complete!</h3>
             <p className="text-sm text-surface-400">Successfully imported <span className="text-surface-200 font-medium">{importedCount}</span> customer{importedCount !== 1 ? 's' : ''}.</p>
+            {importErrors.length > 0 && (
+              <div className="mt-4 w-full max-w-md text-left">
+                <p className="text-sm text-yellow-400 flex items-center gap-1.5 mb-2"><AlertTriangle className="h-4 w-4" />{importErrors.length} row{importErrors.length !== 1 ? 's' : ''} skipped:</p>
+                <div className="max-h-32 overflow-y-auto rounded-lg border border-surface-700 bg-surface-800/50 p-3 text-xs text-surface-400 space-y-1">
+                  {importErrors.slice(0, 20).map((err, i) => <p key={i}>{err}</p>)}
+                  {importErrors.length > 20 && <p className="text-surface-500">…and {importErrors.length - 20} more</p>}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
