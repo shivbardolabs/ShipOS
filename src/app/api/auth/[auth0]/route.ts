@@ -8,11 +8,22 @@ const PLATFORM_HOSTS = ['platform.shipospro.com'];
  * Dynamically resolve the Auth0 base URL from the incoming request so that
  * the redirect_uri matches the domain the user is actually visiting
  * (e.g. app.shipospro.com vs platform.shipospro.com).
+ *
+ * IMPORTANT: We MUST use named exports (handleAuth, handleLogin, etc.) and
+ * NOT `initAuth0`, because the rest of the codebase uses named `getSession`
+ * imports. The Auth0 SDK throws if you mix `initAuth0` with named exports.
+ *
+ * Instead, we override both the login and callback handlers to pass the
+ * dynamic redirect_uri / redirectUri derived from the request host header.
+ * This ensures the redirect_uri is consistent between:
+ *   1. The authorization request to Auth0 (login handler)
+ *   2. The token exchange with Auth0 (callback handler)
  */
 function getBaseURL(req: NextRequest): string {
   const host = req.headers.get('host') || req.headers.get('x-forwarded-host');
   const proto = req.headers.get('x-forwarded-proto') || 'https';
   if (host) return `${proto}://${host}`;
+  // Fallback to env var
   return process.env.AUTH0_BASE_URL || 'https://shipospro.com';
 }
 
