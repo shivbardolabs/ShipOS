@@ -25,7 +25,7 @@ import { Stepper, type Step } from '@/components/ui/stepper';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import type { ParsedAddress } from '@/components/ui/address-autocomplete';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { customers as mockCustomers } from '@/lib/mock-data';
+// Real customer data loaded from API (replaces mock-data for PMB availability)
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_MAILBOX_RANGES,
@@ -35,7 +35,7 @@ import {
 } from '@/lib/pmb-utils';
 import { USPS_PRIMARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
-import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
+import type { Customer, MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
 import {
   ArrowLeft, ArrowRight, User, CreditCard, FileText, Shield,
   ClipboardCheck, Upload, CheckCircle2, AlertCircle, X, Scan,
@@ -341,18 +341,21 @@ export default function NewCustomerPage() {
     { id: 'review', label: 'Review & Create', description: 'Confirm details' },
   ], [isBusinessPmb]);
 
-  const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, mockCustomers), []);
+  /* ── Assigned PMBs from real DB (replaces mock data) ── */
+  const [assignedCustomers, setAssignedCustomers] = useState<Customer[]>([]);
+
+  const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, assignedCustomers), [assignedCustomers]);
   const availableBoxes = useMemo(() => {
     const platform = customerForm.platform as MailboxPlatform | '';
-    return getAvailableBoxNumbers(DEFAULT_MAILBOX_RANGES, mockCustomers, platform || undefined);
-  }, [customerForm.platform]);
+    return getAvailableBoxNumbers(DEFAULT_MAILBOX_RANGES, assignedCustomers, platform || undefined);
+  }, [customerForm.platform, assignedCustomers]);
   const filteredBoxes = useMemo(() => {
     if (!pmbSearch) return availableBoxes.slice(0, 50);
     const q = pmbSearch.toLowerCase();
     return availableBoxes.filter((b) => b.label.toLowerCase().includes(q) || String(b.number).includes(q)).slice(0, 50);
   }, [availableBoxes, pmbSearch]);
 
-  /* ── Load plan tiers on mount ── */
+  /* ── Load plan tiers + assigned PMBs on mount ── */
   useEffect(() => {
     const loadTiers = async () => {
       setPlanTiersLoading(true);
@@ -367,7 +370,19 @@ export default function NewCustomerPage() {
       }
       setPlanTiersLoading(false);
     };
+    const loadAssignedPmbs = async () => {
+      try {
+        const res = await fetch('/api/pmb/assigned');
+        if (res.ok) {
+          const data = await res.json();
+          setAssignedCustomers(data.customers ?? []);
+        }
+      } catch (err) {
+        console.error('Failed to load assigned PMBs:', err);
+      }
+    };
     loadTiers();
+    loadAssignedPmbs();
   }, []);
 
   /* ── Existing customer check ── */
