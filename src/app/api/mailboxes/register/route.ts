@@ -1,4 +1,8 @@
 /* eslint-disable */
+/**
+ * BAR-230: Updated mailbox registration API with plan tier, business entity,
+ * forwarding, payment, CMRA signature, and recipients support.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
@@ -78,6 +82,31 @@ export async function POST(request: NextRequest) {
       form1583SignatureUrl,
       agreementSignatureUrl,
       notes,
+      // BAR-230: New fields
+      planTierId,
+      billingCycle,
+      businessType,
+      businessRegPlace,
+      businessAddress,
+      businessCity,
+      businessState,
+      businessZip,
+      businessPhone,
+      businessEmail,
+      businessWebsite,
+      hasForwardingAddress,
+      forwardingAddress,
+      forwardingCity,
+      forwardingState,
+      forwardingZip,
+      isCourtProtected,
+      cmraSignatureUrl,
+      cmraSignedBy,
+      onboardingPaymentStatus,
+      onboardingPaymentMethod,
+      onboardingPaymentAmount,
+      onboardingPaymentRef,
+      recipients,
     } = body;
 
     // Validate required fields
@@ -134,8 +163,63 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         tenantId: user.tenantId,
         storeId: (user as any).storeId || null,
+        // BAR-230: Rate plan
+        planTierId: planTierId || null,
+        billingCycle: billingCycle || 'monthly',
+        // BAR-230: Business entity fields
+        businessType: businessType || null,
+        businessRegPlace: businessRegPlace || null,
+        businessAddress: businessAddress || null,
+        businessCity: businessCity || null,
+        businessState: businessState || null,
+        businessZip: businessZip || null,
+        businessPhone: businessPhone || null,
+        businessEmail: businessEmail || null,
+        businessWebsite: businessWebsite || null,
+        // BAR-230: Forwarding address
+        hasForwardingAddress: hasForwardingAddress || false,
+        forwardingAddress: forwardingAddress || null,
+        forwardingCity: forwardingCity || null,
+        forwardingState: forwardingState || null,
+        forwardingZip: forwardingZip || null,
+        // BAR-230: Court protection & CMRA signature
+        isCourtProtected: isCourtProtected || false,
+        cmraSignatureUrl: cmraSignatureUrl || null,
+        cmraSignedAt: cmraSignatureUrl ? new Date() : null,
+        cmraSignedBy: cmraSignedBy || null,
+        // BAR-230: Payment info
+        onboardingPaymentStatus: onboardingPaymentStatus || null,
+        onboardingPaymentMethod: onboardingPaymentMethod || null,
+        onboardingPaymentAmount: onboardingPaymentAmount || null,
+        onboardingPaymentRef: onboardingPaymentRef || null,
       },
     });
+
+    // BAR-230: Create additional recipients if provided
+    if (recipients && Array.isArray(recipients) && recipients.length > 0) {
+      await prisma.pmbRecipient.createMany({
+        data: recipients.map((r: any) => ({
+          customerId: customer.id,
+          tenantId: user.tenantId!,
+          type: r.type || 'additional_recipient',
+          firstName: r.firstName,
+          lastName: r.lastName,
+          phone: r.phone || null,
+          email: r.email || null,
+          address: r.address || null,
+          city: r.city || null,
+          state: r.state || null,
+          zip: r.zip || null,
+          primaryIdType: r.primaryIdType || null,
+          primaryIdNumber: r.primaryIdNumber || null,
+          primaryIdIssuer: r.primaryIdIssuer || null,
+          secondaryIdType: r.secondaryIdType || null,
+          secondaryIdNumber: r.secondaryIdNumber || null,
+          secondaryIdIssuer: r.secondaryIdIssuer || null,
+          dateOfBirth: r.dateOfBirth ? new Date(r.dateOfBirth) : null,
+        })),
+      });
+    }
 
     return NextResponse.json({
       success: true,
