@@ -1,6 +1,8 @@
 import { handleAuth, handleLogin, handleCallback } from '@auth0/nextjs-auth0';
 import { NextRequest } from 'next/server';
 
+type AppRouteHandlerFnContext = { params: Record<string, string | string[]> };
+
 /* ── Platform Console hosts ─────────────────────────────────────────────── */
 const PLATFORM_HOSTS = ['platform.shipospro.com'];
 
@@ -50,7 +52,7 @@ function getReturnTo(req: NextRequest): string {
  * silently losing all overrides (redirect_uri, returnTo, etc.).
  */
 export const GET = handleAuth({
-  login: (req: NextRequest, ctx: unknown) => {
+  login: (req: NextRequest, ctx: AppRouteHandlerFnContext) => {
     const baseURL = getBaseURL(req);
     const returnTo = getReturnTo(req);
     return handleLogin(req, ctx, {
@@ -60,7 +62,7 @@ export const GET = handleAuth({
       returnTo,
     });
   },
-  signup: (req: NextRequest, ctx: unknown) => {
+  signup: (req: NextRequest, ctx: AppRouteHandlerFnContext) => {
     const baseURL = getBaseURL(req);
     const returnTo = getReturnTo(req);
     return handleLogin(req, ctx, {
@@ -71,7 +73,7 @@ export const GET = handleAuth({
       returnTo,
     });
   },
-  callback: (req: NextRequest, ctx: unknown) => {
+  callback: (req: NextRequest, ctx: AppRouteHandlerFnContext) => {
     const baseURL = getBaseURL(req);
     return handleCallback(req, ctx, {
       redirectUri: `${baseURL}/api/auth/callback`,

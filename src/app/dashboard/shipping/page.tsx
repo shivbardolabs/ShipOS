@@ -747,7 +747,7 @@ export default function ShippingPage() {
             <div className="flex items-center gap-3">
               <Badge status={detailShipment.status} dot>{String(detailShipment.status).replace('_', ' ')}</Badge>
               <Badge status={detailShipment.paymentStatus} dot>{String(detailShipment.paymentStatus)}</Badge>
-              {detailShipment.paymentStatus === 'declined' && (
+              {(detailShipment.paymentStatus as string) === 'declined' && (
                 <Button
                   variant="secondary"
                   size="sm"

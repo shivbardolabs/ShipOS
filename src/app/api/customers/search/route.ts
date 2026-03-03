@@ -85,7 +85,6 @@ export async function GET(req: NextRequest) {
         status: true,
         notifyEmail: true,
         notifySms: true,
-        photoUrl: true,
         _count: {
           select: {
             packages: { where: { status: { in: ['checked_in', 'notified', 'ready'] } } },
@@ -159,8 +158,7 @@ export async function GET(req: NextRequest) {
         status: c.status,
         notifyEmail: c.notifyEmail,
         notifySms: c.notifySms,
-        photoUrl: c.photoUrl,
-        activePackageCount: c._count.packages,
+        activePackageCount: (c as Record<string, unknown> & { _count?: { packages: number } })._count?.packages ?? 0,
       })),
     });
   } catch (err) {

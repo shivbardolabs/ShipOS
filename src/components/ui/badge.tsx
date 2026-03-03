@@ -10,7 +10,8 @@ type BadgeVariant =
   | 'warning'
   | 'danger'
   | 'info'
-  | 'muted';
+  | 'muted'
+  | 'outline';
 
 interface BadgeProps {
   children: ReactNode;
@@ -30,6 +31,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   danger: 'bg-red-100 text-red-600 border-red-200',
   info: 'bg-blue-100 text-blue-600 border-blue-500/30',
   muted: 'bg-surface-600/30 text-surface-400 border-surface-600/40',
+  outline: 'bg-transparent text-surface-300 border-surface-500',
 };
 
 const dotVariantColors: Record<BadgeVariant, string> = {
@@ -39,6 +41,7 @@ const dotVariantColors: Record<BadgeVariant, string> = {
   danger: 'bg-red-400',
   info: 'bg-blue-400',
   muted: 'bg-surface-400',
+  outline: 'bg-surface-400',
 };
 
 export function Badge({

@@ -49,7 +49,7 @@ export function SendNotificationModal({ customer, open, onClose, onSent }: SendN
   const customerChannels = [
     customer.notifyEmail && 'Email',
     customer.notifySms && 'SMS',
-  ].filter(Boolean);
+  ].filter((ch): ch is string => Boolean(ch));
 
   const resetForm = useCallback(() => {
     setType('package_arrival');

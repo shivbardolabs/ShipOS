@@ -13,6 +13,7 @@ import { Form1583Panel } from '@/components/customer/form1583-panel';
 import { PmbClosureDialog } from '@/components/customer/pmb-closure-dialog';
 import { cn, formatDate, formatCurrency, formatDateTime } from '@/lib/utils';
 import { auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
+import type { Package as PackageType, MailPiece, Shipment, AuditLogEntry, Notification } from '@/lib/types';
 import {
   ArrowLeft,
   Edit,
