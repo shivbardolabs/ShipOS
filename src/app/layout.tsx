@@ -7,10 +7,15 @@ import { FeatureFlagProvider } from '@/components/feature-flag-provider';
 import { PostHogAnalyticsProvider } from '@/components/posthog-provider';
 import { GTMProvider, GTMNoScript } from '@/components/gtm-provider';
 import { ToastProvider } from '@/components/ui/toast';
+import { StagingBanner } from '@/components/staging-banner';
 import "./globals.css";
 
+const isStaging = process.env.NEXT_PUBLIC_ENV === "staging";
+
 export const metadata: Metadata = {
-  title: "ShipOS — Postal Store Management",
+  title: isStaging
+    ? "[STG] ShipOS — Postal Store Management"
+    : "ShipOS — Postal Store Management",
   description:
     "All-in-one management platform for postal stores, mailbox rental, and shipping services. By Bardo Labs.",
 };
@@ -61,6 +66,7 @@ export default function RootLayout({
                     <ToastProvider>
                       {children}
                     </ToastProvider>
+                    <StagingBanner />
                   </body>
                 </PostHogAnalyticsProvider>
               </Suspense>
