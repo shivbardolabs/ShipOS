@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
           where: { id: franchiseId },
           include: {
             locations: true,
-            pricingOverrides: { orderBy: { changedAt: 'desc' }, take: 50 },
+            pricingOverrides: { orderBy: { updatedAt: 'desc' }, take: 50 },
           },
         });
         if (!franchise) return NextResponse.json({ error: 'Franchise not found' }, { status: 404 });

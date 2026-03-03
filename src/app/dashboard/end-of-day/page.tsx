@@ -543,7 +543,7 @@ export default function EndOfDayPage() {
             <div className="space-y-2">
               <h4 className="text-xs text-surface-500 uppercase tracking-wider">Driver Signature (optional)</h4>
               <SignaturePad
-                onSignatureChange={(sig) => setPickupDriverSignature(sig)}
+                onSign={(sig: string) => setPickupDriverSignature(sig)}
                 width={480}
                 height={120}
               />

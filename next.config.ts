@@ -33,14 +33,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Pre-existing ESLint errors across codebase - disable during build
-    // TODO: Fix lint errors incrementally and re-enable
-    ignoreDuringBuilds: true,
+    // ESLint warnings are non-blocking; only errors fail the build.
+    // Re-enabled: all lint errors resolved as of 2026-03-03.
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    // Pre-existing type errors in auth route and customer pages
-    // TODO: Fix type errors and re-enable
-    ignoreBuildErrors: true,
+    // Type checking enforced — all type errors resolved as of 2026-03-03.
+    ignoreBuildErrors: false,
   },
   async headers() {
     return [

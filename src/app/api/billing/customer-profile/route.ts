@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
-    let profile = await prisma.customerBillingProfile.findUnique({
+    const profile = await prisma.customerBillingProfile.findUnique({
       where: { customerId },
     });
 

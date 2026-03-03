@@ -8,7 +8,10 @@ import { Button } from './button';
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface ModalProps {
-  open: boolean;
+  /** Whether the modal is visible. Accepts both `open` and `isOpen` for convenience. */
+  open?: boolean;
+  /** Alias for `open` — for backwards compatibility. */
+  isOpen?: boolean;
   onClose: () => void;
   title?: string;
   description?: string;
@@ -27,7 +30,8 @@ const sizeMap: Record<ModalSize, string> = {
 };
 
 export function Modal({
-  open,
+  open: openProp,
+  isOpen,
   onClose,
   title,
   description,
@@ -36,6 +40,7 @@ export function Modal({
   footer,
   persistent = false,
 }: ModalProps) {
+  const open = openProp ?? isOpen ?? false;
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {

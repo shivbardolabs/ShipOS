@@ -255,6 +255,7 @@ export default function CheckInPage() {
 
   // Step 1 — Customer (BAR-324: unified search with auto-detect)
   const [customerSearch, setCustomerSearch] = useState('');
+  const [searchMode, setSearchMode] = useState<'pmb' | 'name' | 'all'>('pmb');
   const [selectedCustomer, setSelectedCustomer] = useState<SearchCustomer | null>(null);
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
@@ -350,7 +351,7 @@ export default function CheckInPage() {
   const trackingCheckDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Step 4 — Notify
-  const [printLabel, setPrintLabel] = useState(true);
+  const [printLabelEnabled, setPrintLabelEnabled] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(true);
 
@@ -370,6 +371,7 @@ export default function CheckInPage() {
 
   // BAR-9: Multi-package batch tracking
   const [batchCount, setBatchCount] = useState(0);
+  const [batchSessionActive, setBatchSessionActive] = useState(false);
 
   // BAR-40: Batch session package list for session summary
   const [batchSessionPackages, setBatchSessionPackages] = useState<{
@@ -1004,11 +1006,9 @@ export default function CheckInPage() {
           perishable,
           condition,
           conditionOther: condition === 'other' ? conditionOther : undefined,
-          notes: notes.trim() || null,
-          storageLocation: storageLocation.trim() || null,
+          notes: notes.trim() || undefined,
+          storageLocation: storageLocation.trim() || undefined,
           requiresSignature,
-          storageLocation: storageLocation || undefined,
-          notes: notes || undefined,
           isWalkIn: packageProgram === 'pmb' ? isWalkIn : false,
           walkInName: packageProgram === 'pmb' && isWalkIn ? walkInName : undefined,
           recipientName: packageProgram !== 'pmb' ? recipientName : undefined,
@@ -1154,7 +1154,7 @@ export default function CheckInPage() {
     setNotes('');
     setStorageLocation('');
     setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
-    setPrintLabel(true);
+    setPrintLabelEnabled(true);
     setSendEmail(true);
     setSendSms(true);
     setShowSuccess(false);
@@ -1234,7 +1234,7 @@ export default function CheckInPage() {
     setNotes('');
     setStorageLocation('');
     setPackageDimensions({ lengthIn: null, widthIn: null, heightIn: null, weightLbs: null, source: null });
-    setPrintLabel(true);
+    setPrintLabelEnabled(true);
     setSendEmail(true);
     setSendSms(true);
     setShowSuccess(false);
@@ -1260,7 +1260,7 @@ export default function CheckInPage() {
           ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
           : (walkInName || 'Walk-in'),
         pmbNumber: selectedCustomer?.pmbNumber || 'N/A',
-        packageType: selectedSize || 'medium',
+        packageType: packageType || 'medium',
         checkedInAt: new Date().toISOString(),
         labelPrinted: true,
         notified: sendEmail || sendSms,
@@ -1759,7 +1759,7 @@ export default function CheckInPage() {
               {/* BAR-11: Keyboard wedge hint */}
               <p className="mt-1.5 text-xs text-surface-500">
                 <Camera className="h-3 w-3 inline mr-1" />
-                Tap "Scan Barcode" for camera, or use a USB scanner — it auto-detects
+                Tap &quot;Scan Barcode&quot; for camera, or use a USB scanner — it auto-detects
               </p>
               {trackingNumber.trim() && !selectedCarrier && (
                 <p className="mt-1 text-xs text-amber-400">
@@ -2327,8 +2327,8 @@ export default function CheckInPage() {
               <div className="flex flex-col gap-3 pt-2">
                 <CheckboxOption
                   label="Print shelf label"
-                  checked={printLabel}
-                  onChange={setPrintLabel}
+                  checked={printLabelEnabled}
+                  onChange={setPrintLabelEnabled}
                   icon={<Printer className="h-4 w-4" />}
                 />
                 <CheckboxOption
@@ -2632,7 +2632,7 @@ export default function CheckInPage() {
                           ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
                           : (walkInName || 'Walk-in'),
                         pmbNumber: selectedCustomer?.pmbNumber || 'N/A',
-                        packageType: selectedSize || 'medium',
+                        packageType: packageType || 'medium',
                         checkedInAt: new Date().toISOString(),
                         labelPrinted: true,
                         notified: sendEmail || sendSms,
