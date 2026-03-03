@@ -4,7 +4,7 @@
 /**
  * BAR-230: PMB Customer Onboarding Wizard
  *
- * 7-step wizard flow (expanded from original 5 steps):
+ * 7-step wizard flow (reordered per BAR-230 — mailbox selection first):
  *   0. Customer Info + Existing Customer Check
  *   1. Mailbox & Rate Plan Selection
  *   2. Identification + Non-Compliant ID Detection
@@ -243,7 +243,7 @@ export default function NewCustomerPage() {
   const fileInputRef3 = useRef<HTMLInputElement>(null);
   // fileInputRefPoa removed — proof of address merged into secondary ID
 
-  /* ── Step 0: Customer Info state ── */
+  /* ── Step 1: Customer Info state ── */
   const [customerForm, setCustomerForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
     businessName: '', platform: '' as MailboxPlatform | '',
@@ -266,7 +266,7 @@ export default function NewCustomerPage() {
   const [existingCheckLoading, setExistingCheckLoading] = useState(false);
   const [existingCheckDismissed, setExistingCheckDismissed] = useState(false);
 
-  /* ── Step 1: Rate plan state ── */
+  /* ── Step 0: Rate plan state ── */
   const [planTiers, setPlanTiers] = useState<PlanTierOption[]>([]);
   const [planTiersLoading, setPlanTiersLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
@@ -332,8 +332,8 @@ export default function NewCustomerPage() {
   }, [selectedPlan, billingCycle]);
 
   const WIZARD_STEPS: Step[] = useMemo(() => [
-    { id: 'info', label: 'Customer Info', description: 'Name, contact & address' },
     { id: 'plan', label: 'Mailbox & Plan', description: 'PMB & rate plan selection' },
+    { id: 'info', label: 'Customer Info', description: 'Name, contact & address' },
     { id: 'ids', label: 'Identification', description: isBusinessPmb ? 'Three forms of ID' : 'Two forms of ID' },
     { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
     { id: 'payment', label: 'Payment', description: 'Collect payment' },
@@ -561,6 +561,9 @@ export default function NewCustomerPage() {
   const validateStep = useCallback((stepNum: number): boolean => {
     const errors: Record<string, string> = {};
     if (stepNum === 0) {
+      if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB number';
+    }
+    if (stepNum === 1) {
       if (!customerForm.firstName.trim()) errors.firstName = 'Required';
       if (!customerForm.lastName.trim()) errors.lastName = 'Required';
       if (!customerForm.email.trim()) errors.email = 'Required';
@@ -570,9 +573,6 @@ export default function NewCustomerPage() {
       if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
       if (!customerForm.homeState.trim()) errors.homeState = 'Required';
       if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
-    }
-    if (stepNum === 1) {
-      if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB number';
     }
     if (stepNum === 2) {
       const idValid = validateIdPair(primaryIdType, secondaryIdType);
@@ -593,8 +593,8 @@ export default function NewCustomerPage() {
 
   const handleNext = useCallback(() => {
     if (validateStep(step)) {
-      // Trigger existing customer check when leaving step 0
-      if (step === 0 && !existingCheckDone) {
+      // Trigger existing customer check when leaving step 1 (Customer Info)
+      if (step === 1 && !existingCheckDone) {
         checkExistingCustomer();
       }
       setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
@@ -732,106 +732,9 @@ export default function NewCustomerPage() {
       <div className="min-h-[400px]">
 
         {/* ================================================================ */}
-        {/* Step 0: Customer Info + Existing Customer Check                   */}
+        {/* Step 0: Mailbox & Rate Plan Selection                             */}
         {/* ================================================================ */}
         {step === 0 && (
-          <div className="space-y-6">
-            {/* Existing customer match warning */}
-            {existingMatch && !existingCheckDismissed && (
-              <ExistingCustomerCard match={existingMatch} onDismiss={() => setExistingCheckDismissed(true)} />
-            )}
-
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-4 w-4 text-primary-500" />Customer Information</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="First Name *" value={customerForm.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={formErrors.firstName} placeholder="John" leftIcon={<User className="h-4 w-4" />} />
-                  <Input label="Last Name *" value={customerForm.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={formErrors.lastName} placeholder="Doe" leftIcon={<User className="h-4 w-4" />} />
-                  <Input label="Email *" type="email" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} placeholder="john@example.com" leftIcon={<Mail className="h-4 w-4" />} />
-                  <Input label="Phone *" type="tel" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} error={formErrors.phone} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
-                  <div className="sm:col-span-2">
-                    <Input label="Business Name" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Leave blank for personal accounts" leftIcon={<Building2 className="h-4 w-4" />} helperText={isBusinessPmb ? '✓ Business PMB — additional documentation required' : 'Optional — enter to create a business PMB'} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Business entity fields — only show if business name is entered */}
-            {isBusinessPmb && (
-              <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Select label="Business Type (§7b)" options={BUSINESS_ENTITY_TYPES} value={customerForm.businessType} onChange={(e) => updateField('businessType', e.target.value)} placeholder="Select entity type..." />
-                    <Input label="Place of Registration (§7i)" value={customerForm.businessRegPlace} onChange={(e) => updateField('businessRegPlace', e.target.value)} placeholder="State/county or country" helperText="Where the business is registered" />
-                    <div className="sm:col-span-2"><Input label="Business Address (§7c)" value={customerForm.businessAddress} onChange={(e) => updateField('businessAddress', e.target.value)} placeholder="Business street address" leftIcon={<MapPin className="h-4 w-4" />} /></div>
-                    <Input label="City (§7d)" value={customerForm.businessCity} onChange={(e) => updateField('businessCity', e.target.value)} placeholder="City" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="State (§7e)" value={customerForm.businessState} onChange={(e) => updateField('businessState', e.target.value)} placeholder="ST" />
-                      <Input label="ZIP (§7f)" value={customerForm.businessZip} onChange={(e) => updateField('businessZip', e.target.value)} placeholder="ZIP" />
-                    </div>
-                    <Input label="Business Phone (§7h)" value={customerForm.businessPhone} onChange={(e) => updateField('businessPhone', e.target.value)} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
-                    <Input label="Business Email" value={customerForm.businessEmail} onChange={(e) => updateField('businessEmail', e.target.value)} placeholder="business@example.com" leftIcon={<Mail className="h-4 w-4" />} />
-                    <Input label="Website" value={customerForm.businessWebsite} onChange={(e) => updateField('businessWebsite', e.target.value)} placeholder="https://example.com" />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <AddressAutocomplete value={customerForm.homeAddress} onChange={(v) => updateField('homeAddress', v)} onSelect={handleAddressSelect} />
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-2"><Input label="Street Address *" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} leftIcon={<MapPin className="h-4 w-4" />} /></div>
-                    <Input label="City *" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="State *" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />
-                      <Input label="ZIP *" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} error={formErrors.homeZip} />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Semi-Annual', label: 'Semi-Annual' }, { value: 'Annual', label: 'Annual' }]} value={customerForm.billingTerms} onChange={(e) => updateField('billingTerms', e.target.value)} />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-surface-300">Notifications</p>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifyEmail} onChange={(e) => updateField('notifyEmail', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />Email</label>
-                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifySms} onChange={(e) => updateField('notifySms', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />SMS</label>
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2"><Textarea label="Notes" value={customerForm.notes} onChange={(e) => updateField('notes', e.target.value)} placeholder="Internal notes about this customer..." rows={2} /></div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick duplicate check button */}
-            {!existingCheckDone && customerForm.firstName && customerForm.lastName && (
-              <div className="flex justify-center">
-                <Button variant="ghost" size="sm" onClick={checkExistingCustomer} leftIcon={existingCheckLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} disabled={existingCheckLoading}>
-                  {existingCheckLoading ? 'Checking...' : 'Check for Existing Customer'}
-                </Button>
-              </div>
-            )}
-            {existingCheckDone && !existingMatch && (
-              <div className="flex items-center justify-center gap-2 text-sm text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* Step 1: Mailbox & Rate Plan Selection                             */}
-        {/* ================================================================ */}
-        {step === 1 && (
           <div className="space-y-6">
             {/* PMB Number Selection */}
             <Card padding="md">
@@ -949,6 +852,102 @@ export default function NewCustomerPage() {
                 )}
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Step 1: Customer Info + Existing Customer Check                   */}
+        {/* ================================================================ */}
+        {step === 1 && (
+          <div className="space-y-6">
+            {/* Existing customer match warning */}
+            {existingMatch && !existingCheckDismissed && (
+              <ExistingCustomerCard match={existingMatch} onDismiss={() => setExistingCheckDismissed(true)} />
+            )}
+
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-4 w-4 text-primary-500" />Customer Information</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="First Name *" value={customerForm.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={formErrors.firstName} placeholder="John" leftIcon={<User className="h-4 w-4" />} />
+                  <Input label="Last Name *" value={customerForm.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={formErrors.lastName} placeholder="Doe" leftIcon={<User className="h-4 w-4" />} />
+                  <Input label="Email *" type="email" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} placeholder="john@example.com" leftIcon={<Mail className="h-4 w-4" />} />
+                  <Input label="Phone *" type="tel" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} error={formErrors.phone} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
+                  <div className="sm:col-span-2">
+                    <Input label="Business Name" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Leave blank for personal accounts" leftIcon={<Building2 className="h-4 w-4" />} helperText={isBusinessPmb ? '✓ Business PMB — additional documentation required' : 'Optional — enter to create a business PMB'} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Business entity fields — only show if business name is entered */}
+            {isBusinessPmb && (
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Select label="Business Type (§7b)" options={BUSINESS_ENTITY_TYPES} value={customerForm.businessType} onChange={(e) => updateField('businessType', e.target.value)} placeholder="Select entity type..." />
+                    <Input label="Place of Registration (§7i)" value={customerForm.businessRegPlace} onChange={(e) => updateField('businessRegPlace', e.target.value)} placeholder="State/county or country" helperText="Where the business is registered" />
+                    <div className="sm:col-span-2"><Input label="Business Address (§7c)" value={customerForm.businessAddress} onChange={(e) => updateField('businessAddress', e.target.value)} placeholder="Business street address" leftIcon={<MapPin className="h-4 w-4" />} /></div>
+                    <Input label="City (§7d)" value={customerForm.businessCity} onChange={(e) => updateField('businessCity', e.target.value)} placeholder="City" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="State (§7e)" value={customerForm.businessState} onChange={(e) => updateField('businessState', e.target.value)} placeholder="ST" />
+                      <Input label="ZIP (§7f)" value={customerForm.businessZip} onChange={(e) => updateField('businessZip', e.target.value)} placeholder="ZIP" />
+                    </div>
+                    <Input label="Business Phone (§7h)" value={customerForm.businessPhone} onChange={(e) => updateField('businessPhone', e.target.value)} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
+                    <Input label="Business Email" value={customerForm.businessEmail} onChange={(e) => updateField('businessEmail', e.target.value)} placeholder="business@example.com" leftIcon={<Mail className="h-4 w-4" />} />
+                    <Input label="Website" value={customerForm.businessWebsite} onChange={(e) => updateField('businessWebsite', e.target.value)} placeholder="https://example.com" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <AddressAutocomplete value={customerForm.homeAddress} onChange={(v) => updateField('homeAddress', v)} onSelect={handleAddressSelect} />
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-2"><Input label="Street Address *" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} leftIcon={<MapPin className="h-4 w-4" />} /></div>
+                    <Input label="City *" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="State *" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />
+                      <Input label="ZIP *" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} error={formErrors.homeZip} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Semi-Annual', label: 'Semi-Annual' }, { value: 'Annual', label: 'Annual' }]} value={customerForm.billingTerms} onChange={(e) => updateField('billingTerms', e.target.value)} />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-surface-300">Notifications</p>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifyEmail} onChange={(e) => updateField('notifyEmail', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />Email</label>
+                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifySms} onChange={(e) => updateField('notifySms', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />SMS</label>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2"><Textarea label="Notes" value={customerForm.notes} onChange={(e) => updateField('notes', e.target.value)} placeholder="Internal notes about this customer..." rows={2} /></div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick duplicate check button */}
+            {!existingCheckDone && customerForm.firstName && customerForm.lastName && (
+              <div className="flex justify-center">
+                <Button variant="ghost" size="sm" onClick={checkExistingCustomer} leftIcon={existingCheckLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} disabled={existingCheckLoading}>
+                  {existingCheckLoading ? 'Checking...' : 'Check for Existing Customer'}
+                </Button>
+              </div>
+            )}
+            {existingCheckDone && !existingMatch && (
+              <div className="flex items-center justify-center gap-2 text-sm text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
+              </div>
+            )}
           </div>
         )}
 
