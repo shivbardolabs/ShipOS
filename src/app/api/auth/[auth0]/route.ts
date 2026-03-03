@@ -1,10 +1,13 @@
 import { handleAuth, handleLogin } from '@auth0/nextjs-auth0';
 import { NextRequest } from 'next/server';
 
+/* ── Platform Console hosts ─────────────────────────────────────────────── */
+const PLATFORM_HOSTS = ['platform.shipospro.com'];
+
 /**
  * Dynamically resolve the Auth0 base URL from the incoming request so that
  * the redirect_uri matches the domain the user is actually visiting
- * (e.g. app.shipospro.com vs shipospro.com).
+ * (e.g. app.shipospro.com vs platform.shipospro.com).
  */
 function getBaseURL(req: NextRequest): string {
   const host = req.headers.get('host') || req.headers.get('x-forwarded-host');
@@ -14,24 +17,38 @@ function getBaseURL(req: NextRequest): string {
   return process.env.AUTH0_BASE_URL || 'https://shipospro.com';
 }
 
+/**
+ * Determine where to redirect after login based on the host.
+ * Platform domain → super-admin dashboard
+ * Everything else → client dashboard
+ */
+function getReturnTo(req: NextRequest): string {
+  const host = req.headers.get('host') || '';
+  const hostname = host.split(':')[0];
+  if (PLATFORM_HOSTS.includes(hostname)) return '/dashboard/super-admin';
+  return '/dashboard';
+}
+
 export const GET = handleAuth({
   login: (req: NextRequest) => {
     const baseURL = getBaseURL(req);
+    const returnTo = getReturnTo(req);
     return handleLogin(req, {
       authorizationParams: {
         redirect_uri: `${baseURL}/api/auth/callback`,
       },
-      returnTo: '/dashboard',
+      returnTo,
     });
   },
   signup: (req: NextRequest) => {
     const baseURL = getBaseURL(req);
+    const returnTo = getReturnTo(req);
     return handleLogin(req, {
       authorizationParams: {
         screen_hint: 'signup',
         redirect_uri: `${baseURL}/api/auth/callback`,
       },
-      returnTo: '/dashboard',
+      returnTo,
     });
   },
 });

@@ -50,6 +50,7 @@ import {
   Wallet,
   CreditCard,
   ClipboardCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { roleConfig, type UserRole } from '@/components/ui/role-badge';
 
@@ -66,6 +67,8 @@ interface NavItem {
   flagKey?: string;
   /** Badge key — shows a count badge sourced from useSidebarBadges() */
   badgeKey?: string;
+  /** External link — opens in new tab, uses <a> instead of <Link> */
+  external?: boolean;
 }
 
 interface NavSection {
@@ -80,7 +83,12 @@ const navSections: NavSection[] = [
     title: 'PLATFORM',
     requiredRole: 'superadmin',
     items: [
-      { label: 'Platform Console', href: '/dashboard/super-admin', icon: ShieldCheck },
+      {
+        label: 'Platform Console',
+        href: 'https://platform.shipospro.com',
+        icon: ShieldCheck,
+        external: true,
+      },
     ],
   },
   {
@@ -292,27 +300,24 @@ export function Sidebar() {
                 </p>
                 <div className="space-y-0.5">
                   {visibleItems.map((item) => {
-                    const active = isActive(item.href);
+                    const active = !item.external && isActive(item.href);
                     const badgeCount = item.badgeKey ? (badgeCounts[item.badgeKey] ?? 0) : 0;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
-                          active
-                            ? isPlatformSection ? 'pl-[10px]' : 'nav-active pl-[10px]'
-                            : isPlatformSection
-                            ? 'text-rose-400/70 hover:text-rose-300 hover:bg-rose-500/10'
-                            : 'text-surface-400 hover:text-surface-200'
-                        )}
-                        style={
-                          active && isPlatformSection
-                            ? { borderLeft: '3px solid #e11d48', background: 'rgba(225, 29, 72, 0.1)', color: '#fb7185' }
-                            : undefined
-                        }
-                      >
+
+                    const linkClasses = cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                      active
+                        ? isPlatformSection ? 'pl-[10px]' : 'nav-active pl-[10px]'
+                        : isPlatformSection
+                        ? 'text-rose-400/70 hover:text-rose-300 hover:bg-rose-500/10'
+                        : 'text-surface-400 hover:text-surface-200'
+                    );
+                    const linkStyle =
+                      active && isPlatformSection
+                        ? { borderLeft: '3px solid #e11d48', background: 'rgba(225, 29, 72, 0.1)', color: '#fb7185' }
+                        : undefined;
+
+                    const linkContent = (
+                      <>
                         <item.icon
                           className={cn(
                             'h-[18px] w-[18px] flex-shrink-0',
@@ -321,7 +326,39 @@ export function Sidebar() {
                           style={isPlatformSection ? { color: '#e11d48' } : undefined}
                         />
                         <span className="truncate">{item.label}</span>
+                        {item.external && (
+                          <ExternalLink className="h-3 w-3 ml-auto flex-shrink-0 opacity-50" />
+                        )}
                         {badgeCount > 0 && <PendingBadge count={badgeCount} />}
+                      </>
+                    );
+
+                    // External links use <a> with target="_blank"
+                    if (item.external) {
+                      return (
+                        <a
+                          key={item.href}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setMobileOpen(false)}
+                          className={linkClasses}
+                          style={linkStyle}
+                        >
+                          {linkContent}
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={linkClasses}
+                        style={linkStyle}
+                      >
+                        {linkContent}
                       </Link>
                     );
                   })}
