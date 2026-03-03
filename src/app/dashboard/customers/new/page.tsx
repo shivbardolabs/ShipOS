@@ -41,7 +41,7 @@ import {
   ClipboardCheck, Upload, CheckCircle2, AlertCircle, X, Scan,
   Building2, Mail, Phone, MapPin, Calendar, DollarSign,
   Loader2, Mailbox, Info, ChevronDown, Search, Lock,
-  UserPlus, Crown, Trash2, AlertTriangle, Banknote, Smartphone,
+  UserPlus, Crown, Trash2, AlertTriangle, Banknote, Smartphone, Sparkles,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -243,7 +243,7 @@ export default function NewCustomerPage() {
   const fileInputRef3 = useRef<HTMLInputElement>(null);
   // fileInputRefPoa removed — proof of address merged into secondary ID
 
-  /* ── Step 1: Customer Info state ── */
+  /* ── Step 2: Customer Info state ── */
   const [customerForm, setCustomerForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
     businessName: '', platform: '' as MailboxPlatform | '',
@@ -266,13 +266,13 @@ export default function NewCustomerPage() {
   const [existingCheckLoading, setExistingCheckLoading] = useState(false);
   const [existingCheckDismissed, setExistingCheckDismissed] = useState(false);
 
-  /* ── Step 0: Rate plan state ── */
+  /* ── Step 0: Mailbox & Rate plan state ── */
   const [planTiers, setPlanTiers] = useState<PlanTierOption[]>([]);
   const [planTiersLoading, setPlanTiersLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-  /* ── Step 2: ID state ── */
+  /* ── Step 1: ID state ── */
   const [primaryIdType, setPrimaryIdType] = useState('');
   const [secondaryIdType, setSecondaryIdType] = useState('');
   const [primaryIdFile, setPrimaryIdFile] = useState<File | null>(null);
@@ -333,8 +333,8 @@ export default function NewCustomerPage() {
 
   const WIZARD_STEPS: Step[] = useMemo(() => [
     { id: 'plan', label: 'Mailbox & Plan', description: 'PMB & rate plan selection' },
-    { id: 'info', label: 'Customer Info', description: 'Name, contact & address' },
     { id: 'ids', label: 'Identification', description: isBusinessPmb ? 'Three forms of ID' : 'Two forms of ID' },
+    { id: 'info', label: 'Customer Info', description: 'Pre-filled from ID scan' },
     { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
     { id: 'payment', label: 'Payment', description: 'Collect payment' },
     { id: 'agreement', label: 'Agreement', description: 'Sign & countersign' },
@@ -460,39 +460,55 @@ export default function NewCustomerPage() {
     reader.readAsDataURL(file);
   }, []);
 
-  const simulateOCR = useCallback(() => {
-    if (!primaryIdFile) return;
+  const runIdScan = useCallback(async () => {
+    if (!primaryIdFile || !primaryIdPreview) return;
     setExtracting(true);
-    setTimeout(() => {
-      const mockExtracted: ExtractedIdData = {
-        fullName: customerForm.firstName && customerForm.lastName ? `${customerForm.firstName} ${customerForm.lastName}` : 'John Doe',
-        firstName: customerForm.firstName || 'John', lastName: customerForm.lastName || 'Doe',
-        dateOfBirth: '1985-06-15',
-        address: customerForm.homeAddress || '456 Oak Avenue',
-        city: customerForm.homeCity || 'Springfield', state: customerForm.homeState || 'CA',
-        zipCode: customerForm.homeZip || '90211',
-        idNumber: 'DL' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-        expirationDate: new Date(Date.now() + 365 * 3 * 86400000).toISOString().slice(0, 10),
-        issuingAuthority: 'State of California',
+    try {
+      const resp = await fetch('/api/customers/id-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: primaryIdPreview, idType: primaryIdType || 'drivers_license' }),
+      });
+      const data = await resp.json();
+      if (!data.success || !data.result) {
+        console.error('ID scan failed:', data.error);
+        setExtracting(false);
+        return;
+      }
+      const r = data.result;
+      const fullName = [r.firstName, r.lastName].filter(Boolean).join(' ');
+      const extracted: ExtractedIdData = {
+        fullName, firstName: r.firstName || '', lastName: r.lastName || '',
+        dateOfBirth: r.dateOfBirth || '', address: r.address || '',
+        city: r.city || '', state: r.state || '', zipCode: r.zipCode || '',
+        idNumber: r.idNumber || '', expirationDate: r.expirationDate || '',
+        issuingAuthority: '',
       };
-      setExtractedData(mockExtracted);
+      setExtractedData(extracted);
+      // Pre-fill customer info from ID extraction (same algorithm as AI Onboard)
+      setCustomerForm((prev) => ({
+        ...prev,
+        firstName: r.firstName || prev.firstName,
+        lastName: r.lastName || prev.lastName,
+        homeAddress: r.address || prev.homeAddress,
+        homeCity: r.city || prev.homeCity,
+        homeState: r.state || prev.homeState,
+        homeZip: r.zipCode || prev.homeZip,
+      }));
+      // Pre-fill PS1583 form
       setForm1583((prev) => ({
-        ...prev, applicantName: mockExtracted.fullName || '', dateOfBirth: mockExtracted.dateOfBirth || '',
-        homeAddress: mockExtracted.address || '', homeCity: mockExtracted.city || '',
-        homeState: mockExtracted.state || '', homeZip: mockExtracted.zipCode || '',
-        primaryIdNumber: mockExtracted.idNumber || '', primaryIdIssuer: mockExtracted.issuingAuthority || '',
+        ...prev, applicantName: fullName || prev.applicantName, dateOfBirth: r.dateOfBirth || prev.dateOfBirth,
+        homeAddress: r.address || prev.homeAddress, homeCity: r.city || prev.homeCity,
+        homeState: r.state || prev.homeState, homeZip: r.zipCode || prev.homeZip,
+        primaryIdNumber: r.idNumber || prev.primaryIdNumber,
         pmbNumber: customerForm.pmbNumber,
       }));
-      if (!customerForm.homeAddress && mockExtracted.address) {
-        setCustomerForm((prev) => ({
-          ...prev, homeAddress: mockExtracted.address || prev.homeAddress,
-          homeCity: mockExtracted.city || prev.homeCity, homeState: mockExtracted.state || prev.homeState,
-          homeZip: mockExtracted.zipCode || prev.homeZip,
-        }));
-      }
+    } catch (err) {
+      console.error('ID scan error:', err);
+    } finally {
       setExtracting(false);
-    }, 2000);
-  }, [primaryIdFile, customerForm]);
+    }
+  }, [primaryIdFile, primaryIdPreview, primaryIdType, customerForm.pmbNumber]);
 
   /* ── BAR-230: Non-compliant ID check ── */
   const checkNonCompliantId = useCallback((idType: string, expirationDate: string) => {
@@ -564,17 +580,6 @@ export default function NewCustomerPage() {
       if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB number';
     }
     if (stepNum === 1) {
-      if (!customerForm.firstName.trim()) errors.firstName = 'Required';
-      if (!customerForm.lastName.trim()) errors.lastName = 'Required';
-      if (!customerForm.email.trim()) errors.email = 'Required';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
-      if (!customerForm.phone.trim()) errors.phone = 'Required';
-      if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
-      if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
-      if (!customerForm.homeState.trim()) errors.homeState = 'Required';
-      if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
-    }
-    if (stepNum === 2) {
       const idValid = validateIdPair(primaryIdType, secondaryIdType);
       if (!idValid.valid) errors.ids = idValid.error || 'Invalid ID selection';
       if (!primaryIdFile) errors.primaryFile = 'Upload primary ID';
@@ -586,6 +591,17 @@ export default function NewCustomerPage() {
         if (!businessDocFile) errors.businessDocFile = 'Upload business documentation';
       }
     }
+    if (stepNum === 2) {
+      if (!customerForm.firstName.trim()) errors.firstName = 'Required';
+      if (!customerForm.lastName.trim()) errors.lastName = 'Required';
+      if (!customerForm.email.trim()) errors.email = 'Required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
+      if (!customerForm.phone.trim()) errors.phone = 'Required';
+      if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
+      if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
+      if (!customerForm.homeState.trim()) errors.homeState = 'Required';
+      if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
+    }
     // Steps 3-5 are softer — allow progression with warnings
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -593,8 +609,8 @@ export default function NewCustomerPage() {
 
   const handleNext = useCallback(() => {
     if (validateStep(step)) {
-      // Trigger existing customer check when leaving step 1 (Customer Info)
-      if (step === 1 && !existingCheckDone) {
+      // Trigger existing customer check when leaving step 2 (Customer Info)
+      if (step === 2 && !existingCheckDone) {
         checkExistingCustomer();
       }
       setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
@@ -854,11 +870,156 @@ export default function NewCustomerPage() {
             </Card>
           </div>
         )}
-
-        {/* Step 1: Customer Info + Existing Customer Check                   */}
+        {/* ================================================================ */}
+        {/* Step 1: Identification + Non-Compliant ID Detection (AI Extraction)               */}
         {/* ================================================================ */}
         {step === 1 && (
           <div className="space-y-6">
+            {/* Non-compliant ID warning */}
+            {nonCompliantWarning && (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-red-400">Non-Compliant ID Detected</p>
+                  <p className="text-xs text-surface-400 mt-1 whitespace-pre-wrap">{nonCompliantWarning}</p>
+                </div>
+              </div>
+            )}
+            {expirationWarning && !nonCompliantWarning && (
+              <div className={cn('rounded-lg border p-4 flex items-start gap-3', expirationWarning.includes('expired') ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5')}>
+                <AlertCircle className={cn('h-5 w-5 mt-0.5 flex-shrink-0', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')} />
+                <div>
+                  <p className={cn('text-sm font-medium', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')}>
+                    {expirationWarning.includes('expired') ? 'Expired ID' : 'ID Expiring Soon'}
+                  </p>
+                  <p className="text-xs text-surface-400 mt-1">{expirationWarning}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Primary ID */}
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Select label="ID Type *" placeholder="Select primary ID..." options={[
+                      ...USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name })),
+                      { value: '_divider', label: '── Non-Compliant (will be flagged) ──', disabled: true },
+                      ...NON_COMPLIANT_IDS.map((nc) => ({ value: nc.id, label: `⚠️ ${nc.name}` })),
+                    ]} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
+                    <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
+                    <div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
+                      <input ref={fileInputRef1} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'primary'); }} />
+                      {primaryIdPreview ? (
+                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
+                          <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
+                          <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
+                        </div>
+                      ) : (
+                        <div onClick={() => fileInputRef1.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
+                        </div>
+                      )}
+                      {formErrors.primaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.primaryFile}</p>}
+                    </div>
+                    {primaryIdFile && !extractedData && (
+                      <Button variant="default" size="sm" onClick={runIdScan} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
+                        {extracting ? 'Analyzing with AI...' : 'Extract ID Data (AI)'}
+                      </Button>
+                    )}
+                    {extractedData && (
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
+                        <p className="text-xs font-medium text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Data Extracted</p>
+                        <div className="grid grid-cols-2 gap-1 text-[11px]">
+                          {extractedData.fullName && <><span className="text-surface-500">Name</span><span className="text-surface-300">{extractedData.fullName}</span></>}
+                          {extractedData.dateOfBirth && <><span className="text-surface-500">DOB</span><span className="text-surface-300">{extractedData.dateOfBirth}</span></>}
+                          {extractedData.idNumber && <><span className="text-surface-500">ID#</span><span className="text-surface-300 font-mono">{extractedData.idNumber}</span></>}
+                          {extractedData.expirationDate && <><span className="text-surface-500">Expires</span><span className="text-surface-300">{extractedData.expirationDate}</span></>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Secondary ID */}
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Proof of Address)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Select label="Document Type *" placeholder="Select proof of address..." options={PROOF_OF_ADDRESS_TYPES} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
+                    <Input label="Date of Issue" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Date the document was issued" />
+                    <div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
+                      <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
+                      {secondaryIdPreview ? (
+                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
+                          <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
+                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
+                        </div>
+                      ) : (
+                        <div onClick={() => fileInputRef2.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
+                        </div>
+                      )}
+                      {formErrors.secondaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.secondaryFile}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Business Document (if business PMB) */}
+            {isBusinessPmb && (
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Documentation</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Select label="Document Type *" placeholder="Select business document..." options={BUSINESS_DOC_TYPES} value={businessDocType} onChange={(e) => setBusinessDocType(e.target.value)} error={formErrors.businessDocType} />
+                    <div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document *</label>
+                      <input ref={fileInputRef3} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setBusinessDocPreview(ev.target?.result as string); setBusinessDocFile(file); }; reader.readAsDataURL(file); } }} />
+                      {businessDocPreview ? (
+                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
+                          <img src={businessDocPreview} alt="Business Doc" className="w-full h-40 object-cover" />
+                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                        </div>
+                      ) : (
+                        <div onClick={() => fileInputRef3.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload</p>
+                        </div>
+                      )}
+                      {formErrors.businessDocFile && <p className="text-xs text-red-400 mt-1">{formErrors.businessDocFile}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Proof of Address section removed — secondary ID IS the proof of address */}
+          </div>
+        )}
+
+
+        {/* Step 2: Customer Info (Pre-filled from ID Scan)                   */}
+        {/* ================================================================ */}
+        {step === 2 && (
+          <div className="space-y-6">
+            {/* AI extraction banner */}
+            {extractedData && (
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-emerald-400">Fields Pre-filled from ID Scan</p>
+                  <p className="text-xs text-surface-400 mt-1">Name, address, and ID details were extracted from your uploaded photo ID. Please review and correct any fields as needed.</p>
+                </div>
+              </div>
+            )}
+
             {/* Existing customer match warning */}
             {existingMatch && !existingCheckDismissed && (
               <ExistingCustomerCard match={existingMatch} onDismiss={() => setExistingCheckDismissed(true)} />
@@ -948,140 +1109,6 @@ export default function NewCustomerPage() {
                 <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
               </div>
             )}
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* Step 2: Identification + Non-Compliant ID Detection               */}
-        {/* ================================================================ */}
-        {step === 2 && (
-          <div className="space-y-6">
-            {/* Non-compliant ID warning */}
-            {nonCompliantWarning && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-red-400">Non-Compliant ID Detected</p>
-                  <p className="text-xs text-surface-400 mt-1 whitespace-pre-wrap">{nonCompliantWarning}</p>
-                </div>
-              </div>
-            )}
-            {expirationWarning && !nonCompliantWarning && (
-              <div className={cn('rounded-lg border p-4 flex items-start gap-3', expirationWarning.includes('expired') ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5')}>
-                <AlertCircle className={cn('h-5 w-5 mt-0.5 flex-shrink-0', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')} />
-                <div>
-                  <p className={cn('text-sm font-medium', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')}>
-                    {expirationWarning.includes('expired') ? 'Expired ID' : 'ID Expiring Soon'}
-                  </p>
-                  <p className="text-xs text-surface-400 mt-1">{expirationWarning}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Primary ID */}
-              <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select primary ID..." options={[
-                      ...USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name })),
-                      { value: '_divider', label: '── Non-Compliant (will be flagged) ──', disabled: true },
-                      ...NON_COMPLIANT_IDS.map((nc) => ({ value: nc.id, label: `⚠️ ${nc.name}` })),
-                    ]} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
-                    <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
-                    <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
-                      <input ref={fileInputRef1} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'primary'); }} />
-                      {primaryIdPreview ? (
-                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
-                          <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
-                        </div>
-                      ) : (
-                        <div onClick={() => fileInputRef1.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
-                        </div>
-                      )}
-                      {formErrors.primaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.primaryFile}</p>}
-                    </div>
-                    {primaryIdFile && !extractedData && (
-                      <Button variant="default" size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
-                        {extracting ? 'Extracting...' : 'Extract ID Data (OCR)'}
-                      </Button>
-                    )}
-                    {extractedData && (
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
-                        <p className="text-xs font-medium text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Data Extracted</p>
-                        <div className="grid grid-cols-2 gap-1 text-[11px]">
-                          {extractedData.fullName && <><span className="text-surface-500">Name</span><span className="text-surface-300">{extractedData.fullName}</span></>}
-                          {extractedData.dateOfBirth && <><span className="text-surface-500">DOB</span><span className="text-surface-300">{extractedData.dateOfBirth}</span></>}
-                          {extractedData.idNumber && <><span className="text-surface-500">ID#</span><span className="text-surface-300 font-mono">{extractedData.idNumber}</span></>}
-                          {extractedData.expirationDate && <><span className="text-surface-500">Expires</span><span className="text-surface-300">{extractedData.expirationDate}</span></>}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Secondary ID */}
-              <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Proof of Address)</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Select label="Document Type *" placeholder="Select proof of address..." options={PROOF_OF_ADDRESS_TYPES} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
-                    <Input label="Date of Issue" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Date the document was issued" />
-                    <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
-                      <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
-                      {secondaryIdPreview ? (
-                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
-                          <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
-                        </div>
-                      ) : (
-                        <div onClick={() => fileInputRef2.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
-                        </div>
-                      )}
-                      {formErrors.secondaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.secondaryFile}</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Business Document (if business PMB) */}
-            {isBusinessPmb && (
-              <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Documentation</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Select label="Document Type *" placeholder="Select business document..." options={BUSINESS_DOC_TYPES} value={businessDocType} onChange={(e) => setBusinessDocType(e.target.value)} error={formErrors.businessDocType} />
-                    <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document *</label>
-                      <input ref={fileInputRef3} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setBusinessDocPreview(ev.target?.result as string); setBusinessDocFile(file); }; reader.readAsDataURL(file); } }} />
-                      {businessDocPreview ? (
-                        <div className="relative rounded-lg border border-surface-700 overflow-hidden">
-                          <img src={businessDocPreview} alt="Business Doc" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
-                        </div>
-                      ) : (
-                        <div onClick={() => fileInputRef3.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
-                          <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload</p>
-                        </div>
-                      )}
-                      {formErrors.businessDocFile && <p className="text-xs text-red-400 mt-1">{formErrors.businessDocFile}</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Proof of Address section removed — secondary ID IS the proof of address */}
           </div>
         )}
 
