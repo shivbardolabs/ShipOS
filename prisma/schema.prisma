@@ -12,7 +12,7 @@ datasource db {
 
 model Tenant {
   id               String    @id @default(cuid())
-  name             String    // Store / business name
+  name             String // Store / business name
   slug             String    @unique // URL-friendly identifier
   address          String?
   city             String?
@@ -22,7 +22,7 @@ model Tenant {
   phone            String?
   email            String?
   timezone         String    @default("America/New_York")
-  businessHours    String?   // JSON: { mon: { open, close }, tue: … }
+  businessHours    String? // JSON: { mon: { open, close }, tue: … }
   taxRate          Float     @default(0)
   logoUrl          String?
   status           String    @default("active") // active, paused, disabled, trial
@@ -57,14 +57,14 @@ model Tenant {
   // Payment methods enabled for checkout
   paymentMethods String? // JSON: { manual: bool, text2pay: bool, tapToGlass: bool, nfcReader: bool, cash: bool, postToAccount: bool }
 
-  users              User[]
-  customers          Customer[]
-  invitations        Invitation[]
-  stores             Store[]
-  subscriptions      Subscription[]
-  paymentRecords     PaymentRecord[]
-  alerts             Alert[]
-  carrierEnrollments CarrierProgramEnrollment[]
+  users                 User[]
+  customers             Customer[]
+  invitations           Invitation[]
+  stores                Store[]
+  subscriptions         Subscription[]
+  paymentRecords        PaymentRecord[]
+  alerts                Alert[]
+  carrierEnrollments    CarrierProgramEnrollment[]
   storageLocations      StorageLocation[]
   billingModelConfig    BillingModelConfig?
   notificationTemplates NotificationTemplate[]
@@ -73,29 +73,29 @@ model Tenant {
 // ── Users & Roles ────────────────────────────────────────────────────────────
 
 model User {
-  id              String    @id @default(cuid())
-  auth0Id         String?   @unique // Auth0 `sub` claim — links login to local user
-  name            String
-  email           String    @unique
-  password        String    @default("")
-  role            String    @default("admin") // superadmin, admin, manager, employee
-  avatar          String?
-  status          String    @default("active") // active, inactive, suspended
-  deletedAt       DateTime? // Soft delete timestamp — filtered from queries when set
+  id                     String    @id @default(cuid())
+  auth0Id                String?   @unique // Auth0 `sub` claim — links login to local user
+  name                   String
+  email                  String    @unique
+  password               String    @default("")
+  role                   String    @default("admin") // superadmin, admin, manager, employee
+  avatar                 String?
+  status                 String    @default("active") // active, inactive, suspended
+  deletedAt              DateTime? // Soft delete timestamp — filtered from queries when set
   agreedToTermsAt        DateTime? // When user accepted Terms of Service & Privacy Policy
-  termsVersionAccepted   Int?      // Which version of ToS the user accepted
-  privacyVersionAccepted Int?      // Which version of PP the user accepted
-  mfaEnabled      Boolean   @default(false) // Whether user has MFA enrolled
-  lastLoginAt     DateTime? // Tracks most recent login
-  loginCount      Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  termsVersionAccepted   Int? // Which version of ToS the user accepted
+  privacyVersionAccepted Int? // Which version of PP the user accepted
+  mfaEnabled             Boolean   @default(false) // Whether user has MFA enrolled
+  lastLoginAt            DateTime? // Tracks most recent login
+  loginCount             Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   storeId String?
-  store   Store? @relation(fields: [storeId], references: [id])
+  store   Store?  @relation(fields: [storeId], references: [id])
 
   auditLogs     AuditLog[]
   checkins      Package[]      @relation("CheckedInBy")
@@ -112,7 +112,7 @@ model LoginSession {
   ipAddress     String?
   userAgent     String?
   success       Boolean  @default(true) // Whether login was successful
-  failureReason String?  // Reason for failed login attempt
+  failureReason String? // Reason for failed login attempt
   loginAt       DateTime @default(now())
 }
 
@@ -134,7 +134,7 @@ model Customer {
   notes        String?
 
   // CMRA Compliance
-  idType             String?   // drivers_license, passport, both
+  idType             String? // drivers_license, passport, both
   idExpiration       DateTime?
   passportExpiration DateTime?
   form1583Status     String?   @default("pending") // pending, submitted, approved, expired
@@ -146,44 +146,85 @@ model Customer {
   agreementSignedAt  DateTime?
 
   // Proof of Address (CMRA requirement)
-  proofOfAddressType        String?   // home_vehicle_insurance, mortgage_deed_of_trust, current_lease, state_drivers_nondriver_id, voter_id_card
+  proofOfAddressType        String? // home_vehicle_insurance, mortgage_deed_of_trust, current_lease, state_drivers_nondriver_id, voter_id_card
   proofOfAddressDateOfIssue DateTime? // Date the proof-of-address document was issued
   proofOfAddressStatus      String?   @default("pending") // pending, submitted, approved, expired
 
   // Home address (for Form 1583)
-  homeAddress        String?
-  homeCity           String?
-  homeState          String?
-  homeZip            String?
+  homeAddress String?
+  homeCity    String?
+  homeState   String?
+  homeZip     String?
 
   // Renewal tracking
-  renewalStatus      String?   @default("current") // current, due_soon, past_due, suspended
-  lastRenewalNotice  DateTime? // Last time a renewal notification was sent
-  renewalTermMonths  Int?      // Renewal term length in months
-  autoRenew          Boolean   @default(false) // Auto-renew using existing PS1583
+  renewalStatus     String?   @default("current") // current, due_soon, past_due, suspended
+  lastRenewalNotice DateTime? // Last time a renewal notification was sent
+  renewalTermMonths Int? // Renewal term length in months
+  autoRenew         Boolean   @default(false) // Auto-renew using existing PS1583
 
   // PS1583 Change Guard
-  form1583FileUrl    String?   // Uploaded PS1583 document URL
+  form1583FileUrl      String? // Uploaded PS1583 document URL
   form1583SignatureUrl String? // Signature capture data URL
-  form1583NotarizedAt DateTime? // Notarization date
-  form1583ExpiresAt  DateTime? // When current 1583 expires (1 yr from notarization)
-  form1583Version    Int       @default(0) // Incremented on re-filing
+  form1583NotarizedAt  DateTime? // Notarization date
+  form1583ExpiresAt    DateTime? // When current 1583 expires (1 yr from notarization)
+  form1583Version      Int       @default(0) // Incremented on re-filing
+
+  // BAR-230: Rate Plan link
+  planTierId   String? // FK to PmbPlanTier selected during onboarding
+  billingCycle String? @default("monthly") // monthly, quarterly, semi_annual, annual
+
+  // BAR-230: Business entity fields (PS1583 Sections 7a-7i)
+  businessType     String? // llc, corporation, sole_proprietor, partnership, nonprofit, other
+  businessRegPlace String? // Place of registration (county/state or country)
+  businessAddress  String?
+  businessCity     String?
+  businessState    String?
+  businessZip      String?
+  businessCountry  String?
+  businessPhone    String?
+  businessEmail    String?
+  businessWebsite  String?
+
+  // BAR-230: Forwarding address (PS1583 Section 6)
+  hasForwardingAddress Boolean @default(false)
+  forwardingAddress    String?
+  forwardingCity       String?
+  forwardingState      String?
+  forwardingZip        String?
+  forwardingCountry    String?
+  forwardingEmail      String?
+  forwardingPhone      String?
+
+  // BAR-230: Court-protected individual
+  isCourtProtected     Boolean @default(false)
+  courtProtectedDocUrl String?
+
+  // BAR-230: CMRA owner/employee countersignature (PS1583 Section 14a)
+  cmraSignatureUrl String?
+  cmraSignedAt     DateTime?
+  cmraSignedBy     String? // Employee name who countersigned
+
+  // BAR-230: Payment during onboarding
+  onboardingPaymentStatus String? // pending, completed, failed, cash
+  onboardingPaymentMethod String? // manual_entry, text2pay, tap_to_glass, nfc, cash
+  onboardingPaymentAmount Float?
+  onboardingPaymentRef    String? // External reference ID
 
   // PMB Closure workflow
-  closureReason      String?   // voluntary, non_payment, deceased, other
-  closureInitiatedAt DateTime? // When closure was initiated
-  retentionOfferSent Boolean   @default(false)
-  retentionOfferResult String? // accepted, declined, no_response
-  mailHoldUntil      DateTime? // Post-closure mail hold deadline
-  crdClosureStatus   String?   // pending, submitted, confirmed
-  crdClosureDate     DateTime? // When CRD was closed
+  closureReason          String? // voluntary, non_payment, deceased, other
+  closureInitiatedAt     DateTime? // When closure was initiated
+  retentionOfferSent     Boolean   @default(false)
+  retentionOfferResult   String? // accepted, declined, no_response
+  mailHoldUntil          DateTime? // Post-closure mail hold deadline
+  crdClosureStatus       String? // pending, submitted, confirmed
+  crdClosureDate         DateTime? // When CRD was closed
   documentRetentionUntil DateTime? // 6-month USPIS retention deadline
 
   // SMS Compliance
-  smsConsent         Boolean   @default(false)
-  smsConsentAt       DateTime?
-  smsOptOutAt        DateTime?
-  smsConsentMethod   String?   // web_form, verbal, written
+  smsConsent       Boolean   @default(false)
+  smsConsentAt     DateTime?
+  smsOptOutAt      DateTime?
+  smsConsentMethod String? // web_form, verbal, written
 
   // Stripe billing
   stripeCustomerId String? // For customer-facing billing
@@ -203,7 +244,7 @@ model Customer {
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   storeId String?
-  store   Store? @relation(fields: [storeId], references: [id])
+  store   Store?  @relation(fields: [storeId], references: [id])
 
   packages        Package[]
   mailPieces      MailPiece[]
@@ -256,33 +297,33 @@ model Package {
   store   Store?  @relation(fields: [storeId], references: [id])
 
   // Pickup delegation
-  delegateName String? // Name of person picking up on behalf of customer
-  delegateIdType String? // Type of ID provided by delegate
+  delegateName     String? // Name of person picking up on behalf of customer
+  delegateIdType   String? // Type of ID provided by delegate
   delegateIdNumber String? // ID number of delegate (encrypted)
 
   // Carrier Program (FedEx HAL / UPS Access Point)
-  carrierProgram      String?  // fedex_hal, ups_access_point, null = regular PMB package
-  recipientName       String?  // For carrier program packages (general public, not PMB holder)
+  carrierProgram      String? // fedex_hal, ups_access_point, null = regular PMB package
+  recipientName       String? // For carrier program packages (general public, not PMB holder)
   holdDeadline        DateTime? // Calculated hold period expiration (e.g. intake + 7 days)
-  carrierUploadStatus String?  // pending, uploaded, confirmed, failed
+  carrierUploadStatus String? // pending, uploaded, confirmed, failed
   carrierUploadedAt   DateTime?
-  carrierConfirmation String?  // Confirmation ID from carrier portal
+  carrierConfirmation String? // Confirmation ID from carrier portal
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Dimensions — camera measure or manual entry
-  lengthIn        Float?   // Length in inches
-  widthIn         Float?   // Width in inches
-  heightIn        Float?   // Height in inches
-  weightLbs       Float?   // Weight in pounds (manual entry)
-  dimensionSource String?  // manual, camera_ai — how dimensions were captured
-  measurePhoto    String?  // Base64 thumbnail of the measurement photo (optional)
+  lengthIn        Float? // Length in inches
+  widthIn         Float? // Width in inches
+  heightIn        Float? // Height in inches
+  weightLbs       Float? // Weight in pounds (manual entry)
+  dimensionSource String? // manual, camera_ai — how dimensions were captured
+  measurePhoto    String? // Base64 thumbnail of the measurement photo (optional)
 
   // Duplicate override (BAR-328)
-  duplicateOverride          Boolean  @default(false) // True if user overrode duplicate warning
-  duplicateOverrideReason    String?  // Reason for override (e.g. "Re-delivery", "Replacement")
-  duplicateOriginalPackageId String?  // ID of the original package record
+  duplicateOverride          Boolean @default(false) // True if user overrode duplicate warning
+  duplicateOverrideReason    String? // Reason for override (e.g. "Re-delivery", "Replacement")
+  duplicateOriginalPackageId String? // ID of the original package record
 
   // Migration reference
   sourceId    String? // Original PostalMate PKGRECVXNID
@@ -293,10 +334,10 @@ model Package {
 }
 
 model MailPiece {
-  id        String  @id @default(cuid())
-  type      String  @default("letter") // letter, magazine, catalog, legal, other
-  sender    String?
-  status    String  @default("received") // received, scanned, notified, held, forwarded, discarded
+  id            String  @id @default(cuid())
+  type          String  @default("letter") // letter, magazine, catalog, legal, other
+  sender        String?
+  status        String  @default("received") // received, scanned, notified, held, forwarded, discarded
   scanImage     String?
   scanImageBack String? // Back of envelope scan for digital fulfillment
   action        String? // hold, forward, discard, open_scan
@@ -364,14 +405,14 @@ model Notification {
 }
 
 model NotificationTemplate {
-  id          String  @id @default(cuid())
-  type        String  @unique // package_checkin, package_reminder, id_expiration, mail_received, custom
-  name        String  // Display name
-  subject     String  // Email subject template (supports {{variables}})
-  bodyHtml    String  // Email body HTML template
-  bodySms     String  // SMS body template
-  variables   String? // JSON array of available variable names
-  isActive    Boolean @default(true)
+  id        String  @id @default(cuid())
+  type      String  @unique // package_checkin, package_reminder, id_expiration, mail_received, custom
+  name      String // Display name
+  subject   String // Email subject template (supports {{variables}})
+  bodyHtml  String // Email body HTML template
+  bodySms   String // SMS body template
+  variables String? // JSON array of available variable names
+  isActive  Boolean @default(true)
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
@@ -411,11 +452,11 @@ model CarrierRate {
 }
 
 model DropoffSetting {
-  id                 String @id @default(cuid())
+  id                 String   @id @default(cuid())
   carrier            String
-  isEnabled          Boolean @default(false)
-  compensationAmount Float   @default(0)
-  retailCharge       Float   @default(0)
+  isEnabled          Boolean  @default(false)
+  compensationAmount Float    @default(0)
+  retailCharge       Float    @default(0)
   department         String?
   credentials        String? // encrypted JSON
   createdAt          DateTime @default(now())
@@ -423,14 +464,14 @@ model DropoffSetting {
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
-  invoiceNumber String   @unique
+  id            String    @id @default(cuid())
+  invoiceNumber String    @unique
   tenantId      String?
   customerId    String?
   type          String // shipping, storage, service, tos_billing, monthly
   amount        Float
-  tax           Float    @default(0)
-  status        String   @default("draft") // draft, sent, paid, overdue, void, partially_paid
+  tax           Float     @default(0)
+  status        String    @default("draft") // draft, sent, paid, overdue, void, partially_paid
   dueDate       DateTime?
   paidAt        DateTime?
   items         String? // JSON string of line items (legacy)
@@ -442,18 +483,18 @@ model Invoice {
   paymentRef      String?
 
   // Delivery
-  sentAt          DateTime?
-  sentVia         String?   // email, in_app, print
+  sentAt  DateTime?
+  sentVia String? // email, in_app, print
 
   // Period covered
-  periodStart     DateTime?
-  periodEnd       DateTime?
+  periodStart DateTime?
+  periodEnd   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  lineItems   InvoiceLineItem[]
+  lineItems InvoiceLineItem[]
 
   // Migration reference
   sourceId    String? // Original PostalMate CRTOTALXNID
@@ -465,50 +506,50 @@ model Invoice {
 }
 
 model EndOfDayRecord {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   date         DateTime
   carrier      String
   manifestId   String?
-  packageCount Int      @default(0)
-  status       String   @default("open") // open, picked_up, closed
+  packageCount Int       @default(0)
+  status       String    @default("open") // open, picked_up, closed
   pickupTime   DateTime?
   notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // ── PostalMate Migration ─────────────────────────────────────────────────────
 
 model MigrationRun {
-  id            String   @id @default(cuid())
-  sourceFile    String   // Original backup filename
-  sourceSystem  String   @default("postalmate") // postalmate, other
-  status        String   @default("pending") // pending, analyzing, migrating, completed, failed, rolled_back
-  startedAt     DateTime?
-  completedAt   DateTime?
-  errorMessage  String?
+  id           String    @id @default(cuid())
+  sourceFile   String // Original backup filename
+  sourceSystem String    @default("postalmate") // postalmate, other
+  status       String    @default("pending") // pending, analyzing, migrating, completed, failed, rolled_back
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?
 
   // Record counts from source
-  sourceCustomers  Int @default(0)
-  sourceShipments  Int @default(0)
-  sourcePackages   Int @default(0)
-  sourceProducts   Int @default(0)
-  sourceInvoices   Int @default(0)
-  sourceAddresses  Int @default(0)
+  sourceCustomers Int @default(0)
+  sourceShipments Int @default(0)
+  sourcePackages  Int @default(0)
+  sourceProducts  Int @default(0)
+  sourceInvoices  Int @default(0)
+  sourceAddresses Int @default(0)
 
   // Migrated counts
-  migratedCustomers  Int @default(0)
-  migratedShipments  Int @default(0)
-  migratedPackages   Int @default(0)
-  migratedProducts   Int @default(0)
-  migratedInvoices   Int @default(0)
-  migratedAddresses  Int @default(0)
+  migratedCustomers Int @default(0)
+  migratedShipments Int @default(0)
+  migratedPackages  Int @default(0)
+  migratedProducts  Int @default(0)
+  migratedInvoices  Int @default(0)
+  migratedAddresses Int @default(0)
 
   // Errors/skips
-  errorLog      String? // JSON array of errors
+  errorLog String? // JSON array of errors
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ShipToAddress {
@@ -530,33 +571,33 @@ model ShipToAddress {
   isCommercial Boolean @default(false)
 
   // Migration reference
-  sourceId     String? // Original PostalMate SHIPTOID
-  migrationId  String? // Links to MigrationRun
+  sourceId    String? // Original PostalMate SHIPTOID
+  migrationId String? // Links to MigrationRun
 
-  customerId   String?
-  customer     Customer? @relation(fields: [customerId], references: [id])
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ── Loyalty Program ──────────────────────────────────────────────────────────
 
 model LoyaltyProgram {
-  id              String   @id @default(cuid())
-  name            String   @default("ShipOS Rewards")
-  isActive        Boolean  @default(true)
-  pointsPerDollar Float    @default(1)
-  currencyName    String   @default("points")
-  redemptionRate  Float    @default(0.05) // dollars per point (100 pts = $5 → 0.05)
+  id              String  @id @default(cuid())
+  name            String  @default("ShipOS Rewards")
+  isActive        Boolean @default(true)
+  pointsPerDollar Float   @default(1)
+  currencyName    String  @default("points")
+  redemptionRate  Float   @default(0.05) // dollars per point (100 pts = $5 → 0.05)
 
   // Referral config
-  referralEnabled       Boolean @default(true)
-  referrerBonusPoints   Int     @default(200)
-  refereeBonusPoints    Int     @default(100)
+  referralEnabled     Boolean @default(true)
+  referrerBonusPoints Int     @default(200)
+  refereeBonusPoints  Int     @default(100)
 
-  tiers    LoyaltyTier[]
-  rewards  LoyaltyReward[]
+  tiers   LoyaltyTier[]
+  rewards LoyaltyReward[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -564,9 +605,9 @@ model LoyaltyProgram {
 
 model LoyaltyTier {
   id                String  @id @default(cuid())
-  name              String  // Bronze, Silver, Gold
+  name              String // Bronze, Silver, Gold
   minPoints         Int     @default(0)
-  maxPoints         Int?    // null = unlimited (top tier)
+  maxPoints         Int? // null = unlimited (top tier)
   earningMultiplier Float   @default(1.0)
   shippingDiscount  Float   @default(0) // percentage (e.g. 5 = 5%)
   freeHoldDays      Int     @default(0)
@@ -585,11 +626,11 @@ model LoyaltyTier {
 }
 
 model LoyaltyAccount {
-  id             String   @id @default(cuid())
-  currentPoints  Int      @default(0)
-  lifetimePoints Int      @default(0)
-  referralCode   String   @unique
-  referredById   String?  // FK to another LoyaltyAccount
+  id             String  @id @default(cuid())
+  currentPoints  Int     @default(0)
+  lifetimePoints Int     @default(0)
+  referralCode   String  @unique
+  referredById   String? // FK to another LoyaltyAccount
 
   customerId String   @unique
   customer   Customer @relation(fields: [customerId], references: [id])
@@ -604,11 +645,11 @@ model LoyaltyAccount {
 }
 
 model LoyaltyTransaction {
-  id           String @id @default(cuid())
-  type         String // earn, redeem, expire, bonus, referral, adjustment
-  points       Int    // positive for earn, negative for redeem
-  balanceAfter Int
-  description  String?
+  id            String  @id @default(cuid())
+  type          String // earn, redeem, expire, bonus, referral, adjustment
+  points        Int // positive for earn, negative for redeem
+  balanceAfter  Int
+  description   String?
   referenceType String? // shipment, package, mailbox, invoice, referral, manual, reward
   referenceId   String?
 
@@ -619,14 +660,14 @@ model LoyaltyTransaction {
 }
 
 model LoyaltyReward {
-  id           String  @id @default(cuid())
-  name         String
-  description  String?
-  pointsCost   Int
-  rewardType   String  // discount, free_service, upgrade, credit, custom
-  value        Float   @default(0) // dollar value of reward
-  isActive     Boolean @default(true)
-  maxRedemptions Int?  // null = unlimited
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  pointsCost     Int
+  rewardType     String // discount, free_service, upgrade, credit, custom
+  value          Float   @default(0) // dollar value of reward
+  isActive       Boolean @default(true)
+  maxRedemptions Int? // null = unlimited
 
   programId String
   program   LoyaltyProgram @relation(fields: [programId], references: [id])
@@ -638,12 +679,12 @@ model LoyaltyReward {
 // ── Mailbox Ranges ───────────────────────────────────────────────────────
 
 model MailboxRange {
-  id         String  @id @default(cuid())
-  platform   String  // physical, anytime, iPostal, postscan
+  id         String   @id @default(cuid())
+  platform   String // physical, anytime, iPostal, postscan
   label      String
   rangeStart Int
   rangeEnd   Int
-  isActive   Boolean @default(true)
+  isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -655,50 +696,88 @@ model MailboxRange {
 model Form1583AuditLog {
   id          String   @id @default(cuid())
   customerId  String
-  fieldName   String   // Which PS1583-protected field was changed
-  oldValue    String?  // Previous value
-  newValue    String?  // New value
-  changedById String   // User who made the change
+  fieldName   String // Which PS1583-protected field was changed
+  oldValue    String? // Previous value
+  newValue    String? // New value
+  changedById String // User who made the change
   wasWarned   Boolean  @default(true) // Whether the user saw the warning dialog
-  action      String   // edit, re_filing_triggered, status_change
+  action      String // edit, re_filing_triggered, status_change
   notes       String?
   createdAt   DateTime @default(now())
 }
 
 model CustomerDocument {
-  id            String  @id @default(cuid())
-  customerId    String
-  type          String  // primary_id, secondary_id
-  idTypeName    String  // e.g. "drivers_license", "passport"
-  fileName      String
-  fileUrl       String?
-  extractedData String? // JSON: { fullName, address, idNumber, ... }
+  id             String    @id @default(cuid())
+  customerId     String
+  type           String // primary_id, secondary_id
+  idTypeName     String // e.g. "drivers_license", "passport"
+  fileName       String
+  fileUrl        String?
+  extractedData  String? // JSON: { fullName, address, idNumber, ... }
   expirationDate DateTime?
-  uploadedAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  uploadedAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ── BAR-230: Additional PMB Recipients & Authorized Individuals ─────────
+
+model PmbRecipient {
+  id         String @id @default(cuid())
+  customerId String
+  tenantId   String
+
+  type      String // additional_recipient, authorized_individual, minor_exception, employee_exception
+  firstName String
+  lastName  String
+  phone     String?
+  email     String?
+
+  // Address (for authorized individuals — PS1583 Section 5)
+  address String?
+  city    String?
+  state   String?
+  zip     String?
+
+  // ID info (authorized individuals need dual IDs — PS1583 Sections 10a-e, 11a-g)
+  primaryIdType     String?
+  primaryIdNumber   String?
+  primaryIdIssuer   String?
+  secondaryIdType   String?
+  secondaryIdNumber String?
+  secondaryIdIssuer String?
+
+  // Minor exception: date of birth to track turning 18
+  dateOfBirth DateTime?
+
+  // Each additional recipient needs their own PS1583
+  form1583Status       String? @default("pending") // pending, submitted, approved
+  form1583SignatureUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ── Mailbox Service Agreement ────────────────────────────────────────────
 
 model MailboxAgreementTemplate {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  content   String  // Rich text / template with placeholders
-  isDefault Boolean @default(false)
+  content   String // Rich text / template with placeholders
+  isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model CustomerAgreement {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   customerId       String
   templateId       String
   signedAt         DateTime?
   signatureDataUrl String?
-  status           String   @default("draft") // draft, sent, signed, expired
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           String    @default("draft") // draft, sent, signed, expired
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 // ── Invitations ──────────────────────────────────────────────────────────────
@@ -707,10 +786,10 @@ model Invitation {
   id        String   @id @default(cuid())
   email     String
   role      String   @default("employee") // admin, manager, employee
-  status    String   @default("pending")  // pending, accepted, revoked
+  status    String   @default("pending") // pending, accepted, revoked
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  invitedBy String   // User ID of the admin who created the invite
+  invitedBy String // User ID of the admin who created the invite
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -722,8 +801,8 @@ model Invitation {
 model FeatureFlag {
   id             String   @id @default(cuid())
   key            String   @unique // e.g. "ai-smart-intake"
-  name           String   // Human-readable name
-  description    String?  // What this feature does
+  name           String // Human-readable name
+  description    String? // What this feature does
   category       String   @default("general") // ai, packages, operations, compliance, business, platform
   defaultEnabled Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -736,8 +815,8 @@ model FeatureFlagOverride {
   id         String      @id @default(cuid())
   flagId     String
   flag       FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
-  targetType String      // 'user' | 'tenant'
-  targetId   String      // user.id or tenant.id
+  targetType String // 'user' | 'tenant'
+  targetId   String // user.id or tenant.id
   enabled    Boolean
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -769,17 +848,17 @@ model Store {
 // ── Subscription Billing ─────────────────────────────────────────────────────
 
 model BillingPlan {
-  id            String  @id @default(cuid())
-  name          String  // Starter, Pro, Enterprise
-  slug          String  @unique // starter, pro, enterprise
-  priceMonthly  Float   // Monthly price in dollars
-  priceYearly   Float?  // Optional yearly price
-  maxMailboxes  Int     @default(100)
-  maxUsers      Int     @default(5)
-  maxStores     Int     @default(1)
+  id            String   @id @default(cuid())
+  name          String // Starter, Pro, Enterprise
+  slug          String   @unique // starter, pro, enterprise
+  priceMonthly  Float // Monthly price in dollars
+  priceYearly   Float? // Optional yearly price
+  maxMailboxes  Int      @default(100)
+  maxUsers      Int      @default(5)
+  maxStores     Int      @default(1)
   features      String? // JSON array of feature strings
-  isActive      Boolean @default(true)
-  sortOrder     Int     @default(0)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
   stripePriceId String? // Stripe Price ID if synced
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -788,19 +867,19 @@ model BillingPlan {
 }
 
 model Subscription {
-  id                   String   @id @default(cuid())
+  id                   String      @id @default(cuid())
   tenantId             String
-  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  tenant               Tenant      @relation(fields: [tenantId], references: [id])
   planId               String
   plan                 BillingPlan @relation(fields: [planId], references: [id])
-  status               String   @default("active") // active, canceled, past_due, trialing, manual
-  billingCycle         String   @default("monthly") // monthly, yearly
-  currentPeriodStart   DateTime @default(now())
+  status               String      @default("active") // active, canceled, past_due, trialing, manual
+  billingCycle         String      @default("monthly") // monthly, yearly
+  currentPeriodStart   DateTime    @default(now())
   currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean  @default(false)
+  cancelAtPeriodEnd    Boolean     @default(false)
   stripeSubscriptionId String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 }
 
 model PaymentRecord {
@@ -813,9 +892,9 @@ model PaymentRecord {
   method          String    @default("stripe") // stripe, manual, check, wire
   description     String?
   stripePaymentId String?
-  stripeInvoiceId String?   // Stripe Invoice ID for reconciliation
+  stripeInvoiceId String? // Stripe Invoice ID for reconciliation
   invoiceUrl      String?
-  billingPeriod   String?   // "YYYY-MM" for monthly subscription billing (idempotency key)
+  billingPeriod   String? // "YYYY-MM" for monthly subscription billing (idempotency key)
   periodStart     DateTime? // Start of the billing period
   periodEnd       DateTime? // End of the billing period
   createdAt       DateTime  @default(now())
@@ -848,43 +927,43 @@ enum ChargeEventStatus {
 }
 
 model ChargeEvent {
-  id          String              @id @default(cuid())
-  tenantId    String
-  customerId  String
-  pmbNumber   String              // Denormalized PMB for fast queries & audit trail
+  id         String @id @default(cuid())
+  tenantId   String
+  customerId String
+  pmbNumber  String // Denormalized PMB for fast queries & audit trail
 
   // Service details
   serviceType ChargeServiceType
   description String
-  quantity    Float               @default(1)
-  unitRate    Float               @default(0)
+  quantity    Float             @default(1)
+  unitRate    Float             @default(0)
 
   // Financial breakdown: costBasis + markup = totalCharge
-  costBasis   Float               @default(0) // Actual cost to CLIENT (COGS)
-  markup      Float               @default(0) // Margin applied
-  totalCharge Float               @default(0) // Final customer-facing amount
+  costBasis   Float @default(0) // Actual cost to CLIENT (COGS)
+  markup      Float @default(0) // Margin applied
+  totalCharge Float @default(0) // Final customer-facing amount
 
   // Status & lifecycle
-  status      ChargeEventStatus   @default(pending)
+  status ChargeEventStatus @default(pending)
 
   // Optional references to source entities
-  packageId   String?             // FK → Package that triggered this charge
-  shipmentId  String?             // FK → Shipment that triggered this charge
-  mailPieceId String?             // FK → MailPiece that triggered this charge
-  invoiceId   String?             // FK → Invoice once invoiced
+  packageId   String? // FK → Package that triggered this charge
+  shipmentId  String? // FK → Shipment that triggered this charge
+  mailPieceId String? // FK → MailPiece that triggered this charge
+  invoiceId   String? // FK → Invoice once invoiced
 
   // Audit trail
-  createdById String?             // User who created this charge
-  voidedById  String?             // User who voided this charge
+  createdById String? // User who created this charge
+  voidedById  String? // User who voided this charge
   voidedAt    DateTime?
   voidReason  String?
   notes       String?
 
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  customer    Customer            @relation(fields: [customerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
 
   @@index([tenantId])
   @@index([customerId])
@@ -897,43 +976,43 @@ model ChargeEvent {
 // ── Checkout Transactions ────────────────────────────────────────────────────
 
 model CheckoutTransaction {
-  id            String   @id @default(cuid())
+  id            String @id @default(cuid())
   customerId    String
-  employeeId    String   // Staff who performed checkout
-  invoiceNumber String   @unique
+  employeeId    String // Staff who performed checkout
+  invoiceNumber String @unique
 
   // Fee breakdown
-  storageFees   Float    @default(0)
-  receivingFees Float    @default(0)
-  quotaFees     Float    @default(0)
-  addOnFees     Float    @default(0)
-  subtotal      Float    @default(0)
-  taxRate       Float    @default(0)
-  taxAmount     Float    @default(0)
-  total         Float    @default(0)
+  storageFees   Float @default(0)
+  receivingFees Float @default(0)
+  quotaFees     Float @default(0)
+  addOnFees     Float @default(0)
+  subtotal      Float @default(0)
+  taxRate       Float @default(0)
+  taxAmount     Float @default(0)
+  total         Float @default(0)
 
   // Payment
-  paymentMethod String   @default("post_to_account") // post_to_account, cash, manual_card, text2pay, tap_to_glass, nfc_reader
-  paymentStatus String   @default("pending") // pending, completed, failed, refunded
-  paymentRef    String?  // External payment reference ID
+  paymentMethod String  @default("post_to_account") // post_to_account, cash, manual_card, text2pay, tap_to_glass, nfc_reader
+  paymentStatus String  @default("pending") // pending, completed, failed, refunded
+  paymentRef    String? // External payment reference ID
 
   // Packages released in this transaction
-  packageIds    String   // JSON array of package IDs
-  packageCount  Int      @default(0)
+  packageIds   String // JSON array of package IDs
+  packageCount Int    @default(0)
 
   // Recipient info
-  recipientName String?  // If delegate pickup
-  recipientIdType   String?
-  signatureData String?  // Base64 signature
+  recipientName   String? // If delegate pickup
+  recipientIdType String?
+  signatureData   String? // Base64 signature
 
   // Receipt delivery
-  receiptMethod String   @default("none") // email, sms, print, sms+print, none
+  receiptMethod String    @default("none") // email, sms, print, sms+print, none
   receiptSentAt DateTime?
 
   // Line items detail
-  lineItems     String?  // JSON: [{ description, qty, unitPrice, total }]
+  lineItems String? // JSON: [{ description, qty, unitPrice, total }]
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([customerId])
   @@index([employeeId])
@@ -943,11 +1022,11 @@ model CheckoutTransaction {
 
 model LegalDocument {
   id          String   @id @default(cuid())
-  type        String   // 'terms' or 'privacy'
+  type        String // 'terms' or 'privacy'
   content     String   @db.Text // Rich HTML content
   version     Int      @default(1)
   publishedAt DateTime @default(now())
-  publishedBy String   // user ID who published
+  publishedBy String // user ID who published
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -956,13 +1035,13 @@ model LegalDocument {
 // ── Email Verification Tokens ────────────────────────────────────────────────
 
 model EmailVerificationToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   newEmail  String
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 // ── Printer Configuration ────────────────────────────────────────────────────
@@ -987,7 +1066,7 @@ model SmsConsent {
   customerId  String
   phone       String
   consentedAt DateTime  @default(now())
-  method      String    // 'registration', 'checkbox', 'sms_reply'
+  method      String // 'registration', 'checkbox', 'sms_reply'
   ipAddress   String?
   optedOutAt  DateTime?
   createdAt   DateTime  @default(now())
@@ -1020,19 +1099,19 @@ model Alert {
   isTimeSensitive       Boolean       @default(false)
   title                 String
   message               String
-  actionUrl             String?       // link to related entity
-  relatedEntityType     String?       // 'customer', 'package', 'shipment', etc.
+  actionUrl             String? // link to related entity
+  relatedEntityType     String? // 'customer', 'package', 'shipment', etc.
   relatedEntityId       String?
   createdAt             DateTime      @default(now())
   expiresAt             DateTime?
   acknowledgedAt        DateTime?
   acknowledgedBy        String?
-  acknowledgementAction String?       // 'skip', 'snooze', 'resolve'
+  acknowledgementAction String? // 'skip', 'snooze', 'resolve'
   snoozedUntil          DateTime?
   resolvedAt            DateTime?
   metadata              Json?
 
-  tenant                Tenant        @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, resolvedAt])
   @@index([tenantId, priority])
@@ -1041,36 +1120,36 @@ model Alert {
 // ── Carrier Program Enrollment (BAR-280) ─────────────────────────────────────
 
 model CarrierProgramEnrollment {
-  id            String   @id @default(cuid())
-  tenantId      String
-  program       String   // fedex_hal, ups_access_point
-  enabled       Boolean  @default(false)
+  id       String  @id @default(cuid())
+  tenantId String
+  program  String // fedex_hal, ups_access_point
+  enabled  Boolean @default(false)
 
   // Credentials (encrypted at rest)
-  locationId    String?  // Carrier-assigned location ID
+  locationId     String? // Carrier-assigned location ID
   portalUsername String? // Portal login username
   portalPassword String? // Portal login password (encrypted)
   apiKey         String? // API key if direct API integration
 
   // Configuration
-  holdPeriodDays Int     @default(7)     // Default hold period
-  warningDaysBefore Int  @default(2)     // Alert N days before expiration
-  compensationRate Float @default(0)     // Per-package fee from carrier ($)
-  maxCapacity    Int     @default(0)     // Max packages to hold (0 = unlimited)
+  holdPeriodDays    Int   @default(7) // Default hold period
+  warningDaysBefore Int   @default(2) // Alert N days before expiration
+  compensationRate  Float @default(0) // Per-package fee from carrier ($)
+  maxCapacity       Int   @default(0) // Max packages to hold (0 = unlimited)
 
   // Integration mode
   integrationMode String @default("manual") // manual, portal_auto, api_direct
 
   // Status tracking
-  enrollmentStatus String @default("pending") // pending, active, suspended, terminated
-  enrolledAt      DateTime?
-  lastSyncAt      DateTime?
-  lastSyncStatus  String?  // success, failed, partial
+  enrollmentStatus String    @default("pending") // pending, active, suspended, terminated
+  enrolledAt       DateTime?
+  lastSyncAt       DateTime?
+  lastSyncStatus   String? // success, failed, partial
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenant    Tenant                   @relation(fields: [tenantId], references: [id])
   checkouts CarrierProgramCheckout[]
 
   @@unique([tenantId, program])
@@ -1080,35 +1159,35 @@ model CarrierProgramEnrollment {
 // ── Carrier Program Checkout Records (BAR-282, BAR-283) ──────────────────────
 
 model CarrierProgramCheckout {
-  id              String   @id @default(cuid())
-  enrollmentId    String
-  packageId       String
-  trackingNumber  String
+  id             String @id @default(cuid())
+  enrollmentId   String
+  packageId      String
+  trackingNumber String
 
   // Recipient
-  recipientName   String
-  recipientIdType String   // drivers_license, passport, military_id, state_id, other
-  recipientIdVerified Boolean @default(false)
-  idVerifiedAt    DateTime?
-  idVerifiedBy    String?  // Employee who verified ID
+  recipientName       String
+  recipientIdType     String // drivers_license, passport, military_id, state_id, other
+  recipientIdVerified Boolean   @default(false)
+  idVerifiedAt        DateTime?
+  idVerifiedBy        String? // Employee who verified ID
 
   // Checkout details
-  checkedOutAt    DateTime @default(now())
-  checkedOutById  String   // Employee who performed checkout
-  signatureData   String?  // Base64 signature
+  checkedOutAt   DateTime @default(now())
+  checkedOutById String // Employee who performed checkout
+  signatureData  String? // Base64 signature
 
   // Carrier upload status
-  uploadStatus    String   @default("pending") // pending, uploaded, confirmed, failed
-  uploadedAt      DateTime?
-  uploadAttempts  Int      @default(0)
-  uploadError     String?
+  uploadStatus        String    @default("pending") // pending, uploaded, confirmed, failed
+  uploadedAt          DateTime?
+  uploadAttempts      Int       @default(0)
+  uploadError         String?
   carrierConfirmation String? // Confirmation ID from carrier
 
   // Batch tracking
-  batchId         String?  // Groups checkouts uploaded together
+  batchId String? // Groups checkouts uploaded together
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   enrollment CarrierProgramEnrollment @relation(fields: [enrollmentId], references: [id])
 
@@ -1122,10 +1201,10 @@ model CarrierProgramCheckout {
 model StorageLocation {
   id        String  @id @default(cuid())
   tenantId  String
-  name      String  // e.g. "Shelf A1", "Back Room Bin 3"
+  name      String // e.g. "Shelf A1", "Back Room Bin 3"
   sortOrder Int     @default(0) // For drag-to-reorder
   isDefault Boolean @default(false) // Default location for new packages
-  isActive  Boolean @default(true)  // Soft-delete / deactivate
+  isActive  Boolean @default(true) // Soft-delete / deactivate
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -1147,23 +1226,23 @@ model BillingModelConfig {
   timeOfServiceEnabled Boolean @default(false)
 
   // Subscription defaults
-  defaultBillingCycle      String  @default("monthly") // monthly, quarterly, yearly
-  allowMidCycleChanges     Boolean @default(true)
-  prorateUpgrades          Boolean @default(true)
-  prorateDowngrades        Boolean @default(true)
-  autoRenew                Boolean @default(true)
-  gracePeriodDays          Int     @default(7) // Days after failed payment before suspension
+  defaultBillingCycle  String  @default("monthly") // monthly, quarterly, yearly
+  allowMidCycleChanges Boolean @default(true)
+  prorateUpgrades      Boolean @default(true)
+  prorateDowngrades    Boolean @default(true)
+  autoRenew            Boolean @default(true)
+  gracePeriodDays      Int     @default(7) // Days after failed payment before suspension
 
   // Usage-based defaults
-  usageResetCycle       String  @default("monthly") // monthly, weekly, daily
-  usageAlertThreshold   Int     @default(80) // % of quota to trigger alert
-  overage               String  @default("charge") // charge, block, alert_only
-  usageInvoiceCycle     String  @default("monthly") // When to invoice usage: monthly, weekly, realtime
+  usageResetCycle     String @default("monthly") // monthly, weekly, daily
+  usageAlertThreshold Int    @default(80) // % of quota to trigger alert
+  overage             String @default("charge") // charge, block, alert_only
+  usageInvoiceCycle   String @default("monthly") // When to invoice usage: monthly, weekly, realtime
 
   // Time-of-service defaults
-  tosDefaultMode        String  @default("immediate") // immediate, deferred
-  tosPaymentWindow      Int     @default(30) // Days to pay if deferred
-  tosAutoInvoice        Boolean @default(true) // Auto-generate invoice at time of service
+  tosDefaultMode   String  @default("immediate") // immediate, deferred
+  tosPaymentWindow Int     @default(30) // Days to pay if deferred
+  tosAutoInvoice   Boolean @default(true) // Auto-generate invoice at time of service
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1177,8 +1256,8 @@ model UsageMeter {
   id       String @id @default(cuid())
   tenantId String
 
-  name        String  // Human-readable name: "Package Scans", "SMS Notifications"
-  slug        String  // URL-safe key: "package_scans", "sms_notifications"
+  name        String // Human-readable name: "Package Scans", "SMS Notifications"
+  slug        String // URL-safe key: "package_scans", "sms_notifications"
   unit        String  @default("unit") // unit, scan, message, request, gb, hour
   description String?
 
@@ -1214,7 +1293,7 @@ model UsageRecord {
 
   // Billing period for aggregation
   period    String // YYYY-MM or YYYY-WW
-  invoiced  Boolean  @default(false) // Whether this has been invoiced
+  invoiced  Boolean @default(false) // Whether this has been invoiced
   invoiceId String?
 
   recordedAt DateTime @default(now())
@@ -1236,9 +1315,9 @@ model CustomerBillingProfile {
   billingModel String @default("subscription") // subscription, usage, tos, subscription+usage, subscription+tos, all
 
   // Subscription overrides
-  customPlanId  String? // Override tenant's default plan
-  customRate    Float?  // Custom monthly rate (overrides plan price)
-  billingCycle  String? // Override: monthly, quarterly, yearly
+  customPlanId String? // Override tenant's default plan
+  customRate   Float? // Custom monthly rate (overrides plan price)
+  billingCycle String? // Override: monthly, quarterly, yearly
 
   // Usage overrides
   customUsageCap Int? // Override meter hard limits
@@ -1248,11 +1327,11 @@ model CustomerBillingProfile {
   tosMode         String? // Override: immediate, deferred
   creditLimit     Float   @default(0) // Max deferred balance allowed
   accountBalance  Float   @default(0) // Current outstanding balance
-  paymentTermDays Int?    // Override tenant's default payment window
+  paymentTermDays Int? // Override tenant's default payment window
 
   // Auto-pay
   autoPayEnabled Boolean @default(false)
-  autoPayDay     Int?    // Day of month for auto-pay (1-28)
+  autoPayDay     Int? // Day of month for auto-pay (1-28)
 
   notes     String?
   createdAt DateTime @default(now())
@@ -1267,12 +1346,12 @@ model TosCharge {
   tenantId   String
   customerId String
 
-  description  String  // "Package Storage Fee", "Shipping Label", etc.
-  amount       Float
-  tax          Float   @default(0)
-  total        Float   // amount + tax
-  status       String  @default("pending") // pending, authorized, paid, invoiced, void, refunded, failed
-  mode         String  @default("immediate") // immediate, deferred
+  description String // "Package Storage Fee", "Shipping Label", etc.
+  amount      Float
+  tax         Float  @default(0)
+  total       Float // amount + tax
+  status      String @default("pending") // pending, authorized, paid, invoiced, void, refunded, failed
+  mode        String @default("immediate") // immediate, deferred
 
   // Payment info (if immediate)
   paymentMethod   String? // card, ach, paypal, cash, post_to_account
@@ -1281,7 +1360,7 @@ model TosCharge {
   paidAt          DateTime?
 
   // Retry tracking (for failed immediate charges)
-  retryCount    Int     @default(0)
+  retryCount    Int       @default(0)
   lastRetryAt   DateTime?
   failureReason String?
 
@@ -1290,9 +1369,9 @@ model TosCharge {
   dueDate   DateTime?
 
   // Reference to what generated this charge
-  referenceType  String? // package, shipment, service, custom
-  referenceId    String?
-  chargeEventId  String? // FK → ChargeEvent
+  referenceType String? // package, shipment, service, custom
+  referenceId   String?
+  chargeEventId String? // FK → ChargeEvent
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1311,18 +1390,18 @@ model PaymentMethod {
   tenantId   String
   customerId String
 
-  type        String  // card, ach, paypal
-  label       String  // "Visa ****4242", "Bank of America ****1234", "PayPal john@..."
-  isDefault   Boolean @default(false)
+  type      String // card, ach, paypal
+  label     String // "Visa ****4242", "Bank of America ****1234", "PayPal john@..."
+  isDefault Boolean @default(false)
 
   // Card fields (masked)
-  cardBrand   String?  // visa, mastercard, amex, discover
-  cardLast4   String?  // Last 4 digits
+  cardBrand    String? // visa, mastercard, amex, discover
+  cardLast4    String? // Last 4 digits
   cardExpMonth Int?
   cardExpYear  Int?
 
   // ACH fields (masked)
-  bankName    String?
+  bankName     String?
   accountLast4 String?
   routingLast4 String?
 
@@ -1330,12 +1409,12 @@ model PaymentMethod {
   paypalEmail String?
 
   // External reference
-  externalId  String?  // Stripe payment method ID, PayPal billing agreement ID, etc.
+  externalId String? // Stripe payment method ID, PayPal billing agreement ID, etc.
 
   // Status
-  status      String  @default("active") // active, expired, removed
-  verifiedAt  DateTime?
-  expiryAlertSent Boolean @default(false)
+  status          String    @default("active") // active, expired, removed
+  verifiedAt      DateTime?
+  expiryAlertSent Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1352,12 +1431,12 @@ model InvoiceLineItem {
   invoiceId String
 
   description   String
-  serviceType   String?  // receiving, storage, shipping, etc.
-  quantity      Float    @default(1)
-  unitPrice     Float    @default(0)
-  amount        Float    // quantity * unitPrice
-  chargeEventId String?  // FK → ChargeEvent
-  tosChargeId   String?  // FK → TosCharge
+  serviceType   String? // receiving, storage, shipping, etc.
+  quantity      Float   @default(1)
+  unitPrice     Float   @default(0)
+  amount        Float // quantity * unitPrice
+  chargeEventId String? // FK → ChargeEvent
+  tosChargeId   String? // FK → TosCharge
 
   sortOrder Int @default(0)
 
@@ -1376,10 +1455,10 @@ model InvoiceSchedule {
   tenantId   String
   customerId String? // Null = tenant-wide default; set = customer override
 
-  frequency  String  @default("monthly") // weekly, biweekly, monthly, on_demand
-  dayOfWeek  Int?    // 0=Sun..6=Sat (for weekly/biweekly)
-  dayOfMonth Int?    // 1-28 (for monthly)
-  isActive   Boolean @default(true)
+  frequency  String    @default("monthly") // weekly, biweekly, monthly, on_demand
+  dayOfWeek  Int? // 0=Sun..6=Sat (for weekly/biweekly)
+  dayOfMonth Int? // 1-28 (for monthly)
+  isActive   Boolean   @default(true)
   lastRunAt  DateTime?
   nextRunAt  DateTime?
 
@@ -1407,18 +1486,18 @@ enum RtsReason {
 
 /// Processing step the RTS item is currently at.
 enum RtsStep {
-  initiated       // Marked for RTS
-  label_printed   // RTS label generated / printed
+  initiated // Marked for RTS
+  label_printed // RTS label generated / printed
   carrier_handoff // Handed off to carrier for return
-  completed       // Confirmed returned (carrier scan or manual)
-  cancelled       // RTS cancelled (e.g. customer claimed package before handoff)
+  completed // Confirmed returned (carrier scan or manual)
+  cancelled // RTS cancelled (e.g. customer claimed package before handoff)
 }
 
 /// Tracks Return-to-Sender actions for packages and mail pieces.
 /// Every status change is also recorded in AuditLog for USPS compliance.
 model ReturnToSender {
-  id        String  @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
   // Polymorphic reference: exactly one of these should be set
   packageId   String?
@@ -1426,32 +1505,32 @@ model ReturnToSender {
 
   // RTS metadata
   reason       RtsReason
-  reasonDetail String?    // Free-text elaboration (e.g. "PMB expired 2026-01-15")
-  step         RtsStep    @default(initiated)
+  reasonDetail String? // Free-text elaboration (e.g. "PMB expired 2026-01-15")
+  step         RtsStep   @default(initiated)
 
   // Carrier-specific return info
-  carrier            String?  // usps, fedex, ups, dhl, other
+  carrier              String? // usps, fedex, ups, dhl, other
   returnTrackingNumber String? // Tracking number for the return shipment
-  carrierNotes       String?  // Carrier-specific procedures / notes
+  carrierNotes         String? // Carrier-specific procedures / notes
 
   // Timestamps for each processing step
-  initiatedAt     DateTime  @default(now())
-  labelPrintedAt  DateTime?
+  initiatedAt      DateTime  @default(now())
+  labelPrintedAt   DateTime?
   carrierHandoffAt DateTime?
-  completedAt     DateTime?
-  cancelledAt     DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
 
   // Who performed each step
-  initiatedById     String
-  labelPrintedById  String?
+  initiatedById      String
+  labelPrintedById   String?
   carrierHandoffById String?
-  completedById     String?
-  cancelledById     String?
-  cancelReason      String?
+  completedById      String?
+  cancelledById      String?
+  cancelReason       String?
 
   // Customer reference (denormalised for reporting when PMB is closed)
-  customerId  String?
-  pmbNumber   String?  // Snapshot at time of RTS
+  customerId String?
+  pmbNumber  String? // Snapshot at time of RTS
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1473,23 +1552,23 @@ model PmbPlanTier {
   id       String @id @default(cuid())
   tenantId String
 
-  name        String  // e.g. "Bronze", "Silver", "Gold", "Platinum"
-  slug        String  // URL-safe identifier: "bronze", "silver"
+  name        String // e.g. "Bronze", "Silver", "Gold", "Platinum"
+  slug        String // URL-safe identifier: "bronze", "silver"
   description String?
 
   // Pricing
-  priceMonthly Float            // Monthly rate
-  priceAnnual  Float            // Annual rate (discounted)
+  priceMonthly      Float // Monthly rate
+  priceAnnual       Float // Annual rate (discounted)
   annualDiscountPct Float @default(0) // Display discount %: e.g. 17 = 17% off monthly
 
   // Service quotas included
-  includedMailItems    Int @default(30)  // Mail items per cycle
-  includedScans        Int @default(5)   // Scan pages per cycle
-  freeStorageDays      Int @default(30)  // Free package storage days
-  includedForwarding   Int @default(0)   // Forwarding per cycle
-  includedShredding    Int @default(0)   // Shredding per cycle
-  maxRecipients        Int @default(1)   // Max PMB recipients
-  maxPackagesPerMonth  Int @default(0)   // 0 = unlimited
+  includedMailItems   Int @default(30) // Mail items per cycle
+  includedScans       Int @default(5) // Scan pages per cycle
+  freeStorageDays     Int @default(30) // Free package storage days
+  includedForwarding  Int @default(0) // Forwarding per cycle
+  includedShredding   Int @default(0) // Shredding per cycle
+  maxRecipients       Int @default(1) // Max PMB recipients
+  maxPackagesPerMonth Int @default(0) // 0 = unlimited
 
   // Overage rates (inline for simple cases)
   overageMailRate       Float @default(0.50)
@@ -1505,7 +1584,7 @@ model PmbPlanTier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customerAddOns PmbCustomerAddOn[]
+  customerAddOns   PmbCustomerAddOn[]
   promoRedemptions PromoRedemption[]
 
   @@unique([tenantId, slug])
@@ -1517,15 +1596,15 @@ model PmbAddOn {
   id       String @id @default(cuid())
   tenantId String
 
-  name        String  // e.g. "Extra Scanning Package", "Priority Forwarding"
-  slug        String
-  description String?
-  priceMonthly Float  // Monthly add-on price
+  name         String // e.g. "Extra Scanning Package", "Priority Forwarding"
+  slug         String
+  description  String?
+  priceMonthly Float // Monthly add-on price
   priceAnnual  Float? // Optional annual price
-  unit         String @default("month") // month, item, scan, etc.
+  unit         String  @default("month") // month, item, scan, etc.
 
   // What the add-on provides
-  quotaType  String? // mail, scans, storage, forwarding, shredding, packages
+  quotaType   String? // mail, scans, storage, forwarding, shredding, packages
   quotaAmount Int     @default(0) // Additional quota provided
 
   isActive  Boolean @default(true)
@@ -1542,26 +1621,26 @@ model PmbAddOn {
 
 /// Tracks a CUSTOMER's active add-on subscriptions.
 model PmbCustomerAddOn {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   tenantId   String
   customerId String
   addOnId    String
   planTierId String? // The plan tier the customer is on when add-on was added
 
   // Billing
-  billingCycle String   @default("monthly") // monthly, annual
-  price        Float    // Actual price charged (may differ from add-on list price if prorated)
-  prorated     Boolean  @default(false)
-  proratedFrom DateTime?
-  activatedAt  DateTime @default(now())
+  billingCycle  String    @default("monthly") // monthly, annual
+  price         Float // Actual price charged (may differ from add-on list price if prorated)
+  prorated      Boolean   @default(false)
+  proratedFrom  DateTime?
+  activatedAt   DateTime  @default(now())
   deactivatedAt DateTime?
-  status       String   @default("active") // active, cancelled, expired
+  status        String    @default("active") // active, cancelled, expired
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  addOn    PmbAddOn      @relation(fields: [addOnId], references: [id])
-  planTier PmbPlanTier?  @relation(fields: [planTierId], references: [id])
+  addOn    PmbAddOn     @relation(fields: [addOnId], references: [id])
+  planTier PmbPlanTier? @relation(fields: [planTierId], references: [id])
 
   @@index([tenantId, customerId])
   @@index([customerId, status])
@@ -1576,26 +1655,26 @@ model PmbQuotaUsage {
   // Billing period
   periodStart DateTime
   periodEnd   DateTime
-  period      String   // "YYYY-MM" format
+  period      String // "YYYY-MM" format
 
   // Consumption counters
-  mailItemsUsed     Int @default(0)
-  scansUsed         Int @default(0)
-  storageDaysUsed   Int @default(0)
-  forwardingUsed    Int @default(0)
-  shreddingUsed     Int @default(0)
-  packagesReceived  Int @default(0)
+  mailItemsUsed    Int @default(0)
+  scansUsed        Int @default(0)
+  storageDaysUsed  Int @default(0)
+  forwardingUsed   Int @default(0)
+  shreddingUsed    Int @default(0)
+  packagesReceived Int @default(0)
 
   // Included quotas (snapshot from plan at period start)
-  mailItemsIncluded    Int @default(0)
-  scansIncluded        Int @default(0)
-  storageDaysIncluded  Int @default(0)
-  forwardingIncluded   Int @default(0)
-  shreddingIncluded    Int @default(0)
-  packagesIncluded     Int @default(0)
+  mailItemsIncluded   Int @default(0)
+  scansIncluded       Int @default(0)
+  storageDaysIncluded Int @default(0)
+  forwardingIncluded  Int @default(0)
+  shreddingIncluded   Int @default(0)
+  packagesIncluded    Int @default(0)
 
   // Overage tracking
-  overageCharged Float   @default(0)
+  overageCharged  Float   @default(0)
   overageInvoiced Boolean @default(false)
 
   // Alert tracking
@@ -1614,24 +1693,24 @@ model PromoCode {
   id       String @id @default(cuid())
   tenantId String
 
-  code        String  // e.g. "WELCOME20", "SUMMER2026"
+  code        String // e.g. "WELCOME20", "SUMMER2026"
   description String?
 
   // Discount configuration
-  discountType   String  // percent, fixed_amount, free_months
-  discountValue  Float   // 20 for 20%, $10 for fixed, 2 for 2 months free
+  discountType      String // percent, fixed_amount, free_months
+  discountValue     Float // 20 for 20%, $10 for fixed, 2 for 2 months free
   discountAppliesTo String @default("all") // all, monthly, annual, specific_tier
 
   // Validity
-  startsAt  DateTime @default(now())
-  expiresAt DateTime?
-  maxRedemptions Int @default(0) // 0 = unlimited
-  maxPerCustomer Int @default(1) // How many times a single customer can use it
+  startsAt       DateTime  @default(now())
+  expiresAt      DateTime?
+  maxRedemptions Int       @default(0) // 0 = unlimited
+  maxPerCustomer Int       @default(1) // How many times a single customer can use it
 
   // Scope
   applicableTierSlugs String? // JSON array of tier slugs, null = all tiers
 
-  isActive  Boolean @default(true)
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1645,20 +1724,20 @@ model PromoCode {
 
 /// Tracks promo code redemptions.
 model PromoRedemption {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   promoCodeId String
   tenantId    String
   customerId  String
   planTierId  String?
 
   // Applied discount
-  discountAmount Float  // Actual dollar amount discounted
+  discountAmount Float // Actual dollar amount discounted
   billingCycle   String // monthly, annual
 
   // Lifecycle
-  appliedAt    DateTime @default(now())
-  expiresAt    DateTime? // When the promo benefit expires
-  status       String   @default("active") // active, expired, revoked
+  appliedAt DateTime  @default(now())
+  expiresAt DateTime? // When the promo benefit expires
+  status    String    @default("active") // active, expired, revoked
 
   createdAt DateTime @default(now())
 
@@ -1683,24 +1762,24 @@ model FranchiseGroup {
   // Default pricing overrides (apply to all locations unless location overrides)
   defaultPricingJson String? // JSON: { "bronze": { priceMonthly: 7.99 }, ... }
 
-  isActive  Boolean @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  locations FranchiseLocation[]
+  locations        FranchiseLocation[]
   pricingOverrides FranchisePricingOverride[]
 }
 
 /// Links a tenant (location) to a franchise group.
 model FranchiseLocation {
-  id           String @id @default(cuid())
-  franchiseId  String
-  tenantId     String @unique // Each tenant belongs to at most one franchise
+  id          String @id @default(cuid())
+  franchiseId String
+  tenantId    String @unique // Each tenant belongs to at most one franchise
 
   // Location-level overrides (null = use franchise default)
   customPricingJson String? // JSON: { "bronze": { priceMonthly: 8.49 }, ... }
 
-  isActive  Boolean @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1729,12 +1808,11 @@ model FranchisePricingOverride {
   @@index([franchiseId])
 }
 
-
 /// BAR-336: Pending Check-In Queue — packages scanned via Smart Intake awaiting clerk approval.
 model SmartIntakePending {
   id             String  @id @default(cuid())
   trackingNumber String?
-  carrier        String  // amazon, ups, fedex, usps, dhl, lasership, ontrac, other
+  carrier        String // amazon, ups, fedex, usps, dhl, lasership, ontrac, other
   senderName     String?
   senderAddress  String?
   recipientName  String?
@@ -1744,37 +1822,37 @@ model SmartIntakePending {
   confidence     Float   @default(0)
 
   /// Carrier confidence: high, medium, low
-  carrierConfidence String?
+  carrierConfidence   String?
   /// Whether tracking number passes validation
   trackingNumberValid Boolean @default(false)
   /// Whether recipient appears to be a business name
   recipientIsBusiness Boolean @default(false)
 
   /// Approval status: pending, approved, rejected
-  status         String  @default("pending")
+  status          String    @default("pending")
   /// Clerk who reviewed (null if not yet reviewed)
-  reviewedById   String?
+  reviewedById    String?
   /// Timestamp of approval/rejection
-  reviewedAt     DateTime?
+  reviewedAt      DateTime?
   /// Reason for rejection (if rejected)
   rejectionReason String?
 
   /// Original image reference (base64 thumbnail or URL)
-  labelImageUrl  String?
+  labelImageUrl String?
   /// JSON blob of the raw extraction result for audit purposes
-  rawExtraction  String?
+  rawExtraction String?
 
   /// If approved, the Package.id created from this pending item
   checkedInPackageId String?
 
   /// Batch scan session grouping (all items from one scan share a batchId)
-  batchId        String?
+  batchId String?
 
   /// Tenant scoping
-  tenantId       String?
+  tenantId String?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([batchId])

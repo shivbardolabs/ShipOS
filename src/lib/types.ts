@@ -283,6 +283,98 @@ export interface PS1583FormData {
   // Court-ordered protected individual (PS1583 4k)
   courtOrderedProtected: boolean;
   courtOrderUploaded: boolean;
+  // BAR-230: Forwarding address (PS1583 Section 6)
+  hasForwardingAddress: boolean;
+  forwardingAddress?: string;
+  forwardingCity?: string;
+  forwardingState?: string;
+  forwardingZip?: string;
+  forwardingCountry?: string;
+  // BAR-230: CMRA countersignature (PS1583 Section 14a)
+  cmraSignatureUrl?: string;
+  cmraSignedBy?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BAR-230: Additional PMB Recipients & Authorized Individuals               */
+/* -------------------------------------------------------------------------- */
+
+export type RecipientType =
+  | 'additional_recipient'
+  | 'authorized_individual'
+  | 'minor_exception'
+  | 'employee_exception';
+
+export interface PmbRecipientData {
+  id?: string;
+  type: RecipientType;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  primaryIdType?: string;
+  primaryIdNumber?: string;
+  primaryIdIssuer?: string;
+  secondaryIdType?: string;
+  secondaryIdNumber?: string;
+  secondaryIdIssuer?: string;
+  dateOfBirth?: string; // For minors
+  form1583Status?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BAR-230: Non-Compliant ID Detection                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface IdValidationResult {
+  valid: boolean;
+  isNonCompliant: boolean;
+  reason?: string;
+  suggestion?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BAR-230: Payment Processing                                               */
+/* -------------------------------------------------------------------------- */
+
+export type PaymentMethod =
+  | 'manual_entry'
+  | 'text2pay'
+  | 'tap_to_glass'
+  | 'nfc'
+  | 'cash';
+
+export interface OnboardingPayment {
+  method: PaymentMethod;
+  amount: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  reference?: string;
+  error?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BAR-230: Plan Tier (for wizard)                                           */
+/* -------------------------------------------------------------------------- */
+
+export interface PlanTierOption {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  priceMonthly: number;
+  priceAnnual: number;
+  annualDiscountPct: number;
+  includedMailItems: number;
+  includedScans: number;
+  freeStorageDays: number;
+  includedForwarding: number;
+  includedShredding: number;
+  maxRecipients: number;
+  maxPackagesPerMonth: number;
 }
 
 /* -------------------------------------------------------------------------- */
