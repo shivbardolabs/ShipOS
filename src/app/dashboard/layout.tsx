@@ -16,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const isKiosk = pathname?.startsWith('/dashboard/kiosk');
+  const isSuperAdmin = pathname?.startsWith('/dashboard/super-admin');
 
   /* Kiosk mode — full-screen, no sidebar or header */
   if (isKiosk) {
@@ -23,6 +24,17 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-white">
         {children}
       </div>
+    );
+  }
+
+  /* Super-admin / Platform Console — has its own layout with dedicated sidebar */
+  if (isSuperAdmin) {
+    return (
+      <ActivityLogProvider>
+        <div className="min-h-screen bg-surface-950">
+          {children}
+        </div>
+      </ActivityLogProvider>
     );
   }
 
