@@ -39,21 +39,31 @@ function getReturnTo(req: NextRequest): string {
   return '/dashboard';
 }
 
+/**
+ * IMPORTANT: handleAuth calls custom handlers as `handler(req, ctx)`.
+ * When calling handleLogin / handleCallback, we MUST forward `ctx` as
+ * the second argument: `handleLogin(req, ctx, options)`.
+ *
+ * The SDK's App Router handler has signature `(req, _ctx, options = {})`.
+ * If you call `handleLogin(req, options)` with only 2 args, your options
+ * object lands in the `_ctx` slot and the real options default to `{}` —
+ * silently losing all overrides (redirect_uri, returnTo, etc.).
+ */
 export const GET = handleAuth({
-  login: (req: NextRequest) => {
+  login: (req: NextRequest, ctx: unknown) => {
     const baseURL = getBaseURL(req);
     const returnTo = getReturnTo(req);
-    return handleLogin(req, {
+    return handleLogin(req, ctx, {
       authorizationParams: {
         redirect_uri: `${baseURL}/api/auth/callback`,
       },
       returnTo,
     });
   },
-  signup: (req: NextRequest) => {
+  signup: (req: NextRequest, ctx: unknown) => {
     const baseURL = getBaseURL(req);
     const returnTo = getReturnTo(req);
-    return handleLogin(req, {
+    return handleLogin(req, ctx, {
       authorizationParams: {
         screen_hint: 'signup',
         redirect_uri: `${baseURL}/api/auth/callback`,
@@ -61,9 +71,9 @@ export const GET = handleAuth({
       returnTo,
     });
   },
-  callback: (req: NextRequest) => {
+  callback: (req: NextRequest, ctx: unknown) => {
     const baseURL = getBaseURL(req);
-    return handleCallback(req, {
+    return handleCallback(req, ctx, {
       redirectUri: `${baseURL}/api/auth/callback`,
     });
   },
