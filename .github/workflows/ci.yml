@@ -223,6 +223,18 @@ jobs:
 
     steps:
       - name: Determine overall status
+      - name: Set notification context
+        id: context
+        run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "title=${{ steps.status.outputs.result }}  ·  *<${{ github.event.pull_request.html_url }}|PR #${{ github.event.pull_request.number }}>*: ${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          echo "author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+        else
+          echo "title=${{ steps.status.outputs.result }}  ·  Push to \`${{ github.ref_name }}\`: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "author=${{ github.event.head_commit.author.username }}" >> $GITHUB_OUTPUT
+        fi
         id: status
         run: |
           if [[ "${{ needs.build.result }}" == "failure" ]]; then
@@ -252,7 +264,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ steps.status.outputs.result }}  ·  *<${{ github.event.pull_request.html_url }}|PR #${{ github.event.pull_request.number }}>*: ${{ github.event.pull_request.title }}"
+                        "text": "${{ steps.context.outputs.title }}|PR #${{ github.event.pull_request.number }}>*: ${{ github.event.pull_request.title }}"
                       }
                     },
                     {
@@ -261,7 +273,7 @@ jobs:
                         { "type": "mrkdwn", "text": "*Build:*\n${{ needs.build.result == 'success' && '✅ Pass' || '❌ Fail' }}" },
                         { "type": "mrkdwn", "text": "*API Tests:*\n${{ needs.test-api.result == 'success' && '✅ Pass' || (needs.test-api.result == 'skipped' && '⏭️ Skipped' || '❌ Fail') }}" },
                         { "type": "mrkdwn", "text": "*E2E Tests:*\n${{ needs.test-e2e.result == 'success' && '✅ Pass' || (needs.test-e2e.result == 'skipped' && '⏭️ Skipped' || '❌ Fail') }}" },
-                        { "type": "mrkdwn", "text": "*Branch:*\n`${{ github.head_ref }}`" }
+                        { "type": "mrkdwn", "text": "*Branch:*\n`${{ steps.context.outputs.branch }}`" }
                       ]
                     },
                     {
@@ -269,7 +281,7 @@ jobs:
                       "elements": [
                         {
                           "type": "mrkdwn",
-                          "text": "by ${{ github.event.pull_request.user.login }}  ·  <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+                          "text": "by ${{ steps.context.outputs.author }}  ·  <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
                         }
                       ]
                     }
