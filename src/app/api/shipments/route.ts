@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { onShipmentCreated } from '@/lib/charge-event-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/shipments
  * List shipments with search, filtering, and pagination.
  * Query params: search?, status?, paymentStatus?, page?, limit?
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -65,7 +63,7 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/shipments]', err);
     return NextResponse.json({ error: 'Failed to fetch shipments' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/shipments
@@ -73,10 +71,8 @@ export async function GET(request: NextRequest) {
  * Body: { customerId, carrier, service?, trackingNumber?, destination?,
  *         weight?, dimensions?, wholesaleCost?, retailPrice?, insuranceCost?, packingCost? }
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
 
     const body = await request.json();
@@ -168,4 +164,4 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/shipments]', err);
     return NextResponse.json({ error: 'Failed to create shipment' }, { status: 500 });
   }
-}
+});

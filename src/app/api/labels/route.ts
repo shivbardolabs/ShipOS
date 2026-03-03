@@ -22,8 +22,9 @@ import type {
   ContactLabelData,
   SignatureTagData,
 } from '@/lib/labels';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { template, data } = body as { template: LabelTemplate; data: unknown };
@@ -64,4 +65,4 @@ export async function POST(request: NextRequest) {
     console.error('[labels] POST error:', error);
     return NextResponse.json({ error: 'Failed to generate label' }, { status: 500 });
   }
-}
+}, { public: true });

@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { stringify } from 'csv-stringify/sync';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/reports/export?type=packages|customers|revenue&format=csv
  * Export report data as CSV.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'packages';
     const format = searchParams.get('format') || 'csv';
 
@@ -120,4 +116,4 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/reports/export]', err);
     return NextResponse.json({ error: 'Failed to export report' }, { status: 500 });
   }
-}
+});

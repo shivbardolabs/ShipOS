@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { parsePricingJson } from '@/lib/pmb-billing/franchise-pricing';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/pmb/franchise-pricing
  * Get franchise pricing configuration.
  * SuperAdmin: see all franchises. Admin: see own franchise if linked.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const franchiseId = req.nextUrl.searchParams.get('franchiseId');
+    const franchiseId = request.nextUrl.searchParams.get('franchiseId');
 
     if (user.role === 'superadmin') {
       // SuperAdmin sees all franchises
@@ -88,21 +86,19 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/pmb/franchise-pricing]', err);
     return NextResponse.json({ error: 'Failed to fetch franchise pricing' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/pmb/franchise-pricing
  * Create or update franchise pricing.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     // Create a new franchise group
     if (body.action === 'create_franchise') {
@@ -186,4 +182,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/pmb/franchise-pricing]', err);
     return NextResponse.json({ error: 'Failed to update franchise pricing' }, { status: 500 });
   }
-}
+});

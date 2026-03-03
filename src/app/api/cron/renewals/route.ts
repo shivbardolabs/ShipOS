@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendNotification } from '@/lib/notifications/service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/cron/renewals
@@ -13,7 +14,7 @@ import { sendNotification } from '@/lib/notifications/service';
  *
  * Protected by CRON_SECRET header to prevent unauthorized invocation.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     // Verify cron secret
     const authHeader = request.headers.get('authorization');
@@ -189,12 +190,12 @@ export async function POST(request: Request) {
     console.error('[POST /api/cron/renewals]', err);
     return NextResponse.json({ error: 'Renewal processing failed' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /** GET for Vercel Cron compatibility */
-export async function GET(request: Request) {
+export const GET = withApiHandler(async (request, { user }) => {
   return POST(request);
-}
+}, { public: true });
 
 function isSameDay(a: Date, b: Date): boolean {
   return (

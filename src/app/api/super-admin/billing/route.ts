@@ -1,20 +1,18 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/super-admin/billing
  * Returns billing and performance reporting data.
  * Supports: ?period=current|previous|custom&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || 'current';
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -125,4 +123,4 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/super-admin/billing]', err);
     return NextResponse.json({ error: 'Failed to fetch billing data' }, { status: 500 });
   }
-}
+});

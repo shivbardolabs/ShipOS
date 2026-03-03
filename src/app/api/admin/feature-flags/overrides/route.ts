@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/admin/feature-flags/overrides
@@ -8,15 +8,13 @@ import prisma from '@/lib/prisma';
  * Create or update an override for a flag.
  * Body: { flagId, targetType: 'user'|'tenant', targetId, enabled }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { flagId, targetType, targetId, enabled } = await req.json();
+    const { flagId, targetType, targetId, enabled } = await request.json();
 
     if (!flagId || !targetType || !targetId || typeof enabled !== 'boolean') {
       return NextResponse.json(
@@ -43,22 +41,20 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/admin/feature-flags/overrides]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/admin/feature-flags/overrides
  *
  * Remove an override. Body: { overrideId }
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { overrideId } = await req.json();
+    const { overrideId } = await request.json();
     if (!overrideId) {
       return NextResponse.json({ error: 'overrideId required' }, { status: 400 });
     }
@@ -70,4 +66,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/admin/feature-flags/overrides]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

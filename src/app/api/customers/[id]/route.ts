@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { autoRtsForCustomer } from '@/lib/rts-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/customers/[id]
  * Fetch a single customer with all related data.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
 
@@ -108,20 +103,15 @@ export async function GET(
     console.error('[GET /api/customers/[id]]', err);
     return NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/customers/[id]
  * Update a customer. If status changes to 'closed' or 'expired',
  * auto-trigger RTS for all their active packages (BAR-321).
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const body = await request.json();
@@ -182,4 +172,4 @@ export async function PATCH(
     console.error('[PATCH /api/customers/[id]]', err);
     return NextResponse.json({ error: 'Failed to update customer' }, { status: 500 });
   }
-}
+});

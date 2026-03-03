@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/users/email/verify?token=xxx
@@ -13,7 +14,7 @@ import prisma from '@/lib/prisma';
  * Note: Auth0 email update would require Management API integration.
  * For now, we update the local DB record. Auth0 sync is handled on next login.
  */
-export async function GET(request: Request) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
     console.error('[GET /api/users/email/verify]', err);
     return redirectWithError('Verification failed');
   }
-}
+}, { public: true });
 
 function redirectWithError(message: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL

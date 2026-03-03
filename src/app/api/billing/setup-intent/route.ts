@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/billing/setup-intent
@@ -10,12 +10,8 @@ import prisma from '@/lib/prisma';
  * Returns the client_secret needed by the frontend to collect card details
  * via Stripe Elements (PCI-compliant — card data never touches our servers).
  */
-export async function POST() {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden — admin role required' }, { status: 403 });
@@ -80,4 +76,4 @@ export async function POST() {
     console.error('[POST /api/billing/setup-intent]', err);
     return NextResponse.json({ error: 'Failed to create setup intent' }, { status: 500 });
   }
-}
+});

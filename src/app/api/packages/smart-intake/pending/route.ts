@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/packages/smart-intake/pending                                    */
 /*  List pending Smart Intake items with optional status / search filters.    */
 /* -------------------------------------------------------------------------- */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
 
@@ -94,16 +92,14 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/packages/smart-intake/pending error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake/pending                                   */
 /*  Create one or more pending items from a Smart Intake scan.                */
 /* -------------------------------------------------------------------------- */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const { items, batchId } = body as {
@@ -168,4 +164,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/packages/smart-intake/pending error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

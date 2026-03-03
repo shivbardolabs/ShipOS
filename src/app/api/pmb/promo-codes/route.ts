@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validatePromoCode, normalizePromoCode } from '@/lib/pmb-billing/promo-codes';
 import type { DiscountType, DiscountAppliesTo } from '@/lib/pmb-billing/promo-codes';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/pmb/promo-codes
  * List promo codes or validate a specific code.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const code = req.nextUrl.searchParams.get('code');
-    const customerId = req.nextUrl.searchParams.get('customerId');
-    const tierSlug = req.nextUrl.searchParams.get('tierSlug');
-    const billingCycle = req.nextUrl.searchParams.get('billingCycle') as 'monthly' | 'annual' | null;
-    const price = req.nextUrl.searchParams.get('price');
+    const code = request.nextUrl.searchParams.get('code');
+    const customerId = request.nextUrl.searchParams.get('customerId');
+    const tierSlug = request.nextUrl.searchParams.get('tierSlug');
+    const billingCycle = request.nextUrl.searchParams.get('billingCycle') as 'monthly' | 'annual' | null;
+    const price = request.nextUrl.searchParams.get('price');
 
     // Validate a specific code
     if (code) {
@@ -85,19 +83,17 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/pmb/promo-codes]', err);
     return NextResponse.json({ error: 'Failed to fetch promo codes' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/pmb/promo-codes
  * Create or update a promo code, or redeem one.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const body = await req.json();
+    const body = await request.json();
 
     // If 'action' is 'redeem', process redemption
     if (body.action === 'redeem') {
@@ -178,21 +174,19 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/pmb/promo-codes]', err);
     return NextResponse.json({ error: 'Failed to save promo code' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/pmb/promo-codes
  * Deactivate a promo code.
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = await req.json();
+    const { id } = await request.json();
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
     await prisma.promoCode.update({
@@ -205,4 +199,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/pmb/promo-codes]', err);
     return NextResponse.json({ error: 'Failed to delete promo code' }, { status: 500 });
   }
-}
+});

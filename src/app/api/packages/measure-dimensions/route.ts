@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/packages/measure-dimensions
@@ -115,17 +115,10 @@ const DEMO_RESULTS: MeasureDimensionsResult[] = [
 let demoIndex = 0;
 
 /* ── Route handler ─────────────────────────────────────────────────── */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Not authenticated' } as MeasureDimensionsResponse,
-        { status: 401 },
-      );
-    }
 
-    const body = await req.json();
+    const body = await request.json();
     const { image } = body as { image: string };
 
     if (!image) {
@@ -265,4 +258,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

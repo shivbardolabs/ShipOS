@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/shipments/rates
@@ -7,10 +7,8 @@ import { getOrProvisionUser } from '@/lib/auth';
  * Returns estimated rates for available carriers/services based on package dimensions and destination.
  * Initially uses configurable base rates; can be swapped for live API calls later.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const { weight = 1, length = 10, width = 8, height = 6, destination = '', international = false } = body;
@@ -61,4 +59,4 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/shipments/rates]', err);
     return NextResponse.json({ error: 'Failed to estimate rates' }, { status: 500 });
   }
-}
+});

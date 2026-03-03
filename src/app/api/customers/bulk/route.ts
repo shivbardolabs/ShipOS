@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/customers/bulk
@@ -10,12 +10,8 @@ import prisma from '@/lib/prisma';
  *
  * Returns created/skipped/error counts and the created customer IDs.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -143,4 +139,4 @@ export async function POST(request: Request) {
     console.error('[POST /api/customers/bulk]', err);
     return NextResponse.json({ error: 'Bulk import failed' }, { status: 500 });
   }
-}
+});

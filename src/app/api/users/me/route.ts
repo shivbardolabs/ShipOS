@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser, recordLogin } from '@/lib/auth';
+import { recordLogin } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/users/me
@@ -10,12 +11,8 @@ import { getOrProvisionUser, recordLogin } from '@/lib/auth';
  * Blocks access for inactive/suspended users by returning a 403
  * with a descriptive error message.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     // Block inactive or suspended users from logging in
     if (user.status === 'inactive' || user.status === 'suspended') {
@@ -40,4 +37,4 @@ export async function GET() {
     console.error('[GET /api/users/me]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

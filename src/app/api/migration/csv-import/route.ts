@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import {
   parsePMToolsExport,
@@ -9,6 +8,7 @@ import {
   mapBilling,
   type PMToolsCsvData,
 } from '@/lib/migration/csv-parser';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/migration/csv-import
@@ -19,12 +19,8 @@ import {
  *
  * Body: { mode: 'dry_run' | 'execute', files: { CUSTOMER: string, MBDETAIL?: string, PACKAGES?: string, BILLING?: string } }
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -111,7 +107,7 @@ export async function POST(request: Request) {
     console.error('[POST /api/migration/csv-import]', err);
     return NextResponse.json({ error: 'Migration failed' }, { status: 500 });
   }
-}
+});
 
 async function executeMigration(
   data: PMToolsCsvData,

@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/sessions
  * Returns recent login sessions across all users. Superadmin only.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
@@ -51,4 +49,4 @@ export async function GET() {
     console.error('[GET /api/admin/sessions]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

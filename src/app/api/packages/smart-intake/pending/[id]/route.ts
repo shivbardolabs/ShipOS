@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  PATCH /api/packages/smart-intake/pending/[id]                             */
 /*  Update a single pending item — edit fields, approve, or reject.           */
 /* -------------------------------------------------------------------------- */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
 
@@ -135,19 +130,14 @@ export async function PATCH(
     console.error('PATCH /api/packages/smart-intake/pending/[id] error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 /* -------------------------------------------------------------------------- */
 /*  DELETE /api/packages/smart-intake/pending/[id]                            */
 /*  Delete a pending item (only if still pending).                            */
 /* -------------------------------------------------------------------------- */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
 
@@ -162,7 +152,7 @@ export async function DELETE(
     console.error('DELETE /api/packages/smart-intake/pending/[id] error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeItem(item: any) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/users/agree
@@ -14,19 +14,15 @@ import prisma from '@/lib/prisma';
  *
  * Body (optional): { termsVersion?: number, privacyVersion?: number }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     // Parse optional version numbers from body
     let termsVersion: number | null = null;
     let privacyVersion: number | null = null;
 
     try {
-      const body = await req.json();
+      const body = await request.json();
       if (typeof body.termsVersion === 'number') termsVersion = body.termsVersion;
       if (typeof body.privacyVersion === 'number') privacyVersion = body.privacyVersion;
     } catch {
@@ -45,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     await prisma.user.update({
-      where: { id: me.id },
+      where: { id: user.id },
       data: updateData,
     });
 
@@ -54,4 +50,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/users/agree]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages/check-tracking?tracking=xxx
@@ -8,14 +8,10 @@ import prisma from '@/lib/prisma';
  * Checks if a tracking number already exists in the inventory.
  * Used by Package Check-In Step 3 (BAR-245) to prevent duplicates.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const tracking = searchParams.get('tracking')?.trim();
 
     if (!tracking) {
@@ -68,4 +64,4 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

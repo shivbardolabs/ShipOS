@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/settings/storage-locations
  * Returns all active storage locations for the current tenant.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -26,18 +22,14 @@ export async function GET() {
     console.error('[GET /api/settings/storage-locations]', err);
     return NextResponse.json({ error: 'Failed to fetch storage locations' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/settings/storage-locations
  * Create a new storage location. Requires admin or superadmin.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -92,18 +84,14 @@ export async function POST(request: Request) {
     console.error('[POST /api/settings/storage-locations]', err);
     return NextResponse.json({ error: 'Failed to create storage location' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/settings/storage-locations
  * Update a storage location (name, isDefault, sortOrder). Requires admin or superadmin.
  */
-export async function PATCH(request: Request) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -159,18 +147,14 @@ export async function PATCH(request: Request) {
     console.error('[PATCH /api/settings/storage-locations]', err);
     return NextResponse.json({ error: 'Failed to update storage location' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/settings/storage-locations?id=xxx
  * Soft-delete a storage location (set isActive=false). Requires admin or superadmin.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -214,18 +198,14 @@ export async function DELETE(request: Request) {
     console.error('[DELETE /api/settings/storage-locations]', err);
     return NextResponse.json({ error: 'Failed to delete storage location' }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/settings/storage-locations
  * Reorder storage locations. Expects { order: [{ id, sortOrder }] }.
  */
-export async function PUT(request: Request) {
+export const PUT = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -261,4 +241,4 @@ export async function PUT(request: Request) {
     console.error('[PUT /api/settings/storage-locations]', err);
     return NextResponse.json({ error: 'Failed to reorder storage locations' }, { status: 500 });
   }
-}
+});

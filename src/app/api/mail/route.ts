@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { onMailAction } from '@/lib/charge-event-service';
 import { sendNotification } from '@/lib/notifications/service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/mail
  * List mail pieces with search, filtering, and pagination.
  * Query params: search?, type?, status?, page?, limit?
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -65,17 +63,15 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/mail]', err);
     return NextResponse.json({ error: 'Failed to fetch mail' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/mail
  * Update a mail piece action and auto-generate charge event (BAR-308).
  * Body: { id, action: 'scan'|'forward'|'discard', scanImage?, notes?, pageCount? }
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
 
     const body = await request.json();
@@ -167,7 +163,7 @@ export async function PATCH(request: NextRequest) {
     console.error('[PATCH /api/mail]', err);
     return NextResponse.json({ error: 'Failed to update mail piece' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/mail
@@ -176,10 +172,8 @@ export async function PATCH(request: NextRequest) {
  *
  * Automatically triggers a `mail_received` notification to the customer.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
 
     const body = await request.json();
@@ -254,4 +248,4 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/mail]', err);
     return NextResponse.json({ error: 'Failed to create mail piece' }, { status: 500 });
   }
-}
+});

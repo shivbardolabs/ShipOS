@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake/pending/batch                             */
 /*  Batch approve or reject multiple pending items at once.                   */
 /* -------------------------------------------------------------------------- */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const { action, ids, rejectionReason } = body as {
@@ -108,4 +106,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/packages/smart-intake/pending/batch error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

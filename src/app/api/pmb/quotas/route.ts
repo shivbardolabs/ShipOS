@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { getCurrentPeriod, buildQuotaSnapshot } from '@/lib/pmb-billing/quotas';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/pmb/quotas?customerId=...
  * Get quota usage for a customer in the current billing period.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const customerId = req.nextUrl.searchParams.get('customerId');
-    const period = req.nextUrl.searchParams.get('period') ?? getCurrentPeriod();
+    const customerId = request.nextUrl.searchParams.get('customerId');
+    const period = request.nextUrl.searchParams.get('period') ?? getCurrentPeriod();
 
     if (customerId) {
       // Single customer quota
@@ -49,19 +47,17 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/pmb/quotas]', err);
     return NextResponse.json({ error: 'Failed to fetch quotas' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/pmb/quotas
  * Record quota consumption (increment usage counters).
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const { customerId, service, quantity = 1 } = await req.json();
+    const { customerId, service, quantity = 1 } = await request.json();
     if (!customerId || !service) {
       return NextResponse.json({ error: 'customerId and service are required' }, { status: 400 });
     }
@@ -113,4 +109,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/pmb/quotas]', err);
     return NextResponse.json({ error: 'Failed to record quota usage' }, { status: 500 });
   }
-}
+});

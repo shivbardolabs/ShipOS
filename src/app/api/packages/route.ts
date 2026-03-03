@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages
  * List packages with search, filtering, and pagination.
  * Query params: search?, status?, carrier?, page?, limit?
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -67,4 +65,4 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/packages]', err);
     return NextResponse.json({ error: 'Failed to fetch packages' }, { status: 500 });
   }
-}
+});

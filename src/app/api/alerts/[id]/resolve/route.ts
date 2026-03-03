@@ -8,11 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { params }) => {
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
@@ -41,4 +39,4 @@ export async function PATCH(
     console.error('[alerts] PATCH resolve error:', error);
     return NextResponse.json({ error: 'Failed to resolve alert' }, { status: 500 });
   }
-}
+}, { public: true });

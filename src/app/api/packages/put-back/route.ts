@@ -9,8 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { packageId, reason } = body as { packageId: string; reason: string };
@@ -50,4 +51,4 @@ export async function POST(request: NextRequest) {
     console.error('[put-back] POST error:', error);
     return NextResponse.json({ error: 'Failed to put back package' }, { status: 500 });
   }
-}
+}, { public: true });

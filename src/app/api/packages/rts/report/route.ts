@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages/rts/report
@@ -8,11 +8,8 @@ import prisma from '@/lib/prisma';
  * RTS reporting: volume, reason breakdown, carrier distribution, step status.
  * Query params: from?, to? (ISO date strings), format? (json | csv)
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user)
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const fromStr = searchParams.get('from');
@@ -134,4 +131,4 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/packages/rts/report]', err);
     return NextResponse.json({ error: 'Failed to generate RTS report' }, { status: 500 });
   }
-}
+});

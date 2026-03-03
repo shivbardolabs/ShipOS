@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getOrProvisionUser, type LocalUser } from '@/lib/auth';
+import { type LocalUser } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/dashboard/briefing                                               */
@@ -237,15 +238,8 @@ async function getDemoBriefing(user: LocalUser): Promise<Briefing> {
 
 /* ── GET handler ────────────────────────────────────────────────────────── */
 
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   /* ── Auth guard ───────────────────────────────────────────────────────── */
-  const user = await getOrProvisionUser();
-  if (!user) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 },
-    );
-  }
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -344,4 +338,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

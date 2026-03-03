@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { calculateStorageFee } from '@/lib/billing';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/packages/bulk-checkout
  * Bulk checkout multiple packages for the same customer.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const {
       packageIds,
       delegateName,
       delegateIdType,
       delegateIdNumber,
-    } = await req.json();
+    } = await request.json();
 
     if (!packageIds || !Array.isArray(packageIds) || packageIds.length === 0) {
       return NextResponse.json({ error: 'packageIds array is required' }, { status: 400 });
@@ -105,4 +101,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/packages/bulk-checkout]', err);
     return NextResponse.json({ error: 'Failed to process bulk checkout' }, { status: 500 });
   }
-}
+});

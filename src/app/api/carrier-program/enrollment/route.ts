@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { CARRIER_PROGRAMS, PROGRAM_IDS } from '@/lib/carrier-program';
 import type { CarrierProgramId } from '@/lib/carrier-program';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/carrier-program/enrollment?tenantId=...                          */
 /*  BAR-280: Retrieve enrollment status for all programs                      */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const tenantId = new URL(request.url).searchParams.get('tenantId');
     if (!tenantId) {
@@ -55,14 +56,14 @@ export async function GET(request: NextRequest) {
     console.error('[carrier-program/enrollment] GET error:', error);
     return NextResponse.json({ error: 'Failed to load enrollments' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/carrier-program/enrollment                                      */
 /*  BAR-280: Create or update program enrollment                              */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const {
@@ -165,4 +166,4 @@ export async function POST(request: NextRequest) {
     console.error('[carrier-program/enrollment] POST error:', error);
     return NextResponse.json({ error: 'Failed to update enrollment' }, { status: 500 });
   }
-}
+}, { public: true });

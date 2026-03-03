@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/audit-log
@@ -13,11 +13,8 @@ import prisma from '@/lib/prisma';
  *   offset  – pagination offset
  *   category – filter by entity type (package, customer, etc.)
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user)
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(
@@ -108,7 +105,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 

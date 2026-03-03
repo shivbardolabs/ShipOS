@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/legal?type=terms|privacy
@@ -7,9 +8,9 @@ import prisma from '@/lib/prisma';
  * Public endpoint — returns the current active legal document for the given type.
  * No authentication required so public /terms and /privacy pages can load content.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const type = req.nextUrl.searchParams.get('type');
+    const type = request.nextUrl.searchParams.get('type');
     if (!type || !['terms', 'privacy'].includes(type)) {
       return NextResponse.json(
         { error: 'Query param "type" must be "terms" or "privacy"' },
@@ -38,4 +39,4 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/legal]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+}, { public: true });

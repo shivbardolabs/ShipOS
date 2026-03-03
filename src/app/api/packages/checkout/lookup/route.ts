@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/packages/checkout/lookup                                         */
@@ -12,7 +13,7 @@ import prisma from '@/lib/prisma';
 /*    tenantId  — Required for multi-tenant filtering                         */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const { searchParams } = new URL(request.url);
     const pmb = searchParams.get('pmb');
@@ -165,4 +166,4 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * PATCH /api/payment-methods/[id]
@@ -14,12 +14,8 @@ import prisma from '@/lib/prisma';
  *   - label?: string
  *   - status?: 'active' | 'expired' | 'removed'
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -68,19 +64,15 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * DELETE /api/payment-methods/[id]
  *
  * Soft-remove a payment method (sets status to 'removed').
  */
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const DELETE = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -125,4 +117,4 @@ export async function DELETE(
       { status: 500 },
     );
   }
-}
+});

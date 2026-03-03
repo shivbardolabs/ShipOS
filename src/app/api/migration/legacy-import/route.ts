@@ -11,7 +11,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@auth0/nextjs-auth0';
-import { getOrProvisionUser } from '@/lib/auth';
 import {
   LEGACY_PRESETS,
   processMigration,
@@ -19,18 +18,18 @@ import {
   validateRow,
   type MigrationConfig,
 } from '@/lib/migration/legacy-import';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function POST(req: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   const session = await getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const user = await getOrProvisionUser();
   if (!user || !['admin', 'superadmin'].includes(user.role)) {
     return NextResponse.json({ error: 'Admin required' }, { status: 403 });
   }
 
   try {
-    const body = await req.json();
+    const body = await request.json();
     const { source, preset, config: customConfig, mode = 'dry_run' } = body;
 
     if (!source) {
@@ -146,10 +145,10 @@ export async function POST(req: Request) {
     console.error('Legacy import error:', error);
     return NextResponse.json({ error: 'Import failed' }, { status: 500 });
   }
-}
+});
 
 /** GET /api/migration/legacy-import — returns available presets */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   const session = await getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -162,4 +161,4 @@ export async function GET() {
       requiredFields: config.fieldMappings.filter(f => f.required).map(f => f.source),
     })),
   });
-}
+});

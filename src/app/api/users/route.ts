@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { hasPermission, type UserRole } from '@/lib/permissions';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/users
@@ -12,18 +12,16 @@ import { hasPermission, type UserRole } from '@/lib/permissions';
  *   includeDeleted — if "true", includes soft-deleted users for audit view
  *   status         — filter by status: active | inactive | suspended
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!me.tenantId) return NextResponse.json([], { status: 200 });
+    if (!user.tenantId) return NextResponse.json([], { status: 200 });
 
     const { searchParams } = new URL(request.url);
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
     const statusFilter = searchParams.get('status');
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { tenantId: me.tenantId };
+    const where: Record<string, any> = { tenantId: user.tenantId };
 
     // By default filter out soft-deleted users unless includeDeleted=true
     if (!includeDeleted) {
@@ -56,26 +54,24 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/users]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/users  (body: { userId, role?, status? })
  * Updates a user's role and/or status. Admin only.
  */
-export async function PUT(req: NextRequest) {
+export const PUT = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     // RBAC permission check — manage_users required for role/status changes
-    if (!hasPermission(me.role as UserRole, 'manage_users')) {
+    if (!hasPermission(user.role as UserRole, 'manage_users')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const { userId, role, status, action } = await req.json();
+    const { userId, role, status, action } = await request.json();
 
     // Ensure target user belongs to same tenant
     const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.tenantId !== me.tenantId) {
+    if (!target || target.tenantId !== user.tenantId) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -111,7 +107,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Prevent self-deactivation
-    if (userId === me.id && status && status !== 'active') {
+    if (userId === user.id && status && status !== 'active') {
       return NextResponse.json({ error: 'Cannot deactivate yourself' }, { status: 400 });
     }
 
@@ -142,32 +138,30 @@ export async function PUT(req: NextRequest) {
     console.error('[PUT /api/users]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/users  (body: { userId })
  * Soft-deletes a user (sets deletedAt). Admin only.
  * User is filtered from all queries but data is preserved.
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     // RBAC permission check — deactivate_users required for soft delete
-    if (!hasPermission(me.role as UserRole, 'deactivate_users')) {
+    if (!hasPermission(user.role as UserRole, 'deactivate_users')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const { userId } = await req.json();
+    const { userId } = await request.json();
 
     // Cannot soft-delete yourself
-    if (userId === me.id) {
+    if (userId === user.id) {
       return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
     }
 
     // Ensure target user belongs to same tenant
     const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.tenantId !== me.tenantId) {
+    if (!target || target.tenantId !== user.tenantId) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -185,4 +179,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/users]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

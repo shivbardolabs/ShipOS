@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { FEATURE_FLAG_DEFINITIONS } from '@/lib/feature-flag-definitions';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/feature-flags
@@ -9,11 +9,9 @@ import { FEATURE_FLAG_DEFINITIONS } from '@/lib/feature-flag-definitions';
  * Returns all feature flags with their overrides, plus tenant & user lists
  * for the override UI. Superadmin only.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
@@ -53,22 +51,20 @@ export async function GET() {
     console.error('[GET /api/admin/feature-flags]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/admin/feature-flags
  *
  * Update a flag's default state. Body: { flagId, defaultEnabled }
  */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { flagId, defaultEnabled } = await req.json();
+    const { flagId, defaultEnabled } = await request.json();
     if (!flagId || typeof defaultEnabled !== 'boolean') {
       return NextResponse.json({ error: 'flagId and defaultEnabled required' }, { status: 400 });
     }
@@ -83,7 +79,7 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/admin/feature-flags]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /* ── Auto-seed missing flags ─────────────────────────────────────────────── */
 

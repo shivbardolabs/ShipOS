@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/end-of-day/pickup
  * BAR-79: Record a carrier pickup — marks all shipments for that carrier as picked up,
  * rolls the shipping day forward, and generates a pickup confirmation record.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     const body = await request.json();
@@ -87,7 +85,7 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/end-of-day/pickup]', err);
     return NextResponse.json({ error: 'Failed to process carrier pickup' }, { status: 500 });
   }
-}
+});
 
 function getCarrierPickupActions(carrier: string): string[] {
   switch (carrier.toLowerCase()) {

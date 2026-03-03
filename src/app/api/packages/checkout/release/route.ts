@@ -8,6 +8,7 @@ import {
 import { renderReceipt, buildReceiptData } from '@/lib/checkout/receipt';
 import { onPackageCheckout } from '@/lib/charge-event-service';
 import type { FeeConfig, PackageForFees } from '@/lib/checkout/fees';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/checkout/release                                       */
@@ -38,7 +39,7 @@ function generateInvoiceNumber(): string {
   return `INV-${dateStr}-${rand}`;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const {
@@ -304,4 +305,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });

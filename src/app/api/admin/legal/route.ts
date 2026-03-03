@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/legal?type=terms|privacy
@@ -8,15 +8,13 @@ import prisma from '@/lib/prisma';
  * Returns legal documents for the given type (all versions, most recent first).
  * Superadmin only.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const type = req.nextUrl.searchParams.get('type');
+    const type = request.nextUrl.searchParams.get('type');
     if (type && !['terms', 'privacy'].includes(type)) {
       return NextResponse.json(
         { error: 'Query param "type" must be "terms" or "privacy"' },
@@ -35,7 +33,7 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/admin/legal]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/admin/legal
@@ -46,15 +44,13 @@ export async function GET(req: NextRequest) {
  *
  * Body: { type: 'terms' | 'privacy', content: string }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { type, content } = await req.json();
+    const { type, content } = await request.json();
     if (!type || !['terms', 'privacy'].includes(type)) {
       return NextResponse.json({ error: '"type" must be "terms" or "privacy"' }, { status: 400 });
     }
@@ -81,7 +77,7 @@ export async function POST(req: NextRequest) {
           type,
           content: content.trim(),
           version: nextVersion,
-          publishedBy: me.id,
+          publishedBy: user.id,
           isActive: true,
         },
       }),
@@ -97,4 +93,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/admin/legal]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

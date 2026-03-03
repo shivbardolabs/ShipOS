@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  Helper: date range from granularity                                       */
@@ -52,12 +52,8 @@ function dateRangeFromGranularity(granularity: string): { from: Date; to: Date }
 /*    - serviceType: filter by service type                                   */
 /*    - billingModel: subscription | usage | tos                              */
 /* -------------------------------------------------------------------------- */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -420,4 +416,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

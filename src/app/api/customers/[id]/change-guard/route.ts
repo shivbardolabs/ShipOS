@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * PS1583-Protected Fields — changes to these require warning + audit + re-filing trigger
@@ -23,13 +23,8 @@ const PS1583_PROTECTED_FIELDS = [
  * BAR-235: Check if proposed changes affect PS1583-protected fields.
  * Returns which fields are protected and whether a warning is needed.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const body = await request.json();
@@ -107,20 +102,15 @@ export async function POST(
     console.error('[POST /api/customers/[id]/change-guard]', err);
     return NextResponse.json({ error: 'Change guard check failed' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/customers/[id]/change-guard
  * BAR-235: Apply PS1583-protected changes after user confirmation.
  * Logs audit trail and triggers re-filing status.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const body = await request.json();
@@ -182,4 +172,4 @@ export async function PATCH(
     console.error('[PATCH /api/customers/[id]/change-guard]', err);
     return NextResponse.json({ error: 'Failed to apply protected changes' }, { status: 500 });
   }
-}
+});

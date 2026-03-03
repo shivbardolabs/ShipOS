@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/cron/analytics-report
@@ -11,7 +12,7 @@ import { NextResponse } from 'next/server';
  *
  * Protected by CRON_SECRET to prevent unauthorized invocation.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     // ── Auth guard ─────────────────────────────────────────────────────────
     const authHeader = request.headers.get('authorization');
@@ -89,4 +90,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+}, { public: true });

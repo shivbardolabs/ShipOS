@@ -9,17 +9,16 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@auth0/nextjs-auth0';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 const DEMO_TENANT_ID = 'demo_tenant_001';
 
 function daysAgo(n: number) { return new Date(Date.now() - n * 86400000); }
 function daysFromNow(n: number) { return new Date(Date.now() + n * 86400000); }
 
-export async function POST() {
+export const POST = withApiHandler(async (request, { user }) => {
   const session = await getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const user = await getOrProvisionUser();
   if (!user || !['admin', 'superadmin'].includes(user.role)) {
     return NextResponse.json({ error: 'Admin required' }, { status: 403 });
   }
@@ -124,12 +123,11 @@ export async function POST() {
     console.error('Demo seed error:', error);
     return NextResponse.json({ error: 'Seed failed' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE() {
+export const DELETE = withApiHandler(async (request, { user }) => {
   const session = await getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const user = await getOrProvisionUser();
   if (!user || !['admin', 'superadmin'].includes(user.role)) {
     return NextResponse.json({ error: 'Admin required' }, { status: 403 });
   }
@@ -158,4 +156,4 @@ export async function DELETE() {
     console.error('Demo cleanup error:', error);
     return NextResponse.json({ error: 'Cleanup failed' }, { status: 500 });
   }
-}
+});

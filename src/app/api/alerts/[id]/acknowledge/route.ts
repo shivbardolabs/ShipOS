@@ -12,14 +12,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 const VALID_ACTIONS = ['skip', 'snooze', 'dismiss'] as const;
 type AckAction = (typeof VALID_ACTIONS)[number];
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { params }) => {
   try {
     const { id } = await params;
     const body = await request.json();
@@ -112,4 +110,4 @@ export async function PATCH(
     console.error('[alerts] PATCH acknowledge error:', error);
     return NextResponse.json({ error: 'Failed to acknowledge alert' }, { status: 500 });
   }
-}
+}, { public: true });

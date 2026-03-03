@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { onPackageCheckIn } from '@/lib/charge-event-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/packages/check-in
@@ -12,14 +12,10 @@ import { onPackageCheckIn } from '@/lib/charge-event-service';
  * Fixes BAR-260: Packages checked-in were not saving because the
  * front-end only logged to a client-side activity log.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const body = await req.json();
+    const body = await request.json();
 
     const {
       customerId,
@@ -281,7 +277,7 @@ export async function POST(req: NextRequest) {
 
     if (sendEmail && customer.notifyEmail && customer.email) {
       try {
-        await fetch(new URL('/api/notifications/send', req.url), {
+        await fetch(new URL('/api/notifications/send', request.url), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -314,7 +310,7 @@ export async function POST(req: NextRequest) {
 
     if (sendSms && customer.notifySms && customer.phone) {
       try {
-        await fetch(new URL('/api/notifications/send', req.url), {
+        await fetch(new URL('/api/notifications/send', request.url), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -371,4 +367,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

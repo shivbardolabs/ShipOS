@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/customers/id-scan                                               */
@@ -105,7 +106,7 @@ Return a JSON object with these fields:
 If a field is not visible or unclear, use an empty string (except confidence, which should reflect your overall extraction confidence).
 Always return valid JSON only, no markdown, no explanation.`;
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { image, idType } = body as { image: string; idType?: string };
@@ -228,4 +229,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

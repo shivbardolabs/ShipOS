@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/billing/usage
@@ -8,17 +8,13 @@ import prisma from '@/lib/prisma';
  * Returns usage summary for the current period.
  * Query params: ?period=YYYY-MM&customerId=xxx
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const now = new Date();
     const period =
       searchParams.get('period') ||
@@ -80,7 +76,7 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/billing/usage]', err);
     return NextResponse.json({ error: 'Failed to fetch usage' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/billing/usage
@@ -88,17 +84,13 @@ export async function GET(req: NextRequest) {
  * Record a usage event.
  * Body: { meterSlug, quantity?, customerId?, metadata? }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { meterSlug, quantity = 1, customerId, metadata } = await req.json();
+    const { meterSlug, quantity = 1, customerId, metadata } = await request.json();
 
     if (!meterSlug) {
       return NextResponse.json({ error: 'meterSlug is required' }, { status: 400 });
@@ -177,7 +169,7 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/billing/usage]', err);
     return NextResponse.json({ error: 'Failed to record usage' }, { status: 500 });
   }
-}
+});
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 

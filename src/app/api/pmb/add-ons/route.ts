@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { DEFAULT_ADDONS } from '@/lib/pmb-billing/add-ons';
 import { calculateAddOnProration } from '@/lib/pmb-billing/add-ons';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/pmb/add-ons
  * List available add-ons and optionally customer's active add-ons.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const customerId = req.nextUrl.searchParams.get('customerId');
+    const customerId = request.nextUrl.searchParams.get('customerId');
 
     // Get available add-ons
     let addOns = await prisma.pmbAddOn.findMany({
@@ -58,19 +56,17 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/pmb/add-ons]', err);
     return NextResponse.json({ error: 'Failed to fetch add-ons' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/pmb/add-ons
  * Create/update an add-on definition, or activate an add-on for a customer.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const body = await req.json();
+    const body = await request.json();
 
     // If customerId is provided, this is an activation
     if (body.customerId && body.addOnId) {
@@ -136,4 +132,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/pmb/add-ons]', err);
     return NextResponse.json({ error: 'Failed to save add-on' }, { status: 500 });
   }
-}
+});

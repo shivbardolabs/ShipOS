@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 // ── Default template seeds ───────────────────────────────────────────────────
 
@@ -79,12 +79,8 @@ const DEFAULT_TEMPLATES = [
  *   - includeInactive: "true" to include soft-deleted templates
  *   - seed: "true" to seed default templates if none exist
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === 'true';
@@ -137,7 +133,7 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/notifications/templates]', err);
     return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
   }
-}
+});
 
 // ── POST — Create template ───────────────────────────────────────────────────
 
@@ -146,12 +142,8 @@ export async function GET(request: NextRequest) {
  *
  * Body: { type, name, subject, bodyHtml, bodySms, variables? }
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const body = await request.json();
 
@@ -211,7 +203,7 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/notifications/templates]', err);
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }
-}
+});
 
 // ── PATCH — Update template ──────────────────────────────────────────────────
 
@@ -220,12 +212,8 @@ export async function POST(request: NextRequest) {
  *
  * Body: { id, name?, subject?, bodyHtml?, bodySms?, variables? }
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const body = await request.json();
 
@@ -281,7 +269,7 @@ export async function PATCH(request: NextRequest) {
     console.error('[PATCH /api/notifications/templates]', err);
     return NextResponse.json({ error: 'Failed to update template' }, { status: 500 });
   }
-}
+});
 
 // ── DELETE — Soft-delete template ────────────────────────────────────────────
 
@@ -291,12 +279,8 @@ export async function PATCH(request: NextRequest) {
  * Body: { id }
  * Soft-deletes by setting isActive = false.
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const body = await request.json();
 
@@ -333,4 +317,4 @@ export async function DELETE(request: NextRequest) {
     console.error('[DELETE /api/notifications/templates]', err);
     return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 });
   }
-}
+});

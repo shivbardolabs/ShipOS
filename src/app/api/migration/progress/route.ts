@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMigrationProgress } from '@/lib/migration/engine';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/migration/progress?id=mig_xxx
  *
  * Returns the current progress of a running migration.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   const migrationId = request.nextUrl.searchParams.get('id');
 
   if (!migrationId) {
@@ -29,4 +30,4 @@ export async function GET(request: NextRequest) {
     success: true,
     progress,
   });
-}
+}, { public: true });

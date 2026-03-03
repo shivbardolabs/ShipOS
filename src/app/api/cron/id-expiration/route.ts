@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendNotification } from '@/lib/notifications';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/cron/id-expiration                                              */
@@ -25,7 +26,7 @@ interface ExpirationAlert {
   alreadyExpired: boolean;
 }
 
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     // Verify cron secret
     const authHeader = request.headers.get('authorization');
@@ -163,4 +164,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

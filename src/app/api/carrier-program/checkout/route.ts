@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/carrier-program/checkout                                        */
@@ -14,7 +15,7 @@ import prisma from '@/lib/prisma';
 /*    tenantId         — string?                                              */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const {
@@ -144,14 +145,14 @@ export async function POST(request: NextRequest) {
     console.error('[carrier-program/checkout] POST error:', error);
     return NextResponse.json({ error: 'Failed to checkout package' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/carrier-program/checkout?tenantId=...&status=...                 */
 /*  BAR-282: List carrier program checkouts                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const params = new URL(request.url).searchParams;
     const tenantId = params.get('tenantId');
@@ -205,4 +206,4 @@ export async function GET(request: NextRequest) {
     console.error('[carrier-program/checkout] GET error:', error);
     return NextResponse.json({ error: 'Failed to load checkouts' }, { status: 500 });
   }
-}
+}, { public: true });

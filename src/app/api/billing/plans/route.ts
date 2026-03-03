@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { PLAN_DEFINITIONS } from '@/lib/billing';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/billing/plans
  * Returns available billing plans (from DB if seeded, otherwise defaults).
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     // Try to get plans from DB first
     const dbPlans = await prisma.billingPlan.findMany({
@@ -42,4 +38,4 @@ export async function GET() {
     console.error('[GET /api/billing/plans]', err);
     return NextResponse.json({ error: 'Failed to fetch plans' }, { status: 500 });
   }
-}
+});

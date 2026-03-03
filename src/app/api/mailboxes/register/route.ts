@@ -4,17 +4,15 @@
  * forwarding, payment, CMRA signature, and recipients support.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/mailboxes/register
  * BAR-77: Get available PMB numbers and mailbox inventory.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     // Get all assigned PMB numbers
@@ -49,16 +47,14 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/mailboxes/register]', err);
     return NextResponse.json({ error: 'Failed to get mailbox inventory' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/mailboxes/register
  * BAR-77: Register a new mailbox account for a customer.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     const body = await request.json();
@@ -237,4 +233,4 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/mailboxes/register]', err);
     return NextResponse.json({ error: 'Failed to register mailbox' }, { status: 500 });
   }
-}
+});

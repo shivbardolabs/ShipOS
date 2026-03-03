@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/settings/agreement-template
  * Returns the default service agreement template.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const template = await prisma.mailboxAgreementTemplate.findFirst({
       where: { isDefault: true },
@@ -27,18 +23,14 @@ export async function GET() {
     console.error('[GET /api/settings/agreement-template]', err);
     return NextResponse.json({ error: 'Failed to fetch template' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/settings/agreement-template
  * Creates or updates the default service agreement template.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'manager') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -79,4 +71,4 @@ export async function POST(request: Request) {
     console.error('[POST /api/settings/agreement-template]', err);
     return NextResponse.json({ error: 'Failed to save template' }, { status: 500 });
   }
-}
+});
