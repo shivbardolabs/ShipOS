@@ -33,7 +33,7 @@ import {
   getRangeStats,
   formatPmbNumber,
 } from '@/lib/pmb-utils';
-import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, ALL_USPS_IDS, validateIdPair } from '@/lib/usps-ids';
+import { USPS_PRIMARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
 import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
 import {
@@ -241,7 +241,7 @@ export default function NewCustomerPage() {
   const fileInputRef1 = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   const fileInputRef3 = useRef<HTMLInputElement>(null);
-  const fileInputRefPoa = useRef<HTMLInputElement>(null);
+  // fileInputRefPoa removed — proof of address merged into secondary ID
 
   /* ── Step 0: Customer Info state ── */
   const [customerForm, setCustomerForm] = useState({
@@ -290,11 +290,7 @@ export default function NewCustomerPage() {
   const [nonCompliantWarning, setNonCompliantWarning] = useState<string | null>(null);
   const [expirationWarning, setExpirationWarning] = useState<string | null>(null);
 
-  /* ── Step 2 continued: Proof of Address ── */
-  const [proofOfAddressType, setProofOfAddressType] = useState('');
-  const [proofOfAddressDateOfIssue, setProofOfAddressDateOfIssue] = useState('');
-  const [proofOfAddressFile, setProofOfAddressFile] = useState<File | null>(null);
-  const [proofOfAddressPreview, setProofOfAddressPreview] = useState<string | null>(null);
+  /* ── Proof of Address state removed — merged into secondary ID ── */
 
   /* ── Step 3: PS1583 + Recipients + Forwarding ── */
   const [form1583, setForm1583] = useState<Partial<PS1583FormData>>({
@@ -1018,11 +1014,11 @@ export default function NewCustomerPage() {
 
               {/* Secondary ID */}
               <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Proof of Address)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select secondary ID..." options={ALL_USPS_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name }))} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
-                    <Input label="Expiration Date" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
+                    <Select label="Document Type *" placeholder="Select proof of address..." options={PROOF_OF_ADDRESS_TYPES} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
+                    <Input label="Date of Issue" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Date the document was issued" />
                     <div>
                       <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
                       <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
@@ -1071,33 +1067,7 @@ export default function NewCustomerPage() {
               </Card>
             )}
 
-            {/* Proof of Address */}
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Proof of Address</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Select label="Document Type" placeholder="Select proof of address document..." options={PROOF_OF_ADDRESS_TYPES} value={proofOfAddressType} onChange={(e) => setProofOfAddressType(e.target.value)} />
-                  {proofOfAddressType && (
-                    <Input label="Date of Issue *" type="date" value={proofOfAddressDateOfIssue} onChange={(e) => setProofOfAddressDateOfIssue(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the document was issued (required)" />
-                  )}
-                  <div>
-                    <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document Scan/Photo</label>
-                    <input ref={fileInputRefPoa} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setProofOfAddressPreview(ev.target?.result as string); setProofOfAddressFile(file); }; reader.readAsDataURL(file); } }} />
-                    {proofOfAddressPreview ? (
-                      <div className="relative rounded-lg border border-surface-700 overflow-hidden">
-                        <img src={proofOfAddressPreview} alt="Proof of Address" className="w-full h-40 object-cover" />
-                        <div className="absolute top-2 right-2"><button onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{proofOfAddressFile?.name}</p></div>
-                      </div>
-                    ) : (
-                      <div onClick={() => fileInputRefPoa.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
-                        <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Proof of Address section removed — secondary ID IS the proof of address */}
           </div>
         )}
 
@@ -1141,7 +1111,7 @@ export default function NewCustomerPage() {
                     <Input label="Primary ID Type (§10a)" value={USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || primaryIdType} readOnly />
                     <Input label="Primary ID # (§10d)" value={form1583.primaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdNumber: e.target.value }))} placeholder="ID number" />
                     <Input label="Primary ID Issuer (§10e)" value={form1583.primaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdIssuer: e.target.value }))} placeholder="Issuing authority" />
-                    <Input label="Secondary ID Type (§11a)" value={ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || secondaryIdType} readOnly />
+                    <Input label="Secondary ID Type (§11a)" value={PROOF_OF_ADDRESS_TYPES.find((t) => t.value === secondaryIdType)?.label || secondaryIdType} readOnly />
                     <Input label="Secondary ID # (§11d)" value={form1583.secondaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdNumber: e.target.value }))} />
                     <Input label="Secondary ID Issuer (§11e)" value={form1583.secondaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdIssuer: e.target.value }))} />
                   </div>
@@ -1419,10 +1389,9 @@ export default function NewCustomerPage() {
                   <div className="space-y-3">
                     {[
                       { label: 'Primary ID', value: USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || 'Not selected', ok: !!primaryIdFile && !!primaryIdType && !nonCompliantWarning, step: 2 },
-                      { label: 'Secondary ID', value: ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
+                      { label: 'Secondary ID (Proof of Address)', value: PROOF_OF_ADDRESS_TYPES.find((t) => t.value === secondaryIdType)?.label || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
                       ...(isBusinessPmb ? [{ label: 'Business Document', value: BUSINESS_DOC_TYPES.find((d) => d.value === businessDocType)?.label || 'Not selected', ok: !!businessDocFile && !!businessDocType, step: 2 }] : []),
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 3 },
-                      { label: 'Proof of Address', value: proofOfAddressType ? (PROOF_OF_ADDRESS_TYPES.find((t) => t.value === proofOfAddressType)?.label || proofOfAddressType) : 'Not selected', ok: !!proofOfAddressType && !!proofOfAddressDateOfIssue, warn: !!proofOfAddressType && !proofOfAddressDateOfIssue, step: 2 },
                       { label: 'USPS CRD Upload', value: form1583.crdUploaded ? 'Uploaded' : 'Pending', ok: form1583.crdUploaded, warn: !form1583.crdUploaded, step: 3 },
                       { label: 'Form 1583 Notarized', value: form1583.notarized ? 'Yes' : 'Pending', ok: form1583.notarized, warn: !form1583.notarized, step: 3 },
                       { label: 'Customer Signature', value: agreementSigned ? 'Signed' : 'Not signed', ok: agreementSigned, step: 5 },
