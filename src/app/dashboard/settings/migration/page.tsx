@@ -798,8 +798,6 @@ export default function MigrationPage() {
           </div>
         </div>
       )}
-    </div>
-  );
 
       </>}
     </div>
