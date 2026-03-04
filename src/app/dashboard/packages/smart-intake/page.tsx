@@ -141,6 +141,7 @@ export default function SmartIntakePage() {
   // Camera state
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraPermDenied, setCameraPermDenied] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -159,6 +160,7 @@ export default function SmartIntakePage() {
     try {
       setCameraError(null);
       setCameraReady(false);
+      setCameraPermDenied(false);
 
       // Use ideal (not exact) facingMode for broader device compatibility
       const constraints: MediaStreamConstraints = {
@@ -178,12 +180,13 @@ export default function SmartIntakePage() {
       setCameraActive(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      if (msg.includes('NotAllowed') || msg.includes('Permission')) {
-        setCameraError('Camera permission denied. Please allow camera access in your browser settings.');
+      if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
+        setCameraPermDenied(true);
+        setCameraError('Camera access was blocked. Tap "Upload Photo" below to continue, or enable camera in your browser settings and reload.');
       } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
-        setCameraError('No camera found on this device. Use photo upload instead.');
+        setCameraError('No camera found on this device.');
       } else {
-        setCameraError(`Camera not available: ${msg}. Use photo upload instead.`);
+        setCameraError(`Camera not available: ${msg}`);
       }
     }
   }, []);
@@ -407,6 +410,8 @@ export default function SmartIntakePage() {
     setCapturedImage(null);
     setMatchedPackages([]);
     setError(null);
+    setCameraError(null);
+    setCameraPermDenied(false);
     setPhase('capture');
     setSearchingForIdx(null);
     setSearchQuery('');
@@ -633,10 +638,23 @@ export default function SmartIntakePage() {
             )}
 
             {cameraError && (
-              <p className="text-amber-400 text-sm mt-3 flex items-center justify-center gap-1.5">
-                <AlertTriangle className="h-4 w-4" />
-                {cameraError}
-              </p>
+              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto">
+                <p className="text-amber-400 text-sm flex items-center gap-1.5 mb-2">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  {cameraError}
+                </p>
+                {cameraPermDenied && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-2 w-full border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+                    onClick={() => { setCameraError(null); setCameraPermDenied(false); fileInputRef.current?.click(); }}
+                  >
+                    <Upload className="h-4 w-4 mr-1.5" />
+                    Upload Photo Instead
+                  </Button>
+                )}
+              </div>
             )}
           </Card>
 

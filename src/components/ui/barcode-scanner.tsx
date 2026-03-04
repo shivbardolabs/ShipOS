@@ -97,7 +97,11 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
       animFrameRef.current = requestAnimationFrame(scan);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Camera access denied';
-      setError(`Camera error: ${msg}. Please allow camera access or enter the tracking number manually.`);
+      if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
+        setError('Camera access was blocked. Enable camera in your browser settings and reload, or enter the tracking number manually.');
+      } else {
+        setError(`Camera not available: ${msg}. Enter the tracking number manually.`);
+      }
       setScanning(false);
     }
   }, [onScan, handleClose]);
