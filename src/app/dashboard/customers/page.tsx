@@ -27,7 +27,7 @@ const platformBadge: Record<string, { label: string; classes: string }> = {
 
 const statusDot: Record<string, string> = { active: 'bg-emerald-400', suspended: 'bg-yellow-400', closed: 'bg-surface-500' };
 
-function formatClosedDate(dateStr?: string): string | null {
+function formatClosedDate(dateStr?: string | Date | null): string | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   const now = new Date();

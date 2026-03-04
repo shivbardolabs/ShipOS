@@ -42,7 +42,7 @@ interface AgeBracket {
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function daysHeld(checkedInAt: string): number {
+function daysHeld(checkedInAt: string | Date): number {
   const now = new Date();
   const checkedIn = new Date(checkedInAt);
   return Math.max(0, Math.floor((now.getTime() - checkedIn.getTime()) / 86400000));

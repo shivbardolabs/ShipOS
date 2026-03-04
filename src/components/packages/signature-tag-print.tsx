@@ -34,7 +34,7 @@ interface SignatureTagPrintProps {
 
 interface SignatureTag {
   packageId: string;
-  trackingNumber?: string;
+  trackingNumber?: string | null;
   recipientName: string;
   pmbNumber: string;
   date: string;

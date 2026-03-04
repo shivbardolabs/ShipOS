@@ -22,20 +22,7 @@ import {
 /*  tracking, carrier, days held, storage fee, and bulk selection.            */
 /* -------------------------------------------------------------------------- */
 
-interface InventoryPackage {
-  id: string;
-  trackingNumber?: string;
-  carrier: string;
-  senderName?: string;
-  packageType: string;
-  status: string;
-  notes?: string;
-  condition?: string;
-  storageFee: number;
-  storageLocation?: string;
-  checkedInAt: string;
-  customerId: string;
-}
+import type { InventoryPackage } from '@/lib/types';
 
 interface CheckoutInventoryTableProps {
   packages: InventoryPackage[];
@@ -61,7 +48,7 @@ const pkgTypeLabels: Record<string, string> = {
   envelope: 'Envelope', pak: 'Pak/Packet',
 };
 
-function getDaysHeld(checkedInAt: string): number {
+function getDaysHeld(checkedInAt: string | Date): number {
   const now = new Date();
   const checkedIn = new Date(checkedInAt);
   return Math.max(0, Math.floor((now.getTime() - checkedIn.getTime()) / 86400000));

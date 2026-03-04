@@ -269,7 +269,7 @@ export default function LoyaltySettingsPage() {
               <div className="mt-3">
                 <label className="block text-[10px] font-medium text-surface-500 uppercase mb-1">Benefits</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {tier.benefits.map((b: string, j: number) => (
+                  {(JSON.parse(tier.benefits ?? '[]') as string[]).map((b: string, j: number) => (
                     <span
                       key={j}
                       className="inline-flex items-center gap-1 rounded-full bg-surface-800 px-2.5 py-1 text-xs text-surface-300"

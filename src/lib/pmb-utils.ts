@@ -6,12 +6,12 @@
 import type { MailboxRange, MailboxSlot, MailboxPlatform, Customer } from './types';
 
 /** Default mailbox ranges — configurable per store in Settings */
-export const DEFAULT_MAILBOX_RANGES: MailboxRange[] = [
+export const DEFAULT_MAILBOX_RANGES = [
   { id: 'range_1', platform: 'physical', label: 'Store (Physical)', rangeStart: 1, rangeEnd: 550, isActive: true },
   { id: 'range_2', platform: 'anytime', label: 'Anytime Mailbox', rangeStart: 700, rangeEnd: 999, isActive: true },
   { id: 'range_3', platform: 'iPostal', label: 'iPostal1', rangeStart: 1000, rangeEnd: 1200, isActive: true },
   { id: 'range_4', platform: 'postscan', label: 'PostScan Mail', rangeStart: 2000, rangeEnd: 2999, isActive: true },
-];
+] as MailboxRange[];
 
 /** 90-day hold period for recently closed boxes (in ms) */
 const HOLD_PERIOD_MS = 90 * 24 * 60 * 60 * 1000;
@@ -23,7 +23,7 @@ const HOLD_PERIOD_MS = 90 * 24 * 60 * 60 * 1000;
 export function getAvailableBoxes(
   ranges: MailboxRange[],
   customers: Customer[],
-  platform?: MailboxPlatform
+  platform?: string
 ): MailboxSlot[] {
   const now = new Date();
   const activeRanges = platform
@@ -31,7 +31,7 @@ export function getAvailableBoxes(
     : ranges.filter((r) => r.isActive);
 
   // Build a map of rented/held boxes
-  const rentedMap = new Map<number, { customerId: string; customerName: string; status: 'rented' | 'held'; closedDate?: string }>();
+  const rentedMap = new Map<number, { customerId: string; customerName: string; status: 'rented' | 'held'; closedDate?: string | Date }>();
 
   for (const customer of customers) {
     const boxNum = parsePmbNumber(customer.pmbNumber);
@@ -51,7 +51,7 @@ export function getAvailableBoxes(
           customerId: customer.id,
           customerName: `${customer.firstName} ${customer.lastName}`,
           status: 'held',
-          closedDate: customer.dateClosed,
+          closedDate: customer.dateClosed ?? undefined,
         });
       }
     }
@@ -82,8 +82,8 @@ export function getAvailableBoxes(
 export function getAvailableBoxNumbers(
   ranges: MailboxRange[],
   customers: Customer[],
-  platform?: MailboxPlatform
-): { number: number; platform: MailboxPlatform; label: string }[] {
+  platform?: string
+): { number: number; platform: string; label: string }[] {
   const slots = getAvailableBoxes(ranges, customers, platform);
   return slots
     .filter((s) => s.status === 'available')
@@ -120,7 +120,7 @@ export function formatPmbNumber(num: number): string {
 }
 
 /** Find which platform a box number belongs to */
-export function getPlatformForBox(num: number, ranges: MailboxRange[]): MailboxPlatform | null {
+export function getPlatformForBox(num: number, ranges: MailboxRange[]): string | null {
   for (const range of ranges) {
     if (range.isActive && num >= range.rangeStart && num <= range.rangeEnd) {
       return range.platform;

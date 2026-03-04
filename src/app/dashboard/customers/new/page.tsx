@@ -92,7 +92,7 @@ const STORE_INFO = {
   zip: '90210',
 };
 
-const platformLabels: Record<MailboxPlatform, { label: string; color: string }> = {
+const platformLabels: Record<string, { label: string; color: string }> = {
   physical: { label: 'Store (Physical)', color: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   anytime: { label: 'Anytime Mailbox', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
   iPostal: { label: 'iPostal1', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
@@ -246,7 +246,7 @@ export default function NewCustomerPage() {
   /* ── Step 0: Customer Info state ── */
   const [customerForm, setCustomerForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    businessName: '', platform: '' as MailboxPlatform | '',
+    businessName: '', platform: '' as string,
     pmbNumber: '', billingTerms: 'Monthly',
     homeAddress: '', homeCity: '', homeState: '', homeZip: '',
     notifyEmail: true, notifySms: true, notes: '',
@@ -433,7 +433,7 @@ export default function NewCustomerPage() {
     });
   }, []);
 
-  const selectPmb = useCallback((num: number, platform: MailboxPlatform) => {
+  const selectPmb = useCallback((num: number, platform: string) => {
     setCustomerForm((prev) => ({ ...prev, pmbNumber: String(num), platform }));
     setPmbDropdownOpen(false); setPmbSearch('');
     setFormErrors((prev) => { const next = { ...prev }; delete next['pmbNumber']; return next; });

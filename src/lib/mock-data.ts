@@ -33,21 +33,27 @@ const hoursAgo = (n: number) =>
   new Date(today.getTime() - n * 3600000).toISOString();
 
 // ---------------------------------------------------------------------------
+// Mock data type helper — mock objects are intentionally partial because
+// they only include fields the UI needs for demos/development.
+// ---------------------------------------------------------------------------
+type MockOf<T> = Partial<T> & Record<string, unknown>;
+
+// ---------------------------------------------------------------------------
 // Current user
 // ---------------------------------------------------------------------------
-export const currentUser: User = {
+export const currentUser = {
   id: 'usr_001',
   name: 'Sarah Chen',
   email: 'sarah.chen@shipstation.com',
   role: 'admin',
   avatar: undefined,
-};
+} as unknown as User;
 
 // ---------------------------------------------------------------------------
 // Customers (30)
 // ---------------------------------------------------------------------------
 
-export const customers: Customer[] = [
+export const customers = [
   { id: 'cust_001', firstName: 'James', lastName: 'Morrison', email: 'james.morrison@email.com', phone: '(555) 234-5001', businessName: 'Morrison Consulting LLC', pmbNumber: 'PMB-0001', platform: 'physical', status: 'active', dateOpened: daysAgo(420), renewalDate: daysFromNow(45), billingTerms: 'Monthly', idType: 'both', idExpiration: daysFromNow(180), passportExpiration: daysFromNow(400), form1583Status: 'approved', form1583Date: daysAgo(380), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_001', packageCount: 12, mailCount: 34 },
   { id: 'cust_002', firstName: 'Linda', lastName: 'Nakamura', email: 'linda.nak@proton.me', phone: '(555) 234-5002', pmbNumber: 'PMB-0002', platform: 'iPostal', status: 'active', dateOpened: daysAgo(310), renewalDate: daysFromNow(55), billingTerms: 'Quarterly', idType: 'drivers_license', idExpiration: daysFromNow(12), form1583Status: 'approved', form1583Date: daysAgo(290), notifyEmail: true, notifySms: false, photoUrl: 'https://i.pravatar.cc/150?u=cust_002', packageCount: 5, mailCount: 18 },
   { id: 'cust_003', firstName: 'Robert', lastName: 'Singh', email: 'robert.s@gmail.com', phone: '(555) 234-5003', businessName: 'Singh Import/Export', pmbNumber: 'PMB-0003', platform: 'physical', status: 'active', dateOpened: daysAgo(550), renewalDate: daysFromNow(10), billingTerms: 'Annual', idType: 'passport', idExpiration: daysFromNow(90), form1583Status: 'approved', form1583Date: daysAgo(500), notifyEmail: true, notifySms: true, photoUrl: 'https://i.pravatar.cc/150?u=cust_003', packageCount: 28, mailCount: 67 },
@@ -78,7 +84,7 @@ export const customers: Customer[] = [
   { id: 'cust_028', firstName: 'Michelle', lastName: 'Hill', email: 'mhill@yahoo.com', phone: '(555) 234-5028', pmbNumber: 'PMB-0028', platform: 'anytime', status: 'active', dateOpened: daysAgo(80), renewalDate: daysFromNow(285), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(380), form1583Status: 'approved', form1583Date: daysAgo(75), notifyEmail: true, notifySms: true, packageCount: 3, mailCount: 7 },
   { id: 'cust_029', firstName: 'Kevin', lastName: 'Scott', email: 'kscott@fastmail.com', phone: '(555) 234-5029', businessName: 'Scott Digital Media', pmbNumber: 'PMB-0029', platform: 'physical', status: 'active', dateOpened: daysAgo(230), renewalDate: daysFromNow(135), billingTerms: 'Annual', idType: 'both', idExpiration: daysFromNow(170), passportExpiration: daysFromNow(500), form1583Status: 'approved', form1583Date: daysAgo(210), notifyEmail: true, notifySms: true, packageCount: 13, mailCount: 29 },
   { id: 'cust_030', firstName: 'Rachel', lastName: 'Green', email: 'rgreen@email.com', phone: '(555) 234-5030', pmbNumber: 'PMB-0030', platform: 'postscan', status: 'active', dateOpened: daysAgo(25), renewalDate: daysFromNow(340), billingTerms: 'Monthly', idType: 'drivers_license', idExpiration: daysFromNow(600), form1583Status: 'pending', form1583Date: daysAgo(20), notifyEmail: true, notifySms: true, packageCount: 1, mailCount: 2 },
-];
+] as unknown as Customer[];
 
 // ---------------------------------------------------------------------------
 // Packages (60)
@@ -100,7 +106,7 @@ function makeTrackingNumber(carrier: string, i: number): string {
   return map[carrier] || `TRK${pad}`;
 }
 
-export const packages: Package[] = Array.from({ length: 60 }, (_, i) => {
+export const packages = Array.from({ length: 60 }, (_, i) => {
   const idx = i;
   const status = packageStatuses[idx % packageStatuses.length];
   const carrier = carriers[idx % carriers.length];
@@ -131,7 +137,7 @@ export const packages: Package[] = Array.from({ length: 60 }, (_, i) => {
     checkedInBy: currentUser,
     checkedOutBy: status === 'released' ? currentUser : undefined,
   };
-});
+}) as Package[];
 
 // ---------------------------------------------------------------------------
 // Mail Pieces (25)
@@ -140,7 +146,7 @@ const mailTypes: MailPiece['type'][] = ['letter', 'letter', 'magazine', 'catalog
 const mailStatuses: MailPiece['status'][] = ['received', 'scanned', 'notified', 'held', 'forwarded', 'discarded'];
 const mailSenders = ['IRS', 'State of California', 'Chase Bank', 'Wells Fargo', 'GEICO Insurance', 'AT&T', 'Verizon', 'Comcast', 'Time Magazine', 'Wall Street Journal', 'County Tax Assessor', 'Social Security Admin', 'DMV', 'Blue Cross', 'Fidelity Investments'];
 
-export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
+export const mailPieces = Array.from({ length: 25 }, (_, i) => {
   const custIdx = i % 26;
   const status = mailStatuses[i % mailStatuses.length];
   return {
@@ -155,7 +161,7 @@ export const mailPieces: MailPiece[] = Array.from({ length: 25 }, (_, i) => {
     customer: customers[custIdx],
     receivedAt: hoursAgo((i % 7) * 24 + i * 2),
   };
-});
+}) as MailPiece[];
 
 // ---------------------------------------------------------------------------
 // Shipments (20)
@@ -166,7 +172,7 @@ const shipmentStatuses: Shipment['status'][] = ['pending', 'label_created', 'shi
 const paymentStatuses: Shipment['paymentStatus'][] = ['paid', 'paid', 'paid', 'invoiced', 'unpaid', 'paid'];
 const destinations = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ', 'San Diego, CA', 'Dallas, TX', 'Miami, FL', 'Denver, CO', 'Seattle, WA', 'Portland, OR', 'Atlanta, GA', 'Boston, MA', 'London, UK', 'Toronto, Canada', 'Austin, TX', 'Nashville, TN', 'San Francisco, CA', 'Minneapolis, MN', 'Detroit, MI'];
 
-export const shipments: Shipment[] = Array.from({ length: 20 }, (_, i) => {
+export const shipments = Array.from({ length: 20 }, (_, i) => {
   const carrier = shipmentCarriers[i % shipmentCarriers.length];
   const status = shipmentStatuses[i % shipmentStatuses.length];
   const wholesaleCost = parseFloat((8 + Math.random() * 45).toFixed(2));
@@ -193,7 +199,7 @@ export const shipments: Shipment[] = Array.from({ length: 20 }, (_, i) => {
     deliveredAt: status === 'delivered' ? daysAgo(i % 3) : undefined,
     createdAt: daysAgo(i % 8 + 1),
   };
-});
+}) as Shipment[];
 
 // ---------------------------------------------------------------------------
 // Notifications (40)
@@ -202,7 +208,7 @@ const notifTypes = ['package_arrival', 'package_arrival', 'package_reminder', 'm
 const notifChannels: Notification['channel'][] = ['email', 'sms', 'both', 'email', 'sms'];
 const notifStatuses: Notification['status'][] = ['sent', 'delivered', 'delivered', 'delivered', 'pending', 'failed', 'bounced'];
 
-export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) => {
+export const notifications = Array.from({ length: 40 }, (_, i) => {
   const type = notifTypes[i % notifTypes.length];
   const status = notifStatuses[i % notifStatuses.length];
   const custIdx = i % 28;
@@ -228,7 +234,7 @@ export const notifications: Notification[] = Array.from({ length: 40 }, (_, i) =
     sentAt: status !== 'pending' ? hoursAgo(i * 3 + 1) : undefined,
     createdAt: hoursAgo(i * 3),
   };
-});
+}) as Notification[];
 
 // ---------------------------------------------------------------------------
 // Audit Log (15)
@@ -251,7 +257,7 @@ const auditActions = [
   { action: 'mail.forward', entityType: 'mail', detail: 'Forwarded mail to customer address' },
 ];
 
-export const auditLog: AuditLogEntry[] = auditActions.map((a, i) => ({
+export const auditLog = auditActions.map((a, i) => ({
   id: `audit_${String(i + 1).padStart(3, '0')}`,
   action: a.action,
   entityType: a.entityType,
@@ -260,12 +266,12 @@ export const auditLog: AuditLogEntry[] = auditActions.map((a, i) => ({
   userId: currentUser.id,
   user: currentUser,
   createdAt: hoursAgo(i * 2 + 1),
-}));
+})) as AuditLogEntry[];
 
 // ---------------------------------------------------------------------------
 // Carrier Rates (10)
 // ---------------------------------------------------------------------------
-export const carrierRates: CarrierRate[] = [
+export const carrierRates = [
   { id: 'rate_001', carrier: 'ups', service: 'Ground', wholesaleRate: 8.50, retailRate: 12.99, marginType: 'markup', marginValue: 53, isActive: true, lastUpdated: daysAgo(5) },
   { id: 'rate_002', carrier: 'ups', service: '2-Day Air', wholesaleRate: 18.75, retailRate: 27.99, marginType: 'markup', marginValue: 49, isActive: true, lastUpdated: daysAgo(5) },
   { id: 'rate_003', carrier: 'ups', service: 'Next Day Air', wholesaleRate: 32.00, retailRate: 49.99, marginType: 'markup', marginValue: 56, isActive: true, lastUpdated: daysAgo(5) },
@@ -276,7 +282,7 @@ export const carrierRates: CarrierRate[] = [
   { id: 'rate_008', carrier: 'usps', service: 'Priority Mail', wholesaleRate: 9.00, retailRate: 13.99, marginType: 'markup', marginValue: 55, isActive: true, lastUpdated: daysAgo(7) },
   { id: 'rate_009', carrier: 'dhl', service: 'International Economy', wholesaleRate: 28.00, retailRate: 44.99, marginType: 'markup', marginValue: 61, isActive: true, lastUpdated: daysAgo(10) },
   { id: 'rate_010', carrier: 'dhl', service: 'International Express', wholesaleRate: 45.00, retailRate: 69.99, marginType: 'markup', marginValue: 56, isActive: false, lastUpdated: daysAgo(10) },
-];
+] as CarrierRate[];
 
 // ---------------------------------------------------------------------------
 // Dashboard stats
@@ -449,7 +455,7 @@ export const reconciliationStats: ReconciliationStats = {
 // Loyalty Program
 // ---------------------------------------------------------------------------
 
-export const loyaltyTiers: LoyaltyTier[] = [
+export const loyaltyTiers = [
   {
     id: 'tier_bronze',
     name: 'Bronze',
@@ -489,18 +495,18 @@ export const loyaltyTiers: LoyaltyTier[] = [
     icon: 'crown',
     sortOrder: 2,
   },
-];
+] as unknown as LoyaltyTier[];
 
-export const loyaltyRewards: LoyaltyReward[] = [
+export const loyaltyRewards = [
   { id: 'rwd_001', name: '$5 Service Credit', description: 'Apply $5 credit toward any ShipOS service', pointsCost: 100, rewardType: 'credit', value: 5, isActive: true, maxRedemptions: null },
   { id: 'rwd_002', name: '$10 Shipping Discount', description: 'Get $10 off your next shipment', pointsCost: 180, rewardType: 'discount', value: 10, isActive: true, maxRedemptions: null },
   { id: 'rwd_003', name: 'Free Package Hold (30 days)', description: 'Waive storage fees for 30 days on one package', pointsCost: 150, rewardType: 'free_service', value: 15, isActive: true, maxRedemptions: null },
   { id: 'rwd_004', name: 'Free Mail Scan (10 pieces)', description: 'Complimentary scanning of up to 10 mail pieces', pointsCost: 80, rewardType: 'free_service', value: 8, isActive: true, maxRedemptions: null },
   { id: 'rwd_005', name: '$25 Shipping Credit', description: 'Major discount on a large shipment', pointsCost: 400, rewardType: 'credit', value: 25, isActive: true, maxRedemptions: null },
   { id: 'rwd_006', name: 'Free Notary Service', description: 'One complimentary notary session', pointsCost: 120, rewardType: 'free_service', value: 12, isActive: true, maxRedemptions: null },
-];
+] as LoyaltyReward[];
 
-export const loyaltyProgram: LoyaltyProgram = {
+export const loyaltyProgram = {
   id: 'prog_001',
   name: 'ShipOS Rewards',
   isActive: true,
@@ -512,7 +518,7 @@ export const loyaltyProgram: LoyaltyProgram = {
   refereeBonusPoints: 100,
   tiers: loyaltyTiers,
   rewards: loyaltyRewards,
-};
+} as LoyaltyProgram;
 
 // Generate loyalty accounts for active customers
 const activeCustomers = customers.filter(c => c.status === 'active');
@@ -542,7 +548,7 @@ const txnDescs = [
   'Referral bonus — new customer',
 ];
 
-export const loyaltyAccounts: LoyaltyAccount[] = activeCustomers.map((cust, i) => {
+export const loyaltyAccounts = activeCustomers.map((cust, i) => {
   // Vary points across customers
   const basePoints = [1820, 980, 2450, 340, 1200, 560, 420, 1650, 750, 2100, 280, 1380, 190, 890, 1050, 470, 2300, 620, 1500, 830, 350, 1120, 710, 1900, 260, 1700][i % 26];
   const redeemed = Math.floor(basePoints * 0.2);
@@ -582,7 +588,7 @@ export const loyaltyAccounts: LoyaltyAccount[] = activeCustomers.map((cust, i) =
     transactions,
     createdAt: cust.dateOpened,
   };
-});
+}) as LoyaltyAccount[];
 
 export const loyaltyDashboardStats: LoyaltyDashboardStats = {
   totalMembers: loyaltyAccounts.length,

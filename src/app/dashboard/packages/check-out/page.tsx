@@ -42,7 +42,7 @@ import { PackageVerification } from '@/components/packages/package-verification'
 import { Modal } from '@/components/ui/modal';
 // customers and packages now fetched from API
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
-import type { Customer, Package as PackageType, VerificationStatus, PutBackReason } from '@/lib/types';
+import type { Customer, Package as PackageType, VerificationStatus, PutBackReason, InventoryPackage } from '@/lib/types';
 import { CheckoutInventoryTable } from '@/components/packages/checkout-inventory-table';
 
 /* -------------------------------------------------------------------------- */
@@ -90,7 +90,7 @@ const pkgTypeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Days held calculator                                                      */
 /* -------------------------------------------------------------------------- */
-function daysHeld(checkedInAt: string): number {
+function daysHeld(checkedInAt: string | Date): number {
   const now = new Date('2026-02-21T15:00:00');
   return Math.max(0, Math.floor((now.getTime() - new Date(checkedInAt).getTime()) / 86400000));
 }
@@ -997,7 +997,7 @@ export default function CheckOutPage() {
                       storageLocation: p.storageLocation,
                       checkedInAt: p.checkedInAt,
                       customerId: p.customerId,
-                    }))}
+                    })) as InventoryPackage[]}
                     selectedIds={selectedIds}
                     onToggleSelect={(id) => {
                       setSelectedIds((prev) => {

@@ -96,7 +96,7 @@ const packageTypeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Days held calculator                                                      */
 /* -------------------------------------------------------------------------- */
-function daysHeld(checkedInAt: string): number {
+function daysHeld(checkedInAt: string | Date): number {
   const now = new Date('2026-02-21T15:00:00');
   const checkedIn = new Date(checkedInAt);
   return Math.max(0, Math.floor((now.getTime() - checkedIn.getTime()) / 86400000));
@@ -153,7 +153,7 @@ function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
   }));
 
   // Add carrier program packages (BAR-266)
-  const carrierPackages: InventoryPackage[] = [
+  const carrierPackages = [
     {
       id: 'pkg_ap_1',
       trackingNumber: '1Z999AA100000001',
@@ -290,7 +290,7 @@ function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
     },
   ];
 
-  return [...extended, ...carrierPackages];
+  return [...extended, ...carrierPackages] as InventoryPackage[];
 }
 
 /* -------------------------------------------------------------------------- */
