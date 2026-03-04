@@ -21,6 +21,83 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.28.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.28.0',
+    date: '2026-03-03',
+    title: 'PMB Onboarding Gaps, Platform Console Subdomain, Codebase Hardening & API Tests',
+    summary:
+      'Closed all 8 PMB onboarding gaps (rate plans, payment processing, compliance, dual signatures). Split Platform Console onto its own subdomain with @bardolabs.ai access restriction. Major codebase hardening: enforced strict type-checking, centralized auth on all 131 API routes, unified types from Prisma, split monolith components, and added 49 handler-level API tests across 5 critical flows. Plus 10 bug fixes including multi-domain auth, CSV import, and notification wiring.',
+    highlights: ['PMB Onboarding', 'Platform Subdomain', 'Type Safety', 'API Tests', '131 Routes Hardened'],
+    changes: [
+      {
+        text: 'BAR-230 — Complete PMB onboarding: 7-step wizard with rate plan selection (monthly/annual), 5 payment methods (Manual Entry, Text2Pay, Tap to Glass, NFC, Cash), non-compliant ID detection, expanded PS Form 1583 (additional recipients, business entity, forwarding address, court-protected individual), dual signature capture, and existing-customer duplicate check',
+        type: 'feature',
+      },
+      {
+        text: 'Platform Console split to platform.shipospro.com — hostname-aware middleware restricts access to @bardolabs.ai emails only, auto-redirect, dedicated sidebar, unauthorized page',
+        type: 'feature',
+      },
+      {
+        text: '49 handler-level API tests across 5 critical flows: check-in (10), check-out (8), customers (12), billing (9), compliance (10) — all run in <600ms with zero DB dependency',
+        type: 'feature',
+      },
+      {
+        text: 'CSV bulk import now persists customers to database — new POST /api/customers/bulk endpoint with duplicate PMB detection, auto-numbering, and 500-row cap',
+        type: 'fix',
+      },
+      {
+        text: 'Wrap all 131 API routes with withApiHandler() — centralized auth + error handling, removed ~487 lines of boilerplate, consistent user/request naming',
+        type: 'improvement',
+      },
+      {
+        text: 'Enforce build-time type checking (ignoreBuildErrors: false) — resolved all 47 TypeScript errors + 3 ESLint errors across 15 files, every push now fails on type errors',
+        type: 'improvement',
+      },
+      {
+        text: 'Unify types from Prisma schema — replaced 17 hand-maintained interfaces with Prisma-generated types + Serializable<T> utility, eliminating schema drift',
+        type: 'improvement',
+      },
+      {
+        text: 'Split monolith components — Settings _client.tsx from 3,551→1,012 lines (12 tab components extracted), Check-in _client.tsx from 2,909→1,398 lines (4 wizard steps extracted)',
+        type: 'improvement',
+      },
+      {
+        text: 'Staging environment merged — ESLint pinned to ^9.39.3, Next.js bumped to 15.5.12 (fixes 5 high-severity CVEs), staging banner component',
+        type: 'security',
+      },
+      {
+        text: 'Multi-domain Auth0 fix — forward ctx to handleLogin/handleCallback so redirect_uri overrides actually apply; use named exports with dynamic redirect_uri for platform + app subdomains',
+        type: 'fix',
+      },
+      {
+        text: 'Wire notification panel to real API — header bell dropdown now fetches live data with 60s auto-refresh instead of static mock array',
+        type: 'fix',
+      },
+      {
+        text: 'Wire Edit + Send Notification buttons on customer detail page — new SendNotificationModal with 8 notification types, channel override, and customer preference display',
+        type: 'fix',
+      },
+      {
+        text: 'Fix camera spinner regression (BAR-227) — attach stream after <video> mounts via useEffect, applied to both Smart Intake and Camera Measure',
+        type: 'fix',
+      },
+      {
+        text: 'Fix CMRA Compliance crash — Select component switched from JSX children to options prop, Badge variant corrected from destructive to danger',
+        type: 'fix',
+      },
+      {
+        text: 'Fix conditionTags/customerNote/internalNote/conditionPhotos not defined error on Package Check-In — added missing useState declarations',
+        type: 'fix',
+      },
+      {
+        text: 'Homepage nav now responsive — login/signup buttons accessible on mobile, hero text scales for small screens',
+        type: 'fix',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.27.0                                                           */
   /* ------------------------------------------------------------------ */
   {
