@@ -128,6 +128,10 @@ enum API {
         static func send(body: NotificationSendRequest) -> Endpoint {
             Endpoint(path: "/api/notifications/send", method: .post, body: body)
         }
+
+        static func batchNotify() -> Endpoint {
+            Endpoint(path: "/api/notifications/batch", method: .post)
+        }
     }
 
     // MARK: - Mail

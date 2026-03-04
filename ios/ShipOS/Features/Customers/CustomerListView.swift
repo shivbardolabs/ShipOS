@@ -1,18 +1,52 @@
 import SwiftUI
 
-/// Customer list with search, filter, and infinite scroll.
+/// BAR-357: Full customer list — search, filter, infinite scroll, add customer.
 struct CustomerListView: View {
     @StateObject private var viewModel = CustomerListViewModel()
-    @State private var searchText = ""
     @State private var showingAddCustomer = false
 
     var body: some View {
         VStack(spacing: 0) {
-            SOSearchBar(text: $searchText, placeholder: "Search name, PMB, email...") {
-                Task { await viewModel.search(query: searchText) }
+            SOSearchBar(text: $viewModel.searchText, placeholder: "Name, PMB, email, phone...") {
+                Task { await viewModel.search() }
             }
             .padding(.horizontal)
             .padding(.vertical, ShipOSTheme.Spacing.sm)
+
+            // Filter chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    FilterChip(label: "All", isSelected: viewModel.statusFilter == nil) {
+                        viewModel.statusFilter = nil
+                        Task { await viewModel.refresh() }
+                    }
+                    FilterChip(label: "Active", isSelected: viewModel.statusFilter == "active", color: ShipOSTheme.Colors.success) {
+                        viewModel.statusFilter = "active"
+                        Task { await viewModel.refresh() }
+                    }
+                    FilterChip(label: "Inactive", isSelected: viewModel.statusFilter == "inactive", color: ShipOSTheme.Colors.textTertiary) {
+                        viewModel.statusFilter = "inactive"
+                        Task { await viewModel.refresh() }
+                    }
+                    FilterChip(label: "Suspended", isSelected: viewModel.statusFilter == "suspended", color: ShipOSTheme.Colors.error) {
+                        viewModel.statusFilter = "suspended"
+                        Task { await viewModel.refresh() }
+                    }
+                }
+                .padding(.horizontal)
+            }
+
+            // Count
+            if !viewModel.customers.isEmpty {
+                HStack {
+                    Text("\(viewModel.totalCount) customer\(viewModel.totalCount == 1 ? "" : "s")")
+                        .font(ShipOSTheme.Typography.caption)
+                        .foregroundStyle(ShipOSTheme.Colors.textTertiary)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.top, ShipOSTheme.Spacing.xs)
+            }
 
             if viewModel.customers.isEmpty && !viewModel.isLoading {
                 SOEmptyState(
@@ -27,7 +61,7 @@ struct CustomerListView: View {
                 List {
                     ForEach(viewModel.customers, id: \.id) { customer in
                         NavigationLink {
-                            CustomerDetailView(customerId: customer.id)
+                            CustomerDetailView(customer: customer)
                         } label: {
                             SOCustomerRow(customer: customer)
                         }
@@ -46,8 +80,8 @@ struct CustomerListView: View {
             }
         }
         .task { await viewModel.load() }
-        .onChange(of: searchText) { _, newValue in
-            Task { await viewModel.search(query: newValue) }
+        .onChange(of: viewModel.searchText) { _, _ in
+            Task { await viewModel.search() }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -59,8 +93,11 @@ struct CustomerListView: View {
             }
         }
         .sheet(isPresented: $showingAddCustomer) {
-            AddCustomerView()
+            AddCustomerView(onSaved: {
+                Task { await viewModel.refresh() }
+            })
         }
+        .toast($viewModel.toast)
     }
 }
 
@@ -69,12 +106,16 @@ struct CustomerListView: View {
 @MainActor
 final class CustomerListViewModel: ObservableObject {
     @Published var customers: [Customer] = []
+    @Published var searchText = ""
+    @Published var statusFilter: String?
     @Published var isLoading = false
     @Published var hasMore = true
+    @Published var totalCount = 0
+    @Published var toast: ToastMessage?
 
     private var currentPage = 1
-    private var currentSearch: String?
     private let pageSize = 50
+    private var searchTask: Task<Void, Never>?
 
     func load() async {
         guard !isLoading else { return }
@@ -83,13 +124,14 @@ final class CustomerListViewModel: ObservableObject {
 
         do {
             let response: CustomerListResponse = try await APIClient.shared.request(
-                API.Customers.list(search: currentSearch, page: 1, limit: pageSize)
+                API.Customers.list(search: searchText.isEmpty ? nil : searchText, page: 1, limit: pageSize)
             )
             customers = response.customers.map { $0.toModel() }
+            totalCount = response.total ?? customers.count
             currentPage = 1
             hasMore = response.customers.count >= pageSize
         } catch {
-            print("[CustomerList] Error: \(error)")
+            toast = ToastMessage(message: "Failed to load customers", type: .error)
         }
     }
 
@@ -101,7 +143,7 @@ final class CustomerListViewModel: ObservableObject {
         let nextPage = currentPage + 1
         do {
             let response: CustomerListResponse = try await APIClient.shared.request(
-                API.Customers.list(search: currentSearch, page: nextPage, limit: pageSize)
+                API.Customers.list(search: searchText.isEmpty ? nil : searchText, page: nextPage, limit: pageSize)
             )
             customers.append(contentsOf: response.customers.map { $0.toModel() })
             currentPage = nextPage
@@ -116,36 +158,12 @@ final class CustomerListViewModel: ObservableObject {
         await load()
     }
 
-    func search(query: String) async {
-        currentSearch = query.isEmpty ? nil : query
-        currentPage = 1
-        await load()
-    }
-}
-
-// MARK: - Placeholder Views
-
-struct CustomerDetailView: View {
-    let customerId: String
-
-    var body: some View {
-        Text("Customer Detail: \(customerId)")
-            .navigationTitle("Customer")
-    }
-}
-
-struct AddCustomerView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Text("Add Customer Form")
-                .navigationTitle("New Customer")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                }
+    func search() async {
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await refresh()
         }
     }
 }

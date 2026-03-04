@@ -26,6 +26,8 @@ struct ShipOSApp: App {
 final class AppState: ObservableObject {
     @Published var selectedTab: AppTab = .dashboard
     @Published var isShowingScanner = false
+    @Published var isShowingCheckIn = false
+    @Published var isShowingCheckOut = false
     @Published var toastMessage: ToastMessage?
 
     func showToast(_ message: String, type: ToastType = .info) {

@@ -1,64 +1,101 @@
 import SwiftUI
-import SwiftData
 
-/// Package list with search, filter, and infinite scroll.
+/// BAR-354 (partial): Full package list — search, status filter chips, infinite scroll, detail navigation.
 struct PackageListView: View {
     @StateObject private var viewModel = PackageListViewModel()
-    @State private var selectedStatus: PackageStatus?
-    @State private var searchText = ""
-    @State private var showingCheckIn = false
+    @EnvironmentObject private var appState: AppState
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search + Filter
-            VStack(spacing: ShipOSTheme.Spacing.sm) {
-                SOSearchBar(text: $searchText, placeholder: "Search tracking #, sender...") {
-                    Task { await viewModel.search(query: searchText) }
-                }
+            // Search
+            SOSearchBar(text: $viewModel.searchText, placeholder: "Tracking #, customer, PMB...") {
+                Task { await viewModel.search() }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, ShipOSTheme.Spacing.sm)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: ShipOSTheme.Spacing.sm) {
-                        FilterChip(title: "All", isSelected: selectedStatus == nil) {
-                            selectedStatus = nil
-                            Task { await viewModel.filter(status: nil) }
-                        }
-
-                        ForEach(PackageStatus.allCases) { status in
-                            FilterChip(
-                                title: status.displayName,
-                                isSelected: selectedStatus == status,
-                                color: ShipOSTheme.Colors.packageStatus(status)
-                            ) {
-                                selectedStatus = status
-                                Task { await viewModel.filter(status: status) }
-                            }
+            // Status filter chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    FilterChip(label: "All", isSelected: viewModel.selectedStatus == nil) {
+                        viewModel.selectedStatus = nil
+                        Task { await viewModel.refresh() }
+                    }
+                    ForEach(PackageStatus.allCases, id: \.self) { status in
+                        FilterChip(
+                            label: status.displayName,
+                            isSelected: viewModel.selectedStatus == status,
+                            color: status.color
+                        ) {
+                            viewModel.selectedStatus = status
+                            Task { await viewModel.refresh() }
                         }
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.horizontal)
             }
-            .padding(.vertical, ShipOSTheme.Spacing.sm)
-            .background(ShipOSTheme.Colors.background)
+            .padding(.bottom, ShipOSTheme.Spacing.sm)
 
-            // Package List
+            // Results count
+            if !viewModel.packages.isEmpty {
+                HStack {
+                    Text("\(viewModel.totalCount) package\(viewModel.totalCount == 1 ? "" : "s")")
+                        .font(ShipOSTheme.Typography.caption)
+                        .foregroundStyle(ShipOSTheme.Colors.textTertiary)
+                    Spacer()
+
+                    Menu {
+                        Button("Newest First") { viewModel.sortBy = .newest }
+                        Button("Oldest First") { viewModel.sortBy = .oldest }
+                        Button("Carrier") { viewModel.sortBy = .carrier }
+                    } label: {
+                        Label(viewModel.sortBy.label, systemImage: "arrow.up.arrow.down")
+                            .font(ShipOSTheme.Typography.caption)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 4)
+            }
+
+            // Package list
             if viewModel.packages.isEmpty && !viewModel.isLoading {
                 SOEmptyState(
                     icon: "shippingbox",
                     title: "No Packages",
-                    message: selectedStatus != nil
-                        ? "No packages with status \"\(selectedStatus!.displayName)\""
+                    message: viewModel.selectedStatus != nil
+                        ? "No \(viewModel.selectedStatus!.displayName.lowercased()) packages found."
                         : "Check in your first package to get started.",
                     actionTitle: "Check In Package"
                 ) {
-                    showingCheckIn = true
+                    appState.isShowingCheckIn = true
                 }
             } else {
                 List {
                     ForEach(viewModel.packages, id: \.id) { pkg in
                         NavigationLink {
-                            PackageDetailView(packageId: pkg.id)
+                            PackageDetailView(package: pkg)
                         } label: {
                             SOPackageRow(package: pkg)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            if pkg.status == .checkedIn || pkg.status == .notified {
+                                Button {
+                                    viewModel.packageToCheckOut = pkg
+                                } label: {
+                                    Label("Check Out", systemImage: "checkmark.circle")
+                                }
+                                .tint(ShipOSTheme.Colors.success)
+                            }
+                        }
+                        .swipeActions(edge: .leading) {
+                            if pkg.status == .checkedIn {
+                                Button {
+                                    Task { await viewModel.notifyCustomer(pkg) }
+                                } label: {
+                                    Label("Notify", systemImage: "bell")
+                                }
+                                .tint(ShipOSTheme.Colors.warning)
+                            }
                         }
                     }
 
@@ -75,47 +112,48 @@ struct PackageListView: View {
             }
         }
         .task { await viewModel.load() }
-        .onChange(of: searchText) { _, newValue in
-            Task { await viewModel.search(query: newValue) }
+        .onChange(of: viewModel.searchText) { _, _ in
+            Task { await viewModel.search() }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showingCheckIn = true
+                    appState.isShowingCheckIn = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
                 }
             }
         }
-        .sheet(isPresented: $showingCheckIn) {
+        .sheet(isPresented: $appState.isShowingCheckIn) {
             PackageCheckInView()
         }
+        .sheet(item: $viewModel.packageToCheckOut) { _ in
+            PackageCheckOutView()
+        }
+        .toast($viewModel.toast)
     }
 }
 
 // MARK: - Filter Chip
 
 struct FilterChip: View {
-    let title: String
+    let label: String
     let isSelected: Bool
     var color: Color = ShipOSTheme.Colors.primary
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(label)
                 .font(ShipOSTheme.Typography.caption)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, ShipOSTheme.Spacing.md)
-                .padding(.vertical, ShipOSTheme.Spacing.xs + 2)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
                 .background(isSelected ? color.opacity(0.15) : ShipOSTheme.Colors.surfaceSecondary)
                 .foregroundStyle(isSelected ? color : ShipOSTheme.Colors.textSecondary)
                 .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(isSelected ? color.opacity(0.3) : .clear, lineWidth: 1)
-                )
+                .overlay(Capsule().stroke(isSelected ? color.opacity(0.4) : .clear, lineWidth: 1))
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -123,14 +161,29 @@ struct FilterChip: View {
 
 @MainActor
 final class PackageListViewModel: ObservableObject {
+    enum SortOrder { case newest, oldest, carrier
+        var label: String {
+            switch self {
+            case .newest: "Newest"
+            case .oldest: "Oldest"
+            case .carrier: "Carrier"
+            }
+        }
+    }
+
     @Published var packages: [Package] = []
+    @Published var searchText = ""
+    @Published var selectedStatus: PackageStatus?
+    @Published var sortBy: SortOrder = .newest { didSet { Task { await refresh() } } }
     @Published var isLoading = false
     @Published var hasMore = true
+    @Published var totalCount = 0
+    @Published var toast: ToastMessage?
+    @Published var packageToCheckOut: Package?
 
     private var currentPage = 1
-    private var currentSearch: String?
-    private var currentStatus: PackageStatus?
-    private let pageSize = 50
+    private let pageSize = 30
+    private var searchTask: Task<Void, Never>?
 
     func load() async {
         guard !isLoading else { return }
@@ -140,17 +193,18 @@ final class PackageListViewModel: ObservableObject {
         do {
             let response: PackageListResponse = try await APIClient.shared.request(
                 API.Packages.list(
-                    search: currentSearch,
-                    status: currentStatus,
+                    search: searchText.isEmpty ? nil : searchText,
+                    status: selectedStatus,
                     page: 1,
                     limit: pageSize
                 )
             )
             packages = response.packages.map { $0.toModel() }
+            totalCount = response.total ?? packages.count
             currentPage = 1
             hasMore = response.packages.count >= pageSize
         } catch {
-            print("[PackageList] Error: \(error)")
+            toast = ToastMessage(message: "Failed to load packages", type: .error)
         }
     }
 
@@ -163,8 +217,8 @@ final class PackageListViewModel: ObservableObject {
         do {
             let response: PackageListResponse = try await APIClient.shared.request(
                 API.Packages.list(
-                    search: currentSearch,
-                    status: currentStatus,
+                    search: searchText.isEmpty ? nil : searchText,
+                    status: selectedStatus,
                     page: nextPage,
                     limit: pageSize
                 )
@@ -182,44 +236,184 @@ final class PackageListViewModel: ObservableObject {
         await load()
     }
 
-    func search(query: String) async {
-        currentSearch = query.isEmpty ? nil : query
-        currentPage = 1
-        await load()
+    func search() async {
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await refresh()
+        }
     }
 
-    func filter(status: PackageStatus?) async {
-        currentStatus = status
-        currentPage = 1
-        await load()
+    func notifyCustomer(_ pkg: Package) async {
+        guard let customerId = pkg.customerId else {
+            toast = ToastMessage(message: "No customer assigned", type: .error)
+            return
+        }
+        do {
+            let body = NotificationSendRequest(
+                customerId: customerId,
+                packageId: pkg.id,
+                channel: "sms",
+                message: nil
+            )
+            let _: NotificationDTO = try await APIClient.shared.request(
+                API.Notifications.send(body: body)
+            )
+            toast = ToastMessage(message: "Customer notified ✓", type: .success)
+        } catch {
+            toast = ToastMessage(message: "Notification failed", type: .error)
+        }
     }
 }
 
-// MARK: - Placeholder Detail Views
+// MARK: - Package Detail
 
-/// Package detail view (Phase 2 — skeleton for now).
 struct PackageDetailView: View {
-    let packageId: String
+    let package: Package
+    @State private var showingCheckOut = false
 
     var body: some View {
-        Text("Package Detail: \(packageId)")
-            .navigationTitle("Package")
-    }
-}
-
-/// Package check-in view (Phase 2 — skeleton for now).
-struct PackageCheckInView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Text("Package Check-In Flow")
-                .navigationTitle("Check In")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
+        ScrollView {
+            VStack(spacing: ShipOSTheme.Spacing.lg) {
+                // Status banner
+                HStack {
+                    SOStatusBadge(package.status.displayName, color: package.status.color)
+                    Spacer()
+                    if let carrier = package.carrier {
+                        Text(carrier)
+                            .font(ShipOSTheme.Typography.caption)
+                            .foregroundStyle(ShipOSTheme.Colors.textSecondary)
                     }
                 }
+
+                // Tracking
+                SOCard {
+                    VStack(alignment: .leading, spacing: ShipOSTheme.Spacing.md) {
+                        SOSectionHeader(title: "Tracking")
+                        DetailRow(label: "Number", value: package.trackingNumber)
+                        DetailRow(label: "Carrier", value: package.carrier ?? "Unknown")
+                        if let type = package.packageType {
+                            DetailRow(label: "Type", value: type.capitalized)
+                        }
+                        if let weight = package.weight {
+                            DetailRow(label: "Weight", value: String(format: "%.1f lbs", weight))
+                        }
+                        if let loc = package.storageLocation {
+                            DetailRow(label: "Storage", value: loc)
+                        }
+                    }
+                }
+
+                // Timeline
+                SOCard {
+                    VStack(alignment: .leading, spacing: ShipOSTheme.Spacing.md) {
+                        SOSectionHeader(title: "Timeline")
+                        TimelineRow(event: "Checked In", date: package.checkedInAt, icon: "arrow.down.circle.fill", color: ShipOSTheme.Colors.success)
+                        TimelineRow(event: "Notified", date: package.notifiedAt, icon: "bell.fill", color: ShipOSTheme.Colors.warning)
+                        TimelineRow(event: "Released", date: package.releasedAt, icon: "checkmark.circle.fill", color: ShipOSTheme.Colors.primary)
+                    }
+                }
+
+                // Customer
+                if let customer = package.customer {
+                    SOCard {
+                        VStack(alignment: .leading, spacing: ShipOSTheme.Spacing.md) {
+                            SOSectionHeader(title: "Customer")
+                            DetailRow(label: "Name", value: customer.fullName)
+                            DetailRow(label: "PMB", value: customer.pmbNumber ?? "-")
+                        }
+                    }
+                }
+
+                // Notes
+                if let notes = package.notes, !notes.isEmpty {
+                    SOCard {
+                        VStack(alignment: .leading, spacing: ShipOSTheme.Spacing.sm) {
+                            SOSectionHeader(title: "Notes")
+                            Text(notes)
+                                .font(ShipOSTheme.Typography.body)
+                                .foregroundStyle(ShipOSTheme.Colors.textSecondary)
+                        }
+                    }
+                }
+
+                // Actions
+                if package.status == .checkedIn || package.status == .notified {
+                    Button {
+                        showingCheckOut = true
+                    } label: {
+                        Label("Check Out Package", systemImage: "checkmark.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SOPrimaryButtonStyle())
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("Package")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingCheckOut) {
+            PackageCheckOutView()
+        }
+    }
+}
+
+// MARK: - Timeline Row
+
+struct TimelineRow: View {
+    let event: String
+    let date: Date?
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: ShipOSTheme.Spacing.md) {
+            Image(systemName: date != nil ? icon : "circle")
+                .font(.body)
+                .foregroundStyle(date != nil ? color : ShipOSTheme.Colors.textTertiary)
+                .frame(width: 28, height: 28)
+
+            Text(event)
+                .font(ShipOSTheme.Typography.body)
+                .foregroundStyle(date != nil ? ShipOSTheme.Colors.textPrimary : ShipOSTheme.Colors.textTertiary)
+
+            Spacer()
+
+            if let date {
+                Text(date.shortFormatted)
+                    .font(ShipOSTheme.Typography.caption)
+                    .foregroundStyle(ShipOSTheme.Colors.textSecondary)
+            } else {
+                Text("—")
+                    .foregroundStyle(ShipOSTheme.Colors.textTertiary)
+            }
+        }
+    }
+}
+
+// MARK: - Package Status Extensions
+
+extension PackageStatus {
+    var displayName: String {
+        switch self {
+        case .checkedIn: "Checked In"
+        case .notified: "Notified"
+        case .held: "Held"
+        case .released: "Released"
+        case .returned: "Returned"
+        case .forwarded: "Forwarded"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .checkedIn: ShipOSTheme.Colors.info
+        case .notified: ShipOSTheme.Colors.warning
+        case .held: Color(hex: "#a855f7")
+        case .released: ShipOSTheme.Colors.success
+        case .returned: Color(hex: "#f97316")
+        case .forwarded: Color(hex: "#06b6d4")
         }
     }
 }
@@ -229,4 +423,5 @@ struct PackageCheckInView: View {
         PackageListView()
             .navigationTitle("Packages")
     }
+    .environmentObject(AppState())
 }
