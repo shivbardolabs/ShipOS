@@ -1,11 +1,22 @@
 'use client';
 import { ToggleSwitch } from './toggle-switch';
+import { useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { PrinterEntry } from './types';
-import { Plus, Printer, Save, TestTube, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { Loader2, Plus, Printer, RefreshCw, Save, Search, TestTube, Trash2, Wifi, WifiOff } from 'lucide-react';
+
+/* ── Types ───────────────────────────────────────────────────────────────── */
+
+interface DetectedPrinter {
+  name: string;
+  driver: string;
+  uri: string;
+  isDefault: boolean;
+  status: 'idle' | 'busy' | 'unknown';
+}
 
 export interface PrintersTabProps {
   printers: PrinterEntry[];
@@ -14,16 +25,156 @@ export interface PrintersTabProps {
   setAddingPrinter: (v: boolean) => void;
   printerTestResult: string | null;
   setPrinterTestResult: (v: string | null) => void;
+  printersLoading?: boolean;
+  onRefresh?: () => Promise<void>;
 }
 
-export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPrinter, printerTestResult, setPrinterTestResult }: PrintersTabProps) {
+/* ── Component ──────────────────────────────────────────────────────────── */
+
+export function PrintersTab({
+  printers,
+  setPrinters,
+  addingPrinter,
+  setAddingPrinter,
+  printerTestResult,
+  setPrinterTestResult,
+  printersLoading,
+  onRefresh,
+}: PrintersTabProps) {
+  // BAR-385: Detected system printers state
+  const [detectedPrinters, setDetectedPrinters] = useState<DetectedPrinter[]>([]);
+  const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const [hasDetected, setHasDetected] = useState(false);
+  const [savingPrinter, setSavingPrinter] = useState(false);
+
+  // BAR-385: Detect printers from host machine
+  const handleDetectPrinters = async () => {
+    setDetecting(true);
+    setDetectError(null);
+    setDetectedPrinters([]);
+    try {
+      const res = await fetch('/api/settings/printer/detect');
+      if (!res.ok) throw new Error('Detection failed');
+      const data = await res.json();
+      const detected: DetectedPrinter[] = data.printers || [];
+      // Filter out printers already added (by name match)
+      const existingNames = new Set(printers.map(p => p.name.toLowerCase()));
+      const newPrinters = detected.filter(d => !existingNames.has(d.name.toLowerCase()));
+      setDetectedPrinters(newPrinters);
+      setHasDetected(true);
+      if (newPrinters.length === 0 && detected.length > 0) {
+        setDetectError('All detected printers are already added.');
+      } else if (detected.length === 0) {
+        setDetectError('No printers found on this machine. You can add one manually below.');
+      }
+    } catch {
+      setDetectError('Could not detect printers. You can add one manually below.');
+    } finally {
+      setDetecting(false);
+    }
+  };
+
+  // BAR-385: Add a detected printer to the saved list via API
+  const handleAddDetected = async (detected: DetectedPrinter) => {
+    setSavingPrinter(true);
+    try {
+      const printerType = detected.driver !== 'unknown' ? detected.driver : 'zpl';
+      // Parse IP from URI if possible (e.g. socket://192.168.1.50:9100)
+      let ipAddress: string | null = null;
+      let port = 9100;
+      const ipMatch = detected.uri.match(/(?:socket|ipp|http|https):\/\/([^:/]+)(?::(\d+))?/);
+      if (ipMatch) {
+        ipAddress = ipMatch[1];
+        if (ipMatch[2]) port = parseInt(ipMatch[2], 10);
+      }
+
+      const res = await fetch('/api/settings/printer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: detected.name,
+          type: printerType,
+          ipAddress,
+          port,
+          isDefault: detected.isDefault || printers.length === 0,
+        }),
+      });
+
+      if (res.ok) {
+        // Remove from detected list
+        setDetectedPrinters(prev => prev.filter(p => p.name !== detected.name));
+        // Refresh the full printer list from API
+        if (onRefresh) await onRefresh();
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setSavingPrinter(false);
+    }
+  };
+
+  // BAR-385: Save a manually configured printer via API
+  const handleSaveManualPrinter = async () => {
+    setSavingPrinter(true);
+    try {
+      const nameEl = document.getElementById('new-printer-name') as HTMLInputElement;
+      const modelEl = document.getElementById('new-printer-model') as HTMLInputElement;
+      const ipEl = document.getElementById('new-printer-ip') as HTMLInputElement;
+      const portEl = document.getElementById('new-printer-port') as HTMLInputElement;
+      const typeEl = document.getElementById('new-printer-type') as HTMLSelectElement;
+
+      const res = await fetch('/api/settings/printer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameEl?.value || 'New Printer',
+          type: typeEl?.value || 'zpl',
+          ipAddress: ipEl?.value || null,
+          port: parseInt(portEl?.value || '9100', 10),
+          isDefault: printers.length === 0,
+        }),
+      });
+
+      if (res.ok) {
+        setAddingPrinter(false);
+        // Refresh from API to get the real saved data
+        if (onRefresh) await onRefresh();
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setSavingPrinter(false);
+    }
+  };
+
+  // BAR-385: Delete a printer via API
+  const handleDeletePrinter = async (printer: PrinterEntry) => {
+    if (!confirm(`Delete printer "${printer.name}"?`)) return;
+    try {
+      const res = await fetch(`/api/settings/printer?id=${printer.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setPrinters(prev => prev.filter(p => p.id !== printer.id));
+      }
+    } catch {
+      // Silently fail
+    }
+  };
+
   return (
     <>
   <div className="flex items-center justify-between mb-4">
     <h2 className="text-sm font-semibold text-surface-200">Connected Printers</h2>
-    <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setAddingPrinter(true)}>
-      Add Printer
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button size="sm" variant="secondary" leftIcon={<Search className="h-3.5 w-3.5" />} onClick={handleDetectPrinters} loading={detecting}>
+        Detect Printers
+      </Button>
+      <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setAddingPrinter(true)}>
+        Add Printer
+      </Button>
+    </div>
   </div>
 
   {/* Test Result Banner */}
@@ -37,7 +188,55 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
     </div>
   )}
 
-  {/* Add Printer Form */}
+  {/* BAR-385: Detected System Printers */}
+  {hasDetected && detectedPrinters.length > 0 && (
+    <Card className="mb-4">
+      <div className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-surface-200">
+            Detected Printers ({detectedPrinters.length})
+          </h3>
+          <Button size="sm" variant="ghost" leftIcon={<RefreshCw className="h-3.5 w-3.5" />} onClick={handleDetectPrinters} loading={detecting}>
+            Rescan
+          </Button>
+        </div>
+        <p className="text-xs text-surface-500">
+          These printers were found on your machine. Click &ldquo;Add&rdquo; to configure them.
+        </p>
+        <div className="space-y-2">
+          {detectedPrinters.map((dp) => (
+            <div key={dp.name} className="flex items-center justify-between p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500/10">
+                  <Printer className="h-4.5 w-4.5 text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-surface-200">{dp.name}</p>
+                  <p className="text-xs text-surface-500">
+                    {dp.driver !== 'unknown' ? dp.driver.toUpperCase() : 'Standard'} printer
+                    {dp.uri ? ` · ${dp.uri}` : ''}
+                    {dp.isDefault ? ' · System default' : ''}
+                  </p>
+                </div>
+              </div>
+              <Button size="sm" onClick={() => handleAddDetected(dp)} loading={savingPrinter} leftIcon={<Plus className="h-3.5 w-3.5" />}>
+                Add
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  )}
+
+  {/* Detection error / info message */}
+  {detectError && (
+    <div className="mb-4 p-3 rounded-lg text-sm bg-surface-800/50 text-surface-400 border border-surface-700/50">
+      {detectError}
+    </div>
+  )}
+
+  {/* Add Printer Form (manual) */}
   {addingPrinter && (
     <Card className="mb-4">
       <div className="p-4 space-y-3">
@@ -56,7 +255,7 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-surface-500 mb-1 block">IP Address</label>
-            <input type="text" placeholder="e.g. 192.168.1.100" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-ip" />
+            <input type="text" placeholder="e.g. 192.168.1.100 (leave blank for USB)" className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" id="new-printer-ip" />
           </div>
           <div>
             <label className="text-xs text-surface-500 mb-1 block">Port</label>
@@ -94,40 +293,7 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
           </div>
         </div>
         <div className="flex gap-2 pt-1">
-          <Button size="sm" onClick={() => {
-            const nameEl = document.getElementById('new-printer-name') as HTMLInputElement;
-            const modelEl = document.getElementById('new-printer-model') as HTMLInputElement;
-            const ipEl = document.getElementById('new-printer-ip') as HTMLInputElement;
-            const portEl = document.getElementById('new-printer-port') as HTMLInputElement;
-            const typeEl = document.getElementById('new-printer-type') as HTMLSelectElement;
-            const paperEl = document.getElementById('new-printer-paper') as HTMLSelectElement;
-            const dpiEl = document.getElementById('new-printer-dpi') as HTMLSelectElement;
-            const newPrinter = {
-              id: `ptr_${Date.now()}`,
-              name: nameEl?.value || 'New Printer',
-              model: modelEl?.value || 'Unknown Model',
-              status: 'offline' as const,
-              autoPrint: false,
-              ipAddress: ipEl?.value || '',
-              port: parseInt(portEl?.value || '9100', 10),
-              type: typeEl?.value || 'zpl',
-              paperSize: paperEl?.value || '4x6',
-              dpi: parseInt(dpiEl?.value || '203', 10),
-            };
-            setPrinters(prev => [...prev, newPrinter]);
-            setAddingPrinter(false);
-            // Also persist via API
-            fetch('/api/settings/printer', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: newPrinter.name,
-                type: newPrinter.type,
-                ipAddress: newPrinter.ipAddress || null,
-                port: newPrinter.port,
-              }),
-            }).catch(() => {});
-          }} leftIcon={<Save className="h-3.5 w-3.5" />}>
+          <Button size="sm" onClick={handleSaveManualPrinter} loading={savingPrinter} leftIcon={<Save className="h-3.5 w-3.5" />}>
             Save
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setAddingPrinter(false)}>Cancel</Button>
@@ -136,13 +302,27 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
     </Card>
   )}
 
+  {/* Loading state */}
+  {printersLoading && (
+    <Card>
+      <div className="text-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-surface-500 mx-auto mb-3" />
+        <p className="text-surface-400">Loading printers…</p>
+      </div>
+    </Card>
+  )}
+
+  {/* Printer list */}
+  {!printersLoading && (
   <div className="space-y-3">
     {printers.length === 0 && (
       <Card>
         <div className="text-center py-12">
           <Printer className="h-12 w-12 text-surface-600 mx-auto mb-3" />
           <p className="text-surface-400">No printers configured</p>
-          <p className="text-sm text-surface-500 mt-1">Click &ldquo;Add Printer&rdquo; to set up a label printer</p>
+          <p className="text-sm text-surface-500 mt-1">
+            Click &ldquo;Detect Printers&rdquo; to find printers on this machine, or &ldquo;Add Printer&rdquo; to set one up manually
+          </p>
         </div>
       </Card>
     )}
@@ -194,6 +374,12 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
                       p.id === printer.id ? { ...p, autoPrint: val } : p
                     )
                   );
+                  // Persist auto-print / default toggle via API
+                  fetch('/api/settings/printer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: printer.id, isDefault: val }),
+                  }).catch(() => {});
                 }}
                 label="Auto-print"
               />
@@ -210,11 +396,7 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
             }}>
               Test Print
             </Button>
-            <Button variant="ghost" size="sm" iconOnly onClick={() => {
-              if (confirm(`Delete printer "${printer.name}"?`)) {
-                setPrinters(prev => prev.filter(p => p.id !== printer.id));
-              }
-            }}>
+            <Button variant="ghost" size="sm" iconOnly onClick={() => handleDeletePrinter(printer)}>
               <Trash2 className="h-4 w-4 text-red-600" />
             </Button>
           </div>
@@ -222,6 +404,7 @@ export function PrintersTab({ printers, setPrinters, addingPrinter, setAddingPri
       </Card>
     ))}
   </div>
+  )}
     </>
   );
 }
