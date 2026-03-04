@@ -6,7 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { ToggleSwitch } from './toggle-switch';
-import { Check, Edit3, FileText, Mail, Package, Plus, Save, Upload } from 'lucide-react';
+import { AlertTriangle, Check, Edit3, FileText, Mail, Package, Plus, Save, Upload } from 'lucide-react';
+
+/* ── Range value type ─────────────────────────────────────────────────── */
+export interface RangeValues {
+  rangeStart: number;
+  rangeEnd: number;
+}
 
 export interface MailboxTabProps {
   platformEnabled: Record<string, boolean>;
@@ -23,9 +29,72 @@ export interface MailboxTabProps {
   templateSaved: boolean;
   handleSaveTemplate: () => void;
   handleUploadTemplate: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /* BAR-387: Range state + save */
+  mailboxRanges: Record<string, RangeValues>;
+  setMailboxRanges: React.Dispatch<React.SetStateAction<Record<string, RangeValues>>>;
+  handleSaveRanges: () => void;
+  rangeSaving: boolean;
+  rangeSaved: boolean;
+  rangeError: string | null;
 }
 
-export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgramEnabled, setCarrierProgramEnabled, templateContent, setTemplateContent, templateFileName, templateFileRef, showEditTemplateModal, setShowEditTemplateModal, templateSaving, templateSaved, handleSaveTemplate, handleUploadTemplate }: MailboxTabProps) {
+/* ── Overlap detection helper (client-side) ───────────────────────────── */
+function detectOverlaps(
+  ranges: Record<string, RangeValues>,
+  enabled: Record<string, boolean>,
+): string | null {
+  const keys = Object.keys(ranges).filter((k) => enabled[k] !== false);
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      const a = ranges[keys[i]];
+      const b = ranges[keys[j]];
+      if (a.rangeStart <= b.rangeEnd && b.rangeStart <= a.rangeEnd) {
+        const labels: Record<string, string> = {
+          store: 'Store (Physical)',
+          anytime: 'Anytime Mailbox',
+          ipostal1: 'iPostal1',
+          postscan: 'PostScan Mail',
+        };
+        return `${labels[keys[i]] || keys[i]} (${a.rangeStart}–${a.rangeEnd}) overlaps with ${labels[keys[j]] || keys[j]} (${b.rangeStart}–${b.rangeEnd})`;
+      }
+    }
+  }
+  return null;
+}
+
+export function MailboxTab({
+  platformEnabled,
+  setPlatformEnabled,
+  carrierProgramEnabled,
+  setCarrierProgramEnabled,
+  templateContent,
+  setTemplateContent,
+  templateFileName,
+  templateFileRef,
+  showEditTemplateModal,
+  setShowEditTemplateModal,
+  templateSaving,
+  templateSaved,
+  handleSaveTemplate,
+  handleUploadTemplate,
+  mailboxRanges,
+  setMailboxRanges,
+  handleSaveRanges,
+  rangeSaving,
+  rangeSaved,
+  rangeError,
+}: MailboxTabProps) {
+  /* Live overlap warning (client-side) */
+  const overlapWarning = detectOverlaps(mailboxRanges, platformEnabled);
+
+  /* Helper to update a single platform's range field */
+  const updateRange = (platform: string, field: 'rangeStart' | 'rangeEnd', value: number) => {
+    setMailboxRanges((prev) => ({
+      ...prev,
+      [platform]: { ...prev[platform], [field]: value },
+    }));
+  };
+
   return (
     <>
   <Card>
@@ -37,6 +106,24 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
         Define your PMB number ranges for each mailbox platform. These ranges determine which box numbers
         are available when setting up new customers.
       </p>
+
+      {/* BAR-387: Overlap warning */}
+      {overlapWarning && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-amber-300">
+            <span className="font-medium">Overlapping ranges:</span> {overlapWarning}
+          </p>
+        </div>
+      )}
+
+      {/* BAR-387: API error */}
+      {rangeError && !overlapWarning && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-red-300">{rangeError}</p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* Physical / Store boxes */}
@@ -64,11 +151,21 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
-              <input type="number" defaultValue={1} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.store?.rangeStart ?? 1}
+                onChange={(e) => updateRange('store', 'rangeStart', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range End</label>
-              <input type="number" defaultValue={550} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.store?.rangeEnd ?? 550}
+                onChange={(e) => updateRange('store', 'rangeEnd', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
           </div>
         </div>
@@ -98,11 +195,21 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
-              <input type="number" defaultValue={700} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.anytime?.rangeStart ?? 700}
+                onChange={(e) => updateRange('anytime', 'rangeStart', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range End</label>
-              <input type="number" defaultValue={999} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.anytime?.rangeEnd ?? 999}
+                onChange={(e) => updateRange('anytime', 'rangeEnd', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
           </div>
         </div>
@@ -132,11 +239,21 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
-              <input type="number" defaultValue={1000} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.ipostal1?.rangeStart ?? 1000}
+                onChange={(e) => updateRange('ipostal1', 'rangeStart', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range End</label>
-              <input type="number" defaultValue={1200} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.ipostal1?.rangeEnd ?? 1200}
+                onChange={(e) => updateRange('ipostal1', 'rangeEnd', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
           </div>
         </div>
@@ -166,11 +283,21 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range Start</label>
-              <input type="number" defaultValue={2000} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.postscan?.rangeStart ?? 2000}
+                onChange={(e) => updateRange('postscan', 'rangeStart', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
             <div>
               <label className="text-xs text-surface-500 mb-1 block">Range End</label>
-              <input type="number" defaultValue={2999} className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500" />
+              <input
+                type="number"
+                value={mailboxRanges.postscan?.rangeEnd ?? 2999}
+                onChange={(e) => updateRange('postscan', 'rangeEnd', parseInt(e.target.value) || 0)}
+                className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+              />
             </div>
           </div>
         </div>
@@ -178,7 +305,16 @@ export function MailboxTab({ platformEnabled, setPlatformEnabled, carrierProgram
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="ghost" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>Add Custom Range</Button>
-        <Button variant="default" size="sm" leftIcon={<Save className="h-3.5 w-3.5" />}>Save Ranges</Button>
+        <Button
+          variant="default"
+          size="sm"
+          leftIcon={rangeSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+          onClick={handleSaveRanges}
+          loading={rangeSaving}
+          disabled={rangeSaving || !!overlapWarning}
+        >
+          {rangeSaved ? 'Saved!' : 'Save Ranges'}
+        </Button>
       </div>
     </CardContent>
   </Card>
