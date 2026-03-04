@@ -75,7 +75,7 @@ async function detectUnixPrinters(): Promise<DetectedPrinter[]> {
     }
 
     // Get detailed printer info via lpoptions
-    let printerDetails: Record<string, string> = {};
+    const printerDetails: Record<string, string> = {};
     try {
       const { stdout: lpoptionsOutput } = await execAsync('lpstat -v 2>/dev/null || true', {
         timeout: 5000,
