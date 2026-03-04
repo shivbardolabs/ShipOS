@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { generateZplLabel, printZplLabel } from '@/lib/zpl';
+import { recordLabelPrint } from '@/lib/labels';
 import {
   Printer,
   Plus,
@@ -114,6 +115,11 @@ export default function PrinterSettingsPage() {
         ? `✅ Print sent via ${result.method}`
         : `❌ Failed: ${result.error || 'Unknown error'}`
     );
+
+    // BAR-386: Track label roll usage for test prints
+    if (result.success) {
+      recordLabelPrint(1, printer.id);
+    }
 
     setTimeout(() => setTestResult(null), 5000);
   };

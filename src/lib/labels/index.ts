@@ -58,3 +58,49 @@ export function printLabel(html: string): void {
     printWindow.print();
   };
 }
+
+/**
+ * BAR-386: Record label print(s) against the default printer's roll counter.
+ *
+ * Best-effort tracking — fires and forgets so it never blocks the print flow.
+ * If no default printer is configured, silently skips.
+ *
+ * @param count Number of labels printed (default 1)
+ * @param printerId Optional specific printer ID (uses default if omitted)
+ * @returns The API response with updated roll status, or null
+ */
+export async function recordLabelPrint(
+  count: number = 1,
+  printerId?: string
+): Promise<{ remaining: number; isLow: boolean } | null> {
+  try {
+    // If no specific printer, find the default
+    let resolvedPrinterId = printerId;
+    if (!resolvedPrinterId) {
+      const res = await fetch('/api/settings/printer');
+      if (!res.ok) return null;
+      const data = await res.json();
+      const printers = data.printers || [];
+      const defaultPrinter =
+        printers.find((p: { isDefault: boolean }) => p.isDefault) ||
+        printers[0];
+      if (!defaultPrinter) return null;
+      resolvedPrinterId = defaultPrinter.id;
+    }
+
+    const res = await fetch('/api/settings/printer/roll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        printerId: resolvedPrinterId,
+        action: 'increment',
+        count,
+      }),
+    });
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}

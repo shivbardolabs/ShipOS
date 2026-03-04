@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { printLabel, renderPackageLabel } from '@/lib/labels';
+import { printLabel, renderPackageLabel, recordLabelPrint } from '@/lib/labels';
 import type { PackageLabelData } from '@/lib/labels';
 import { useActivityLog } from '@/components/activity-log-provider';
 
@@ -110,6 +110,9 @@ export function LabelPrintQueue({
         .join('\n<div style="page-break-after: always;"></div>\n');
 
       printLabel(allLabelsHtml);
+
+      // BAR-386: Track label roll usage for the batch (fire-and-forget)
+      recordLabelPrint(queue.length);
 
       // Log batch label print to activity log
       const labelSummary = queue.map((l) => `${l.pmbNumber} (${l.carrier.toUpperCase()})`).join(', ');

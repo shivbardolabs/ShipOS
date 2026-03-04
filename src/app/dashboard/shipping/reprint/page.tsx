@@ -26,6 +26,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
+import { recordLabelPrint } from '@/lib/labels';
 import type { CarrierLabelRecord } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -112,6 +113,8 @@ export default function ReprintPage() {
       printWindow.print();
     };
     setPrintedIds((prev) => new Set([...prev, label.id]));
+    // BAR-386: Track label roll usage (fire-and-forget)
+    recordLabelPrint(1);
   }, []);
 
   return (

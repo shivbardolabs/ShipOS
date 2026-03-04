@@ -6,7 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { PrinterEntry } from './types';
-import { Loader2, Plus, Printer, RefreshCw, Save, Search, TestTube, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { AlertTriangle, Loader2, Package, Plus, Printer, RefreshCw, RotateCcw, Save, Search, Settings2, TestTube, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { computeRollStatus, useLabelRollTracking } from '@/hooks/use-label-roll-tracking';
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -47,6 +48,52 @@ export function PrintersTab({
   const [detectError, setDetectError] = useState<string | null>(null);
   const [hasDetected, setHasDetected] = useState(false);
   const [savingPrinter, setSavingPrinter] = useState(false);
+
+  // BAR-386: Label roll tracking state
+  const { resetRoll, configureRoll } = useLabelRollTracking();
+  const [configuringRollId, setConfiguringRollId] = useState<string | null>(null);
+  const [rollConfigCapacity, setRollConfigCapacity] = useState('');
+  const [rollConfigThreshold, setRollConfigThreshold] = useState('');
+  const [resettingRollId, setResettingRollId] = useState<string | null>(null);
+
+  // BAR-386: Handle new roll loaded
+  const handleResetRoll = async (printerId: string) => {
+    setResettingRollId(printerId);
+    const result = await resetRoll(printerId);
+    if (result) {
+      setPrinters(prev =>
+        prev.map(p =>
+          p.id === printerId
+            ? { ...p, labelsPrinted: 0, rollLoadedAt: new Date().toISOString() }
+            : p
+        )
+      );
+    }
+    setResettingRollId(null);
+  };
+
+  // BAR-386: Save roll configuration
+  const handleSaveRollConfig = async (printerId: string) => {
+    const capacity = parseInt(rollConfigCapacity) || undefined;
+    const threshold = parseInt(rollConfigThreshold) || undefined;
+    const result = await configureRoll(printerId, capacity, threshold);
+    if (result) {
+      setPrinters(prev =>
+        prev.map(p =>
+          p.id === printerId
+            ? {
+                ...p,
+                rollCapacity: capacity ?? p.rollCapacity,
+                lowSupplyThreshold: threshold ?? p.lowSupplyThreshold,
+              }
+            : p
+        )
+      );
+    }
+    setConfiguringRollId(null);
+    setRollConfigCapacity('');
+    setRollConfigThreshold('');
+  };
 
   // BAR-385: Detect printers from host machine
   const handleDetectPrinters = async () => {
@@ -188,6 +235,30 @@ export function PrintersTab({
     </div>
   )}
 
+  {/* BAR-386: Low Label Supply Warning Banner */}
+  {(() => {
+    const lowPrinters = printers.filter(p => {
+      const status = computeRollStatus(p);
+      return status.isLow;
+    });
+    if (lowPrinters.length === 0) return null;
+    return (
+      <div className="mb-4 p-3 rounded-lg text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-start gap-2">
+        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+        <div>
+          <p className="font-medium">Low label supply</p>
+          <p className="text-xs text-amber-400/80 mt-0.5">
+            {lowPrinters.map(p => {
+              const s = computeRollStatus(p);
+              return `${p.name}: ~${s.remaining} labels remaining`;
+            }).join(' · ')}
+            {' — '}Have a new roll ready or order more labels.
+          </p>
+        </div>
+      </div>
+    );
+  })()}
+
   {/* BAR-385: Detected System Printers */}
   {hasDetected && detectedPrinters.length > 0 && (
     <Card className="mb-4">
@@ -326,7 +397,16 @@ export function PrintersTab({
         </div>
       </Card>
     )}
-    {printers.map((printer) => (
+    {printers.map((printer) => {
+      const rollStatus = computeRollStatus(printer);
+      const progressColor = rollStatus.isLow
+        ? rollStatus.remaining <= 0
+          ? 'bg-red-500'
+          : 'bg-amber-500'
+        : 'bg-emerald-500';
+      const isConfiguring = configuringRollId === printer.id;
+
+      return (
       <Card key={printer.id}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -401,8 +481,114 @@ export function PrintersTab({
             </Button>
           </div>
         </div>
+
+        {/* BAR-386: Label Roll Usage Tracker */}
+        <div className="mt-3 pt-3 border-t border-surface-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Package className="h-3.5 w-3.5 text-surface-400" />
+              <span className="text-xs font-medium text-surface-300">Label Roll</span>
+              {rollStatus.isLow && (
+                <Badge variant="warning" dot>Low Supply</Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (isConfiguring) {
+                    setConfiguringRollId(null);
+                  } else {
+                    setConfiguringRollId(printer.id);
+                    setRollConfigCapacity(String(rollStatus.rollCapacity));
+                    setRollConfigThreshold(String(rollStatus.lowSupplyThreshold));
+                  }
+                }}
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+                onClick={() => handleResetRoll(printer.id)}
+                loading={resettingRollId === printer.id}
+              >
+                New Roll Loaded
+              </Button>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 bg-surface-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
+                style={{ width: `${Math.min(100, rollStatus.percentUsed)}%` }}
+              />
+            </div>
+            <span className="text-xs text-surface-400 tabular-nums whitespace-nowrap">
+              {rollStatus.labelsPrinted} / {rollStatus.rollCapacity}
+            </span>
+          </div>
+
+          {/* Status text */}
+          <div className="flex items-center justify-between mt-1.5">
+            <span className={`text-xs ${rollStatus.isLow ? 'text-amber-400' : 'text-surface-500'}`}>
+              {rollStatus.remaining <= 0
+                ? 'Roll may be empty — load a new roll'
+                : rollStatus.isLow
+                  ? `~${rollStatus.remaining} labels remaining — have a new roll ready`
+                  : `~${rollStatus.remaining} labels remaining`}
+            </span>
+            {rollStatus.rollLoadedAt && (
+              <span className="text-xs text-surface-600">
+                Loaded {new Date(rollStatus.rollLoadedAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+
+          {/* BAR-386: Roll configuration panel */}
+          {isConfiguring && (
+            <div className="mt-3 p-3 rounded-lg bg-surface-800/50 border border-surface-700/50 space-y-3">
+              <p className="text-xs font-medium text-surface-300">Roll Settings</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-surface-500 mb-1 block">Labels per roll</label>
+                  <input
+                    type="number"
+                    value={rollConfigCapacity}
+                    onChange={e => setRollConfigCapacity(e.target.value)}
+                    className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-surface-500 mb-1 block">Warn when remaining</label>
+                  <input
+                    type="number"
+                    value={rollConfigThreshold}
+                    onChange={e => setRollConfigThreshold(e.target.value)}
+                    className="w-full bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-sm text-surface-200 focus:outline-none focus:border-primary-500"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => handleSaveRollConfig(printer.id)} leftIcon={<Save className="h-3.5 w-3.5" />}>
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfiguringRollId(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
-    ))}
+      );
+    })}
   </div>
   )}
     </>
