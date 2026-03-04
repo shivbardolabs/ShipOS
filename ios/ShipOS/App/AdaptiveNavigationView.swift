@@ -64,50 +64,14 @@ struct AdaptiveNavigationView: View {
 
     private var iPadSidebarView: some View {
         NavigationSplitView {
-            sidebarContent
+            EnhancedIPadSidebar()
         } detail: {
             NavigationStack {
                 tabContent(for: appState.selectedTab)
                     .navigationTitle(appState.selectedTab.title)
             }
         }
-    }
-
-    private var sidebarContent: some View {
-        List(selection: $appState.selectedTab) {
-            Section("Main") {
-                ForEach([AppTab.dashboard, .packages, .mail, .customers]) { tab in
-                    sidebarRow(for: tab)
-                }
-            }
-
-            Section("Communication") {
-                sidebarRow(for: .notifications)
-            }
-
-            Section("System") {
-                sidebarRow(for: .settings)
-            }
-        }
-        .navigationTitle("ShipOS")
-        .listStyle(.sidebar)
-        .toolbar {
-            ToolbarItem(placement: .bottomBar) {
-                HStack {
-                    if let user = authManager.currentUser {
-                        Label(user.name, systemImage: "person.circle.fill")
-                            .font(ShipOSTheme.Typography.caption)
-                            .foregroundStyle(ShipOSTheme.Colors.textSecondary)
-                    }
-                    Spacer()
-                }
-            }
-        }
-    }
-
-    private func sidebarRow(for tab: AppTab) -> some View {
-        Label(tab.title, systemImage: appState.selectedTab == tab ? tab.selectedIcon : tab.icon)
-            .tag(tab)
+        .modifier(KeyboardShortcutsModifier())
     }
 
     // MARK: - Tab Content

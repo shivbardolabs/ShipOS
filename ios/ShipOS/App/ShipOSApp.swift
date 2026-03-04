@@ -2,9 +2,10 @@ import SwiftUI
 import SwiftData
 
 /// ShipOS — Main app entry point.
-/// Configures SwiftData, Auth, and the root view hierarchy.
+/// Configures SwiftData, Auth, Push Notifications, Sync, and the root view hierarchy.
 @main
 struct ShipOSApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var appState = AppState()
 
@@ -14,8 +15,45 @@ struct ShipOSApp: App {
                 .environmentObject(authManager)
                 .environmentObject(appState)
                 .tint(ShipOSTheme.Colors.primary)
+                .overlay(alignment: .top) {
+                    ConnectivityBanner()
+                }
+                .onAppear {
+                    SyncEngine.shared.startPeriodicSync()
+                }
         }
         .modelContainer(PersistenceController.shared.container)
+    }
+}
+
+// MARK: - App Delegate (Push Notifications)
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Push notification manager is initialized on first access
+        _ = PushNotificationManager.shared
+        return true
+    }
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        Task { @MainActor in
+            PushNotificationManager.shared.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+        }
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        Task { @MainActor in
+            PushNotificationManager.shared.didFailToRegisterForRemoteNotifications(error: error)
+        }
     }
 }
 

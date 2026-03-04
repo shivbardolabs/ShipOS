@@ -43,9 +43,17 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         NSCameraUsageDescription: "ShipOS needs camera access to scan barcodes and capture package labels"
         NSFaceIDUsageDescription: "Use Face ID to unlock ShipOS quickly"
+    entitlements:
+      path: ShipOS/App/ShipOS.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.ai.bardolabs.shipos
+        aps-environment: development
     dependencies:
       - package: Auth0
       - package: KeychainAccess
+      - target: ShipOSWidgets
+        embed: true
     postBuildScripts:
       - name: "SwiftLint"
         script: |
@@ -53,6 +61,28 @@ targets:
             swiftlint
           fi
         basedOnDependencyAnalysis: false
+
+  ShipOSWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - ShipOSWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos.widgets
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "5.9"
+        INFOPLIST_FILE: ShipOSWidgets/Info.plist
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: "1,2"
+    entitlements:
+      path: ShipOSWidgets/ShipOSWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.ai.bardolabs.shipos
 
   ShipOSTests:
     type: bundle.unit-test
@@ -75,6 +105,7 @@ schemes:
     build:
       targets:
         ShipOS: all
+        ShipOSWidgets: all
         ShipOSTests: [test]
         ShipOSUITests: [test]
     run:
