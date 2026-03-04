@@ -21,6 +21,147 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.29.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.29.0',
+    date: '2026-03-04',
+    title: 'Native iOS App — Full Platform Build (Phases 1–6)',
+    summary:
+      'Complete native iOS app built from scratch in Swift/SwiftUI — 55 Swift files, 17,323 lines of code across 6 build phases. Covers the entire ShipOS platform: package management, customer ops, shipping, compliance, reports, plus iOS-exclusive features like offline mode, push notifications, widgets, AR dimension measurement, and AI-powered smart intake. Includes security hardening, performance optimization, 45 automated tests, CI/CD pipeline, and full App Store submission prep.',
+    highlights: ['📱 Native iOS', 'SwiftUI', 'Offline Mode', 'Push Notifications', 'Widgets', 'AR + AI', 'TestFlight CI/CD'],
+    changes: [
+      {
+        text: 'BAR-349 — App Shell & Navigation: XcodeGen project config (iOS 17.0+, Swift 5.9), adaptive TabView (iPhone) / NavigationSplitView (iPad) with 6-tab layout, AppState observable for global UI state',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-350 — Auth0 Integration: PKCE flow with Auth0.swift SDK, Keychain token persistence, biometric unlock (Face ID / Touch ID), silent token refresh, secure logout',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-351 — API Client: actor-based URLSession networking with Swift Concurrency, Auth0 token injection, retry with exponential backoff, snake_case ↔ camelCase auto-coding',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-352 — Design System: ShipOSTheme (colors, typography, spacing, shadows, animations), 14 reusable components (SOCard, SOStatusBadge, SOSearchBar, SOToastBanner, FilterChip, etc.)',
+        type: 'design',
+      },
+      {
+        text: 'BAR-353 — SwiftData Models: Package and Customer @Model classes, DTO layer with toModel() conversion, PersistenceController with upsert sync helpers',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-354 — Dashboard: live KPI stat cards (packages today, pending pickups, customers, compliance score), quick action buttons, recent activity feed with pull-to-refresh',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-355 — Package Check-In: barcode scanner integration, carrier auto-detection, customer lookup, storage location assignment, condition tagging, photo capture',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-356 — Package Check-Out: signature capture, ID verification, multi-package release, release confirmation with haptic feedback',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-357 — Customer List: searchable/filterable list with PMB numbers, status badges, infinite scroll pagination, swipe actions',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-358 — Customer Detail: full profile view with package history, compliance status, contact info, notification preferences, edit capabilities',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-359 — Notifications: notification center with categories, read/unread state, deep-link tap navigation, batch mark-as-read, badge counts',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-360 — Smart Intake AI: camera-based label scanning using Vision OCR, GPT-4o extraction of tracking number + carrier + sender + address, one-tap confirm to check in',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-361 — AR Dimension Measurement: LiDAR + ARKit-powered package measurement, tap-to-measure L×W×H, DIM weight calculation, confidence indicators',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-362 — Mail Management: mail piece list with type filtering (letter, magazine, legal, certified), customer assignment, batch notify, scan-to-log',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-363 — Batch Operations: multi-select packages for bulk notify, bulk release, bulk status change, progress tracking with success/failure counts',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-364 — End of Day: EOD reconciliation wizard — stale package flagging, pending notification sweep, daily stats summary, shift close confirmation',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-365 — Enhanced Scanner: continuous barcode scanning with multi-code detection, torch toggle, scan history, haptic feedback per scan',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-366 — Shipping: 5-step shipping wizard (origin → destination → package details → rate compare → confirm), live carrier rate comparison, shipment tracking',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-367 — Customer Onboarding: 7-step wizard with ID verification, Form 1583 capture, notarization scheduling, rate plan selection, dual signature',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-368 — Compliance Dashboard: compliance score ring, 5-status tracking (compliant/expiring/non-compliant/pending/review), Form 1583 management, automated alerts',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-369 — Reports & Analytics: Swift Charts-powered KPI dashboards (revenue, volume, customer growth), date range filtering, CSV export',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-370 — Settings: 15+ sub-screens for store info, notifications, security, appearance, scanner, printer, integrations, data management, about',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-371 — Offline Mode: NWPathMonitor connectivity tracking, disk-persisted priority queue with de-duplication, SyncEngine (push/pull, 5-min periodic + reconnect auto-sync), connectivity banner',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-372 — Push Notifications: full APNs lifecycle, 5 notification categories with action buttons (PACKAGE_ARRIVED, PACKAGE_READY, COMPLIANCE_ALERT, CUSTOMER_ACTION, SYSTEM_ALERT), deep-link routing, local scheduling, badge management',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-373 — Widgets: WidgetKit extension with App Group data sharing, PackageStatsWidget in 6 families (systemSmall/Medium/Large + Lock Screen), 15-min auto-refresh',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-374 — Haptics & Accessibility: CoreHaptics engine with 5 complex patterns, VoiceOver-optimized components, Dynamic Type support, Reduce Motion awareness, high contrast adaptation',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-375 — iPad Pro: enhanced sidebar with badges/sync status, 12 keyboard shortcuts (⌘1–5, ⌘I/O/B, ⌘⇧N/S/E, ⌘,), pointer hover effects, 3-column responsive layout, drag-and-drop, context menus',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-376 — Security Hardening: jailbreak detection (12+ probes), AES-256-GCM encryption via CryptoKit, biometric Keychain storage, SSL certificate pinning, append-only security audit log, auto-expiring clipboard, screen capture detection',
+        type: 'security',
+      },
+      {
+        text: 'BAR-377 — Performance: two-tier image cache (NSCache 50MB + disk 200MB with LRU eviction), API response cache with TTL, os_signpost profiling, CachedAsyncImage view, screen load tracking, PrefetchManager',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-378 — Testing Suite: 45 tests across 6 files — security (encryption round-trip, SHA256), models (DTO conversion, endpoints, auth), offline (queue, deep links, sync), performance (cache, JSON decoding benchmarks), UI (launch, navigation, accessibility), screenshots',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-379 — CI/CD Pipeline: GitHub Actions workflow (SwiftLint → Build+Test → Coverage → TestFlight Deploy), Fastlane lanes (test/beta/release/screenshots), Match code signing, auto build numbering, Slack deploy notifications',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-380 — App Store Prep: Apple Privacy Manifest (PrivacyInfo.xcprivacy), SwiftLint config (25+ rules), full en-US App Store metadata (description, keywords, release notes, screenshots automation)',
+        type: 'improvement',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.28.0                                                           */
   /* ------------------------------------------------------------------ */
   {
