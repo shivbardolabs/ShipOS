@@ -120,10 +120,10 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
       setCameraActive(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      if (msg.includes('NotAllowed') || msg.includes('Permission')) {
-        setCameraError('Camera permission denied. Allow camera access in browser settings.');
+      if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
+        setCameraError('Camera access was blocked. Enable camera in your browser settings and reload, or enter dimensions manually.');
       } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
-        setCameraError('No camera found. Use photo upload instead.');
+        setCameraError('No camera found. Enter dimensions manually.');
       } else {
         setCameraError(`Camera not available: ${msg}`);
       }
