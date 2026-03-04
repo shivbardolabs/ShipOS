@@ -142,10 +142,12 @@ export default function SmartIntakePage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraPermDenied, setCameraPermDenied] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const startingRef = useRef(false); // Guard against double-clicks
 
   // Customer search for no-match
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,10 +159,21 @@ export default function SmartIntakePage() {
   const [cameraReady, setCameraReady] = useState(false);
 
   const startCamera = useCallback(async () => {
+    // Guard: prevent double-clicks while getUserMedia is pending
+    if (startingRef.current) return;
+    startingRef.current = true;
+
     try {
       setCameraError(null);
       setCameraReady(false);
       setCameraPermDenied(false);
+      setCameraLoading(true);
+
+      // Clean up any leaked stream from a previous attempt
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
 
       // Use ideal (not exact) facingMode for broader device compatibility
       const constraints: MediaStreamConstraints = {
@@ -173,21 +186,46 @@ export default function SmartIntakePage() {
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Validate the stream has a live video track
+      const videoTracks = stream.getVideoTracks();
+      if (!videoTracks.length || videoTracks[0].readyState === 'ended') {
+        stream.getTracks().forEach((t) => t.stop());
+        setCameraError('Camera returned an empty stream. Close other apps using the camera and try again.');
+        setCameraLoading(false);
+        startingRef.current = false;
+        return;
+      }
+
+      // Listen for track ending unexpectedly (e.g. another app takes the camera)
+      videoTracks[0].addEventListener('ended', () => {
+        setCameraError('Camera stream ended unexpectedly. Tap "Open Camera" to retry.');
+        setCameraActive(false);
+        setCameraReady(false);
+        streamRef.current = null;
+      }, { once: true });
+
       streamRef.current = stream;
 
-      // IMPORTANT: Set cameraActive FIRST so the <video> element renders in the DOM.
+      // Set cameraActive so the <video> element renders in the DOM.
       // The useEffect below will attach the stream once videoRef becomes available.
       setCameraActive(true);
+      setCameraLoading(false);
     } catch (err) {
+      setCameraLoading(false);
       const msg = err instanceof Error ? err.message : 'Unknown error';
       if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
         setCameraPermDenied(true);
         setCameraError('Camera access was blocked. Tap "Upload Photo" below to continue, or enable camera in your browser settings and reload.');
       } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
         setCameraError('No camera found on this device.');
+      } else if (msg.includes('NotReadable') || msg.includes('TrackStartError')) {
+        setCameraError('Camera is in use by another app. Close it and try again.');
       } else {
         setCameraError(`Camera not available: ${msg}`);
       }
+    } finally {
+      startingRef.current = false;
     }
   }, []);
 
@@ -196,29 +234,59 @@ export default function SmartIntakePage() {
   // the <video> element only mounts when cameraActive is true.
   useEffect(() => {
     if (!cameraActive || !streamRef.current) return;
-    const video = videoRef.current;
-    if (!video) return;
 
-    // Attach stream
-    video.srcObject = streamRef.current;
+    let mounted = true;
+    let initTimeout: ReturnType<typeof setTimeout>;
 
-    const handleMetadata = () => {
-      video.play().then(() => {
-        setCameraReady(true);
-      }).catch(() => {
-        setCameraError('Could not start video playback.');
-      });
+    // The video element may not have its ref immediately after the state flip.
+    // Use requestAnimationFrame to wait one frame for React to commit the DOM.
+    const tryAttach = () => {
+      const video = videoRef.current;
+      if (!video) {
+        // Video not in DOM yet — retry next frame (max 1 retry)
+        requestAnimationFrame(() => {
+          const v = videoRef.current;
+          if (!v || !mounted) return;
+          attachStream(v);
+        });
+        return;
+      }
+      attachStream(video);
     };
 
-    // Fast-path: metadata already loaded (some devices)
-    if (video.readyState >= 1) {
-      handleMetadata();
-    } else {
-      video.onloadedmetadata = handleMetadata;
-    }
+    const attachStream = (video: HTMLVideoElement) => {
+      video.srcObject = streamRef.current;
+
+      const handleReady = () => {
+        if (!mounted) return;
+        video.play().then(() => {
+          if (mounted) setCameraReady(true);
+        }).catch(() => {
+          if (mounted) setCameraError('Could not start video playback. Try again.');
+        });
+      };
+
+      // Fast-path: metadata already loaded (some devices)
+      if (video.readyState >= 1) {
+        handleReady();
+      } else {
+        video.addEventListener('loadedmetadata', handleReady, { once: true });
+      }
+
+      // Safety timeout: if video doesn't start within 10s, show actionable error
+      initTimeout = setTimeout(() => {
+        if (mounted && video.readyState < 2) {
+          setCameraError('Camera is taking too long to start. Close other apps using the camera, then try again.');
+          // Don't auto-close — user can still cancel
+        }
+      }, 10000);
+    };
+
+    tryAttach();
 
     return () => {
-      video.onloadedmetadata = null;
+      mounted = false;
+      clearTimeout(initTimeout);
     };
   }, [cameraActive]);
 
@@ -227,6 +295,8 @@ export default function SmartIntakePage() {
     streamRef.current = null;
     setCameraActive(false);
     setCameraReady(false);
+    setCameraLoading(false);
+    startingRef.current = false;
   }, []);
 
   const capturePhoto = useCallback(() => {
@@ -412,6 +482,8 @@ export default function SmartIntakePage() {
     setError(null);
     setCameraError(null);
     setCameraPermDenied(false);
+    setCameraLoading(false);
+    startingRef.current = false;
     setPhase('capture');
     setSearchingForIdx(null);
     setSearchQuery('');
@@ -614,10 +686,20 @@ export default function SmartIntakePage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   onClick={startCamera}
-                  className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8 py-6 text-base"
+                  disabled={cameraLoading}
+                  className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8 py-6 text-base disabled:opacity-70"
                 >
-                  <Camera className="h-5 w-5 mr-2" />
-                  Open Camera
+                  {cameraLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Starting Camera…
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-5 w-5 mr-2" />
+                      Open Camera
+                    </>
+                  )}
                 </Button>
                 <Button
                   variant="secondary"
