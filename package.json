@@ -13,9 +13,10 @@
     "db:generate": "bunx prisma generate",
     "db:studio": "bunx prisma studio",
     "test:e2e": "playwright test",
-    "test:api": "jest tests/api/ --passWithNoTests",
+    "test:api": "bun test tests/api/ tests/unit/",
+    "test:api:live": "jest tests/api/health.test.ts --passWithNoTests",
     "test:load": "k6 run tests/load/k6-load-test.js",
-    "test": "npm run test:api"
+    "test": "bun test tests/api/ tests/unit/"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^3.5.0",
@@ -57,6 +58,7 @@
     "prisma": "^6.4.1",
     "tailwindcss": "^4.0.6",
     "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "wait-on": "^8.0.0"
   }
