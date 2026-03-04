@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/settings/branding
  * Returns branding settings for the current tenant.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -33,19 +29,15 @@ export async function GET() {
     console.error('[GET /api/settings/branding]', err);
     return NextResponse.json({ error: 'Failed to fetch branding' }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/settings/branding
  * Updates branding settings for the current tenant.
  * Requires admin or superadmin role.
  */
-export async function PUT(request: Request) {
+export const PUT = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -95,4 +87,4 @@ export async function PUT(request: Request) {
     console.error('[PUT /api/settings/branding]', err);
     return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 });
   }
-}
+});

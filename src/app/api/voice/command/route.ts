@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { formatCurrency } from '@/lib/utils';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/voice/command                                                   */
@@ -344,15 +344,8 @@ Rules:
 - Always return valid JSON, no markdown, no explanation`;
 
 /* ── Main handler ────────────────────────────────────────────────────────── */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 },
-      );
-    }
 
     const tenantFilter =
       user.role !== 'superadmin' && user.tenantId
@@ -492,4 +485,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

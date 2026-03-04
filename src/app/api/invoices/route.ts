@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import {
   generateInvoiceForCustomer,
   generateBatchInvoices,
   getInvoiceSummary,
 } from '@/lib/invoice-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/invoices
  *
  * List invoices for the tenant.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * POST /api/invoices
@@ -93,9 +92,8 @@ export async function GET(request: NextRequest) {
  *   - autoSend?: boolean
  *   - notes?: string
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -147,4 +145,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

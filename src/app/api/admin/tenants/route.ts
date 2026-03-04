@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { hasPermission, type UserRole } from '@/lib/permissions';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/tenants
  * Returns ALL tenants with status info. Superadmin only.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     // RBAC permission check — manage_tenants required for status changes
-    if (!hasPermission(me.role as UserRole, 'manage_tenants')) {
+    if (!hasPermission(user.role as UserRole, 'manage_tenants')) {
       return NextResponse.json({ error: 'Insufficient permissions — superadmin required' }, { status: 403 });
     }
 
@@ -48,22 +46,20 @@ export async function GET() {
     console.error('[GET /api/admin/tenants]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/admin/tenants  (body: { tenantId, status })
  * Updates a tenant's status. Superadmin only.
  * Valid statuses: active, paused, disabled, trial
  */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { tenantId, status } = await req.json();
+    const { tenantId, status } = await request.json();
 
     if (!tenantId || !status) {
       return NextResponse.json({ error: 'tenantId and status are required' }, { status: 400 });
@@ -108,4 +104,4 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/admin/tenants]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages/senders?q=xxx&limit=8
@@ -9,14 +9,10 @@ import prisma from '@/lib/prisma';
  * for the current tenant. Used for sender name autocomplete in
  * Package Check-In Step 2 (BAR-239).
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim() || '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '8', 10), 20);
 
@@ -46,4 +42,4 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

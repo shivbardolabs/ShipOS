@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages/rts/[id]
  * Fetch a single RTS record with full details.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const GET = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
 
@@ -68,7 +63,7 @@ export async function GET(
     console.error('[GET /api/packages/rts/[id]]', err);
     return NextResponse.json({ error: 'Failed to fetch RTS record' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/packages/rts/[id]
@@ -82,16 +77,11 @@ export async function GET(
  *   cancelReason?: string,           // required when action = 'cancel'
  * }
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
-    const body = await req.json();
+    const body = await request.json();
     const { action, returnTrackingNumber, carrierNotes, cancelReason } = body;
 
     const validActions = ['print_label', 'carrier_handoff', 'complete', 'cancel'];
@@ -221,4 +211,4 @@ export async function PATCH(
     console.error('[PATCH /api/packages/rts/[id]]', err);
     return NextResponse.json({ error: 'Failed to update RTS record' }, { status: 500 });
   }
-}
+});

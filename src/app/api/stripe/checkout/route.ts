@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/stripe/checkout
  * Create a Stripe Checkout session for a plan subscription.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     if (!isStripeConfigured()) {
       return NextResponse.json(
@@ -22,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const stripe = getStripe()!;
-    const { priceId, planId } = await req.json();
+    const { priceId, planId } = await request.json();
 
     if (!priceId || !planId) {
       return NextResponse.json({ error: 'priceId and planId are required' }, { status: 400 });
@@ -52,7 +48,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const origin = request.headers.get('origin') || 'http://localhost:3000';
 
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
@@ -71,4 +67,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/stripe/checkout]', err);
     return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
   }
-}
+});

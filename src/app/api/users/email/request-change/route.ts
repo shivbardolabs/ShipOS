@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '@/lib/notifications/resend';
 import { randomBytes } from 'crypto';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/users/email/request-change
@@ -12,12 +12,8 @@ import { randomBytes } from 'crypto';
  * 2. Creates a verification token (24h expiry)
  * 3. Sends a verification email to the new address
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const body = await request.json();
     const { newEmail } = body;
@@ -99,4 +95,4 @@ export async function POST(request: Request) {
     console.error('[POST /api/users/email/request-change]', err);
     return NextResponse.json({ error: 'Failed to process email change' }, { status: 500 });
   }
-}
+});

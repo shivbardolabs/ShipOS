@@ -1,16 +1,14 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/renewals/process
  * BAR-191: Process individual customer renewal — auto-renew or flag for manual handling.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const { customerId, action, renewalTermMonths, infoChanged } = body;
@@ -140,4 +138,4 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/renewals/process]', err);
     return NextResponse.json({ error: 'Renewal processing failed' }, { status: 500 });
   }
-}
+});

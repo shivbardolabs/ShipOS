@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/stores — List stores for the current tenant
@@ -8,10 +8,8 @@ import prisma from '@/lib/prisma';
  * PATCH /api/stores — Update a store
  * DELETE /api/stores — Delete a store
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     const stores = await prisma.store.findMany({
@@ -29,18 +27,16 @@ export async function GET() {
     console.error('[GET /api/stores]', err);
     return NextResponse.json({ error: 'Failed to fetch stores' }, { status: 500 });
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const body = await req.json();
+    const body = await request.json();
     const { name, address, city, state, zipCode, phone, isDefault } = body;
 
     if (!name) {
@@ -73,17 +69,15 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/stores]', err);
     return NextResponse.json({ error: 'Failed to create store' }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { id, name, address, city, state, zipCode, phone, isDefault } = body;
 
     if (!id) return NextResponse.json({ error: 'Store id is required' }, { status: 400 });
@@ -119,17 +113,15 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/stores]', err);
     return NextResponse.json({ error: 'Failed to update store' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Store id is required' }, { status: 400 });
 
@@ -148,4 +140,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/stores]', err);
     return NextResponse.json({ error: 'Failed to delete store' }, { status: 500 });
   }
-}
+});

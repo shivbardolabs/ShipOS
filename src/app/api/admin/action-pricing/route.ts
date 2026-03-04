@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import {
   getActionPrices,
   createActionPrice,
   updateActionPrice,
   deleteActionPrice,
 } from '@/lib/action-pricing-db';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/action-pricing
@@ -13,23 +13,21 @@ import {
  * Returns all action prices for the user's tenant with overrides.
  * Superadmin only.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
-    if (!me.tenantId) {
+    if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant associated' }, { status: 400 });
     }
 
-    const prices = await getActionPrices(me.tenantId);
+    const prices = await getActionPrices(user.tenantId);
 
     // Also fetch customers for the override UI
     const { default: prisma } = await import('@/lib/prisma');
     const customers = await prisma.customer.findMany({
-      where: { tenantId: me.tenantId, status: 'active' },
+      where: { tenantId: user.tenantId, status: 'active' },
       orderBy: { lastName: 'asc' },
       select: { id: true, firstName: true, lastName: true, pmbNumber: true, platform: true },
     });
@@ -39,7 +37,7 @@ export async function GET() {
     console.error('[GET /api/admin/action-pricing]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/admin/action-pricing
@@ -49,23 +47,21 @@ export async function GET() {
  *         hasTieredPricing?, firstUnitPrice?, additionalUnitPrice?,
  *         cogs?, cogsFirstUnit?, cogsAdditionalUnit? }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
-    if (!me.tenantId) {
+    if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant associated' }, { status: 400 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     if (!body.key || !body.name) {
       return NextResponse.json({ error: 'key and name are required' }, { status: 400 });
     }
 
-    const price = await createActionPrice(me.tenantId, body);
+    const price = await createActionPrice(user.tenantId, body);
     return NextResponse.json(price, { status: 201 });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -75,7 +71,7 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/admin/action-pricing]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/admin/action-pricing
@@ -83,23 +79,21 @@ export async function POST(req: NextRequest) {
  * Update an existing action price.
  * Body: { id, ...fields }
  */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
-    if (!me.tenantId) {
+    if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant associated' }, { status: 400 });
     }
 
-    const { id, ...data } = await req.json();
+    const { id, ...data } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const updated = await updateActionPrice(id, me.tenantId, data);
+    const updated = await updateActionPrice(id, user.tenantId, data);
     if (!updated) {
       return NextResponse.json({ error: 'Not found or no changes' }, { status: 404 });
     }
@@ -109,7 +103,7 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/admin/action-pricing]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/admin/action-pricing
@@ -117,23 +111,21 @@ export async function PATCH(req: NextRequest) {
  * Delete an action price (cascades to overrides).
  * Body: { id }
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
-    if (!me.tenantId) {
+    if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant associated' }, { status: 400 });
     }
 
-    const { id } = await req.json();
+    const { id } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const deleted = await deleteActionPrice(id, me.tenantId);
+    const deleted = await deleteActionPrice(id, user.tenantId);
     if (!deleted) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
@@ -143,4 +135,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/admin/action-pricing]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

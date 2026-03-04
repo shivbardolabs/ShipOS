@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/billing/subscription
@@ -8,12 +8,8 @@ import prisma from '@/lib/prisma';
  * Returns the current active subscription for the authenticated user's tenant,
  * including plan details and billing period information.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -73,4 +69,4 @@ export async function GET() {
     console.error('[GET /api/billing/subscription]', err);
     return NextResponse.json({ error: 'Failed to fetch subscription' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/settings/billing-models
@@ -8,12 +8,8 @@ import prisma from '@/lib/prisma';
  * Returns the tenant's billing model configuration.
  * Creates a default config if none exists.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -75,7 +71,7 @@ export async function GET() {
     console.error('[GET /api/settings/billing-models]', err);
     return NextResponse.json({ error: 'Failed to fetch billing config' }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/settings/billing-models
@@ -83,12 +79,8 @@ export async function GET() {
  * Updates the tenant's billing model configuration.
  * Admin or superadmin only.
  */
-export async function PUT(req: NextRequest) {
+export const PUT = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -96,7 +88,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     const config = await prisma.billingModelConfig.upsert({
       where: { tenantId: user.tenantId },
@@ -112,19 +104,15 @@ export async function PUT(req: NextRequest) {
     console.error('[PUT /api/settings/billing-models]', err);
     return NextResponse.json({ error: 'Failed to update billing config' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/settings/billing-models
  *
  * Create or update a usage meter for the tenant.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -132,7 +120,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { action, meter } = await req.json();
+    const { action, meter } = await request.json();
 
     if (action === 'create_meter' || action === 'update_meter') {
       if (!meter?.name || !meter?.slug) {
@@ -190,7 +178,7 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/settings/billing-models]', err);
     return NextResponse.json({ error: 'Failed to manage meter' }, { status: 500 });
   }
-}
+});
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 

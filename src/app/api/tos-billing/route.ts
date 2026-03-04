@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import {
   processImmediateCharge,
@@ -7,15 +6,15 @@ import {
   processChargeViaTos,
   retryFailedCharge,
 } from '@/lib/tos-billing-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/tos-billing
  *
  * List TOS charges for the tenant with filtering.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * POST /api/tos-billing
@@ -104,9 +103,8 @@ export async function GET(request: NextRequest) {
  *   - action?: 'retry' (to retry a failed charge)
  *   - tosChargeId?: string (for retry)
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -192,4 +190,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

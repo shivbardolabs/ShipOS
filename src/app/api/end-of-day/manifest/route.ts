@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/end-of-day/manifest
  * BAR-80: Generate a carrier manifest for end-of-day processing.
  * Groups today's shipments by carrier and generates manifest data.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     const body = await request.json();
@@ -87,7 +85,7 @@ export async function POST(request: NextRequest) {
     console.error('[POST /api/end-of-day/manifest]', err);
     return NextResponse.json({ error: 'Failed to generate manifest' }, { status: 500 });
   }
-}
+});
 
 function getCarrierManifestType(carrier: string): string {
   switch (carrier.toLowerCase()) {
@@ -108,10 +106,8 @@ function getCarrierManifestType(carrier: string): string {
  * GET /api/end-of-day/manifest
  * List manifests generated today (or specified date).
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     const { searchParams } = new URL(request.url);
@@ -152,4 +148,4 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/end-of-day/manifest]', err);
     return NextResponse.json({ error: 'Failed to fetch manifest data' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendNotification } from '@/lib/notifications';
 import type { NotificationType, NotificationChannel } from '@/lib/notifications';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/notifications/send
@@ -15,7 +16,7 @@ import type { NotificationType, NotificationChannel } from '@/lib/notifications'
  *   body?:      string (required for 'custom' type)
  *   data?:      Record<string, unknown> (template-specific data)
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
 
@@ -76,4 +77,4 @@ export async function POST(request: Request) {
     console.error('[API] Notification send error:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { public: true });

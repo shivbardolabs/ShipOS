@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/renewals
  * Returns renewal pipeline data for the current tenant.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     const where = {
       ...(user.role !== 'superadmin' && user.tenantId ? { tenantId: user.tenantId } : {}),
@@ -74,4 +70,4 @@ export async function GET() {
     console.error('[GET /api/renewals]', err);
     return NextResponse.json({ error: 'Failed to fetch renewals' }, { status: 500 });
   }
-}
+});

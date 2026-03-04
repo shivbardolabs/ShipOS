@@ -10,6 +10,7 @@ import type {
   ServiceType,
   FieldValidation,
 } from '@/lib/smart-intake';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/smart-intake                                           */
@@ -165,7 +166,7 @@ const DEMO_BATCH: SmartIntakeResult[] = [
 
 let demoIndex = 0;
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { image, batch } = body as { image: string; batch?: boolean };
@@ -344,4 +345,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

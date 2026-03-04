@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import {
   getAccountBalance,
   getOutstandingBalances,
 } from '@/lib/tos-billing-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/account-balance
@@ -12,9 +12,8 @@ import {
  *   - ?customerId=xxx → single customer balance
  *   - no customerId → all customers with outstanding balances
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
     if (!user?.tenantId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -45,4 +44,4 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

@@ -6,11 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiHandler(async (request, { params }) => {
   try {
     const { id } = await params;
 
@@ -27,4 +25,4 @@ export async function GET(
     console.error('[alerts] GET :id error:', error);
     return NextResponse.json({ error: 'Failed to fetch alert' }, { status: 500 });
   }
-}
+}, { public: true });

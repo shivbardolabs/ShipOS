@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/cron/billing
@@ -30,7 +31,7 @@ interface BillingResult {
   error?: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     // Verify cron secret
     const authHeader = request.headers.get('authorization');
@@ -278,9 +279,9 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });
 
 /** GET handler for Vercel Cron compatibility */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   return POST(request);
-}
+}, { public: true });

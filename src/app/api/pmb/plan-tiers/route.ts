@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { DEFAULT_PMB_TIERS } from '@/lib/pmb-billing/plan-tiers';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/pmb/plan-tiers
  * List all PMB plan tiers for the current tenant.
  * Seeds defaults if none exist.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
     let tiers = await prisma.pmbPlanTier.findMany({
@@ -55,22 +53,20 @@ export async function GET() {
     console.error('[GET /api/pmb/plan-tiers]', err);
     return NextResponse.json({ error: 'Failed to fetch plan tiers' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/pmb/plan-tiers
  * Create or update a PMB plan tier.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (!user.tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 });
 
-    const body = await req.json();
+    const body = await request.json();
     const {
       id, name, slug, description, priceMonthly, priceAnnual, annualDiscountPct,
       includedMailItems, includedScans, freeStorageDays, includedForwarding,
@@ -118,21 +114,19 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/pmb/plan-tiers]', err);
     return NextResponse.json({ error: 'Failed to save plan tier' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/pmb/plan-tiers
  * Soft-delete a plan tier (set isActive = false).
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = await req.json();
+    const { id } = await request.json();
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
     await prisma.pmbPlanTier.update({
@@ -145,4 +139,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/pmb/plan-tiers]', err);
     return NextResponse.json({ error: 'Failed to delete tier' }, { status: 500 });
   }
-}
+});

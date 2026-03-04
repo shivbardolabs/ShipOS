@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* Priority sort order: urgent_important (0) → urgent (1) → important (2) → completed (3) */
 const PRIORITY_ORDER = {
@@ -16,7 +17,7 @@ const PRIORITY_ORDER = {
   completed: 3,
 } as const;
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const { searchParams } = new URL(request.url);
     const tenantId = searchParams.get('tenantId');
@@ -68,9 +69,9 @@ export async function GET(request: NextRequest) {
     console.error('[alerts] GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch alerts' }, { status: 500 });
   }
-}
+}, { public: true });
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const {
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
     console.error('[alerts] POST error:', error);
     return NextResponse.json({ error: 'Failed to create alert' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 

@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/stripe/portal
  * Create a Stripe Customer Portal session for managing billing.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     if (!isStripeConfigured()) {
       return NextResponse.json(
@@ -34,7 +30,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const origin = request.headers.get('origin') || 'http://localhost:3000';
 
     const session = await stripe.billingPortal.sessions.create({
       customer: tenant.stripeCustomerId,
@@ -46,4 +42,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/stripe/portal]', err);
     return NextResponse.json({ error: 'Failed to create portal session' }, { status: 500 });
   }
-}
+});

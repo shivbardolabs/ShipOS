@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { daysRemaining, holdStatus } from '@/lib/carrier-program';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/carrier-program/inventory                                        */
@@ -13,7 +14,7 @@ import { daysRemaining, holdStatus } from '@/lib/carrier-program';
 /*    search    — recipient name or tracking number                           */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const params = new URL(request.url).searchParams;
     const tenantId = params.get('tenantId');
@@ -101,14 +102,14 @@ export async function GET(request: NextRequest) {
     console.error('[carrier-program/inventory] GET error:', error);
     return NextResponse.json({ error: 'Failed to load inventory' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/carrier-program/inventory                                       */
 /*  BAR-281: Intake a carrier program package                                 */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const {
@@ -198,4 +199,4 @@ export async function POST(request: NextRequest) {
     console.error('[carrier-program/inventory] POST error:', error);
     return NextResponse.json({ error: 'Failed to intake package' }, { status: 500 });
   }
-}
+}, { public: true });

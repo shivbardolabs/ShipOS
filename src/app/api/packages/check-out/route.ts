@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/check-out                                              */
@@ -16,7 +17,7 @@ interface CheckOutBody {
   receiptMethod?: 'email' | 'sms' | 'print' | 'none';
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body: CheckOutBody = await request.json();
 
@@ -112,4 +113,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

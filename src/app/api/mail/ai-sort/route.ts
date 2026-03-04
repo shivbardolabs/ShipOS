@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/mail/ai-sort                                                    */
@@ -154,7 +155,7 @@ Mail type hints:
 If a field is not visible or unclear, use an empty string for text fields.
 Always return valid JSON array only, no markdown, no explanation.`;
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { image, batch } = body as { image: string; batch?: boolean };
@@ -274,4 +275,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/reconciliation/ai-audit                                         */
@@ -281,7 +282,7 @@ Return ONLY a JSON object with this exact structure:
 
 No markdown, no explanation — only valid JSON.`;
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { invoice, carrier, format } = body as {
@@ -451,4 +452,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

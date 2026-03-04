@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/shipments/[id]
  * Get a single shipment with full details.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const GET = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const shipment = await prisma.shipment.findUnique({
       where: { id: params.id },
@@ -45,20 +40,15 @@ export async function GET(
     console.error('[GET /api/shipments/[id]]', err);
     return NextResponse.json({ error: 'Failed to fetch shipment' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/shipments/[id]
  * Update shipment status, payment status, tracking, etc.
  * BAR-16: Full status workflow support.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const {
@@ -121,4 +111,4 @@ export async function PATCH(
     console.error('[PATCH /api/shipments/[id]]', err);
     return NextResponse.json({ error: 'Failed to update shipment' }, { status: 500 });
   }
-}
+});

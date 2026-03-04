@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/admin/billing
@@ -12,12 +12,8 @@ import prisma from '@/lib/prisma';
  *   - period: "YYYY-MM" (defaults to current month)
  *   - limit: number (defaults to 50)
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden — superadmin only' }, { status: 403 });
     }
@@ -110,4 +106,4 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/admin/billing]', err);
     return NextResponse.json({ error: 'Failed to fetch billing overview' }, { status: 500 });
   }
-}
+});

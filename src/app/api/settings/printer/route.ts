@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/settings/printer
  * Returns printer configuration for the current tenant.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -26,18 +22,14 @@ export async function GET() {
     console.error('[GET /api/settings/printer]', err);
     return NextResponse.json({ error: 'Failed to fetch printers' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/settings/printer
  * Creates or updates a printer configuration.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -88,18 +80,14 @@ export async function POST(request: Request) {
     console.error('[POST /api/settings/printer]', err);
     return NextResponse.json({ error: 'Failed to save printer' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/settings/printer
  * Deletes a printer configuration.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -123,4 +111,4 @@ export async function DELETE(request: Request) {
     console.error('[DELETE /api/settings/printer]', err);
     return NextResponse.json({ error: 'Failed to delete printer' }, { status: 500 });
   }
-}
+});

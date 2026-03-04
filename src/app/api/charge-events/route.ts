@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/charge-events
@@ -16,12 +16,8 @@ import prisma from '@/lib/prisma';
  *   - limit: number (defaults to 50, max 200)
  *   - offset: number (defaults to 0)
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -100,7 +96,7 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * POST /api/charge-events
@@ -120,12 +116,8 @@ export async function GET(request: NextRequest) {
  *   - mailPieceId?: string
  *   - notes?: string
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -231,4 +223,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

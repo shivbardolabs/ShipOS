@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/dashboard/stats
  * Compute real-time dashboard statistics from Postgres.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -78,4 +76,4 @@ export async function GET() {
     console.error('[GET /api/dashboard/stats]', err);
     return NextResponse.json({ error: 'Failed to fetch dashboard stats' }, { status: 500 });
   }
-}
+});

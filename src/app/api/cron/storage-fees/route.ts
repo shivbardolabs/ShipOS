@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDailyStorageCharges } from '@/lib/charge-event-service';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/cron/storage-fees
@@ -13,7 +14,7 @@ import { generateDailyStorageCharges } from '@/lib/charge-event-service';
  *
  * Idempotent: skips packages that already have a storage charge for today.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     // Verify cron secret or allow manual trigger in dev
     const authHeader = request.headers.get('authorization');
@@ -41,4 +42,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });

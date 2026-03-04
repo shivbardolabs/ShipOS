@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/packages/rts
@@ -8,11 +8,8 @@ import prisma from '@/lib/prisma';
  * List RTS records with filtering and pagination.
  * Query params: step?, reason?, carrier?, search?, page?, limit?
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user)
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const step = searchParams.get('step');
@@ -100,7 +97,7 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/packages/rts]', err);
     return NextResponse.json({ error: 'Failed to fetch RTS records' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/packages/rts
@@ -117,13 +114,10 @@ export async function GET(request: NextRequest) {
  *   confirmed: boolean   // must be true — prevents accidental RTS
  * }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user)
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const body = await req.json();
+    const body = await request.json();
     const { packageId, mailPieceId, reason, reasonDetail, carrier, confirmed } = body;
 
     // -- Validation --
@@ -255,4 +249,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/packages/rts]', err);
     return NextResponse.json({ error: 'Failed to initiate RTS' }, { status: 500 });
   }
-}
+});

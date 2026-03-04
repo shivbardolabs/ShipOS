@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/users/invite
  * Lists all invitations for the current tenant.
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!me.tenantId) return NextResponse.json([], { status: 200 });
+    if (!user.tenantId) return NextResponse.json([], { status: 200 });
 
     const invitations = await prisma.invitation.findMany({
-      where: { tenantId: me.tenantId },
+      where: { tenantId: user.tenantId },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -22,25 +20,23 @@ export async function GET() {
     console.error('[GET /api/users/invite]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/users/invite
  * Creates an invitation. Admin only.
  * Body: { email: string, role: string }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
     }
-    if (!me.tenantId) {
+    if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant configured' }, { status: 400 });
     }
 
-    const { email, role } = await req.json();
+    const { email, role } = await request.json();
 
     // Validate email
     if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -54,13 +50,13 @@ export async function POST(req: NextRequest) {
 
     // Check if user already exists in this tenant
     const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
-    if (existingUser && existingUser.tenantId === me.tenantId) {
+    if (existingUser && existingUser.tenantId === user.tenantId) {
       return NextResponse.json({ error: 'User is already a member of this team' }, { status: 409 });
     }
 
     // Check for existing pending invitation
     const existingInvite = await prisma.invitation.findUnique({
-      where: { email_tenantId: { email: email.toLowerCase().trim(), tenantId: me.tenantId } },
+      where: { email_tenantId: { email: email.toLowerCase().trim(), tenantId: user.tenantId } },
     });
 
     if (existingInvite && existingInvite.status === 'pending') {
@@ -69,14 +65,14 @@ export async function POST(req: NextRequest) {
 
     // Create or upsert the invitation
     const invitation = await prisma.invitation.upsert({
-      where: { email_tenantId: { email: email.toLowerCase().trim(), tenantId: me.tenantId } },
-      update: { role, status: 'pending', invitedBy: me.id },
+      where: { email_tenantId: { email: email.toLowerCase().trim(), tenantId: user.tenantId } },
+      update: { role, status: 'pending', invitedBy: user.id },
       create: {
         email: email.toLowerCase().trim(),
         role,
         status: 'pending',
-        tenantId: me.tenantId,
-        invitedBy: me.id,
+        tenantId: user.tenantId,
+        invitedBy: user.id,
       },
     });
 
@@ -85,26 +81,24 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/users/invite]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/users/invite
  * Revokes an invitation. Admin only.
  * Body: { invitationId: string }
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
     }
 
-    const { invitationId } = await req.json();
+    const { invitationId } = await request.json();
 
     // Ensure invitation belongs to same tenant
     const invite = await prisma.invitation.findUnique({ where: { id: invitationId } });
-    if (!invite || invite.tenantId !== me.tenantId) {
+    if (!invite || invite.tenantId !== user.tenantId) {
       return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
     }
 
@@ -118,4 +112,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/users/invite]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

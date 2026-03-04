@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/billing/dashboard/export                                         */
@@ -13,12 +13,8 @@ import prisma from '@/lib/prisma';
 /*    - to: ISO date                                                          */
 /*    - format: csv (default)                                                 */
 /* -------------------------------------------------------------------------- */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -129,4 +125,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

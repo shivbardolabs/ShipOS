@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/billing/customer-profile?customerId=xxx
  *
  * Returns the billing profile for a specific customer.
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
 
     if (!customerId) {
@@ -102,7 +98,7 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * PUT /api/billing/customer-profile
@@ -110,12 +106,8 @@ export async function GET(req: NextRequest) {
  * Create or update a customer's billing profile.
  * Body: { customerId, billingModel, ... }
  */
-export async function PUT(req: NextRequest) {
+export const PUT = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -123,7 +115,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { customerId } = body;
 
     if (!customerId) {
@@ -155,7 +147,7 @@ export async function PUT(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 

@@ -5,7 +5,7 @@ import {
   updateMigrationProgress,
 } from '@/lib/migration/engine';
 import prisma from '@/lib/prisma';
-import { getOrProvisionUser } from '@/lib/auth';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/migration/start
@@ -16,12 +16,8 @@ import { getOrProvisionUser } from '@/lib/auth';
  * Processes the parsed migration data and writes records to the ShipOS
  * database using Prisma batch operations.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant' }, { status: 400 });
     }
@@ -105,7 +101,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Execute the actual migration — reads parsed data and writes to ShipOS DB.

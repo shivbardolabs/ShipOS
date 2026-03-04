@@ -13,8 +13,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   const { searchParams } = new URL(request.url);
 
   const programType = searchParams.get('programType');
@@ -60,4 +61,4 @@ export async function GET(request: NextRequest) {
       byProgram: {},
     },
   });
-}
+}, { public: true });

@@ -1,17 +1,15 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/super-admin/clients
  * Lists all platform client accounts (tenants) with their stores, admins, and subscriptions.
  * Supports query params: ?status=active&search=query
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { searchParams } = new URL(request.url);
@@ -119,19 +117,17 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/super-admin/clients]', err);
     return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/super-admin/clients
  * Creates a new client account (tenant) with buyer contact info.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
+    const body = await request.json();
     const { firstName, lastName, email, phone, companyName, subscriptionFee } = body;
 
     // Validation
@@ -192,4 +188,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/super-admin/clients]', err);
     return NextResponse.json({ error: 'Failed to create client' }, { status: 500 });
   }
-}
+});

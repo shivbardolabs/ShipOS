@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/super-admin/users
  * Lists all super admin users (role = 'superadmin').
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const superAdmins = await prisma.user.findMany({
@@ -49,19 +47,17 @@ export async function GET() {
     console.error('[GET /api/super-admin/users]', err);
     return NextResponse.json({ error: 'Failed to fetch super admins' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/super-admin/users
  * Creates a new super admin user.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
+    const body = await request.json();
     const { firstName, lastName, email } = body;
 
     if (!firstName || !lastName || !email) {
@@ -107,19 +103,17 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/super-admin/users]', err);
     return NextResponse.json({ error: 'Failed to create super admin' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/super-admin/users
  * Updates a super admin user (status, name, email).
  */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
+    const body = await request.json();
     const { userId, status, firstName, lastName, email } = body;
 
     if (!userId) {
@@ -190,4 +184,4 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/super-admin/users]', err);
     return NextResponse.json({ error: 'Failed to update super admin' }, { status: 500 });
   }
-}
+});

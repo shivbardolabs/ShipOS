@@ -1,19 +1,14 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/customers/[id]/closure
  * BAR-234: Get closure status and pre-flight check for PMB closure.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const tenantScope = user.role !== 'superadmin' && user.tenantId
@@ -75,19 +70,14 @@ export async function GET(
     console.error('[GET /api/customers/[id]/closure]', err);
     return NextResponse.json({ error: 'Failed to fetch closure data' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/customers/[id]/closure
  * BAR-234: Initiate or advance PMB closure workflow.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const body = await request.json();
@@ -200,4 +190,4 @@ export async function POST(
     console.error('[POST /api/customers/[id]/closure]', err);
     return NextResponse.json({ error: 'Closure action failed' }, { status: 500 });
   }
-}
+});

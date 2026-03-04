@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { lookupCarrierTracking } from '@/lib/carrier-api';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/carrier-lookup                                         */
@@ -14,7 +15,7 @@ interface LookupBody {
   carrier: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body: LookupBody = await request.json();
 
@@ -41,4 +42,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

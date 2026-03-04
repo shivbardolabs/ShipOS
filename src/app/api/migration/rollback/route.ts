@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/migration/rollback
@@ -14,7 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * 5. Delete all Invoice records where migrationId = X
  * 6. Update the MigrationRun status to 'rolled_back'
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const { migrationId } = await request.json();
 
@@ -49,4 +50,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { public: true });

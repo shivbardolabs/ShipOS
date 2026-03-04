@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/feature-flags
@@ -14,15 +14,11 @@ import prisma from '@/lib/prisma';
  *   3. Tenant-level override → second priority
  *   4. Flag defaultEnabled → fallback
  */
-export async function GET() {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
     // Superadmin always sees everything
-    if (me.role === 'superadmin') {
+    if (user.role === 'superadmin') {
       const flags = await prisma.featureFlag.findMany({ select: { key: true } });
       const result: Record<string, boolean> = {};
       for (const f of flags) result[f.key] = true;
@@ -35,8 +31,8 @@ export async function GET() {
         overrides: {
           where: {
             OR: [
-              { targetType: 'user', targetId: me.id },
-              ...(me.tenantId ? [{ targetType: 'tenant', targetId: me.tenantId }] : []),
+              { targetType: 'user', targetId: user.id },
+              ...(user.tenantId ? [{ targetType: 'tenant', targetId: user.tenantId }] : []),
             ],
           },
         },
@@ -47,7 +43,7 @@ export async function GET() {
     for (const flag of flags) {
       // Check user-level override first
       const userOverride = flag.overrides.find(
-        (o) => o.targetType === 'user' && o.targetId === me.id,
+        (o) => o.targetType === 'user' && o.targetId === user.id,
       );
       if (userOverride) {
         result[flag.key] = userOverride.enabled;
@@ -56,7 +52,7 @@ export async function GET() {
 
       // Check tenant-level override
       const tenantOverride = flag.overrides.find(
-        (o) => o.targetType === 'tenant' && o.targetId === me.tenantId,
+        (o) => o.targetType === 'tenant' && o.targetId === user.tenantId,
       );
       if (tenantOverride) {
         result[flag.key] = tenantOverride.enabled;
@@ -73,4 +69,4 @@ export async function GET() {
     // On error, return empty map (don't block the app)
     return NextResponse.json({});
   }
-}
+});

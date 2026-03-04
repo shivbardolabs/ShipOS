@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { buildUploadPayload } from '@/lib/carrier-program';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/carrier-program/upload                                          */
@@ -14,7 +15,7 @@ import { buildUploadPayload } from '@/lib/carrier-program';
 /*    mode         — 'single' | 'batch'                                       */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { checkoutIds, tenantId, mode = 'single' } = body;
@@ -169,14 +170,14 @@ export async function POST(request: NextRequest) {
     console.error('[carrier-program/upload] POST error:', error);
     return NextResponse.json({ error: 'Failed to upload checkout data' }, { status: 500 });
   }
-}
+}, { public: true });
 
 /* -------------------------------------------------------------------------- */
 /*  GET /api/carrier-program/upload/reconciliation?tenantId=...&month=...     */
 /*  BAR-283: Monthly reconciliation summary                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const params = new URL(request.url).searchParams;
     const tenantId = params.get('tenantId');
@@ -242,4 +243,4 @@ export async function GET(request: NextRequest) {
     console.error('[carrier-program/upload/reconciliation] GET error:', error);
     return NextResponse.json({ error: 'Failed to load reconciliation' }, { status: 500 });
   }
-}
+}, { public: true });

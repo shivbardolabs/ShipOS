@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/customers/provision
@@ -12,12 +12,8 @@ import prisma from '@/lib/prisma';
  *
  * All within a transaction for consistency.
  */
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
@@ -134,4 +130,4 @@ export async function POST(request: Request) {
     console.error('[POST /api/customers/provision]', err);
     return NextResponse.json({ error: 'Provisioning failed' }, { status: 500 });
   }
-}
+});

@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { isStripeConfigured } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/billing/subscribe
  * Create or change a subscription. Uses Stripe if configured, otherwise marks as "manual".
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -20,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { planSlug, billingCycle = 'monthly' } = await req.json();
+    const { planSlug, billingCycle = 'monthly' } = await request.json();
 
     if (!planSlug) {
       return NextResponse.json({ error: 'planSlug is required' }, { status: 400 });
@@ -102,4 +98,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/billing/subscribe]', err);
     return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 });
   }
-}
+});

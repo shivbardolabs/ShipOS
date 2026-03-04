@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/billing/tos-charges
@@ -8,17 +8,13 @@ import prisma from '@/lib/prisma';
  * Returns time-of-service charges.
  * Query params: ?customerId=xxx&status=pending&limit=50
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50', 10);
@@ -65,7 +61,7 @@ export async function GET(req: NextRequest) {
     console.error('[GET /api/billing/tos-charges]', err);
     return NextResponse.json({ error: 'Failed to fetch ToS charges' }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/billing/tos-charges
@@ -73,17 +69,13 @@ export async function GET(req: NextRequest) {
  * Create a time-of-service charge.
  * Body: { customerId, description, amount, tax?, mode?, paymentMethod?, referenceType?, referenceId? }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (!user.tenantId) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { customerId, description, amount, tax = 0, mode, paymentMethod, referenceType, referenceId } = body;
 
     if (!customerId || !description || amount === undefined) {
@@ -195,4 +187,4 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/billing/tos-charges]', err);
     return NextResponse.json({ error: 'Failed to create charge' }, { status: 500 });
   }
-}
+});

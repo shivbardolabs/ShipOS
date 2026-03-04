@@ -1,20 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { PLAN_DEFINITIONS } from '@/lib/billing';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/stripe/products
  * Sync local billing plans with Stripe products and prices.
  * Admin-only operation.
  */
-export async function POST() {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -100,4 +96,4 @@ export async function POST() {
     console.error('[POST /api/stripe/products]', err);
     return NextResponse.json({ error: 'Failed to sync products' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/customers/search?q=xxx&mode=pmb|name|phone|company|name_company&limit=10&includeInactive=true
@@ -9,14 +9,10 @@ import prisma from '@/lib/prisma';
  * BAR-38: Returns all statuses (active, suspended, closed) with smart ranking.
  * Used by the Package Check-In wizard (Step 1) with unified auto-detect search (BAR-324).
  */
-export async function GET(req: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim() || '';
     const mode = searchParams.get('mode') || 'pmb';
     const limit = Math.min(parseInt(searchParams.get('limit') || '10', 10), 50);
@@ -168,4 +164,4 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

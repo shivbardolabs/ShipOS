@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* ── Shared serializer ──────────────────────────────────────────────────── */
 
@@ -39,11 +39,9 @@ const USER_INCLUDE = {
  *   includeDeleted — if "true", includes soft-deleted users (default: false)
  *   status         — filter by status: active | inactive | suspended
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
@@ -79,7 +77,7 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/admin/users]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/admin/users
@@ -91,15 +89,13 @@ export async function GET(request: NextRequest) {
  *   { userId: string, action: 'soft-delete' }
  *   { userId: string, action: 'restore' }
  */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'superadmin') {
+    if (user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { userId, action, role, tenantId, status } = body;
 
     if (!userId) {
@@ -114,7 +110,7 @@ export async function PATCH(req: NextRequest) {
 
     // ── Handle soft-delete action ──────────────────────────────────────────
     if (action === 'soft-delete') {
-      if (target.id === me.id) {
+      if (target.id === user.id) {
         return NextResponse.json({ error: 'Cannot soft-delete yourself' }, { status: 400 });
       }
 
@@ -178,7 +174,7 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid status. Must be: active, inactive, or suspended' }, { status: 400 });
       }
       // Prevent self-deactivation
-      if (target.id === me.id && status !== 'active') {
+      if (target.id === user.id && status !== 'active') {
         return NextResponse.json({ error: 'Cannot deactivate yourself' }, { status: 400 });
       }
       data.status = status;
@@ -199,4 +195,4 @@ export async function PATCH(req: NextRequest) {
     console.error('[PATCH /api/admin/users]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

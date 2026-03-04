@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import { upsertOverride, deleteOverride } from '@/lib/action-pricing-db';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * POST /api/admin/action-pricing/overrides
@@ -10,15 +10,13 @@ import { upsertOverride, deleteOverride } from '@/lib/action-pricing-db';
  *         retailPrice?, firstUnitPrice?, additionalUnitPrice?,
  *         cogs?, cogsFirstUnit?, cogsAdditionalUnit? }
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     if (!body.actionPriceId || !body.targetType || !body.targetValue) {
       return NextResponse.json(
         { error: 'actionPriceId, targetType, and targetValue are required' },
@@ -32,7 +30,7 @@ export async function POST(req: NextRequest) {
     console.error('[POST /api/admin/action-pricing/overrides]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/admin/action-pricing/overrides
@@ -40,15 +38,13 @@ export async function POST(req: NextRequest) {
  * Delete a price override.
  * Body: { id }
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withApiHandler(async (request, { user }) => {
   try {
-    const me = await getOrProvisionUser();
-    if (!me) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (me.role !== 'admin' && me.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
     }
 
-    const { id } = await req.json();
+    const { id } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
@@ -63,4 +59,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[DELETE /api/admin/action-pricing/overrides]', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
+});

@@ -1,19 +1,14 @@
 /* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrProvisionUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /**
  * GET /api/customers/[id]/form1583
  * BAR-19: Get Form 1583 status and history for a customer.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const tenantScope = user.role !== 'superadmin' && user.tenantId
@@ -82,19 +77,14 @@ export async function GET(
     console.error('[GET /api/customers/[id]/form1583]', err);
     return NextResponse.json({ error: 'Failed to fetch Form 1583 data' }, { status: 500 });
   }
-}
+});
 
 /**
  * PATCH /api/customers/[id]/form1583
  * BAR-19: Update Form 1583 status, upload document, record notarization.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withApiHandler(async (request, { user, params }) => {
   try {
-    const user = await getOrProvisionUser();
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { id } = await params;
     const body = await request.json();
@@ -175,4 +165,4 @@ export async function PATCH(
     console.error('[PATCH /api/customers/[id]/form1583]', err);
     return NextResponse.json({ error: 'Failed to update Form 1583' }, { status: 500 });
   }
-}
+});

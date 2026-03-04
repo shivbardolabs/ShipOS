@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withApiHandler } from '@/lib/api-utils';
 
 /* -------------------------------------------------------------------------- */
 /*  Payment Methods Configuration                                             */
@@ -51,7 +52,7 @@ function parsePaymentMethods(json: string | null): PaymentMethodsConfig {
 /*  GET /api/settings/payment-methods?tenantId=...                            */
 /* -------------------------------------------------------------------------- */
 
-export async function GET(request: NextRequest) {
+export const GET = withApiHandler(async (request, { user }) => {
   try {
     const { searchParams } = new URL(request.url);
     const tenantId = searchParams.get('tenantId');
@@ -85,14 +86,14 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/settings/payment-methods                                        */
 /*  Body: { tenantId, paymentMethods: PaymentMethodsConfig }                  */
 /* -------------------------------------------------------------------------- */
 
-export async function POST(request: NextRequest) {
+export const POST = withApiHandler(async (request, { user }) => {
   try {
     const body = await request.json();
     const { tenantId, paymentMethods } = body;
@@ -166,4 +167,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { public: true });
