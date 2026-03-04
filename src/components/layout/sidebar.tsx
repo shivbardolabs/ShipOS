@@ -48,7 +48,6 @@ import {
   Tag,
   Building2,
   Wallet,
-  CreditCard,
   ClipboardCheck,
   ExternalLink,
 } from 'lucide-react';
@@ -134,7 +133,7 @@ const navSections: NavSection[] = [
       { label: 'Report Hub', href: '/dashboard/reports', icon: BarChart3, flagKey: 'reports' },
       { label: 'Charge Events', href: '/dashboard/charge-events', icon: Receipt, flagKey: 'charge_events' },
       { label: 'TOS Billing', href: '/dashboard/tos-billing', icon: Wallet, flagKey: 'tos_billing' },
-      { label: 'Payment Methods', href: '/dashboard/tos-billing/payment-methods', icon: CreditCard, flagKey: 'tos_billing' },
+      /* Payment Methods moved into individual Customer records (BAR-392) */
       { label: 'Invoicing', href: '/dashboard/invoicing', icon: FileText, flagKey: 'invoicing' },
       { label: 'Activity Log', href: '/dashboard/activity-log', icon: Activity, flagKey: 'activity-log' },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
