@@ -51,7 +51,7 @@ export default function DashboardLayout({
                 {/* Main content area – offset by sidebar width on desktop */}
                 <div className="lg:pl-[260px] flex flex-col min-h-screen">
                   <Header />
-                  <main className="flex-1 p-6">{children}</main>
+                  <main className="flex-1 p-6 pb-24">{children}</main>
                 </div>
 
                 {/* Voice assistant — floating on all dashboard pages */}
