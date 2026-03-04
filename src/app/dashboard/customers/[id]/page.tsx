@@ -10,6 +10,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { EditCustomerModal } from '@/components/customer/edit-customer-modal';
 import { SendNotificationModal } from '@/components/customer/send-notification-modal';
 import { Form1583Panel } from '@/components/customer/form1583-panel';
+import { PaymentMethodsPanel } from '@/components/customer/payment-methods-panel';
 import { PmbClosureDialog } from '@/components/customer/pmb-closure-dialog';
 import { cn, formatDate, formatCurrency, formatDateTime } from '@/lib/utils';
 import { auditLog, loyaltyAccounts, loyaltyTiers, loyaltyRewards, getCustomerFeeSummary } from '@/lib/mock-data';
@@ -257,6 +258,7 @@ export default function CustomerDetailPage() {
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-3.5 w-3.5" />, count: customerNotifications.length },
     { id: 'activity', label: 'Activity', icon: <Clock className="h-3.5 w-3.5" /> },
     { id: 'loyalty', label: 'Loyalty', icon: <Award className="h-3.5 w-3.5" /> },
+    { id: 'payment-methods', label: 'Payment Methods', icon: <CreditCard className="h-3.5 w-3.5" /> },
     { id: 'quota', label: 'Quota Usage', icon: <BarChart3 className="h-3.5 w-3.5" /> },
   ];
 
@@ -567,6 +569,11 @@ export default function CustomerDetailPage() {
                 </button>
               </div>
             )}
+          </TabPanel>
+
+          {/* Payment Methods Tab */}
+          <TabPanel active={activeTab === 'payment-methods'}>
+            <PaymentMethodsPanel customerId={customer.id} />
           </TabPanel>
 
           {/* Quota Usage Tab */}
