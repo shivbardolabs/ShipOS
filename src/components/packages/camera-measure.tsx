@@ -92,18 +92,32 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [cameraLoading, setCameraLoading] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const startingRef = useRef(false);
 
   const hasDimensions = dimensions.lengthIn || dimensions.widthIn || dimensions.heightIn;
 
   /* ── Camera controls ─────────────────────────────────────────────── */
   const startCamera = useCallback(async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
+
     try {
       setCameraError(null);
       setCameraReady(false);
+      setCameraLoading(true);
+
+      // Clean up any leaked stream from a previous attempt
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: 'environment' },
@@ -113,20 +127,45 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
         audio: false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Validate the stream has a live video track
+      const videoTracks = stream.getVideoTracks();
+      if (!videoTracks.length || videoTracks[0].readyState === 'ended') {
+        stream.getTracks().forEach((t) => t.stop());
+        setCameraError('Camera returned an empty stream. Close other apps using the camera and try again.');
+        setCameraLoading(false);
+        startingRef.current = false;
+        return;
+      }
+
+      // Listen for track ending unexpectedly (e.g. another app takes the camera)
+      videoTracks[0].addEventListener('ended', () => {
+        setCameraError('Camera stream ended unexpectedly. Try opening the camera again.');
+        setCameraActive(false);
+        setCameraReady(false);
+        streamRef.current = null;
+      }, { once: true });
+
       streamRef.current = stream;
 
-      // IMPORTANT: Set cameraActive FIRST so the <video> element renders in the DOM.
+      // Set cameraActive so the <video> element renders in the DOM.
       // The useEffect below will attach the stream once videoRef becomes available.
       setCameraActive(true);
+      setCameraLoading(false);
     } catch (err) {
+      setCameraLoading(false);
       const msg = err instanceof Error ? err.message : 'Unknown error';
       if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
         setCameraError('Camera access was blocked. Enable camera in your browser settings and reload, or enter dimensions manually.');
       } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
         setCameraError('No camera found. Enter dimensions manually.');
+      } else if (msg.includes('NotReadable') || msg.includes('TrackStartError')) {
+        setCameraError('Camera is in use by another app. Close it and try again.');
       } else {
         setCameraError(`Camera not available: ${msg}`);
       }
+    } finally {
+      startingRef.current = false;
     }
   }, []);
 
@@ -134,24 +173,56 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
   // Avoids race condition: videoRef.current is null until cameraActive renders <video>.
   useEffect(() => {
     if (!cameraActive || !streamRef.current) return;
-    const video = videoRef.current;
-    if (!video) return;
 
-    video.srcObject = streamRef.current;
+    let mounted = true;
+    let initTimeout: ReturnType<typeof setTimeout>;
 
-    const handleMetadata = () => {
-      video.play().then(() => setCameraReady(true)).catch(() => {
-        setCameraError('Could not start video playback.');
-      });
+    const tryAttach = () => {
+      const video = videoRef.current;
+      if (!video) {
+        // Video not in DOM yet — retry next frame
+        requestAnimationFrame(() => {
+          const v = videoRef.current;
+          if (!v || !mounted) return;
+          attachStream(v);
+        });
+        return;
+      }
+      attachStream(video);
     };
 
-    if (video.readyState >= 1) {
-      handleMetadata();
-    } else {
-      video.onloadedmetadata = handleMetadata;
-    }
+    const attachStream = (video: HTMLVideoElement) => {
+      video.srcObject = streamRef.current;
 
-    return () => { video.onloadedmetadata = null; };
+      const handleReady = () => {
+        if (!mounted) return;
+        video.play().then(() => {
+          if (mounted) setCameraReady(true);
+        }).catch(() => {
+          if (mounted) setCameraError('Could not start video playback. Try again.');
+        });
+      };
+
+      if (video.readyState >= 1) {
+        handleReady();
+      } else {
+        video.addEventListener('loadedmetadata', handleReady, { once: true });
+      }
+
+      // Safety timeout: if video doesn't start within 10s, show actionable error
+      initTimeout = setTimeout(() => {
+        if (mounted && video.readyState < 2) {
+          setCameraError('Camera is taking too long to start. Close other apps using the camera, then try again.');
+        }
+      }, 10000);
+    };
+
+    tryAttach();
+
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+    };
   }, [cameraActive]);
 
   const stopCamera = useCallback(() => {
@@ -159,6 +230,8 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
     streamRef.current = null;
     setCameraActive(false);
     setCameraReady(false);
+    setCameraLoading(false);
+    startingRef.current = false;
   }, []);
 
   const capturePhoto = useCallback(() => {
@@ -481,10 +554,20 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
                   <>
                     <Button
                       onClick={startCamera}
-                      className="flex-1 gap-2"
+                      disabled={cameraLoading}
+                      className="flex-1 gap-2 disabled:opacity-70"
                     >
-                      <Camera className="h-4 w-4" />
-                      Open Camera
+                      {cameraLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Starting Camera…
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="h-4 w-4" />
+                          Open Camera
+                        </>
+                      )}
                     </Button>
                     <Button
                       variant="outline"

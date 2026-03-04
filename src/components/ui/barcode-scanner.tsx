@@ -22,6 +22,7 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number>(0);
+  const startingRef = useRef(false);
 
   const stopCamera = useCallback(() => {
     if (animFrameRef.current) {
@@ -33,6 +34,7 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
       streamRef.current = null;
     }
     setScanning(false);
+    startingRef.current = false;
   }, []);
 
   const handleClose = useCallback(() => {
@@ -47,6 +49,10 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
   }, [stopCamera]);
 
   const startScanning = useCallback(async () => {
+    // Guard: prevent double-clicks while getUserMedia is pending
+    if (startingRef.current) return;
+    startingRef.current = true;
+
     setIsOpen(true);
     setError(null);
     setScanning(true);
@@ -55,13 +61,41 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
     if (!('BarcodeDetector' in window)) {
       setError('Barcode scanning is not supported in this browser. Please use Chrome, Edge, or Safari, or enter the tracking number manually.');
       setScanning(false);
+      startingRef.current = false;
       return;
     }
 
     try {
+      // Clean up any leaked stream from a previous attempt
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       });
+
+      // Validate the stream has a live video track
+      const videoTracks = stream.getVideoTracks();
+      if (!videoTracks.length || videoTracks[0].readyState === 'ended') {
+        stream.getTracks().forEach((t) => t.stop());
+        setError('Camera returned an empty stream. Close other apps using the camera and try again.');
+        setScanning(false);
+        return;
+      }
+
+      // Listen for track ending unexpectedly
+      videoTracks[0].addEventListener('ended', () => {
+        setError('Camera stream ended unexpectedly. Try scanning again.');
+        setScanning(false);
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = 0;
+        }
+        streamRef.current = null;
+      }, { once: true });
+
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -99,10 +133,14 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
       const msg = err instanceof Error ? err.message : 'Camera access denied';
       if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
         setError('Camera access was blocked. Enable camera in your browser settings and reload, or enter the tracking number manually.');
+      } else if (msg.includes('NotReadable') || msg.includes('TrackStartError')) {
+        setError('Camera is in use by another app. Close it and try again.');
       } else {
         setError(`Camera not available: ${msg}. Enter the tracking number manually.`);
       }
       setScanning(false);
+    } finally {
+      startingRef.current = false;
     }
   }, [onScan, handleClose]);
 
