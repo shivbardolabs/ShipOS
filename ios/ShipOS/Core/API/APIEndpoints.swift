@@ -208,6 +208,34 @@ enum API {
         }
     }
 
+    // MARK: - Smart Intake
+
+    enum SmartIntake {
+        static func analyze(imageData: Data) -> Endpoint {
+            Endpoint(path: "/api/packages/smart-intake", method: .post)
+        }
+    }
+
+    // MARK: - Batch Operations
+
+    enum Batch {
+        static func checkOut(packageIds: [String]) -> Endpoint {
+            Endpoint(path: "/api/packages/batch/checkout", method: .post, body: BatchCheckOutRequest(packageIds: packageIds))
+        }
+
+        static func notify(packageIds: [String]) -> Endpoint {
+            Endpoint(path: "/api/packages/batch/notify", method: .post, body: BatchNotifyRequest(packageIds: packageIds))
+        }
+
+        static func updateStatus(packageIds: [String], status: String) -> Endpoint {
+            Endpoint(path: "/api/packages/batch/status", method: .post, body: BatchStatusRequest(packageIds: packageIds, status: status))
+        }
+
+        static func moveStorage(packageIds: [String], location: String) -> Endpoint {
+            Endpoint(path: "/api/packages/batch/move", method: .post, body: BatchMoveRequest(packageIds: packageIds, storageLocation: location))
+        }
+    }
+
     // MARK: - End of Day
 
     enum EndOfDay {

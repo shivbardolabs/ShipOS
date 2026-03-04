@@ -242,3 +242,23 @@ extension Package {
         )
     }
 }
+
+// MARK: - Batch Request Types
+
+struct BatchCheckOutRequest: Encodable {
+    let packageIds: [String]
+}
+
+struct BatchNotifyRequest: Encodable {
+    let packageIds: [String]
+}
+
+struct BatchStatusRequest: Encodable {
+    let packageIds: [String]
+    let status: String
+}
+
+struct BatchMoveRequest: Encodable {
+    let packageIds: [String]
+    let storageLocation: String
+}

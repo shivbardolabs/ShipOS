@@ -113,11 +113,27 @@ struct DashboardView: View {
                 }
 
                 QuickActionButton(
+                    title: "Smart Intake",
+                    icon: "camera.viewfinder",
+                    color: Color(hex: "#06b6d4")
+                ) {
+                    appState.isShowingSmartIntake = true
+                }
+
+                QuickActionButton(
+                    title: "Batch Ops",
+                    icon: "square.stack.3d.up.fill",
+                    color: Color(hex: "#f97316")
+                ) {
+                    appState.isShowingBatchOps = true
+                }
+
+                QuickActionButton(
                     title: "End of Day",
                     icon: "moon.fill",
                     color: Color(hex: "#a855f7")
                 ) {
-                    // Phase 3
+                    appState.isShowingEndOfDay = true
                 }
             }
         }

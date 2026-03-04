@@ -8,10 +8,27 @@ struct AdaptiveNavigationView: View {
     @EnvironmentObject private var authManager: AuthManager
 
     var body: some View {
-        if sizeClass == .regular {
-            iPadSidebarView
-        } else {
-            iPhoneTabView
+        Group {
+            if sizeClass == .regular {
+                iPadSidebarView
+            } else {
+                iPhoneTabView
+            }
+        }
+        .fullScreenCover(isPresented: $appState.isShowingScanner) {
+            EnhancedScannerView()
+        }
+        .sheet(isPresented: $appState.isShowingSmartIntake) {
+            SmartIntakeView()
+        }
+        .sheet(isPresented: $appState.isShowingBatchOps) {
+            BatchOperationsView()
+        }
+        .sheet(isPresented: $appState.isShowingEndOfDay) {
+            EndOfDayView()
+        }
+        .sheet(isPresented: $appState.isShowingDimensionTool) {
+            DimensionMeasurementView()
         }
     }
 
@@ -53,7 +70,7 @@ struct AdaptiveNavigationView: View {
     private var sidebarContent: some View {
         List(selection: $appState.selectedTab) {
             Section("Main") {
-                ForEach([AppTab.dashboard, .packages, .customers]) { tab in
+                ForEach([AppTab.dashboard, .packages, .mail, .customers]) { tab in
                     sidebarRow(for: tab)
                 }
             }
@@ -96,6 +113,8 @@ struct AdaptiveNavigationView: View {
             DashboardView()
         case .packages:
             PackageListView()
+        case .mail:
+            MailListView()
         case .customers:
             CustomerListView()
         case .notifications:

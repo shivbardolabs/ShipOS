@@ -28,6 +28,10 @@ final class AppState: ObservableObject {
     @Published var isShowingScanner = false
     @Published var isShowingCheckIn = false
     @Published var isShowingCheckOut = false
+    @Published var isShowingSmartIntake = false
+    @Published var isShowingBatchOps = false
+    @Published var isShowingEndOfDay = false
+    @Published var isShowingDimensionTool = false
     @Published var toastMessage: ToastMessage?
 
     func showToast(_ message: String, type: ToastType = .info) {
@@ -38,6 +42,7 @@ final class AppState: ObservableObject {
 enum AppTab: String, CaseIterable, Identifiable {
     case dashboard
     case packages
+    case mail
     case customers
     case notifications
     case settings
@@ -48,6 +53,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .dashboard: "Dashboard"
         case .packages: "Packages"
+        case .mail: "Mail"
         case .customers: "Customers"
         case .notifications: "Notifications"
         case .settings: "Settings"
@@ -58,6 +64,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .dashboard: "square.grid.2x2"
         case .packages: "shippingbox"
+        case .mail: "envelope"
         case .customers: "person.2"
         case .notifications: "bell"
         case .settings: "gearshape"
@@ -68,6 +75,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .dashboard: "square.grid.2x2.fill"
         case .packages: "shippingbox.fill"
+        case .mail: "envelope.fill"
         case .customers: "person.2.fill"
         case .notifications: "bell.fill"
         case .settings: "gearshape.fill"
