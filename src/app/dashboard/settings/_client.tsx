@@ -43,7 +43,6 @@ import {
   Palette,
   Sun,
   Moon,
-  CreditCard,
   Crown,
   Star,
   Zap,
@@ -70,7 +69,6 @@ import { ReceiptsTab } from './components/receipts-tab';
 import { PrintersTab } from './components/printers-tab';
 import { NotificationsTab } from './components/notifications-tab';
 import { UsersTab } from './components/users-tab';
-import { BillingTab } from './components/billing-tab';
 import { SubscriptionTab } from './components/subscription-tab';
 import { AppearanceTab } from './components/appearance-tab';
 import {
@@ -812,8 +810,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
   /*    Label Printers → Hardware config (admin+ only)                 */
   /*    Notifications → Email, SMS, alert templates                    */
   /*    Users & Roles → User management (admin+ only)                  */
-  /*    Billing → Billing & subscription (owner/admin only)            */
-  /*    Subscription → Plan management (owner/admin only)              */
+  /*    Subscription → Plan, billing & payment (owner/admin only)      */
   /*    Appearance → Theme, branding                                   */
   /*    Migration → Data import (admin+ only)                          */
   /*                                                                    */
@@ -830,22 +827,22 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     superadmin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
-      billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
+      'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
     admin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
-      billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
+      'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
     manager: {
       general: 'view_only', mailbox: 'view_only', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
-      billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
+      'billing-models': 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
       'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden' },
     employee: {
       general: 'hidden', mailbox: 'hidden', rates: 'view_only', 'storage-locations': 'view_only', dropoff: 'hidden',
       receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
-      billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
+      'billing-models': 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
       'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden' } };
 
   const role = (localUser?.role as UserRole) || 'employee';
@@ -861,7 +858,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     { id: 'printers', label: 'Label Printers', icon: <Printer className="h-4 w-4" />, section: 'Hardware' },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" />, section: 'Communications' },
     { id: 'users', label: 'Users & Roles', icon: <Users className="h-4 w-4" />, section: 'Administration' },
-    { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" />, section: 'Administration' },
+    /* BAR-389: "Billing" merged into "Subscription" — removed standalone billing tab */
     { id: 'billing-models', label: 'Billing Models', icon: <Layers className="h-4 w-4" />, section: 'Administration' },
     { id: 'subscription', label: 'Subscription', icon: <Crown className="h-4 w-4" />, section: 'Administration' },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" />, section: 'General' },
@@ -1020,21 +1017,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
             />
           </TabPanel>
 
-          <TabPanel active={activeTab === 'billing'}>
-            <BillingTab
-              cardholderName={cardholderName} setCardholderName={setCardholderName}
-              cardNumber={cardNumber} setCardNumber={setCardNumber}
-              cardExpiry={cardExpiry} setCardExpiry={setCardExpiry}
-              cardCvc={cardCvc} setCardCvc={setCardCvc}
-              billingAddress={billingAddress} setBillingAddress={setBillingAddress}
-              billingCity={billingCity} setBillingCity={setBillingCity}
-              billingState={billingState} setBillingState={setBillingState}
-              billingZip={billingZip} setBillingZip={setBillingZip}
-              billingSaved={billingSaved} setBillingSaved={setBillingSaved}
-              billingSaving={billingSaving} setBillingSaving={setBillingSaving}
-            />
-          </TabPanel>
-
+          {/* BAR-389: Billing merged into Subscription tab */}
           <TabPanel active={activeTab === 'billing-models'}>
             <BillingModelsTab />
           </TabPanel>
@@ -1045,6 +1028,16 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
               billingCycle={billingCycle} setBillingCycle={setBillingCycle}
               showChangePlanConfirm={showChangePlanConfirm} setShowChangePlanConfirm={setShowChangePlanConfirm}
               pendingPlan={pendingPlan} setPendingPlan={setPendingPlan}
+              cardholderName={cardholderName} setCardholderName={setCardholderName}
+              cardNumber={cardNumber} setCardNumber={setCardNumber}
+              cardExpiry={cardExpiry} setCardExpiry={setCardExpiry}
+              cardCvc={cardCvc} setCardCvc={setCardCvc}
+              billingAddress={billingAddress} setBillingAddress={setBillingAddress}
+              billingCity={billingCity} setBillingCity={setBillingCity}
+              billingState={billingState} setBillingState={setBillingState}
+              billingZip={billingZip} setBillingZip={setBillingZip}
+              billingSaved={billingSaved} setBillingSaved={setBillingSaved}
+              billingSaving={billingSaving} setBillingSaving={setBillingSaving}
             />
           </TabPanel>
 
