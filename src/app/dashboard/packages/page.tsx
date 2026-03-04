@@ -32,9 +32,11 @@ import {
   Download,
   Plus,
   CheckCircle2,
+  Printer,
 } from 'lucide-react';
 import { useActivityLog } from '@/components/activity-log-provider';
 import { PrintQueueIndicator } from '@/components/packages/print-queue-indicator';
+import { printLabel } from '@/lib/labels';
 import type { Package as PackageType } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -419,6 +421,9 @@ function PackagesContent() {
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  /* BAR-383: Reprint check-in label state */
+  const [reprintLoading, setReprintLoading] = useState(false);
+
   // Sort state (BAR-338) — default: newest checked-in first
   const [sort, setSort] = useState<SortState>({ field: 'checkedInAt', direction: 'desc' });
 
@@ -519,6 +524,67 @@ function PackagesContent() {
 
       // Close the modal after release
       setSelectedPackage(null);
+    },
+    [logActivity]
+  );
+
+  /* ---- BAR-383: Reprint check-in label handler ---- */
+  const handleReprintLabel = useCallback(
+    async (pkg: PackageType) => {
+      setReprintLoading(true);
+      try {
+        const res = await fetch('/api/labels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template: 'package',
+            data: {
+              pmbNumber:
+                pkg.customer?.pmbNumber || pkg.kinekNumber || 'N/A',
+              customerName: pkg.customer
+                ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
+                : pkg.recipientName || 'Walk-In',
+              trackingNumber: pkg.trackingNumber || 'N/A',
+              carrier: pkg.carrier.toUpperCase(),
+              checkedInAt: pkg.checkedInAt,
+              packageId: pkg.id,
+              storeName: 'ShipOS Store',
+            },
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to generate label');
+        const result = await res.json();
+        printLabel(result.html);
+
+        logActivity({
+          action: 'label.reprint',
+          entityType: 'package',
+          entityId: pkg.id,
+          entityLabel: pkg.trackingNumber || pkg.id,
+          description: `Reprinted check-in label for ${
+            pkg.customer
+              ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
+              : 'Unknown'
+          } (${pkg.customer?.pmbNumber || '—'})`,
+          metadata: {
+            packageId: pkg.id,
+            trackingNumber: pkg.trackingNumber,
+            carrier: pkg.carrier,
+          },
+        });
+
+        setToast({
+          message: 'Label sent to printer',
+          type: 'success',
+        });
+      } catch {
+        setToast({
+          message: 'Failed to reprint label',
+          type: 'error',
+        });
+      } finally {
+        setReprintLoading(false);
+      }
     },
     [logActivity]
   );
@@ -917,6 +983,15 @@ function PackagesContent() {
                 onClick={() => setSelectedPackage(null)}
               >
                 Close
+              </Button>
+              {/* BAR-383: Reprint check-in label */}
+              <Button
+                variant="outline"
+                leftIcon={<Printer className="h-4 w-4" />}
+                onClick={() => handleReprintLabel(selectedPackage)}
+                disabled={reprintLoading}
+              >
+                {reprintLoading ? 'Printing…' : 'Reprint Label'}
               </Button>
               {selectedPackage.status !== 'released' && (
                 <>
