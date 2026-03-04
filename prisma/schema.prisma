@@ -1057,6 +1057,12 @@ model PrinterConfig {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // BAR-386: Label roll usage tracking
+  labelsPrinted     Int       @default(0)         // labels printed since last roll reset
+  rollCapacity      Int       @default(500)        // total labels per roll
+  lowSupplyThreshold Int      @default(50)         // warn when this many labels remain
+  rollLoadedAt      DateTime?                      // when the current roll was loaded
 }
 
 // ── SMS Consent Tracking ─────────────────────────────────────────────────────

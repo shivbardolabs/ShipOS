@@ -23,6 +23,11 @@ export interface PrinterEntry {
   type?: string;
   paperSize?: string;
   dpi?: number;
+  // BAR-386: Label roll tracking
+  labelsPrinted?: number;
+  rollCapacity?: number;
+  lowSupplyThreshold?: number;
+  rollLoadedAt?: string | null;
 }
 
 export interface StorageLocationItem {

@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LabelPreview } from '@/components/ui/label-preview';
+import { recordLabelPrint } from '@/lib/labels';
 import {
   Printer,
   RotateCcw,
@@ -158,6 +159,8 @@ export function CarrierLabelReprintModal({
       printWindow.print();
     };
     setReprinted(true);
+    // BAR-386: Track label roll usage (fire-and-forget)
+    recordLabelPrint(1);
   }, [lastLabel]);
 
   return (

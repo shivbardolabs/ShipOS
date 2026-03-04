@@ -43,7 +43,7 @@ import type { QueuedLabel } from '@/components/packages/label-print-queue';
 import type { StagingPackage } from '@/components/packages/queue-jump-modal';
 import { detectCarrier } from '@/lib/carrier-detection';
 import { ENRICHABLE_CARRIERS } from '@/lib/carrier-api';
-import { printLabel, renderPackageLabel } from '@/lib/labels';
+import { printLabel, renderPackageLabel, recordLabelPrint } from '@/lib/labels';
 import { BarcodeScanner } from '@/components/ui/barcode-scanner';
 // customers now fetched from API
 import type { Customer, ConditionTag } from '@/lib/types';
@@ -730,6 +730,8 @@ export default function CheckInPage() {
         isCarrierProgram,
       });
       printLabel(html);
+      // BAR-386: Track label roll usage (fire-and-forget)
+      recordLabelPrint(1);
     },
     [resolveRecipient, resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram, trackingNumber, selectedCarrier, customCarrierName]
   );
@@ -776,6 +778,8 @@ export default function CheckInPage() {
         isCarrierProgram,
       });
       printLabel(html);
+      // BAR-386: Track label roll usage (fire-and-forget)
+      recordLabelPrint(1);
     },
     [resolveProgramType, resolveConditionLabel, perishable, isCarrierProgram]
   );
