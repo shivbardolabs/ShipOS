@@ -121,7 +121,7 @@ interface TenantUser {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Mock printers                                                             */
+/*  Printer types (BAR-385: replaced mock data with API fetch)                */
 /* -------------------------------------------------------------------------- */
 interface PrinterEntry {
   id: string;
@@ -144,12 +144,6 @@ interface StorageLocationItem {
   isDefault: boolean;
   isActive: boolean;
 }
-
-const mockPrinters: PrinterEntry[] = [
-  { id: 'ptr_001', name: 'Front Counter Label Printer', model: 'Zebra ZD420', status: 'online', autoPrint: true, ipAddress: '192.168.1.50', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
-  { id: 'ptr_002', name: 'Back Office Printer', model: 'Zebra GK420d', status: 'online', autoPrint: false, ipAddress: '192.168.1.51', port: 9100, type: 'zpl', paperSize: '4x6', dpi: 203 },
-  { id: 'ptr_003', name: 'Receipt Printer', model: 'Zebra ZD220', status: 'offline', autoPrint: false },
-];
 
 /* -------------------------------------------------------------------------- */
 /*  Settings Page                                                             */
@@ -585,10 +579,41 @@ export default function SettingsPage() {
   const [showChangePlanConfirm, setShowChangePlanConfirm] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'enterprise' | null>(null);
 
-  // Printers
-  const [printers, setPrinters] = useState(mockPrinters);
+  // Printers — BAR-385: fetch from API instead of mock data
+  const [printers, setPrinters] = useState<PrinterEntry[]>([]);
+  const [printersLoading, setPrintersLoading] = useState(true);
   const [addingPrinter, setAddingPrinter] = useState(false);
   const [printerTestResult, setPrinterTestResult] = useState<string | null>(null);
+
+  // BAR-385: Fetch saved printers from API on mount
+  const fetchPrinters = useCallback(async () => {
+    try {
+      setPrintersLoading(true);
+      const res = await fetch('/api/settings/printer');
+      if (res.ok) {
+        const data = await res.json();
+        const entries: PrinterEntry[] = (data.printers || []).map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          name: (p.name as string) || 'Printer',
+          model: (p.type as string)?.toUpperCase() || 'Printer',
+          status: (p.isActive as boolean) !== false ? 'online' as const : 'offline' as const,
+          autoPrint: (p.isDefault as boolean) || false,
+          ipAddress: (p.ipAddress as string) || undefined,
+          port: (p.port as number) || 9100,
+          type: (p.type as string) || 'zpl',
+        }));
+        setPrinters(entries);
+      }
+    } catch {
+      // Silently fail — printers list will be empty
+    } finally {
+      setPrintersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrinters();
+  }, [fetchPrinters]);
 
   // ─── BAR-311: Service Agreement Template state ──────────────────────────
   const DEFAULT_TEMPLATE = `MAILBOX SERVICE AGREEMENT
@@ -913,6 +938,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
               printers={printers} setPrinters={setPrinters}
               addingPrinter={addingPrinter} setAddingPrinter={setAddingPrinter}
               printerTestResult={printerTestResult} setPrinterTestResult={setPrinterTestResult}
+              printersLoading={printersLoading} onRefresh={fetchPrinters}
             />
           </TabPanel>
 
