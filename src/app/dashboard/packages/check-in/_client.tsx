@@ -51,184 +51,15 @@ import { cn } from '@/lib/utils';
 import { RtsInitiateDialog } from '@/components/packages/rts-initiate-dialog';
 import { BatchSessionSummary } from '@/components/packages/batch-session-summary';
 
-/* -------------------------------------------------------------------------- */
-/*  Types                                                                     */
-/* -------------------------------------------------------------------------- */
-interface SearchCustomer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email?: string | null;
-  phone?: string | null;
-  businessName?: string | null;
-  pmbNumber: string;
-  platform: string;
-  status: string;
-  notifyEmail: boolean;
-  notifySms: boolean;
-  photoUrl?: string | null;
-  activePackageCount?: number;
-}
+/* Extracted step components */
+import { Step1IdentifyCustomer } from './components/step-1-identify';
+import { Step2CarrierSender } from './components/step-2-carrier';
+import { Step3PackageDetails } from './components/step-3-details';
+import { Step4ReviewConfirm } from './components/step-4-review';
+import { CheckInModals } from './components/check-in-modals';
+import type { SearchCustomer, DuplicatePackage, PackageProgram } from './components/types';
+import { STEPS, carrierOptions, carrierSenderMap, packageProgramOptions, detectSearchCategory } from './components/types';
 
-interface DuplicatePackage {
-  id: string;
-  trackingNumber: string;
-  carrier: string;
-  status: string;
-  checkedInAt: string;
-  customerName: string;
-  customerPmb: string;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  BAR-324: Unified search — auto-detect search category                     */
-/* -------------------------------------------------------------------------- */
-type SearchCategory = 'pmb' | 'phone' | 'name_company';
-
-const SEARCH_CATEGORY_META: Record<SearchCategory, { label: string; icon: typeof Hash; color: string }> = {
-  pmb:          { label: 'PMB #',          icon: Hash,  color: 'text-primary-400 bg-primary-500/10 border-primary-500/30' },
-  phone:        { label: 'Phone',          icon: Phone, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
-  name_company: { label: 'Name / Company', icon: User,  color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
-};
-
-/**
- * Auto-detect the search category from user input.
- *
- * Rules:
- *  - PMB pattern:   starts with "PMB" (with optional dash/space), OR purely numeric
- *  - Phone pattern: 10+ digits after stripping formatting, OR input is mostly digits (≥7) with common phone chars
- *  - Default:       Name + Company search
- */
-function detectSearchCategory(input: string): SearchCategory {
-  const trimmed = input.trim();
-  if (!trimmed) return 'name_company';
-
-  // PMB pattern: "PMB-0003", "PMB 12", "0003", "123", etc.
-  if (/^PMB[-\s]?\d*/i.test(trimmed) || /^\d+$/.test(trimmed)) {
-    return 'pmb';
-  }
-
-  // Phone pattern: strip non-digits, check length
-  const digitsOnly = trimmed.replace(/[^0-9]/g, '');
-  const isPhoneFormatted = /^[\d\s\-\(\)\+\.]+$/.test(trimmed);
-  if (digitsOnly.length >= 10 || (isPhoneFormatted && digitsOnly.length >= 7)) {
-    return 'phone';
-  }
-
-  // Default: search Name + Company
-  return 'name_company';
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Step Config                                                               */
-/* -------------------------------------------------------------------------- */
-const STEPS = [
-  { id: 1, label: 'Identify Customer' },
-  { id: 2, label: 'Carrier & Sender' },
-  { id: 3, label: 'Package Details' },
-  { id: 4, label: 'Confirm & Notify' },
-];
-
-/* -------------------------------------------------------------------------- */
-/*  Carrier Config                                                            */
-/* -------------------------------------------------------------------------- */
-const carrierOptions = [
-  { id: 'amazon', label: 'Amazon', color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20', active: 'border-orange-500 bg-orange-500/20 ring-1 ring-orange-500/30' },
-  { id: 'ups', label: 'UPS', color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30', active: 'border-amber-600 bg-amber-900/30 ring-1 ring-amber-500/30' },
-  { id: 'fedex', label: 'FedEx', color: 'border-indigo-300/40 bg-indigo-50 text-indigo-600 hover:bg-indigo-100', active: 'border-indigo-500 bg-indigo-100 ring-1 ring-indigo-500/30' },
-  { id: 'usps', label: 'USPS', color: 'border-blue-500/40 bg-blue-50 text-blue-600 hover:bg-blue-100', active: 'border-blue-500 bg-blue-100 ring-1 ring-blue-500/30' },
-  { id: 'dhl', label: 'DHL', color: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', active: 'border-yellow-500 bg-yellow-500/20 ring-1 ring-yellow-500/30' },
-  { id: 'lasership', label: 'LaserShip', color: 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20', active: 'border-green-500 bg-green-500/20 ring-1 ring-green-500/30' },
-  { id: 'temu', label: 'Temu', color: 'border-orange-600/40 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20', active: 'border-orange-600 bg-orange-600/20 ring-1 ring-orange-600/30' },
-  { id: 'ontrac', label: 'OnTrac', color: 'border-blue-600/40 bg-blue-600/10 text-blue-300 hover:bg-blue-600/20', active: 'border-blue-600 bg-blue-600/20 ring-1 ring-blue-600/30' },
-  { id: 'walmart', label: 'Walmart', color: 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20', active: 'border-blue-500 bg-blue-500/20 ring-1 ring-blue-500/30' },
-  { id: 'target', label: 'Target', color: 'border-red-500/40 bg-red-50 text-red-600 hover:bg-red-100', active: 'border-red-500 bg-red-100 ring-1 ring-red-500/30' },
-  { id: 'other', label: 'Other', color: 'border-surface-600/40 bg-surface-700/20 text-surface-400 hover:bg-surface-700/30', active: 'border-surface-500 bg-surface-700/30 ring-1 ring-surface-500/30' },
-];
-
-const carrierSenderMap: Record<string, string> = {
-  amazon: 'Amazon.com',
-  ups: '',
-  fedex: '',
-  usps: '',
-  dhl: '',
-  lasership: '',
-  temu: 'Temu.com',
-  ontrac: '',
-  walmart: 'Walmart Inc',
-  target: 'Target Corporation',
-  other: '' };
-
-/* -------------------------------------------------------------------------- */
-/*  Package type config                                                       */
-/* -------------------------------------------------------------------------- */
-const packageTypeOptions = [
-  { id: 'letter', label: 'Letter', icon: '✉️', desc: 'Envelope / Flat' },
-  { id: 'pack', label: 'Pack', icon: '📨', desc: 'Bubble mailer / Soft pack' },
-  { id: 'small', label: 'Small', icon: '📦', desc: 'Up to 2 lbs' },
-  { id: 'medium', label: 'Medium', icon: '📦', desc: 'Up to 8 lbs' },
-  { id: 'large', label: 'Large', icon: '📦', desc: 'Up to 15 lbs' },
-  { id: 'xlarge', label: 'Extra Large', icon: '🏗️', desc: '20+ lbs / Bulky' },
-];
-
-/* -------------------------------------------------------------------------- */
-/*  Package Program Types (BAR-266)                                           */
-/* -------------------------------------------------------------------------- */
-type PackageProgram = 'pmb' | 'ups_ap' | 'fedex_hal' | 'kinek' | 'amazon';
-
-const packageProgramOptions: {
-  id: PackageProgram;
-  label: string;
-  icon: string;
-  desc: string;
-  color: string;
-  activeColor: string;
-}[] = [
-  {
-    id: 'pmb',
-    label: 'PMB',
-    icon: '📬',
-    desc: 'Private Mailbox customer',
-    color: 'border-primary-500/40 bg-primary-500/10 text-primary-400 hover:bg-primary-500/20',
-    activeColor: 'border-primary-500 bg-primary-500/20 ring-1 ring-primary-500/30',
-  },
-  {
-    id: 'ups_ap',
-    label: 'UPS AP',
-    icon: '📦',
-    desc: 'UPS Access Point',
-    color: 'border-amber-700/40 bg-amber-900/20 text-amber-500 hover:bg-amber-900/30',
-    activeColor: 'border-amber-600 bg-amber-900/30 ring-1 ring-amber-500/30',
-  },
-  {
-    id: 'fedex_hal',
-    label: 'FedEx HAL',
-    icon: '📦',
-    desc: 'FedEx Hold At Location',
-    color: 'border-indigo-300/40 bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
-    activeColor: 'border-indigo-500 bg-indigo-100 ring-1 ring-indigo-500/30',
-  },
-  {
-    id: 'kinek',
-    label: 'KINEK',
-    icon: '📦',
-    desc: 'KINEK network',
-    color: 'border-teal-500/40 bg-teal-500/10 text-teal-400 hover:bg-teal-500/20',
-    activeColor: 'border-teal-500 bg-teal-500/20 ring-1 ring-teal-500/30',
-  },
-  {
-    id: 'amazon',
-    label: 'Amazon',
-    icon: '📦',
-    desc: 'Amazon packages',
-    color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20',
-    activeColor: 'border-orange-500 bg-orange-500/20 ring-1 ring-orange-500/30',
-  },
-];
-
-/* -------------------------------------------------------------------------- */
-/*  Main Component                                                            */
-/* -------------------------------------------------------------------------- */
 export default function CheckInPage() {
   const { log: logActivity, lastActionByVerb } = useActivityLog();
 
@@ -1331,6 +1162,7 @@ export default function CheckInPage() {
     postscan: 'warning',
     other: 'default' };
 
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -1348,7 +1180,6 @@ export default function CheckInPage() {
         }
       />
 
-      {/* BAR-9 Gap 5: Offline banner */}
       {!isOnline && (
         <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
           <WifiOff className="h-4 w-4 shrink-0" />
@@ -1356,16 +1187,7 @@ export default function CheckInPage() {
         </div>
       )}
 
-      {/* Hidden file input for photo capture (BAR-9 Gap 2) */}
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        multiple
-        className="hidden"
-        onChange={handlePhotoCapture}
-      />
+      <input ref={photoInputRef} type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={handlePhotoCapture} />
 
       {/* Step Progress Indicator */}
       <div className="flex items-center gap-2">
@@ -1374,7 +1196,6 @@ export default function CheckInPage() {
             <button
               onClick={() => {
                 if (s.id < step) {
-                  // BAR-325: Cancel any pending auto-advance when navigating back
                   if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
                   setStep(s.id);
                 }
@@ -1388,984 +1209,107 @@ export default function CheckInPage() {
                     : 'text-surface-500 cursor-default'
               )}
             >
-              <span
-                className={cn(
-                  'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
-                  step === s.id
-                    ? 'bg-primary-600 text-white'
-                    : s.id < step
-                      ? 'bg-emerald-100 text-emerald-600'
-                      : 'bg-surface-700 text-surface-500'
-                )}
-              >
+              <span className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                step === s.id ? 'bg-primary-600 text-white'
+                  : s.id < step ? 'bg-emerald-100 text-emerald-600' : 'bg-surface-700 text-surface-500'
+              )}>
                 {s.id < step ? <Check className="h-3.5 w-3.5" /> : s.id}
               </span>
               <span className="hidden sm:inline">{s.label}</span>
             </button>
             {idx < STEPS.length - 1 && (
-              <div
-                className={cn(
-                  'mx-1 h-px w-8 sm:w-12',
-                  s.id < step ? 'bg-emerald-500/40' : 'bg-surface-700'
-                )}
-              />
+              <div className={cn('mx-1 h-px w-8 sm:w-12', s.id < step ? 'bg-emerald-500/40' : 'bg-surface-700')} />
             )}
           </div>
         ))}
       </div>
 
-      {/* Step Content */}
       <Card padding="lg">
-        {/* ================================================================ */}
-        {/*  Step 1: Identify Customer / Recipient (BAR-266 enhanced)        */}
-        {/* ================================================================ */}
         {step === 1 && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-surface-100 mb-1">
-                Identify Recipient
-              </h2>
-              <p className="text-sm text-surface-400">
-                Select the package program, then identify the recipient
-              </p>
-            </div>
-
-            {/* Package Program Selector (BAR-266) */}
-            <div>
-              <label className="text-sm font-medium text-surface-300 mb-3 block">
-                Package Program
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {enabledPrograms.map((prog) => {
-                  const isActive = packageProgram === prog.id;
-                  return (
-                    <button
-                      key={prog.id}
-                      onClick={() => {
-                        setPackageProgram(prog.id);
-                        // Reset recipient fields when switching programs
-                        setSelectedCustomer(null);
-                        setCustomerSearch('');
-                        setIsWalkIn(false);
-                        setWalkInName('');
-                        setRecipientName('');
-                        setKinekNumber('');
-                      }}
-                      className={cn(
-                        'flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all',
-                        isActive ? prog.activeColor : prog.color
-                      )}
-                    >
-                      <span>{prog.icon}</span>
-                      <span>{prog.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ── PMB Flow ─────────────────────────────────────────────── */}
-            {packageProgram === 'pmb' && (
-              <>
-                {/* Walk-in toggle */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-800/40 border border-surface-700/50 max-w-lg">
-                  <input
-                    type="checkbox"
-                    checked={isWalkIn}
-                    onChange={(e) => { setIsWalkIn(e.target.checked); if (!e.target.checked) setWalkInName(''); setSelectedCustomer(null); }}
-                    className="h-4 w-4 rounded border-surface-600 text-primary-600 focus:ring-primary-500"
-                    id="walk-in-toggle"
-                  />
-                  <label htmlFor="walk-in-toggle" className="text-sm text-surface-300 cursor-pointer">
-                    Walk-in customer (no mailbox)
-                  </label>
-                </div>
-
-                {isWalkIn ? (
-                  <div className="max-w-lg">
-                    <label className="text-sm font-medium text-surface-300 mb-2 block">Walk-In Customer Name</label>
-                    <Input
-                      placeholder="Enter customer name..."
-                      value={walkInName}
-                      onChange={(e) => setWalkInName(e.target.value)}
-                      className="!py-3"
-                    />
-                    {walkInName.trim() && (
-                      <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> Package will be checked in for walk-in: {walkInName}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {/* BAR-324: Unified search box with auto-detect indicator */}
-                    <div className="max-w-lg space-y-2">
-                      <SearchInput
-                        placeholder="Search by PMB #, name, phone, or company..."
-                        value={customerSearch}
-                        onSearch={setCustomerSearch}
-                        autoFocus
-                      />
-                      {/* Detected category indicator — only show when user is typing */}
-                      {customerSearch.trim() && (
-                        <div className="flex items-center gap-2">
-                          {(() => {
-                            const meta = SEARCH_CATEGORY_META[detectedCategory];
-                            const Icon = meta.icon;
-                            return (
-                              <span className={cn(
-                                'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-all',
-                                meta.color,
-                              )}>
-                                <Icon className="h-3 w-3" />
-                                Searching {meta.label}
-                              </span>
-                            );
-                          })()}
-                          <span className="text-[11px] text-surface-500">
-                            {detectedCategory === 'pmb' && 'Detected number pattern'}
-                            {detectedCategory === 'phone' && 'Detected phone pattern'}
-                            {detectedCategory === 'name_company' && 'Searching name & company'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {!isWalkIn && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {filteredCustomers.map((cust) => {
-                      const isSelected = selectedCustomer?.id === cust.id;
-                      return (
-                        <button
-                          key={cust.id}
-                          onClick={() => handleCustomerSelect(cust)}
-                          className={cn(
-                            'flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
-                            isSelected
-                              ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30 scale-[0.98]'
-                              : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600 hover:bg-surface-800/60'
-                          )}
-                        >
-                          <CustomerAvatar
-                            firstName={cust.firstName}
-                            lastName={cust.lastName}
-                            photoUrl={cust.photoUrl}
-                            size="md"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-surface-200 text-sm truncate">
-                                {cust.firstName} {cust.lastName}
-                              </p>
-                              <Badge
-                                variant={
-                                  (platformColors[cust.platform] as 'default' | 'info' | 'success' | 'warning') ||
-                                  'default'
-                                }
-                                dot={false}
-                              >
-                                {cust.platform}
-                              </Badge>
-                              {/* BAR-38: Status badge for non-active customers */}
-                              {cust.status !== 'active' && (
-                                <Badge
-                                  variant={cust.status === 'suspended' ? 'warning' : 'default'}
-                                  dot={false}
-                                >
-                                  {cust.status === 'suspended' ? 'Suspended' : 'Closed'}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 mt-0.5">
-                              <span className="text-xs font-mono text-primary-600">
-                                {cust.pmbNumber}
-                              </span>
-                              {cust.businessName && (
-                                <span className="text-xs text-surface-500 truncate">
-                                  {cust.businessName}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <CheckCircle2 className="h-5 w-5 text-primary-600 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                    {filteredCustomers.length === 0 && (
-                      <div className="col-span-2 py-12 text-center text-surface-500">
-                        <Search className="mx-auto h-8 w-8 mb-3 text-surface-600" />
-                        <p>No customers found matching your search</p>
-                        <p className="text-xs text-surface-600 mt-2">
-                          If no customer can be matched, you can return this package to the sender.
-                        </p>
-                        <div className="mt-3 flex items-center justify-center gap-3">
-                          <a
-                            href="/dashboard/customers/new"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary-900/20 text-primary-400 hover:bg-primary-900/30 border border-primary-800/30 transition-colors"
-                          >
-                            <UserPlus className="h-3.5 w-3.5" />
-                            Create New Customer
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => setShowRtsDialog(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/30 transition-colors"
-                          >
-                            <Undo2 className="h-3.5 w-3.5" />
-                            Return to Sender
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ── UPS AP / FedEx HAL / Amazon Flow (BAR-266) ───────────── */}
-            {(packageProgram === 'ups_ap' || packageProgram === 'fedex_hal' || packageProgram === 'amazon') && (
-              <div className="max-w-lg space-y-4">
-                <div className="p-3 rounded-lg bg-surface-800/40 border border-surface-700/50">
-                  <p className="text-xs text-surface-400 flex items-center gap-2">
-                    <Package className="h-3.5 w-3.5" />
-                    {packageProgram === 'ups_ap' && 'UPS Access Point — transient recipient (no customer profile required)'}
-                    {packageProgram === 'fedex_hal' && 'FedEx Hold At Location — transient recipient (no customer profile required)'}
-                    {packageProgram === 'amazon' && 'Amazon package — transient recipient (no customer profile required)'}
-                  </p>
-                </div>
-                <div>
-                  <Input
-                    label="Recipient Name"
-                    placeholder="Enter recipient name from package..."
-                    value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    className="!py-3"
-                  />
-                </div>
-                {recipientName.trim() && (
-                  <p className="text-xs text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Package will be checked in for: {recipientName}
-                    <Badge variant="default" dot={false} className="ml-1">
-                      {packageProgram === 'ups_ap' ? 'UPS AP' : packageProgram === 'fedex_hal' ? 'FedEx HAL' : 'Amazon'}
-                    </Badge>
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* ── KINEK Flow (BAR-266) ─────────────────────────────────── */}
-            {packageProgram === 'kinek' && (
-              <div className="max-w-lg space-y-4">
-                <div className="p-3 rounded-lg bg-surface-800/40 border border-surface-700/50">
-                  <p className="text-xs text-surface-400 flex items-center gap-2">
-                    <Package className="h-3.5 w-3.5" />
-                    KINEK network — recipient identified by 7-digit KINEK number
-                  </p>
-                </div>
-                <div>
-                  <Input
-                    label="Recipient Name"
-                    placeholder="Enter recipient name from package..."
-                    value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    className="!py-3"
-                  />
-                </div>
-                <div>
-                  <Input
-                    label="KINEK Number"
-                    placeholder="Enter 7-digit KINEK number..."
-                    value={kinekNumber}
-                    onChange={(e) => {
-                      // Only allow digits, max 7
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 7);
-                      setKinekNumber(val);
-                    }}
-                    className="!py-3 font-mono"
-                  />
-                  {kinekNumber.length > 0 && kinekNumber.length < 7 && (
-                    <p className="mt-1 text-xs text-amber-400 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      KINEK number must be 7 digits ({kinekNumber.length}/7)
-                    </p>
-                  )}
-                  {kinekNumber.length === 7 && (
-                    <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Valid KINEK number
-                    </p>
-                  )}
-                </div>
-                {recipientName.trim() && kinekNumber.length === 7 && (
-                  <p className="text-xs text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Package will be checked in for: {recipientName}
-                    <Badge variant="default" dot={false} className="ml-1">KINEK #{kinekNumber}</Badge>
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <Step1IdentifyCustomer
+            packageProgram={packageProgram} setPackageProgram={setPackageProgram}
+            enabledPrograms={enabledPrograms as any}
+            customerSearch={customerSearch} setCustomerSearch={setCustomerSearch}
+            filteredCustomers={filteredCustomers} customersLoading={customersLoading}
+            selectedCustomer={selectedCustomer} setSelectedCustomer={setSelectedCustomer}
+            isWalkIn={isWalkIn} setIsWalkIn={setIsWalkIn}
+            walkInName={walkInName} setWalkInName={setWalkInName}
+            recipientName={recipientName} setRecipientName={setRecipientName}
+            kinekNumber={kinekNumber} setKinekNumber={setKinekNumber}
+            handleCustomerSelect={handleCustomerSelect}
+            setShowRtsDialog={setShowRtsDialog}
+            setStep={setStep} step={step}
+          />
         )}
 
-        {/* ================================================================ */}
-        {/*  Step 2: Carrier & Sender                                        */}
-        {/* ================================================================ */}
         {step === 2 && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-surface-100 mb-1">
-                Carrier & Sender
-              </h2>
-              <p className="text-sm text-surface-400">
-                Scan or enter the tracking number — carrier auto-detects. Then confirm sender.
-              </p>
-            </div>
-
-            {/* Tracking Number — moved here from Step 3 (BAR-239) */}
-            <div className="max-w-lg">
-              <label className="text-sm font-medium text-surface-300 mb-1.5 block">
-                Tracking Number
-              </label>
-              <div className="flex items-start gap-2">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Enter or scan tracking number"
-                    value={trackingNumber}
-                    onChange={(e) => handleTrackingNumberChange(e.target.value)}
-                    leftIcon={<ScanBarcode className="h-5 w-5" />}
-                    className="!py-3"
-                  />
-                </div>
-                {/* BAR-11: Camera barcode scanner */}
-                <BarcodeScanner onScan={handleScanResult} className="shrink-0 mt-0.5" />
-              </div>
-
-              {/* BAR-11: Scan success feedback */}
-              {scanFeedback && (
-                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 animate-in fade-in-0 duration-200">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <p className="text-xs text-emerald-300 font-medium">{scanFeedback}</p>
-                </div>
-              )}
-
-              {/* BAR-11: Keyboard wedge hint */}
-              <p className="mt-1.5 text-xs text-surface-500">
-                <Camera className="h-3 w-3 inline mr-1" />
-                Tap &quot;Scan Barcode&quot; for camera, or use a USB scanner — it auto-detects
-              </p>
-              {trackingNumber.trim() && !selectedCarrier && (
-                <p className="mt-1 text-xs text-amber-400">
-                  <AlertTriangle className="h-3 w-3 inline mr-1" />
-                  Could not auto-detect carrier — please select below
-                </p>
-              )}
-              {trackingNumber.trim() && selectedCarrier && carrierAutoSuggested && (
-                <div className="mt-1 flex items-center gap-2">
-                  <p className="text-xs text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Carrier auto-detected: {selectedCarrier.toUpperCase()}
-                  </p>
-                  <button
-                    onClick={() => { setSelectedCarrier(''); setCarrierAutoSuggested(false); }}
-                    className="text-xs text-primary-400 hover:text-primary-300 underline"
-                  >
-                    Select Different Carrier
-                  </button>
-                </div>
-              )}
-              {checkingTracking && (
-                <p className="mt-1 text-xs text-surface-500 flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Checking tracking number...
-                </p>
-              )}
-              {/* BAR-328: Inline duplicate warning in Step 2 */}
-              {duplicatePackage && !checkingTracking && (
-                <div className="mt-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-amber-300">
-                        Duplicate tracking number detected
-                      </p>
-                      <p className="text-xs text-surface-400 mt-0.5">
-                        Already checked in for {duplicatePackage.customerName} ({duplicatePackage.customerPmb}) — {duplicatePackage.status.replace('_', ' ')} since {new Date(duplicatePackage.checkedInAt).toLocaleDateString()}
-                      </p>
-                      {duplicateAcknowledged ? (
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Override acknowledged{duplicateOverrideReason ? `: ${duplicateOverrideReason}` : ''}
-                        </div>
-                      ) : (
-                        <button
-                          className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
-                          onClick={() => setShowDuplicateModal(true)}
-                        >
-                          Review &amp; override
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Carrier Grid */}
-            <div>
-              <label className="text-sm font-medium text-surface-300 mb-3 block">
-                Carrier {selectedCarrier && <span className="text-xs text-surface-500 ml-2">(tap to change)</span>}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {carrierOptions.map((carrier) => {
-                  const isActive = selectedCarrier === carrier.id;
-                  return (
-                    <button
-                      key={carrier.id}
-                      onClick={() => handleCarrierSelect(carrier.id)}
-                      className={cn(
-                        'flex flex-col items-center justify-center gap-2 rounded-xl border px-4 py-4 transition-all',
-                        isActive
-                          ? carrier.active
-                          : carrier.color
-                      )}
-                    >
-                      <CarrierLogo carrier={carrier.id} size={28} />
-                      <span className="text-xs font-medium opacity-80">{carrier.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Custom carrier name when "Other" is selected */}
-            {selectedCarrier === 'other' && (
-              <div className="max-w-md">
-                <Input
-                  label="Custom Carrier Name"
-                  placeholder="e.g. Veho, AxleHire, CDL..."
-                  value={customCarrierName}
-                  onChange={(e) => setCustomCarrierName(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Sender Name with autocomplete (BAR-239) */}
-            <div className="max-w-md relative" ref={senderRef}>
-              <Input
-                label="Sender Name"
-                placeholder="e.g. Amazon.com, John Smith"
-                value={senderName}
-                onChange={(e) => {
-                  setSenderName(e.target.value);
-                  setShowSenderSuggestions(true);
-                }}
-                onFocus={() => {
-                  if (senderSuggestions.length > 0) setShowSenderSuggestions(true);
-                }}
-              />
-              {/* Sender autocomplete dropdown (BAR-239) */}
-              {showSenderSuggestions && senderSuggestions.length > 0 && senderName.length >= 2 && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg border border-surface-700 bg-surface-900 shadow-xl overflow-hidden">
-                  {senderSuggestions
-                    .filter((s) => s.toLowerCase() !== senderName.toLowerCase())
-                    .map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => {
-                          setSenderName(suggestion);
-                          setShowSenderSuggestions(false);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <Step2CarrierSender
+            trackingNumber={trackingNumber}
+            handleTrackingNumberChange={handleTrackingNumberChange as any}
+            selectedCarrier={selectedCarrier}
+            handleCarrierSelect={handleCarrierSelect}
+            carrierAutoSuggested={carrierAutoSuggested} setCarrierAutoSuggested={setCarrierAutoSuggested}
+            setSelectedCarrier={setSelectedCarrier}
+            setCustomCarrierName={setCustomCarrierName}
+            customCarrierName={customCarrierName}
+            senderName={senderName} setSenderName={setSenderName}
+            senderSuggestions={senderSuggestions}
+            showSenderSuggestions={showSenderSuggestions} setShowSenderSuggestions={setShowSenderSuggestions}
+            senderRef={senderRef as React.RefObject<HTMLElement | null>}
+            checkingTracking={checkingTracking}
+            duplicatePackage={duplicatePackage}
+            duplicateAcknowledged={duplicateAcknowledged}
+            duplicateOverrideReason={duplicateOverrideReason}
+            setShowDuplicateModal={setShowDuplicateModal}
+            scanFeedback={scanFeedback as any}
+            handleScanResult={handleScanResult}
+            setStep={setStep} step={step}
+          />
         )}
 
-        {/* ================================================================ */}
-        {/*  Step 3: Package Details                                         */}
-        {/* ================================================================ */}
         {step === 3 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-surface-100 mb-1">
-                Package Details
-              </h2>
-              <p className="text-sm text-surface-400">
-                Describe the package characteristics
-              </p>
-            </div>
-
-            {/* BAR-328: Duplicate tracking warning with override status */}
-            {duplicatePackage && !showDuplicateModal && (
-              <div className={cn(
-                'p-4 rounded-xl border flex items-start gap-3',
-                duplicateAcknowledged
-                  ? 'border-emerald-500/30 bg-emerald-500/5'
-                  : 'border-amber-500/30 bg-amber-500/5'
-              )}>
-                {duplicateAcknowledged ? (
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  {duplicateAcknowledged ? (
-                    <>
-                      <p className="text-sm font-medium text-emerald-300">Duplicate override active</p>
-                      <p className="text-xs text-surface-400 mt-1">
-                        Proceeding with re-check-in for tracking number already assigned to {duplicatePackage.customerName} ({duplicatePackage.customerPmb}).
-                        {duplicateOverrideReason && <> Reason: {duplicateOverrideReason}</>}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium text-amber-300">Duplicate tracking number detected</p>
-                      <p className="text-xs text-surface-400 mt-1">
-                        This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
-                      </p>
-                      <button
-                        className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
-                        onClick={() => setShowDuplicateModal(true)}
-                      >
-                        Review &amp; override
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Package Type Selector */}
-            <div>
-              <label className="text-sm font-medium text-surface-300 mb-3 block">
-                Package Type
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {packageTypeOptions.map((pt) => {
-                  const isActive = packageType === pt.id;
-                  return (
-                    <button
-                      key={pt.id}
-                      onClick={() => setPackageType(pt.id)}
-                      className={cn(
-                        'flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all',
-                        isActive
-                          ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500/30'
-                          : 'border-surface-700/50 bg-surface-900/60 hover:border-surface-600'
-                      )}
-                    >
-                      <span className="text-2xl">{pt.icon}</span>
-                      <span
-                        className={cn(
-                          'text-sm font-medium',
-                          isActive ? 'text-primary-600' : 'text-surface-300'
-                        )}
-                      >
-                        {pt.label}
-                      </span>
-                      <span className="text-[10px] text-surface-500">
-                        {pt.desc}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div className="flex flex-wrap gap-4">
-              <ToggleSwitch
-                label="Hazardous Materials"
-                icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
-                checked={hazardous}
-                onChange={setHazardous}
-              />
-              <ToggleSwitch
-                label="Perishable"
-                icon={<Snowflake className="h-4 w-4 text-blue-600" />}
-                checked={perishable}
-                onChange={(val) => {
-                  setPerishable(val);
-                  if (!val) setPerishableWarningAcked(false);
-                }}
-              />
-              <ToggleSwitch
-                label="Requires Signature"
-                icon={<CheckCircle2 className="h-4 w-4 text-purple-500" />}
-                checked={requiresSignature}
-                onChange={setRequiresSignature}
-              />
-            </div>
-
-            {/* Conditional inline alerts (kept for reference even with modals) */}
-            {(hazardous || perishable) && (
-              <div className={cn(
-                'p-4 rounded-xl border space-y-2',
-                hazardous
-                  ? 'bg-amber-500/5 border-amber-500/20'
-                  : 'bg-blue-500/5 border-blue-500/20'
-              )}>
-                {hazardous && (
-                  <div className="flex items-center gap-2 text-sm text-amber-400">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span><strong>Hazardous Materials:</strong> Package must be stored in hazmat-designated area. Notify manager on duty.</span>
-                  </div>
-                )}
-                {perishable && (
-                  <div className="flex items-center gap-2 text-sm text-blue-400">
-                    <Snowflake className="h-4 w-4 shrink-0" />
-                    <span><strong>Perishable:</strong> Customer will receive an urgent notification. Package should be released within 24 hours.</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Condition + Photo Capture (BAR-9 Gap 2) */}
-            <div className="flex items-end gap-3">
-              <div className="max-w-xs flex-1">
-                <Select
-                  label="Condition"
-                  value={condition}
-                  onChange={(e) => {
-                    setCondition(e.target.value);
-                    if (e.target.value !== 'other') setConditionOther('');
-                  }}
-                  options={[
-                    { value: 'good', label: 'Good' },
-                    { value: 'damaged', label: 'Damaged' },
-                    { value: 'wet', label: 'Wet' },
-                    { value: 'opened', label: 'Opened' },
-                    { value: 'partially_opened', label: 'Partially Opened' },
-                    { value: 'other', label: 'Other' },
-                  ]}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-lg border transition-all',
-                  condition !== 'good'
-                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-400 animate-pulse hover:bg-amber-500/20'
-                    : 'border-surface-600/50 bg-surface-800/50 text-surface-400 hover:border-surface-500 hover:text-surface-300'
-                )}
-                title="Take photo of package condition"
-              >
-                <Camera className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Photo previews (BAR-9 Gap 2) */}
-            {photos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {photos.map((photo, idx) => (
-                  <div key={idx} className="relative group">
-                    <img
-                      src={photo}
-                      alt={`Condition photo ${idx + 1}`}
-                      className="h-16 w-16 rounded-lg object-cover border border-surface-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
-                      className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {condition === 'other' && (
-              <div className="max-w-lg">
-                <Input
-                  label="Describe Condition"
-                  placeholder="Describe the condition of the package..."
-                  value={conditionOther}
-                  onChange={(e) => setConditionOther(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Storage Location — BAR-326: Dropdown from defined locations + custom entry */}
-            <div className="max-w-lg">
-              {definedStorageLocations.length > 0 && !storageLocationCustom ? (
-                <div className="flex flex-col gap-1.5">
-                  <Select
-                    label="Storage Location"
-                    placeholder="Select a location…"
-                    value={storageLocation}
-                    onChange={(e) => {
-                      if (e.target.value === '__custom__') {
-                        setStorageLocationCustom(true);
-                        setStorageLocation('');
-                      } else {
-                        setStorageLocation(e.target.value);
-                      }
-                    }}
-                    options={[
-                      ...definedStorageLocations.map((l) => ({ value: l.name, label: l.name })),
-                      { value: '__custom__', label: '✏️ Enter custom location…' },
-                    ]}
-                    helperText="Where this package will be stored in your facility"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  <Input
-                    label="Storage Location"
-                    placeholder="e.g. Shelf A3, Bin 12, Rack B-2..."
-                    value={storageLocation}
-                    onChange={(e) => setStorageLocation(e.target.value)}
-                    helperText="Where this package will be stored in your facility"
-                  />
-                  {definedStorageLocations.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStorageLocationCustom(false);
-                        const defaultLoc = definedStorageLocations.find((l) => l.isDefault);
-                        setStorageLocation(defaultLoc ? defaultLoc.name : definedStorageLocations[0]?.name || '');
-                      }}
-                      className="text-xs text-primary-400 hover:text-primary-300 text-left"
-                    >
-                      ← Back to predefined locations
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div className="max-w-lg">
-              <Textarea
-                label="Notes"
-                placeholder="Any special handling instructions..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* Camera Measure Dimensions */}
-            <div className="max-w-lg">
-              <CameraMeasure
-                dimensions={packageDimensions}
-                onChange={setPackageDimensions}
-                onSuggestPackageType={(type) => {
-                  // Auto-select package type from AI suggestion if not already set
-                  if (!packageType) setPackageType(type);
-                }}
-              />
-            </div>
-          </div>
+          <Step3PackageDetails
+            packageType={packageType} setPackageType={setPackageType}
+            packageDimensions={packageDimensions} setPackageDimensions={setPackageDimensions}
+            hazardous={hazardous} setHazardous={setHazardous}
+            perishable={perishable} setPerishable={setPerishable}
+            setPerishableWarningAcked={setPerishableWarningAcked}
+            condition={condition} setCondition={setCondition}
+            conditionOther={conditionOther} setConditionOther={setConditionOther}
+            notes={notes} setNotes={setNotes}
+            storageLocation={storageLocation} setStorageLocation={setStorageLocation}
+            storageLocationCustom={storageLocationCustom} setStorageLocationCustom={setStorageLocationCustom}
+            requiresSignature={requiresSignature} setRequiresSignature={setRequiresSignature}
+            definedStorageLocations={definedStorageLocations}
+            photos={photos} setPhotos={setPhotos} photoInputRef={photoInputRef}
+            duplicatePackage={duplicatePackage} duplicateAcknowledged={duplicateAcknowledged}
+            duplicateOverrideReason={duplicateOverrideReason}
+            showDuplicateModal={showDuplicateModal} setShowDuplicateModal={setShowDuplicateModal}
+            setStep={setStep} step={step}
+          />
         )}
 
-        {/* ================================================================ */}
-        {/*  Step 4: Confirm & Notify                                        */}
-        {/* ================================================================ */}
         {step === 4 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-surface-100 mb-1">
-                Confirm & Notify
-              </h2>
-              <p className="text-sm text-surface-400">
-                Review the information and select notification options
-              </p>
-            </div>
-
-            {/* Summary Card */}
-            <div className="rounded-xl border border-surface-700/50 bg-surface-900/60 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider">
-                Package Summary
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <SummaryField
-                  label="Customer"
-                  value={
-                    selectedCustomer
-                      ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-                      : isWalkIn ? walkInName : '—'
-                  }
-                />
-                <SummaryField
-                  label="PMB"
-                  value={isWalkIn ? 'Walk-In' : (selectedCustomer?.pmbNumber || '—')}
-                  mono
-                />
-                <SummaryField
-                  label="Store"
-                  value={isWalkIn ? '—' : (selectedCustomer?.platform || '—')}
-                />
-                <SummaryField
-                  label="Carrier"
-                  value={
-                    carrierOptions.find((c) => c.id === selectedCarrier)
-                      ?.label || '—'
-                  }
-                />
-                <SummaryField
-                  label="Sender"
-                  value={senderName || '—'}
-                />
-                <SummaryField
-                  label="Package Type"
-                  value={
-                    packageTypeOptions.find((p) => p.id === packageType)
-                      ?.label || '—'
-                  }
-                />
-                <SummaryField
-                  label="Tracking #"
-                  value={trackingNumber || 'Not provided'}
-                  mono
-                />
-                <SummaryField
-                  label="Condition"
-                  value={
-                    condition === 'other'
-                      ? conditionOther
-                        ? `Other — ${conditionOther}`
-                        : 'Other'
-                      : condition === 'partially_opened'
-                        ? 'Partially Opened'
-                        : condition.charAt(0).toUpperCase() + condition.slice(1)
-                  }
-                />
-                <SummaryField
-                  label="Special"
-                  value={
-                    [hazardous && 'Hazardous', perishable && 'Perishable', requiresSignature && 'Signature Required']
-                      .filter(Boolean)
-                      .join(', ') || 'None'
-                  }
-                />
-                {storageLocation && (
-                  <SummaryField
-                    label="Storage Location"
-                    value={storageLocation}
-                  />
-                )}
-              </div>
-              {(packageDimensions.lengthIn || packageDimensions.widthIn || packageDimensions.heightIn) && (
-                <div className="pt-3 border-t border-surface-800">
-                  <SummaryField
-                    label="Dimensions"
-                    value={`${packageDimensions.lengthIn || '–'} × ${packageDimensions.widthIn || '–'} × ${packageDimensions.heightIn || '–'} in${packageDimensions.weightLbs ? ` • ${packageDimensions.weightLbs} lbs` : ''}${packageDimensions.source === 'camera_ai' ? ' (📐 AI measured)' : ''}`}
-                  />
-                </div>
-              )}
-              {notes && (
-                <div className="pt-3 border-t border-surface-800">
-                  <SummaryField label="Notes" value={notes} />
-                </div>
-              )}
-
-              {/* BAR-328: Duplicate override notice in summary */}
-              {duplicatePackage && duplicateAcknowledged && (
-                <div className="pt-3 border-t border-amber-500/20">
-                  <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-amber-300 font-medium mb-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      Duplicate Override Active
-                    </div>
-                    <div className="flex justify-between text-surface-400">
-                      <span>Original Package:</span>
-                      <span className="text-surface-300">{duplicatePackage.customerName} — {duplicatePackage.status.replace('_', ' ')}</span>
-                    </div>
-                    <div className="flex justify-between text-surface-400">
-                      <span>Override Reason:</span>
-                      <span className="text-surface-300">{duplicateOverrideReason}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Notification Preview */}
-            <div className="rounded-xl border border-surface-700/50 bg-surface-900/60 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-surface-300 uppercase tracking-wider">
-                Notification Settings
-              </h3>
-
-              {selectedCustomer?.email && (
-                <div className="flex items-center gap-3 text-sm text-surface-400">
-                  <Mail className="h-4 w-4 text-blue-600" />
-                  <span>
-                    Email will be sent to{' '}
-                    <span className="text-surface-200">
-                      {selectedCustomer.email}
-                    </span>
-                  </span>
-                </div>
-              )}
-              {selectedCustomer?.phone && (
-                <div className="flex items-center gap-3 text-sm text-surface-400">
-                  <MessageSquare className="h-4 w-4 text-emerald-600" />
-                  <span>
-                    SMS will be sent to{' '}
-                    <span className="text-surface-200">
-                      {selectedCustomer.phone}
-                    </span>
-                  </span>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3 pt-2">
-                <CheckboxOption
-                  label="Print shelf label"
-                  checked={printLabelEnabled}
-                  onChange={setPrintLabelEnabled}
-                  icon={<Printer className="h-4 w-4" />}
-                />
-                <CheckboxOption
-                  label="Send email notification"
-                  checked={sendEmail}
-                  onChange={setSendEmail}
-                  icon={<Mail className="h-4 w-4" />}
-                  disabled={!selectedCustomer?.notifyEmail}
-                />
-                <CheckboxOption
-                  label="Send SMS notification"
-                  checked={sendSms}
-                  onChange={setSendSms}
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  disabled={!selectedCustomer?.notifySms}
-                />
-              </div>
-            </div>
-
-            {/* Submit Error (BAR-260) */}
-            {submitError && (
-              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-red-300">Check-in failed</p>
-                  <p className="text-xs text-surface-400 mt-1">{submitError}</p>
-                  <button
-                    onClick={() => setSubmitError(null)}
-                    className="text-xs text-primary-400 hover:text-primary-300 underline mt-1"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <Step4ReviewConfirm
+            trackingNumber={trackingNumber} selectedCarrier={selectedCarrier}
+            senderName={senderName} packageType={packageType}
+            packageDimensions={packageDimensions}
+            hazardous={hazardous} perishable={perishable}
+            condition={condition} conditionOther={conditionOther}
+            notes={notes} storageLocation={storageLocation}
+            requiresSignature={requiresSignature}
+            selectedCustomer={selectedCustomer} isWalkIn={isWalkIn} walkInName={walkInName}
+            duplicatePackage={duplicatePackage} duplicateAcknowledged={duplicateAcknowledged}
+            duplicateOverrideReason={duplicateOverrideReason}
+            submitError={submitError} setSubmitError={setSubmitError}
+            printLabelEnabled={printLabelEnabled} setPrintLabelEnabled={setPrintLabelEnabled}
+            sendEmail={sendEmail} setSendEmail={setSendEmail}
+            sendSms={sendSms} setSendSms={setSendSms}
+            setStep={setStep} step={step}
+          />
         )}
+
 
         {/* Navigation (BAR-9: added Cancel button + offline disable) */}
         <div className="flex items-center justify-between pt-6 mt-6 border-t border-surface-800">
@@ -2413,497 +1357,42 @@ export default function CheckInPage() {
             </Button>
           )}
         </div>
+
       </Card>
 
-      {/* ================================================================== */}
-      {/*  BAR-245: Size Warning Modal (Large / Extra Large)                  */}
-      {/* ================================================================== */}
-      <Modal
-        open={showSizeWarning}
-        onClose={() => { setShowSizeWarning(false); setSizeWarningAcked(true); }}
-        title="Large Package Notice"
-        size="sm"
-        footer={
-          <Button onClick={() => { setShowSizeWarning(false); setSizeWarningAcked(true); }}>
-            OK
-          </Button>
-        }
-      >
-        <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
-            <Package className="h-7 w-7 text-amber-600" />
-          </div>
-          <p className="text-sm text-surface-300 max-w-xs">
-            This customer will be notified this package will accrue <strong className="text-surface-100">storage fees</strong> after the free storage period ends.
-          </p>
-          <p className="mt-3 text-xs text-surface-500 max-w-xs">
-            The notification will include: &ldquo;Due to its size, this package will accrue storage fees of $1/day if not picked up within 30 days of receipt.&rdquo;
-          </p>
-        </div>
-      </Modal>
-
-      {/* ================================================================== */}
-      {/*  BAR-245: Perishable Warning Modal                                  */}
-      {/* ================================================================== */}
-      <Modal
-        open={showPerishableWarning}
-        onClose={() => { setShowPerishableWarning(false); setPerishableWarningAcked(true); }}
-        title="Perishable Package Notice"
-        size="sm"
-        footer={
-          <Button onClick={() => { setShowPerishableWarning(false); setPerishableWarningAcked(true); }}>
-            OK
-          </Button>
-        }
-      >
-        <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 mb-4">
-            <Snowflake className="h-7 w-7 text-blue-600" />
-          </div>
-          <p className="text-sm text-surface-300 max-w-xs">
-            This customer will be notified this package <strong className="text-surface-100">must be picked up within 24 hours</strong>.
-          </p>
-          <p className="mt-3 text-xs text-surface-500 max-w-xs">
-            The notification will include: &ldquo;This package contains perishable goods. Please pick up within 24 hours or it may be disposed of.&rdquo;
-          </p>
-        </div>
-      </Modal>
-
-      {/* ================================================================== */}
-      {/*  BAR-328: Duplicate Tracking Number Modal (enhanced)                */}
-      {/* ================================================================== */}
-      <Modal
-        open={showDuplicateModal}
-        onClose={() => setShowDuplicateModal(false)}
-        title="Duplicate Tracking Number"
-        size="md"
-        footer={
-          <div className="flex flex-wrap gap-2 justify-end">
-            <Button
-              variant="secondary"
-              leftIcon={<Eye className="h-4 w-4" />}
-              onClick={() => {
-                setShowDuplicateModal(false);
-                window.open(`/dashboard/packages?id=${duplicatePackage?.id}`, '_blank');
-              }}
-            >
-              View Existing
-            </Button>
-            <Button
-              variant="secondary"
-              leftIcon={<RefreshCw className="h-4 w-4" />}
-              onClick={() => {
-                setShowDuplicateModal(false);
-                setTrackingNumber('');
-                setDuplicatePackage(null);
-                setDuplicateAcknowledged(false);
-                setDuplicateOverrideReason('');
-              }}
-            >
-              Clear &amp; Re-enter
-            </Button>
-            <Button
-              variant="secondary"
-              leftIcon={<Hash className="h-4 w-4" />}
-              onClick={handleGenerateTracking}
-            >
-              Generate New
-            </Button>
-            <Button
-              leftIcon={<AlertTriangle className="h-4 w-4" />}
-              disabled={!duplicateOverrideReason.trim()}
-              onClick={() => {
-                setDuplicateAcknowledged(true);
-                setShowDuplicateModal(false);
-              }}
-              className="!bg-amber-600 hover:!bg-amber-700 !text-white"
-            >
-              Override &amp; Continue
-            </Button>
-          </div>
-        }
-      >
-        <div className="py-2">
-          <div className="flex items-start gap-3 mb-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-surface-200">
-                This tracking number is already in the system
-              </p>
-              <p className="text-xs text-surface-400 mt-1">
-                Check-in is blocked by default. If this is a legitimate re-delivery (e.g., returned package, replacement), enter a reason below to override.
-              </p>
-            </div>
-          </div>
-
-          {/* Existing package details */}
-          {duplicatePackage && (
-            <div className="bg-surface-800/60 rounded-lg p-3 text-xs space-y-1.5 mb-4">
-              <p className="text-xs font-medium text-surface-300 mb-2">Existing Package</p>
-              <div className="flex justify-between">
-                <span className="text-surface-500">Tracking:</span>
-                <span className="font-mono text-surface-300">{duplicatePackage.trackingNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-surface-500">Customer:</span>
-                <span className="text-surface-300">{duplicatePackage.customerName} ({duplicatePackage.customerPmb})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-surface-500">Status:</span>
-                <span className="text-surface-300 capitalize">{duplicatePackage.status.replace('_', ' ')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-surface-500">Checked In:</span>
-                <span className="text-surface-300">{new Date(duplicatePackage.checkedInAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Override reason */}
-          <div>
-            <label className="text-sm font-medium text-surface-300 mb-1.5 block">
-              Override Reason <span className="text-red-400">*</span>
-            </label>
-            <Select
-              value={duplicateOverrideReason}
-              onChange={(e) => setDuplicateOverrideReason(e.target.value)}
-              options={[
-                { value: '', label: 'Select a reason...' },
-                { value: 'Re-delivery', label: 'Re-delivery — package was returned and re-sent' },
-                { value: 'Replacement', label: 'Replacement — carrier sent a replacement' },
-                { value: 'Split shipment', label: 'Split shipment — same tracking, multiple boxes' },
-                { value: 'Carrier reused tracking', label: 'Carrier reused tracking number' },
-                { value: 'Other', label: 'Other' },
-              ]}
-            />
-            <p className="mt-1.5 text-[11px] text-surface-500">
-              This reason will be logged in the audit trail and linked to the original package.
-            </p>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ================================================================== */}
-      {/*  Success Modal                                                      */}
-      {/* ================================================================== */}
-      <Modal
-        open={showSuccess}
-        onClose={handleReset}
-        title="Package Checked In"
-        size="sm"
-        persistent
-        footer={
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => (window.location.href = checkedInPackageId
-                  ? `/dashboard/packages?id=${checkedInPackageId}`
-                  : '/dashboard/packages')}
-                className="flex-1"
-              >
-                View Package
-              </Button>
-              <Button onClick={handleReset} variant="secondary" className="flex-1">New Check-In</Button>
-            </div>
-            {/* BAR-9 Gap 3: Check in another for same customer */}
-            {(selectedCustomer || isWalkIn) && (
-              <Button onClick={handleCheckInAnother} className="w-full">
-                <Package className="h-4 w-4 mr-2" />
-                Check in another for this customer
-              </Button>
-            )}
-            {/* BAR-40: Done — show batch session summary */}
-            {batchCount > 0 && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  // Add the last package to session list
-                  if (checkedInPackageId && !batchSessionPackages.find((p) => p.id === checkedInPackageId)) {
-                    setBatchSessionPackages((prev) => [
-                      ...prev,
-                      {
-                        id: checkedInPackageId,
-                        trackingNumber: trackingNumber || undefined,
-                        carrier: selectedCarrier || 'other',
-                        customerName: selectedCustomer
-                          ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-                          : (walkInName || 'Walk-in'),
-                        pmbNumber: selectedCustomer?.pmbNumber || 'N/A',
-                        packageType: packageType || 'medium',
-                        checkedInAt: new Date().toISOString(),
-                        labelPrinted: true,
-                        notified: sendEmail || sendSms,
-                      },
-                    ]);
-                  }
-                  // Send consolidated notification
-                  if (selectedCustomer?.id) {
-                    fetch(`/api/packages/batch-notify`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ customerId: selectedCustomer.id }),
-                    }).catch(() => {});
-                  }
-                  setShowBatchSummary(true);
-                  setShowSuccess(false);
-                }}
-                className="w-full"
-              >
-                Done — View Session Summary ({batchCount + 1} packages)
-              </Button>
-            )}
-          </div>
-        }
-      >
-        <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
-            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-surface-100 mb-1">
-            Successfully Checked In!
-          </h3>
-          {/* BAR-9 Gap 3: Show batch count */}
-          {batchCount > 0 && (
-            <p className="text-xs text-primary-400 mb-2">
-              📦 {batchCount + 1} packages checked in this session
-            </p>
-          )}
-          <p className="text-sm text-surface-400 max-w-xs">
-            Package for{' '}
-            <span className="text-surface-200 font-medium">
-              {isWalkIn
-                ? walkInName
-                : selectedCustomer
-                  ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
-                  : ''
-              }
-            </span>{' '}
-            {!isWalkIn && selectedCustomer?.pmbNumber ? `(${selectedCustomer.pmbNumber}) ` : ''}
-            has been checked in
-            {(sendEmail || sendSms) ? ' and notifications have been sent.' : '.'}
-          </p>
-          {trackingNumber && (
-            <p className="mt-3 font-mono text-xs text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg">
-              {trackingNumber}
-            </p>
-          )}
-
-          {/* BAR-9 Gap 6: Retry buttons for failed operations */}
-          {(labelPrintFailed || notificationFailed) && (
-            <div className="mt-4 w-full space-y-2">
-              {labelPrintFailed && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
-                  <span className="text-amber-400 flex items-center gap-2">
-                    <Printer className="h-4 w-4" />
-                    Label print failed
-                  </span>
-                  <div className="flex gap-2">
-                    <button onClick={handleRetryLabelPrint} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
-                      Retry
-                    </button>
-                    <button onClick={() => setLabelPrintFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
-                      Skip
-                    </button>
-                  </div>
-                </div>
-              )}
-              {notificationFailed && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
-                  <span className="text-amber-400 flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Notification failed
-                  </span>
-                  <div className="flex gap-2">
-                    <button onClick={handleRetryNotification} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
-                      Retry
-                    </button>
-                    <button onClick={() => setNotificationFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
-                      Skip
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* ================================================================== */}
-      {/*  BAR-9 Gap 1: Cancel Confirmation Modal                             */}
-      {/* ================================================================== */}
-      <Modal
-        open={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Cancel Check-In?"
-        size="sm"
-        footer={
-          <div className="flex gap-2 w-full">
-            <Button variant="secondary" onClick={() => setShowCancelModal(false)} className="flex-1">
-              Continue Editing
-            </Button>
-            <Button variant="secondary" onClick={handleSaveDraft} className="flex-1">
-              Save Progress
-            </Button>
-            <Button
-              onClick={handleClearAndReset}
-              className="flex-1 !bg-red-600 hover:!bg-red-700 !text-white"
-            >
-              Clear
-            </Button>
-          </div>
-        }
-      >
-        <div className="py-2">
-          <p className="text-sm text-surface-300 mb-3">
-            What would you like to do with your current progress?
-          </p>
-          <div className="space-y-2 text-xs text-surface-400">
-            <p>• <strong className="text-surface-300">Save Progress</strong> — saves your current entries as a draft. You can resume later.</p>
-            <p>• <strong className="text-surface-300">Clear</strong> — discards all entries and starts over from Step 1.</p>
-          </div>
-        </div>
-      </Modal>
-
-      {/* RTS Dialog — triggered from no-results flow (BAR-321) */}
-      {showRtsDialog && (
-        <RtsInitiateDialog
-          onClose={() => setShowRtsDialog(false)}
-          onSuccess={() => {
-            setShowRtsDialog(false);
-            handleReset();
-          }}
-          prefillReason="no_matching_customer"
-        />
-      )}
-
-      {/* BAR-40: Batch Session Summary Modal */}
-      {showBatchSummary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl">
-            <BatchSessionSummary
-              packages={batchSessionPackages}
-              sessionStart={batchSessionStart}
-              sessionEnd={new Date()}
-              onDismiss={() => {
-                setShowBatchSummary(false);
-                setBatchSessionPackages([]);
-                setBatchCount(0);
-                handleReset();
-              }}
-              onGoToPackages={() => {
-                window.location.href = '/dashboard/packages';
-              }}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Sub-components                                                            */
-/* -------------------------------------------------------------------------- */
-function ToggleSwitch({
-  label,
-  icon,
-  checked,
-  onChange }: {
-  label: string;
-  icon: React.ReactNode;
-  checked: boolean;
-  onChange: (val: boolean) => void;
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm transition-all',
-        checked
-          ? 'border-primary-300 bg-primary-50 text-primary-600'
-          : 'border-surface-700/50 bg-surface-900/60 text-surface-400 hover:border-surface-600'
-      )}
-    >
-      {icon}
-      <span className="font-medium">{label}</span>
-      <div
-        className={cn(
-          'ml-2 relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors',
-          checked ? 'bg-primary-600' : 'bg-surface-600'
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform shadow-sm',
-            checked ? 'translate-x-4' : 'translate-x-0.5'
-          )}
-        />
-      </div>
-    </button>
-  );
-}
-
-function CheckboxOption({
-  label,
-  checked,
-  onChange,
-  icon,
-  disabled }: {
-  label: string;
-  checked: boolean;
-  onChange: (val: boolean) => void;
-  icon?: React.ReactNode;
-  disabled?: boolean;
-}) {
-  return (
-    <label
-      className={cn(
-        'flex items-center gap-3 text-sm cursor-pointer',
-        disabled && 'opacity-40 cursor-not-allowed'
-      )}
-    >
-      <button
-        onClick={() => !disabled && onChange(!checked)}
-        disabled={disabled}
-        className={cn(
-          'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all',
-          checked
-            ? 'bg-primary-600 border-primary-500 text-surface-100'
-            : 'bg-surface-900 border-surface-600 text-transparent'
-        )}
-      >
-        <Check className="h-3 w-3" />
-      </button>
-      {icon && <span className="text-surface-500">{icon}</span>}
-      <span className="text-surface-300">{label}</span>
-    </label>
-  );
-}
-
-function SummaryField({
-  label,
-  value,
-  mono }: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-[11px] uppercase tracking-wider text-surface-500 mb-0.5">
-        {label}
-      </p>
-      <p
-        className={cn(
-          'text-sm text-surface-200',
-          mono && 'font-mono text-xs'
-        )}
-      >
-        {value}
-      </p>
+      <CheckInModals
+        step={step} setStep={setStep}
+        isSubmitting={isSubmitting} isOnline={isOnline}
+        showSuccess={showSuccess} setShowSuccess={setShowSuccess}
+        checkedInPackageId={checkedInPackageId}
+        showCancelModal={showCancelModal} setShowCancelModal={setShowCancelModal}
+        showRtsDialog={showRtsDialog} setShowRtsDialog={setShowRtsDialog}
+        showDuplicateModal={showDuplicateModal} setShowDuplicateModal={setShowDuplicateModal}
+        showSizeWarning={showSizeWarning} setShowSizeWarning={setShowSizeWarning}
+        showPerishableWarning={showPerishableWarning} setShowPerishableWarning={setShowPerishableWarning}
+        showBatchSummary={showBatchSummary} setShowBatchSummary={setShowBatchSummary}
+        duplicatePackage={duplicatePackage} setDuplicatePackage={setDuplicatePackage}
+        duplicateAcknowledged={duplicateAcknowledged} setDuplicateAcknowledged={setDuplicateAcknowledged}
+        duplicateOverrideReason={duplicateOverrideReason} setDuplicateOverrideReason={setDuplicateOverrideReason}
+        sizeWarningAcked={sizeWarningAcked} setSizeWarningAcked={setSizeWarningAcked}
+        perishableWarningAcked={perishableWarningAcked} setPerishableWarningAcked={setPerishableWarningAcked}
+        selectedCustomer={selectedCustomer} selectedCarrier={selectedCarrier}
+        trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber}
+        sendEmail={sendEmail} sendSms={sendSms}
+        packageType={packageType} isWalkIn={isWalkIn} walkInName={walkInName}
+        labelPrintFailed={labelPrintFailed} setLabelPrintFailed={setLabelPrintFailed}
+        notificationFailed={notificationFailed} setNotificationFailed={setNotificationFailed}
+        batchCount={batchCount} setBatchCount={setBatchCount}
+        batchSessionPackages={batchSessionPackages as any} setBatchSessionPackages={setBatchSessionPackages as any}
+        batchSessionStart={batchSessionStart}
+        autoAdvanceTimerRef={autoAdvanceTimerRef}
+        handleSubmit={handleSubmit} handleReset={handleReset}
+        handleSaveDraft={handleSaveDraft} handleClearAndReset={handleClearAndReset}
+        handleCheckInAnother={handleCheckInAnother}
+        handleRetryLabelPrint={handleRetryLabelPrint}
+        handleRetryNotification={handleRetryNotification}
+        handleGenerateTracking={handleGenerateTracking}
+      />
     </div>
   );
 }
