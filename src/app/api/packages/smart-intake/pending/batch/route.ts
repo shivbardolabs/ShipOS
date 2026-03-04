@@ -35,16 +35,56 @@ export const POST = withApiHandler(async (request, { user }) => {
     const results: Array<{ id: string; status: string; packageId?: string; warning?: string }> = [];
 
     if (action === 'approve') {
+      // BAR-382: Resolve default store once for the batch
+      const defaultStore = user.tenantId
+        ? await prisma.store.findFirst({ where: { tenantId: user.tenantId, isDefault: true } })
+        : null;
+
       // Process each approval — create Package records
       for (const item of items) {
         let customerId: string | null = null;
         let warning: string | undefined;
 
         if (item.pmbNumber) {
+          // BAR-382: Scope customer lookup to tenant
           const customer = await prisma.customer.findFirst({
-            where: { pmbNumber: item.pmbNumber, status: 'active' },
+            where: {
+              pmbNumber: item.pmbNumber,
+              status: 'active',
+              ...(user.tenantId ? { tenantId: user.tenantId } : {}),
+            },
           });
           customerId = customer?.id ?? null;
+
+          // BAR-382: Check if mailbox is closed
+          if (!customerId) {
+            const closedCustomer = await prisma.customer.findFirst({
+              where: {
+                pmbNumber: item.pmbNumber,
+                status: { not: 'active' },
+                ...(user.tenantId ? { tenantId: user.tenantId } : {}),
+              },
+              select: { pmbNumber: true, status: true },
+            });
+            if (closedCustomer) {
+              warning = `Mailbox ${closedCustomer.pmbNumber} is ${closedCustomer.status}`;
+            }
+          }
+        }
+
+        // BAR-382: Check for duplicate tracking number
+        if (customerId && item.trackingNumber?.trim()) {
+          const duplicate = await prisma.package.findFirst({
+            where: {
+              trackingNumber: item.trackingNumber.trim(),
+              customer: { tenantId: user.tenantId },
+              status: { notIn: ['released', 'returned'] },
+            },
+            select: { id: true },
+          });
+          if (duplicate) {
+            warning = `Duplicate tracking number — already exists as package ${duplicate.id}`;
+          }
         }
 
         let packageId: string | null = null;
@@ -59,10 +99,11 @@ export const POST = withApiHandler(async (request, { user }) => {
               customerId,
               recipientName: item.recipientName,
               checkedInById: user.id,
+              storeId: defaultStore?.id ?? null,
             },
           });
           packageId = pkg.id;
-        } else {
+        } else if (!warning) {
           warning = 'No matching customer found — package not created';
         }
 

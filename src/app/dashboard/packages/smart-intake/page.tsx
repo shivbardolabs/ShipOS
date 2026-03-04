@@ -41,6 +41,15 @@ import {
 /* -------------------------------------------------------------------------- */
 type IntakePhase = 'capture' | 'analyzing' | 'review' | 'success';
 
+/** BAR-382: Duplicate tracking number info */
+interface DuplicateInfo {
+  existingPackageId: string;
+  customerName: string;
+  customerPmb: string;
+  status: string;
+  checkedInAt: string;
+}
+
 interface MatchedPackage {
   result: SmartIntakeResult;
   customer: Customer | null;
@@ -50,6 +59,17 @@ interface MatchedPackage {
   overrides: Partial<SmartIntakeResult>;
   /** BAR-337: Server-side pending item ID (for badge count tracking) */
   pendingItemId?: string;
+  /** BAR-382: Duplicate tracking number warning */
+  duplicateInfo?: DuplicateInfo;
+  /** BAR-382: Closed/suspended mailbox warning */
+  closedMailboxPmb?: string;
+  /** BAR-382: Loading state while check-in API call is in flight */
+  checkingIn?: boolean;
+  /** BAR-382: Error message from check-in API */
+  checkInError?: string;
+  /** BAR-382: Duplicate override — user chose to proceed anyway */
+  duplicateOverride?: boolean;
+  duplicateOverrideReason?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -83,16 +103,60 @@ const packageSizeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 /*  Customer matcher                                                          */
 /* -------------------------------------------------------------------------- */
-async function findCustomerByPMB(pmb: string): Promise<Customer | null> {
-  if (!pmb) return null;
+
+/** BAR-382: Return both active customer and closed-mailbox info */
+interface CustomerMatchResult {
+  customer: Customer | null;
+  /** If PMB matched a closed/suspended mailbox, its PMB number */
+  closedMailboxPmb?: string;
+}
+
+async function findCustomerByPMB(pmb: string): Promise<CustomerMatchResult> {
+  if (!pmb) return { customer: null };
   const normalized = pmb.replace(/[^0-9]/g, '').padStart(4, '0');
   const search = `PMB-${normalized}`;
   try {
+    // First try to find an active customer
     const res = await fetch(`/api/customers?search=${encodeURIComponent(search)}&limit=1&status=active`);
     const data = await res.json();
-    return data.customers?.[0] ?? null;
+    const customer = data.customers?.[0] ?? null;
+
+    if (customer) return { customer };
+
+    // BAR-382: If no active customer, check if there's a closed/suspended one
+    // so we can show a specific warning instead of just "No customer match"
+    const closedRes = await fetch(`/api/customers?search=${encodeURIComponent(search)}&limit=1`);
+    const closedData = await closedRes.json();
+    const closedCustomer = closedData.customers?.[0];
+
+    if (closedCustomer && closedCustomer.status !== 'active') {
+      return { customer: null, closedMailboxPmb: closedCustomer.pmbNumber };
+    }
+
+    return { customer: null };
   } catch {
-    return null;
+    return { customer: null };
+  }
+}
+
+/** BAR-382: Check for duplicate tracking numbers */
+async function checkDuplicateTracking(trackingNumber: string): Promise<DuplicateInfo | undefined> {
+  if (!trackingNumber?.trim()) return undefined;
+  try {
+    const res = await fetch(`/api/packages/check-tracking?tracking=${encodeURIComponent(trackingNumber.trim())}`);
+    const data = await res.json();
+    if (data.exists && data.package) {
+      return {
+        existingPackageId: data.package.id,
+        customerName: data.package.customerName,
+        customerPmb: data.package.customerPmb,
+        status: data.package.status,
+        checkedInAt: data.package.checkedInAt,
+      };
+    }
+    return undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -363,15 +427,23 @@ export default function SmartIntakePage() {
 
       setResponseMode(data.mode);
 
-      // Match each result to a customer (async lookups)
+      // BAR-382: Match each result to a customer + check duplicates + closed mailboxes
       const matched: MatchedPackage[] = await Promise.all(
-        data.results.map(async (r: SmartIntakeResult) => ({
-          result: r,
-          customer: await findCustomerByPMB(r.pmbNumber),
-          confirmed: false,
-          editing: false,
-          overrides: {},
-        }))
+        data.results.map(async (r: SmartIntakeResult) => {
+          const [matchResult, duplicateInfo] = await Promise.all([
+            findCustomerByPMB(r.pmbNumber),
+            checkDuplicateTracking(r.trackingNumber),
+          ]);
+          return {
+            result: r,
+            customer: matchResult.customer,
+            confirmed: false,
+            editing: false,
+            overrides: {},
+            duplicateInfo,
+            closedMailboxPmb: matchResult.closedMailboxPmb,
+          };
+        })
       );
 
       // BAR-337: Save to pending queue for sidebar badge count
@@ -422,22 +494,96 @@ export default function SmartIntakePage() {
   }, [capturedImage]);
 
   /* ── Check-in actions ──────────────────────────────────────────────── */
+  /**
+   * BAR-382: Confirm a package by calling the actual check-in API.
+   * Previously this only logged to a client-side activity log and
+   * fire-and-forget approved the pending item, which meant the Package
+   * record was either not created or created without proper data
+   * (missing storeId, tenant-scoped customer lookup, overrides ignored).
+   *
+   * Now we POST to /api/packages/check-in with all the correct data,
+   * which creates the Package record, audit log, charge event, and
+   * sends notifications — exactly like the regular check-in flow.
+   */
   const confirmPackage = useCallback(
-    (idx: number) => {
+    async (idx: number) => {
+      const pkg = matchedPackages[idx];
+      if (!pkg.customer || pkg.confirmed || pkg.checkingIn) return;
+
+      const effectiveResult = { ...pkg.result, ...pkg.overrides };
+
+      // BAR-382: Block check-in for duplicate tracking unless user overrode
+      if (pkg.duplicateInfo && !pkg.duplicateOverride) return;
+
+      // Set loading state
       setMatchedPackages((prev) => {
         const updated = [...prev];
-        updated[idx] = { ...updated[idx], confirmed: true };
+        updated[idx] = { ...updated[idx], checkingIn: true, checkInError: undefined };
         return updated;
       });
 
-      const pkg = matchedPackages[idx];
-      const effectiveResult = { ...pkg.result, ...pkg.overrides };
+      try {
+        const resp = await fetch('/api/packages/check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: pkg.customer.id,
+            trackingNumber: effectiveResult.trackingNumber,
+            carrier: effectiveResult.carrier,
+            senderName: effectiveResult.senderName,
+            packageType: effectiveResult.packageSize || 'medium',
+            hazardous: false,
+            perishable: false,
+            condition: 'good',
+            sendEmail: true,
+            sendSms: true,
+            // BAR-382: Pass duplicate override if user chose to proceed
+            ...(pkg.duplicateOverride && {
+              duplicateOverride: true,
+              duplicateOverrideReason: pkg.duplicateOverrideReason || 'Smart Intake — user confirmed duplicate',
+              duplicateOriginalPackageId: pkg.duplicateInfo?.existingPackageId,
+            }),
+          }),
+        });
 
-      if (pkg.customer) {
+        const data = await resp.json();
+
+        // BAR-382: Handle duplicate response from check-in API
+        if (resp.status === 409 && data.code === 'DUPLICATE_TRACKING') {
+          setMatchedPackages((prev) => {
+            const updated = [...prev];
+            updated[idx] = {
+              ...updated[idx],
+              checkingIn: false,
+              duplicateInfo: {
+                existingPackageId: data.existingPackage.id,
+                customerName: data.existingPackage.customerName,
+                customerPmb: data.existingPackage.customerPmb,
+                status: data.existingPackage.status,
+                checkedInAt: data.existingPackage.checkedInAt,
+              },
+            };
+            return updated;
+          });
+          return;
+        }
+
+        if (!resp.ok) {
+          throw new Error(data.error || 'Check-in failed');
+        }
+
+        // Success — mark as confirmed
+        setMatchedPackages((prev) => {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], confirmed: true, checkingIn: false };
+          return updated;
+        });
+
+        // Log to client-side activity log
         log({
           action: 'package.check_in',
           entityType: 'package',
-          entityId: `pkg_ai_${Date.now()}_${idx}`,
+          entityId: data.package?.id || `pkg_ai_${Date.now()}_${idx}`,
           entityLabel: `${effectiveResult.carrier.toUpperCase()} — ${effectiveResult.trackingNumber}`,
           description: `AI Smart Intake: Checked in ${carrierLabels[effectiveResult.carrier] ?? effectiveResult.carrier} package for ${pkg.customer.firstName} ${pkg.customer.lastName} (${pkg.customer.pmbNumber})`,
           metadata: {
@@ -448,26 +594,50 @@ export default function SmartIntakePage() {
             confidence: effectiveResult.confidence,
           },
         });
-      }
 
-      // BAR-337: Approve pending item to decrement sidebar badge
-      if (pkg.pendingItemId) {
-        fetch(`/api/packages/smart-intake/pending/${pkg.pendingItemId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'approve' }),
-        }).catch(() => {}); // Non-blocking
+        // BAR-337: Approve pending item to decrement sidebar badge (non-blocking)
+        if (pkg.pendingItemId) {
+          fetch(`/api/packages/smart-intake/pending/${pkg.pendingItemId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'approve' }),
+          }).catch(() => {}); // Non-blocking — badge count is secondary
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Check-in failed';
+        setMatchedPackages((prev) => {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], checkingIn: false, checkInError: message };
+          return updated;
+        });
       }
     },
     [matchedPackages, log]
   );
 
-  const confirmAll = useCallback(() => {
-    matchedPackages.forEach((pkg, idx) => {
-      if (!pkg.confirmed && pkg.customer) {
-        confirmPackage(idx);
-      }
+  /** BAR-382: Allow user to override duplicate warning and proceed */
+  const overrideDuplicate = useCallback((idx: number, reason?: string) => {
+    setMatchedPackages((prev) => {
+      const updated = [...prev];
+      updated[idx] = {
+        ...updated[idx],
+        duplicateOverride: true,
+        duplicateOverrideReason: reason || 'Re-delivery / replacement',
+      };
+      return updated;
     });
+  }, []);
+
+  const confirmAll = useCallback(async () => {
+    // BAR-382: Process all eligible packages (with customer, no blocking duplicate)
+    const promises = matchedPackages.map((pkg, idx) => {
+      if (!pkg.confirmed && !pkg.checkingIn && pkg.customer
+          && (!pkg.duplicateInfo || pkg.duplicateOverride)) {
+        return confirmPackage(idx);
+      }
+      return Promise.resolve();
+    });
+    await Promise.all(promises);
   }, [matchedPackages, confirmPackage]);
 
   const finishIntake = useCallback(() => {
@@ -531,6 +701,15 @@ export default function SmartIntakePage() {
 
   const matchedCount = useMemo(
     () => matchedPackages.filter((p) => p.customer).length,
+    [matchedPackages]
+  );
+
+  /** BAR-382: Count of packages eligible for check-in (matched, no blocking issues) */
+  const eligibleCount = useMemo(
+    () => matchedPackages.filter((p) =>
+      p.customer && !p.confirmed && !p.closedMailboxPmb
+      && (!p.duplicateInfo || p.duplicateOverride)
+    ).length,
     [matchedPackages]
   );
 
@@ -814,15 +993,15 @@ export default function SmartIntakePage() {
               <Button variant="ghost" size="sm" onClick={startNew}>
                 <RotateCcw className="h-4 w-4 mr-1" /> Retake
               </Button>
-              {matchedPackages.length > 1 && matchedCount > 0 && (
+              {matchedPackages.length > 1 && eligibleCount > 0 && (
                 <Button
                   size="sm"
                   onClick={confirmAll}
-                  disabled={allConfirmed}
+                  disabled={allConfirmed || eligibleCount === 0}
                   className="bg-emerald-600 hover:bg-emerald-500"
                 >
                   <Check className="h-4 w-4 mr-1" />
-                  Check In All ({matchedCount})
+                  Check In All ({eligibleCount})
                 </Button>
               )}
             </div>
@@ -938,6 +1117,19 @@ export default function SmartIntakePage() {
                           </div>
                           <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                         </div>
+                      ) : pkg.closedMailboxPmb ? (
+                        /* BAR-382: Closed mailbox warning — show specific message */
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
+                            <X className="h-4 w-4 text-red-400" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-400">Mailbox Closed</p>
+                            <p className="text-[11px] text-surface-500">
+                              {pkg.closedMailboxPmb} is closed/inactive — cannot check in packages for this mailbox
+                            </p>
+                          </div>
+                        </div>
                       ) : (
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
@@ -959,6 +1151,47 @@ export default function SmartIntakePage() {
                           >
                             Search
                           </Button>
+                        </div>
+                      )}
+
+                      {/* BAR-382: Duplicate tracking number warning */}
+                      {pkg.duplicateInfo && !pkg.confirmed && (
+                        <div className={cn(
+                          'mt-2 p-3 rounded-lg border',
+                          pkg.duplicateOverride
+                            ? 'bg-amber-500/5 border-amber-500/20'
+                            : 'bg-red-500/10 border-red-500/30'
+                        )}>
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className={cn('h-4 w-4 flex-shrink-0 mt-0.5', pkg.duplicateOverride ? 'text-amber-400' : 'text-red-400')} />
+                            <div className="flex-1 min-w-0">
+                              <p className={cn('text-sm font-medium', pkg.duplicateOverride ? 'text-amber-400' : 'text-red-400')}>
+                                {pkg.duplicateOverride ? 'Duplicate Override' : 'Duplicate Tracking Number'}
+                              </p>
+                              <p className="text-[11px] text-surface-400 mt-0.5">
+                                Already checked in for {pkg.duplicateInfo.customerName} ({pkg.duplicateInfo.customerPmb})
+                                {pkg.duplicateInfo.checkedInAt && ` on ${new Date(pkg.duplicateInfo.checkedInAt).toLocaleDateString()}`}
+                              </p>
+                              {!pkg.duplicateOverride && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 text-xs px-2"
+                                  onClick={() => overrideDuplicate(idx, 'Re-delivery / replacement')}
+                                >
+                                  Override — Check In Anyway
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* BAR-382: Check-in error message */}
+                      {pkg.checkInError && (
+                        <div className="mt-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                          <p className="text-xs text-red-400">{pkg.checkInError}</p>
                         </div>
                       )}
 
@@ -1006,11 +1239,21 @@ export default function SmartIntakePage() {
 
                   {/* Actions */}
                   <div className="flex flex-col gap-2 flex-shrink-0">
-                    {!pkg.confirmed ? (
+                    {pkg.checkingIn ? (
+                      /* BAR-382: Loading state during check-in API call */
+                      <div className="flex flex-col items-center gap-1.5 text-violet-400">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                        <span className="text-[11px] font-semibold">Saving…</span>
+                      </div>
+                    ) : !pkg.confirmed ? (
                       <>
                         <Button
                           onClick={() => confirmPackage(idx)}
-                          disabled={!pkg.customer}
+                          disabled={
+                            !pkg.customer
+                            || !!pkg.closedMailboxPmb
+                            || (!!pkg.duplicateInfo && !pkg.duplicateOverride)
+                          }
                           className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
                           size="sm"
                         >
