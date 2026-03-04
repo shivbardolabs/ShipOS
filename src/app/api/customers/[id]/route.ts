@@ -116,6 +116,9 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
     const { id } = await params;
     const body = await request.json();
 
+    // BAR-393: Strip pmbNumber — it must not be changed via profile edit
+    delete body.pmbNumber;
+
     const tenantScope = user.role !== 'superadmin' && user.tenantId
       ? { tenantId: user.tenantId }
       : {};

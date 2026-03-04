@@ -243,7 +243,9 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
               <Input
                 label="PMB Number"
                 value={form.pmbNumber}
-                onChange={(e) => handleChange('pmbNumber', e.target.value)}
+                readOnly
+                className="cursor-not-allowed opacity-60"
+                helperText="PMB number cannot be changed"
               />
               <Select
                 label="Billing Terms"
