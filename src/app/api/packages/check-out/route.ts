@@ -28,6 +28,14 @@ export const POST = withApiHandler(async (request, { user }) => {
       );
     }
 
+    // BAR-381: Require customer signature before releasing packages
+    if (!body.releaseSignature) {
+      return NextResponse.json(
+        { error: 'Customer signature is required to release packages' },
+        { status: 400 },
+      );
+    }
+
     // Verify customer exists
     const customer = await prisma.customer.findUnique({
       where: { id: body.customerId },
