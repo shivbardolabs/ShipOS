@@ -12,7 +12,7 @@ import { carrierOptions, carrierSenderMap } from './types';
 
 export interface Step2Props {
   trackingNumber: string;
-  handleTrackingNumberChange: (e: React.ChangeEvent<HTMLInputElement> | string) => void;
+  handleTrackingNumberChange: (value: string) => void;
   selectedCarrier: string;
   handleCarrierSelect: (carrier: string) => void;
   carrierAutoSuggested: boolean;
@@ -25,7 +25,7 @@ export interface Step2Props {
   senderSuggestions: string[];
   showSenderSuggestions: boolean;
   setShowSenderSuggestions: (v: boolean) => void;
-  senderRef: React.RefObject<any>;
+  senderRef: React.RefObject<HTMLDivElement | null>;
   checkingTracking: boolean;
   duplicatePackage: DuplicatePackage | null;
   duplicateAcknowledged: boolean;

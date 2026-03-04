@@ -32,7 +32,7 @@ export interface Step3Props {
   storageLocation: string;
   setStorageLocation: (v: string) => void;
   storageLocationCustom: string | boolean;
-  setStorageLocationCustom: (v: any) => void;
+  setStorageLocationCustom: (v: boolean) => void;
   requiresSignature: boolean;
   setRequiresSignature: (v: boolean) => void;
   definedStorageLocations: { name: string; isDefault: boolean }[];

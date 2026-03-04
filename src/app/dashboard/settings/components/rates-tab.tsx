@@ -12,14 +12,25 @@ import { formatCurrency } from '@/lib/utils';
 import { Check, Edit3, Save, X } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Rate {
+  id: string;
+  service: string;
+  addOnName?: string;
+  wholesaleRate: number;
+  retailRate: number;
+  marginType: string;
+  marginValue: number;
+  isActive: boolean;
+}
+
 export interface RatesTabProps {
   carrierTab: string;
   setCarrierTab: (v: string) => void;
   carrierTabs: { id: string; label: string }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filteredRates: any[];
+  filteredRates: Rate[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  editingRate: any | null;
+  editingRate: Rate | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setEditingRate: React.Dispatch<React.SetStateAction<any | null>>;
   rateSaving: boolean;

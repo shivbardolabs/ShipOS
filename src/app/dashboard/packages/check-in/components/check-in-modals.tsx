@@ -62,8 +62,8 @@ export interface CheckInModalsProps {
   setNotificationFailed: (v: boolean) => void;
   batchCount: number;
   setBatchCount: React.Dispatch<React.SetStateAction<number>>;
-  batchSessionPackages: any[];
-  setBatchSessionPackages: React.Dispatch<React.SetStateAction<any[]>>;
+  batchSessionPackages: { id: string; trackingNumber?: string; carrier: string; customerName: string; pmbNumber: string; packageType: string; checkedInAt: string; labelPrinted: boolean; notified: boolean; }[];
+  setBatchSessionPackages: React.Dispatch<React.SetStateAction<{ id: string; trackingNumber?: string; carrier: string; customerName: string; pmbNumber: string; packageType: string; checkedInAt: string; labelPrinted: boolean; notified: boolean; }[]>>;
   batchSessionStart: Date;
   autoAdvanceTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | undefined>;
   handleSubmit: () => void;

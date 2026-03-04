@@ -13,7 +13,7 @@ import { SEARCH_CATEGORY_META, detectSearchCategory, packageProgramOptions } fro
 export interface Step1Props {
   packageProgram: PackageProgram;
   setPackageProgram: (v: PackageProgram) => void;
-  enabledPrograms: { id: string; value: string; label: string; description?: string; icon?: string; color?: string; activeColor?: string; desc?: string }[];
+  enabledPrograms: typeof import('./types').packageProgramOptions;
   customerSearch: string;
   setCustomerSearch: (v: string) => void;
   filteredCustomers: SearchCustomer[];

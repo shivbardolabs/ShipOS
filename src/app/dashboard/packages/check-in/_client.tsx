@@ -1229,7 +1229,7 @@ export default function CheckInPage() {
         {step === 1 && (
           <Step1IdentifyCustomer
             packageProgram={packageProgram} setPackageProgram={setPackageProgram}
-            enabledPrograms={enabledPrograms as any}
+            enabledPrograms={enabledPrograms}
             customerSearch={customerSearch} setCustomerSearch={setCustomerSearch}
             filteredCustomers={filteredCustomers} customersLoading={customersLoading}
             selectedCustomer={selectedCustomer} setSelectedCustomer={setSelectedCustomer}
@@ -1246,7 +1246,7 @@ export default function CheckInPage() {
         {step === 2 && (
           <Step2CarrierSender
             trackingNumber={trackingNumber}
-            handleTrackingNumberChange={handleTrackingNumberChange as any}
+            handleTrackingNumberChange={handleTrackingNumberChange}
             selectedCarrier={selectedCarrier}
             handleCarrierSelect={handleCarrierSelect}
             carrierAutoSuggested={carrierAutoSuggested} setCarrierAutoSuggested={setCarrierAutoSuggested}
@@ -1256,13 +1256,13 @@ export default function CheckInPage() {
             senderName={senderName} setSenderName={setSenderName}
             senderSuggestions={senderSuggestions}
             showSenderSuggestions={showSenderSuggestions} setShowSenderSuggestions={setShowSenderSuggestions}
-            senderRef={senderRef as React.RefObject<HTMLElement | null>}
+            senderRef={senderRef}
             checkingTracking={checkingTracking}
             duplicatePackage={duplicatePackage}
             duplicateAcknowledged={duplicateAcknowledged}
             duplicateOverrideReason={duplicateOverrideReason}
             setShowDuplicateModal={setShowDuplicateModal}
-            scanFeedback={scanFeedback as any}
+            scanFeedback={scanFeedback}
             handleScanResult={handleScanResult}
             setStep={setStep} step={step}
           />
@@ -1383,7 +1383,7 @@ export default function CheckInPage() {
         labelPrintFailed={labelPrintFailed} setLabelPrintFailed={setLabelPrintFailed}
         notificationFailed={notificationFailed} setNotificationFailed={setNotificationFailed}
         batchCount={batchCount} setBatchCount={setBatchCount}
-        batchSessionPackages={batchSessionPackages as any} setBatchSessionPackages={setBatchSessionPackages as any}
+        batchSessionPackages={batchSessionPackages} setBatchSessionPackages={setBatchSessionPackages}
         batchSessionStart={batchSessionStart}
         autoAdvanceTimerRef={autoAdvanceTimerRef}
         handleSubmit={handleSubmit} handleReset={handleReset}
