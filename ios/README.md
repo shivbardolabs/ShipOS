@@ -1,176 +1,86 @@
-# ShipOS iOS App 📱
+# ShipOS iOS App
 
-The ShipOS mobile companion app for iPad and iPhone, built with React Native (Expo).
+Native iOS companion to ShipOS — the mailroom management platform.
 
-Designed primarily for iPad use at the store counter, with full iPhone support for on-the-go management.
+## Requirements
 
----
+- Xcode 15.0+
+- iOS 17.0+
+- Swift 5.9+
 
-## Features
+## Project Setup
 
-- **Package Check-In** — Scan barcodes with the device camera, auto-detect carrier, and check in packages with a tap
-- **Package Check-Out** — PMB lookup, fee display, and package release
-- **Barcode Scanner** — Native camera integration for fast barcode/QR scanning
-- **Customer Lookup** — Search and view customer profiles, package history, compliance status
-- **Dashboard** — At-a-glance stats: packages held, checked in today, pending pickups
-- **Notifications** — View and manage customer notification history
-- **Dark Theme** — Matches the ShipOS web app design language
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | React Native (Expo SDK 52) |
-| Language | TypeScript |
-| Navigation | React Navigation 7 |
-| Icons | Expo Vector Icons |
-| Camera | expo-camera / expo-barcode-scanner |
-| Storage | AsyncStorage |
-| HTTP | Axios |
-
----
-
-## Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Xcode 15+ (for iOS simulator and builds)
-- iOS device or simulator (iPad recommended)
-
----
-
-## Getting Started
-
-### 1. Install Dependencies
+This project uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) for project generation:
 
 ```bash
-cd ios
-npm install
+# Install XcodeGen
+brew install xcodegen
+
+# Generate .xcodeproj
+cd ios/
+xcodegen generate
+
+# Open in Xcode
+open ShipOS.xcodeproj
 ```
 
-### 2. Configure API Endpoint
-
-Edit `src/lib/api.ts` and set `API_BASE_URL` to your ShipOS backend:
-
-```typescript
-// Development (local)
-const API_BASE_URL = 'http://localhost:3000/api';
-
-// Production
-const API_BASE_URL = 'https://app.yourdomain.com/api';
-```
-
-### 3. Start Development
-
-```bash
-# Start Expo dev server
-npx expo start
-
-# Run on iOS simulator
-npx expo start --ios
-
-# Run on connected device
-npx expo start --device
-```
-
-### 4. iPad-Specific Testing
-
-To test iPad layouts in the simulator:
-1. Open Xcode → Window → Devices and Simulators
-2. Add an iPad simulator (iPad Pro 12.9" recommended)
-3. Run `npx expo start --ios` and select the iPad simulator
-
----
-
-## Project Structure
+## Architecture
 
 ```
-ios/
-├── App.tsx                     # Entry point
-├── app.json                    # Expo configuration
-├── package.json                # Dependencies
-├── tsconfig.json               # TypeScript config
-└── src/
-    ├── screens/                # App screens
-    │   ├── LoginScreen.tsx
-    │   ├── DashboardScreen.tsx
-    │   ├── PackageCheckInScreen.tsx
-    │   ├── PackageCheckOutScreen.tsx
-    │   ├── CustomerListScreen.tsx
-    │   ├── CustomerDetailScreen.tsx
-    │   ├── ScannerScreen.tsx
-    │   ├── NotificationsScreen.tsx
-    │   └── SettingsScreen.tsx
-    ├── navigation/
-    │   └── AppNavigator.tsx    # Tab + stack navigation
-    ├── components/             # Reusable UI components
-    │   ├── Card.tsx
-    │   ├── Badge.tsx
-    │   ├── Button.tsx
-    │   ├── Header.tsx
-    │   └── StatCard.tsx
-    └── lib/
-        ├── api.ts              # API client
-        ├── theme.ts            # Dark theme colors
-        └── types.ts            # Shared TypeScript types
+ios/ShipOS/
+├── App/                    # App entry, navigation, config
+├── Core/
+│   ├── Auth/               # Auth0 PKCE + Keychain + biometrics
+│   ├── API/                # Type-safe URLSession client
+│   ├── Models/             # SwiftData models (Package, Customer, etc.)
+│   ├── Persistence/        # SwiftData container + offline sync
+│   └── DesignSystem/       # Theme, components, typography
+├── Features/
+│   ├── Dashboard/          # Real-time stats + quick actions
+│   ├── Packages/           # Package list, check-in, check-out
+│   ├── Customers/          # Customer list + detail
+│   ├── Notifications/      # Notification center
+│   ├── Settings/           # Store config + account
+│   └── Mail/               # Mail management
+└── Shared/                 # Extensions, utilities
 ```
 
----
+### Key Patterns
 
-## Building for Production
+- **SwiftUI + SwiftData** — declarative UI with automatic persistence
+- **Swift Concurrency** — async/await for all network calls
+- **MVVM** — `@StateObject` view models, `@Published` state
+- **Actor-based API client** — thread-safe network layer with retry logic
+- **Adaptive layout** — TabView on iPhone, NavigationSplitView on iPad
 
-### Development Build (TestFlight)
+## Phase Roadmap
 
-```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Configure EAS
-eas build:configure
-
-# Build for iOS
-eas build --platform ios --profile preview
-
-# Submit to TestFlight
-eas submit --platform ios
-```
-
-### Production Build (App Store)
-
-```bash
-# Build production binary
-eas build --platform ios --profile production
-
-# Submit to App Store Connect
-eas submit --platform ios --latest
-```
-
----
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 1. Foundation | ✅ | App shell, auth, API client, design system, data models |
+| 2. Core Ops | 🔲 | Dashboard, check-in/out, customer management, notifications |
+| 3. Advanced | 🔲 | Smart Intake AI, mail, batch ops, enhanced scanner |
+| 4. Full Platform | 🔲 | Shipping, compliance, reports, settings |
+| 5. iOS-Exclusive | 🔲 | Offline mode, push, widgets, iPad Pro layout |
+| 6. Quality | 🔲 | Security, performance, testing, CI/CD, App Store |
 
 ## Configuration
 
-### app.json Key Settings
+1. Create `ios/ShipOS/App/Auth0.plist` with your Auth0 credentials:
+   ```xml
+   <dict>
+       <key>ClientId</key>
+       <string>YOUR_CLIENT_ID</string>
+       <key>Domain</key>
+       <string>YOUR_DOMAIN.auth0.com</string>
+   </dict>
+   ```
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| `supportsTablet` | `true` | iPad support |
-| `requireFullScreen` | `false` | Slide Over / Split View |
-| `userInterfaceStyle` | `dark` | Force dark mode |
-| `bundleIdentifier` | `com.bardolabs.shipos` | Change for your org |
+2. Set the API URL in `AppConfiguration.swift`
 
-### Environment Variables
+3. Add your URL scheme to `project.yml` under URL Types
 
-The app reads its API endpoint from `src/lib/api.ts`. For different environments, you can use Expo's `app.config.js` with environment variables:
+## Dependencies
 
-```bash
-API_URL=https://staging.yourdomain.com npx expo start
-```
-
----
-
-## License
-
-Proprietary — Bardo Labs © 2026
+- [Auth0.swift](https://github.com/auth0/Auth0.swift) — Authentication
+- [KeychainAccess](https://github.com/kishikawakatsumi/KeychainAccess) — Secure token storage
