@@ -404,38 +404,32 @@ export default function CheckOutPage() {
     }
 
     try {
-      // Search packages by tracking number
-      const pkgRes = await fetch(`/api/packages?search=${encodeURIComponent(trackingInput.trim())}&limit=10`);
-      const pkgData = await pkgRes.json();
-      const matchingPkgs = (pkgData.packages ?? []).filter(
+      // BAR-342: Use the purpose-built checkout lookup endpoint which does
+      // case-insensitive partial matching and filters to checkout-eligible statuses
+      const lookupRes = await fetch(
+        `/api/packages/checkout/lookup?tracking=${encodeURIComponent(trackingInput.trim())}`
+      );
+      const lookupData = await lookupRes.json();
+
+      if (!lookupRes.ok || !lookupData.customer) {
+        setLookupError(lookupData.error || `No unreleased package found with tracking "${trackingInput}"`);
+        return;
+      }
+
+      const allPkgs = (lookupData.packages ?? []).filter(
         (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
       );
 
-      if (matchingPkgs.length === 0) {
+      if (allPkgs.length === 0) {
         setLookupError(`No unreleased package found with tracking "${trackingInput}"`);
         return;
       }
 
-      const pkg = matchingPkgs[0];
-      if (!pkg.customerId) {
-        setLookupError('Package found but customer record is missing');
-        return;
-      }
-
-      // Load the customer with all their packages
-      const custRes = await fetch(`/api/customers/${pkg.customerId}`);
-      const customer = await custRes.json();
-      if (!customer || customer.error) {
-        setLookupError('Package found but customer record is missing');
-        return;
-      }
-
-      const allPkgs = (customer.packages ?? []).filter(
-        (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
-      );
-      setFoundCustomer(customer);
+      setFoundCustomer(lookupData.customer);
       setCustomerPackages(allPkgs);
-      setSelectedIds(new Set(matchingPkgs.map((p: PackageType) => p.id)));
+      // Auto-select the package that matched the tracking number
+      const matchedId = lookupData.matchedTrackingId;
+      setSelectedIds(new Set(matchedId ? [matchedId] : [allPkgs[0]?.id].filter(Boolean)));
     } catch {
       setLookupError(`Failed to look up tracking "${trackingInput}"`);
     }

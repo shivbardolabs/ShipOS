@@ -238,9 +238,12 @@ export default function CustomersPage() {
         if (data.customer) {
           setCustomers((prev) => [data.customer, ...prev]);
         }
+        setAddSuccess(true);
+        setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
+      } else {
+        const data = await res.json().catch(() => null);
+        setFormErrors({ submit: data?.error || 'Failed to save customer. Please try again.' });
       }
-      setAddSuccess(true);
-      setTimeout(() => { setShowAddModal(false); setAddSuccess(false); setForm(EMPTY_FORM); setFormErrors({}); }, 1500);
     } catch {
       setFormErrors({ submit: 'Failed to save customer. Please try again.' });
     } finally {

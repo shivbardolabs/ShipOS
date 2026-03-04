@@ -42,8 +42,11 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
     };
 
     // ── Handle approval ──────────────────────────────────────────────────
+    // BAR-347: Require a matching active customer before allowing approval.
+    // Previously, items without a customer match were silently marked as
+    // "approved" with no Package record created, so they never appeared in
+    // Package Management.
     if (action === 'approve') {
-      // Create the actual Package record
       let customerId: string | null = null;
       if (existing.pmbNumber) {
         const customer = await prisma.customer.findFirst({
@@ -55,21 +58,27 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
         customerId = customer?.id ?? null;
       }
 
-      // If no customer found, we still approve but note it
-      const pkg = customerId
-        ? await prisma.package.create({
-            data: {
-              trackingNumber: existing.trackingNumber,
-              carrier: existing.carrier,
-              senderName: existing.senderName,
-              packageType: existing.packageSize || 'medium',
-              status: 'checked_in',
-              customerId,
-              recipientName: existing.recipientName,
-              checkedInById: user.id,
-            },
-          })
-        : null;
+      if (!customerId) {
+        return NextResponse.json(
+          {
+            error: `Cannot approve: no active customer found for PMB "${existing.pmbNumber || '(none)'}". Edit the PMB number or create the customer first.`,
+          },
+          { status: 422 }
+        );
+      }
+
+      const pkg = await prisma.package.create({
+        data: {
+          trackingNumber: existing.trackingNumber,
+          carrier: existing.carrier,
+          senderName: existing.senderName,
+          packageType: existing.packageSize || 'medium',
+          status: 'checked_in',
+          customerId,
+          recipientName: existing.recipientName,
+          checkedInById: user.id,
+        },
+      });
 
       const updated = await prisma.smartIntakePending.update({
         where: { id },
@@ -77,15 +86,14 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
           status: 'approved',
           reviewedById: user.id,
           reviewedAt: new Date(),
-          checkedInPackageId: pkg?.id ?? null,
+          checkedInPackageId: pkg.id,
         },
       });
 
       return NextResponse.json({
         success: true,
         item: serializeItem(updated),
-        packageId: pkg?.id ?? null,
-        warning: !customerId ? 'No matching customer found for PMB — package not created' : undefined,
+        packageId: pkg.id,
       });
     }
 

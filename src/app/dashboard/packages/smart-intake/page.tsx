@@ -799,6 +799,20 @@ export default function SmartIntakePage() {
                       </div>
                     </div>
 
+                    {/* Recipient — BAR-346 */}
+                    <div>
+                      <p className="text-xs text-surface-500 mb-0.5">Recipient</p>
+                      {pkg.editing ? (
+                        <Input
+                          value={effective.recipientName}
+                          onChange={(e) => updateOverride(idx, 'recipientName', e.target.value)}
+                          className="text-sm h-8"
+                        />
+                      ) : (
+                        <p className="text-sm text-surface-200">{effective.recipientName || '\u2014'}</p>
+                      )}
+                    </div>
+
                     {/* Sender */}
                     <div>
                       <p className="text-xs text-surface-500 mb-0.5">From</p>

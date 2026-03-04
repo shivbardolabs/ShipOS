@@ -35,10 +35,13 @@ export const POST = withApiHandler(async (request, { user }) => {
     const results: Array<{ id: string; status: string; packageId?: string; warning?: string }> = [];
 
     if (action === 'approve') {
-      // Process each approval — create Package records
+      // BAR-347: Process each approval — require matching customer before
+      // creating Package records. Items without a customer match are skipped
+      // with a clear error so they don't silently disappear.
+      const skippedItems: Array<{ id: string; pmbNumber: string | null; reason: string }> = [];
+
       for (const item of items) {
         let customerId: string | null = null;
-        let warning: string | undefined;
 
         if (item.pmbNumber) {
           const customer = await prisma.customer.findFirst({
@@ -47,24 +50,32 @@ export const POST = withApiHandler(async (request, { user }) => {
           customerId = customer?.id ?? null;
         }
 
-        let packageId: string | null = null;
-        if (customerId) {
-          const pkg = await prisma.package.create({
-            data: {
-              trackingNumber: item.trackingNumber,
-              carrier: item.carrier,
-              senderName: item.senderName,
-              packageType: item.packageSize || 'medium',
-              status: 'checked_in',
-              customerId,
-              recipientName: item.recipientName,
-              checkedInById: user.id,
-            },
+        if (!customerId) {
+          skippedItems.push({
+            id: item.id,
+            pmbNumber: item.pmbNumber,
+            reason: `No active customer found for PMB "${item.pmbNumber || '(none)'}"`,
           });
-          packageId = pkg.id;
-        } else {
-          warning = 'No matching customer found — package not created';
+          results.push({
+            id: item.id,
+            status: 'skipped',
+            warning: `No active customer for PMB "${item.pmbNumber || '(none)'}" — edit PMB or create customer first`,
+          });
+          continue;
         }
+
+        const pkg = await prisma.package.create({
+          data: {
+            trackingNumber: item.trackingNumber,
+            carrier: item.carrier,
+            senderName: item.senderName,
+            packageType: item.packageSize || 'medium',
+            status: 'checked_in',
+            customerId,
+            recipientName: item.recipientName,
+            checkedInById: user.id,
+          },
+        });
 
         await prisma.smartIntakePending.update({
           where: { id: item.id },
@@ -72,12 +83,24 @@ export const POST = withApiHandler(async (request, { user }) => {
             status: 'approved',
             reviewedById: user.id,
             reviewedAt: new Date(),
-            checkedInPackageId: packageId,
+            checkedInPackageId: pkg.id,
           },
         });
 
-        results.push({ id: item.id, status: 'approved', packageId: packageId ?? undefined, warning });
+        results.push({ id: item.id, status: 'approved', packageId: pkg.id });
       }
+
+      const approved = results.filter((r) => r.status === 'approved').length;
+      const skipped = results.filter((r) => r.status === 'skipped').length;
+
+      return NextResponse.json({
+        success: true,
+        action,
+        processed: approved,
+        skipped: skipped + (ids.length - items.length),
+        skippedItems,
+        results,
+      });
     } else {
       // Batch reject
       await prisma.smartIntakePending.updateMany({
