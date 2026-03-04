@@ -194,7 +194,7 @@ export const POST = withApiHandler(async (request, { user }) => {
 
 /** GET for Vercel Cron compatibility */
 export const GET = withApiHandler(async (request, { user }) => {
-  return POST(request);
+  return POST(request, { params: Promise.resolve({}) });
 }, { public: true });
 
 function isSameDay(a: Date, b: Date): boolean {

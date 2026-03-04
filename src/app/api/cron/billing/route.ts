@@ -283,5 +283,5 @@ export const POST = withApiHandler(async (request, { user }) => {
 
 /** GET handler for Vercel Cron compatibility */
 export const GET = withApiHandler(async (request, { user }) => {
-  return POST(request);
+  return POST(request, { params: Promise.resolve({}) });
 }, { public: true });
