@@ -260,7 +260,6 @@ function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
       customerId: '',
       programType: 'kinek',
       recipientName: 'Tom Rogers',
-      kinekNumber: '4829371',
       holdDeadline: new Date(Date.now() + 4 * 86400000).toISOString(),
       conditionTags: [],
       conditionPhotos: [],
@@ -283,7 +282,6 @@ function buildInventoryPackages(rawPackages: any[] = []): InventoryPackage[] {
       customerId: '',
       programType: 'kinek',
       recipientName: 'Lisa Wang',
-      kinekNumber: '5938271',
       holdDeadline: new Date(Date.now() - 3 * 86400000).toISOString(),
       conditionTags: [],
       conditionPhotos: [],
@@ -540,7 +538,7 @@ function PackagesContent() {
             template: 'package',
             data: {
               pmbNumber:
-                pkg.customer?.pmbNumber || pkg.kinekNumber || 'N/A',
+                pkg.customer?.pmbNumber || 'N/A',
               customerName: pkg.customer
                 ? `${pkg.customer.firstName} ${pkg.customer.lastName}`
                 : pkg.recipientName || 'Walk-In',
