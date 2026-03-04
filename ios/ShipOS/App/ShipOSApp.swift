@@ -32,6 +32,8 @@ final class AppState: ObservableObject {
     @Published var isShowingBatchOps = false
     @Published var isShowingEndOfDay = false
     @Published var isShowingDimensionTool = false
+    @Published var isShowingShipping = false
+    @Published var isShowingOnboarding = false
     @Published var toastMessage: ToastMessage?
 
     func showToast(_ message: String, type: ToastType = .info) {

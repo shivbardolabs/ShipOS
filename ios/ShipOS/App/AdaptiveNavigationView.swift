@@ -30,6 +30,12 @@ struct AdaptiveNavigationView: View {
         .sheet(isPresented: $appState.isShowingDimensionTool) {
             DimensionMeasurementView()
         }
+        .sheet(isPresented: $appState.isShowingShipping) {
+            ShippingView()
+        }
+        .sheet(isPresented: $appState.isShowingOnboarding) {
+            CustomerOnboardingView()
+        }
     }
 
     // MARK: - iPhone TabView

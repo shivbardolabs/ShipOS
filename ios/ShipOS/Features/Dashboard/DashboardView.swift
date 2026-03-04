@@ -135,6 +135,22 @@ struct DashboardView: View {
                 ) {
                     appState.isShowingEndOfDay = true
                 }
+
+                QuickActionButton(
+                    title: "Ship",
+                    icon: "paperplane.fill",
+                    color: Color(hex: "#8b5cf6")
+                ) {
+                    appState.isShowingShipping = true
+                }
+
+                QuickActionButton(
+                    title: "New Customer",
+                    icon: "person.badge.plus",
+                    color: Color(hex: "#10b981")
+                ) {
+                    appState.isShowingOnboarding = true
+                }
             }
         }
     }

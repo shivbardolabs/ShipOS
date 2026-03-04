@@ -180,10 +180,13 @@ enum API {
     // MARK: - Reports
 
     enum Reports {
-        static func export(format: String = "csv") -> Endpoint {
+        static func export(type: String = "packages", format: String = "csv") -> Endpoint {
             Endpoint(
                 path: "/api/reports/export",
-                queryItems: [URLQueryItem(name: "format", value: format)]
+                queryItems: [
+                    URLQueryItem(name: "type", value: type),
+                    URLQueryItem(name: "format", value: format)
+                ]
             )
         }
     }
@@ -191,6 +194,29 @@ enum API {
     // MARK: - Shipments
 
     enum Shipments {
+        static func list(
+            search: String? = nil,
+            status: String? = nil,
+            page: Int = 1,
+            limit: Int = 50
+        ) -> Endpoint {
+            var items: [URLQueryItem] = [
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "limit", value: "\(limit)")
+            ]
+            if let search, !search.isEmpty {
+                items.append(URLQueryItem(name: "search", value: search))
+            }
+            if let status {
+                items.append(URLQueryItem(name: "status", value: status))
+            }
+            return Endpoint(path: "/api/shipments", queryItems: items)
+        }
+
+        static func get(id: String) -> Endpoint {
+            Endpoint(path: "/api/shipments/\(id)")
+        }
+
         static func rates(body: ShipmentRateRequest) -> Endpoint {
             Endpoint(path: "/api/shipments/rates", method: .post, body: body)
         }
@@ -203,8 +229,20 @@ enum API {
     // MARK: - Compliance
 
     enum Compliance {
-        static func list() -> Endpoint {
-            Endpoint(path: "/api/compliance")
+        static func list(filter: String? = nil) -> Endpoint {
+            var items: [URLQueryItem] = []
+            if let filter {
+                items.append(URLQueryItem(name: "filter", value: filter))
+            }
+            return Endpoint(path: "/api/compliance", queryItems: items)
+        }
+
+        static func closures() -> Endpoint {
+            Endpoint(path: "/api/compliance/closures")
+        }
+
+        static func form1583(customerId: String) -> Endpoint {
+            Endpoint(path: "/api/customers/\(customerId)/form1583")
         }
     }
 
