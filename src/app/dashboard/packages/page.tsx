@@ -109,7 +109,7 @@ function daysHeld(checkedInAt: string | Date): number {
 /* -------------------------------------------------------------------------- */
 interface ToastState {
   message: string;
-  type: 'success' | 'info';
+  type: 'success' | 'info' | 'error';
 }
 
 function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void }) {

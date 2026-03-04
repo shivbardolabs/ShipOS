@@ -26,6 +26,7 @@ export type ActionVerb =
   | 'package.update'
   | 'package.return'
   | 'package.labels_printed'
+  | 'label.reprint'
   // Customer
   | 'customer.create'
   | 'customer.update'
@@ -236,6 +237,7 @@ export const ACTION_LABELS: Record<ActionVerb, string> = {
   'package.update': 'Updated package',
   'package.return': 'Returned package',
   'package.labels_printed': 'Printed label batch',
+  'label.reprint': 'Reprinted check-in label',
   'customer.create': 'Created customer',
   'customer.update': 'Updated customer',
   'customer.suspend': 'Suspended customer',
