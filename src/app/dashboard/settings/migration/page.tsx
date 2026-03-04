@@ -25,8 +25,10 @@ import {
   Clock,
   BarChart3,
   Shield,
+  FileSpreadsheet,
 } from 'lucide-react';
 import Link from 'next/link';
+import { LegacyImportSection } from './_legacy-import';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -69,7 +71,10 @@ type Step = 'upload' | 'analysis' | 'configure' | 'migrating' | 'complete';
 
 /* ── Main Component ─────────────────────────────────────────────────────── */
 
+type MigrationMode = 'postalmate' | 'csv';
+
 export default function MigrationPage() {
+  const [mode, setMode] = useState<MigrationMode>('postalmate');
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -270,10 +275,42 @@ export default function MigrationPage() {
           <ChevronLeft className="h-4 w-4" /> Back to Settings
         </Link>
         <PageHeader
-          title="PostalMate Migration"
-          description="Import your PostalMate data into ShipOS"
+          title="Data Migration"
+          description="Import data from PostalMate backups or CSV files into ShipOS"
         />
       </div>
+
+      {/* Migration mode tabs */}
+      <div className="flex gap-2 mb-8 border-b border-surface-800 pb-px">
+        <button
+          onClick={() => setMode('postalmate')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+            mode === 'postalmate'
+              ? 'bg-surface-800 text-primary-400 border border-surface-700 border-b-transparent -mb-px'
+              : 'text-surface-400 hover:text-surface-200'
+          }`}
+        >
+          <FileArchive className="h-4 w-4" />
+          PostalMate Backup
+        </button>
+        <button
+          onClick={() => setMode('csv')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+            mode === 'csv'
+              ? 'bg-surface-800 text-primary-400 border border-surface-700 border-b-transparent -mb-px'
+              : 'text-surface-400 hover:text-surface-200'
+          }`}
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          CSV Import
+        </button>
+      </div>
+
+      {/* CSV Import mode */}
+      {mode === 'csv' && <LegacyImportSection />}
+
+      {/* PostalMate Backup mode */}
+      {mode === 'postalmate' && <>
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-8">
@@ -761,6 +798,10 @@ export default function MigrationPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+
+      </>}
     </div>
   );
 }
