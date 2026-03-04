@@ -50,7 +50,6 @@ import {
   Package,
   ScreenShare,
   Monitor,
-  Database,
   ArrowRight,
   MapPin,
   GripVertical,
@@ -75,7 +74,7 @@ import { SubscriptionTab } from './components/subscription-tab';
 import { AppearanceTab } from './components/appearance-tab';
 import {
   BillingModelsTab, MigrationTab, CustomerDisplayTab,
-  PricingTab, PlatformConfigTab, LegacyMigrationTab } from './components/placeholder-tabs';
+  PricingTab, PlatformConfigTab } from './components/placeholder-tabs';
 
 function ToggleSwitch({ checked, onChange, label, description }: ToggleSwitchProps) {
   return (
@@ -831,22 +830,22 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'full' },
     admin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'full' },
     manager: {
       general: 'view_only', mailbox: 'view_only', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
       billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden' },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden' },
     employee: {
       general: 'hidden', mailbox: 'hidden', rates: 'view_only', 'storage-locations': 'view_only', dropoff: 'hidden',
       receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
       billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
-      'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden' } };
+      'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden' } };
 
   const role = (localUser?.role as UserRole) || 'employee';
   const roleAccess = ROLE_TAB_ACCESS[role] || ROLE_TAB_ACCESS.employee;
@@ -869,7 +868,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     { id: 'customer-display', label: 'Customer Display', icon: <ScreenShare className="h-4 w-4" />, section: 'Operations' },
     { id: 'pricing', label: 'Pricing Dashboard', icon: <DollarSign className="h-4 w-4" />, section: 'Operations' },
     { id: 'platform-config', label: 'Platform Config', icon: <Monitor className="h-4 w-4" />, section: 'Administration' },
-    { id: 'legacy-migration', label: 'Legacy Migration', icon: <Database className="h-4 w-4" />, section: 'Tools' },
+
   ];
 
   // BAR-286: Filter tabs by role — hidden tabs are removed entirely (not grayed out)
@@ -1056,7 +1055,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
           <TabPanel active={activeTab === 'customer-display'}><CustomerDisplayTab /></TabPanel>
           <TabPanel active={activeTab === 'pricing'}><PricingTab /></TabPanel>
           <TabPanel active={activeTab === 'platform-config'}><PlatformConfigTab /></TabPanel>
-          <TabPanel active={activeTab === 'legacy-migration'}><LegacyMigrationTab /></TabPanel>
+
         </div>
       </div>
     </div>
