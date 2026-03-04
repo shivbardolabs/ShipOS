@@ -119,6 +119,18 @@ export function AddressAutocomplete({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // Track user-initiated changes so we don't overwrite during typing
+  const isUserInputRef = useRef(false);
+
+  // Sync parent value → DOM only when the change comes from the parent
+  // (e.g. after place selection), NOT during active typing
+  useEffect(() => {
+    if (inputRef.current && !isUserInputRef.current) {
+      inputRef.current.value = value;
+    }
+    isUserInputRef.current = false;
+  }, [value]);
+
   // Load Google Maps and initialise Autocomplete
   useEffect(() => {
     if (!GOOGLE_API_KEY || disabled) return;
@@ -162,10 +174,11 @@ export function AddressAutocomplete({
     };
   }, [disabled]);
 
-  // Sync value into the input (for controlled behaviour)
-  // Google Autocomplete hijacks the input, so we need to be careful
+  // Let React know about keystrokes while marking them as user-initiated
+  // so the parent→DOM sync above won't fight with active typing
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      isUserInputRef.current = true;
       onChange(e.target.value);
     },
     [onChange],
@@ -189,7 +202,7 @@ export function AddressAutocomplete({
         <input
           ref={inputRef}
           type="text"
-          value={value}
+          defaultValue={value}
           onChange={handleChange}
           placeholder={placeholder}
           disabled={disabled}

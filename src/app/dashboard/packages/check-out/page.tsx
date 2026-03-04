@@ -404,10 +404,8 @@ export default function CheckOutPage() {
     }
 
     try {
-      // BAR-381: Use the dedicated checkout lookup endpoint which correctly
+      // BAR-342/381: Use the dedicated checkout lookup endpoint which correctly
       // filters for unreleased packages and resolves the customer in one call.
-      // Previously used /api/packages?search= which requires auth and doesn't
-      // filter by checkout-eligible statuses.
       const res = await fetch(`/api/packages/checkout/lookup?tracking=${encodeURIComponent(trackingInput.trim())}`);
       const data = await res.json();
 
@@ -421,14 +419,21 @@ export default function CheckOutPage() {
         return;
       }
 
-      setFoundCustomer(data.customer);
-      setCustomerPackages(data.packages ?? []);
-      // Auto-select the matched tracking package
-      const autoSelect = new Set<string>();
-      if (data.matchedTrackingId) {
-        autoSelect.add(data.matchedTrackingId);
+      // Client-side safety filter: exclude already released/returned packages
+      const allPkgs = (data.packages ?? []).filter(
+        (p: PackageType) => p.status !== 'released' && p.status !== 'returned'
+      );
+
+      if (allPkgs.length === 0) {
+        setLookupError(`No unreleased package found with tracking "${trackingInput}"`);
+        return;
       }
-      setSelectedIds(autoSelect);
+
+      setFoundCustomer(data.customer);
+      setCustomerPackages(allPkgs);
+      // Auto-select the matched tracking package, or fall back to first available
+      const matchedId = data.matchedTrackingId;
+      setSelectedIds(new Set(matchedId ? [matchedId] : [allPkgs[0]?.id].filter(Boolean)));
     } catch {
       setLookupError(`Failed to look up tracking "${trackingInput}"`);
     }
