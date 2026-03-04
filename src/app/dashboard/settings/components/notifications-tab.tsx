@@ -1,11 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, Textarea } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Modal } from '@/components/ui/modal';
 import { ToggleSwitch } from './toggle-switch';
-import { Bell, Edit3, Mail, Save, Shield, Smartphone, TrendingUp, Wifi, WifiOff } from 'lucide-react';
+import { Bell, Check, Edit3, Mail, Save, Shield, Smartphone, TrendingUp, Wifi, WifiOff } from 'lucide-react';
+
+interface NotificationTemplate {
+  name: string;
+  channel: string;
+  status: string;
+  subject: string;
+  bodyEmail: string;
+  bodySms: string;
+}
 
 export interface NotificationsTabProps {
   emailReceipts: boolean;
@@ -17,7 +29,89 @@ export interface NotificationsTabProps {
   role?: string;
 }
 
+const NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
+  {
+    name: 'Package Arrival',
+    channel: 'Email + SMS',
+    status: 'active',
+    subject: '📦 New {{carrier}} package at {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nA new {{carrier}} package has arrived at your mailbox {{pmbNumber}}.\n\nPlease pick up at your convenience.',
+    bodySms: 'Hi {{customerName}}, a new {{carrier}} package has arrived at your mailbox {{pmbNumber}}. Please pick up at your convenience.',
+  },
+  {
+    name: 'Package Reminder',
+    channel: 'Email',
+    status: 'active',
+    subject: '⏰ {{packageCount}} package(s) waiting at {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nReminder: you have {{packageCount}} package(s) waiting at {{pmbNumber}}.\n\nPlease pick up soon to avoid storage fees.',
+    bodySms: 'Hi {{customerName}}, reminder: you have {{packageCount}} package(s) waiting at {{pmbNumber}}. Please pick up soon.',
+  },
+  {
+    name: 'Mail Received',
+    channel: 'Email',
+    status: 'active',
+    subject: '✉️ New mail received at {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nNew {{mailType}} has been received at your mailbox {{pmbNumber}}.\n\nContact your location for handling options.',
+    bodySms: 'Hi {{customerName}}, new {{mailType}} has been received at your mailbox {{pmbNumber}}. Contact your location for handling options.',
+  },
+  {
+    name: 'ID Expiration Warning',
+    channel: 'Email + SMS',
+    status: 'active',
+    subject: '⚠️ ID expiration notice for {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nYour {{idType}} on file for {{pmbNumber}} {{expiryMessage}}.\n\nPlease bring updated ID to your location.',
+    bodySms: 'Hi {{customerName}}, your {{idType}} on file for {{pmbNumber}} {{expiryMessage}}. Please bring updated ID to your location.',
+  },
+  {
+    name: 'Renewal Reminder',
+    channel: 'Email',
+    status: 'active',
+    subject: '🔔 Mailbox renewal reminder for {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nYour mailbox {{pmbNumber}} renewal is due on {{renewalDate}}.\n\nPlease renew before the due date to avoid any interruption in service.',
+    bodySms: 'Hi {{customerName}}, your mailbox {{pmbNumber}} renewal is due on {{renewalDate}}. Please renew to avoid service interruption.',
+  },
+  {
+    name: 'Shipment Update',
+    channel: 'Email + SMS',
+    status: 'inactive',
+    subject: '🚚 Shipment update for {{pmbNumber}}',
+    bodyEmail: 'Hi {{customerName}},\n\nYour shipment status has been updated.\n\nCheck your dashboard for details.',
+    bodySms: 'Hi {{customerName}}, your shipment status has been updated. Check your dashboard for details.',
+  },
+  {
+    name: 'Welcome',
+    channel: 'Email',
+    status: 'active',
+    subject: '🎉 Welcome to ShipOS Pro — {{pmbNumber}} is ready!',
+    bodyEmail: 'Welcome to ShipOS Pro, {{customerName}}!\n\nYour mailbox {{pmbNumber}} is now active at {{locationName}}.\n\nYou\'ll receive notifications for packages and mail.',
+    bodySms: 'Welcome to ShipOS Pro, {{customerName}}! Your mailbox {{pmbNumber}} is now active. You\'ll receive notifications for packages and mail.',
+  },
+];
+
 export function NotificationsTab({ emailReceipts, setEmailReceipts, smtpFrom, setSmtpFrom, smsDefaultArrival, setSmsDefaultArrival, role }: NotificationsTabProps) {
+  const [templates, setTemplates] = useState<NotificationTemplate[]>(NOTIFICATION_TEMPLATES);
+  const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+
+  const handleSaveTemplate = () => {
+    if (!editingTemplate) return;
+    setTemplateSaving(true);
+    // Update the template in the local list
+    setTemplates((prev) =>
+      prev.map((t) => (t.name === editingTemplate.name ? { ...editingTemplate } : t))
+    );
+    // Simulate save (templates are client-side for now)
+    setTimeout(() => {
+      setTemplateSaving(false);
+      setTemplateSaved(true);
+      setTimeout(() => {
+        setTemplateSaved(false);
+        setEditingTemplate(null);
+      }, 1000);
+    }, 400);
+  };
+
   return (
     <>
   <div className="space-y-6">
@@ -144,15 +238,7 @@ export function NotificationsTab({ emailReceipts, setEmailReceipts, smtpFrom, se
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {[
-            { name: 'Package Arrival', channel: 'Email + SMS', status: 'active' },
-            { name: 'Package Reminder', channel: 'Email', status: 'active' },
-            { name: 'Mail Received', channel: 'Email', status: 'active' },
-            { name: 'ID Expiration Warning', channel: 'Email + SMS', status: 'active' },
-            { name: 'Renewal Reminder', channel: 'Email', status: 'active' },
-            { name: 'Shipment Update', channel: 'Email + SMS', status: 'inactive' },
-            { name: 'Welcome', channel: 'Email', status: 'active' },
-          ].map((template) => (
+          {templates.map((template) => (
             <div
               key={template.name}
               className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-800/50 transition-colors border border-surface-700/30"
@@ -171,7 +257,7 @@ export function NotificationsTab({ emailReceipts, setEmailReceipts, smtpFrom, se
                 >
                   {template.status}
                 </Badge>
-                <Button variant="ghost" size="sm" iconOnly>
+                <Button variant="ghost" size="sm" iconOnly onClick={() => setEditingTemplate({ ...template })}>
                   <Edit3 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -185,6 +271,78 @@ export function NotificationsTab({ emailReceipts, setEmailReceipts, smtpFrom, se
       <Button leftIcon={<Save className="h-4 w-4" />}>Save Notification Settings</Button>
     </div>
   </div>
+
+  {/* Template Edit Modal */}
+  <Modal
+    open={!!editingTemplate}
+    onClose={() => setEditingTemplate(null)}
+    title={`Edit Template — ${editingTemplate?.name || ''}`}
+    size="lg"
+    footer={
+      <>
+        <Button variant="ghost" size="sm" onClick={() => setEditingTemplate(null)}>
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          leftIcon={templateSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+          onClick={handleSaveTemplate}
+          loading={templateSaving}
+          disabled={templateSaving}
+        >
+          {templateSaved ? 'Saved!' : 'Save Changes'}
+        </Button>
+      </>
+    }
+  >
+    {editingTemplate && (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Template Name"
+            value={editingTemplate.name}
+            onChange={(e) => setEditingTemplate((prev) => prev ? { ...prev, name: e.target.value } : prev)}
+          />
+          <Select
+            label="Channel"
+            value={editingTemplate.channel}
+            onChange={(e) => setEditingTemplate((prev) => prev ? { ...prev, channel: e.target.value } : prev)}
+            options={[
+              { value: 'Email', label: 'Email' },
+              { value: 'SMS', label: 'SMS' },
+              { value: 'Email + SMS', label: 'Email + SMS' },
+            ]}
+          />
+        </div>
+        <Input
+          label="Subject Line"
+          value={editingTemplate.subject}
+          onChange={(e) => setEditingTemplate((prev) => prev ? { ...prev, subject: e.target.value } : prev)}
+          placeholder="Email subject line — use {{variable}} for dynamic values"
+        />
+        <Textarea
+          label="Email Body"
+          value={editingTemplate.bodyEmail}
+          onChange={(e) => setEditingTemplate((prev) => prev ? { ...prev, bodyEmail: e.target.value } : prev)}
+          rows={4}
+          placeholder="Email body content — use {{variable}} for dynamic values"
+        />
+        <Textarea
+          label="SMS Body"
+          value={editingTemplate.bodySms}
+          onChange={(e) => setEditingTemplate((prev) => prev ? { ...prev, bodySms: e.target.value } : prev)}
+          rows={3}
+          placeholder="SMS body content — use {{variable}} for dynamic values"
+        />
+        <ToggleSwitch
+          checked={editingTemplate.status === 'active'}
+          onChange={(val) => setEditingTemplate((prev) => prev ? { ...prev, status: val ? 'active' : 'inactive' } : prev)}
+          label="Active"
+          description="Enable or disable this notification template"
+        />
+      </div>
+    )}
+  </Modal>
     </>
   );
 }
