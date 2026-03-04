@@ -1,0 +1,16 @@
+Welcome to ShipOS for iOS! 🎉
+
+This is our first release, bringing the full power of ShipOS to your iPhone and iPad:
+
+• Scan barcodes and check in packages in seconds
+• AI-powered Smart Intake — photograph labels, let AI do the rest
+• AR dimension measurement with LiDAR
+• Full customer management with PMB tracking
+• Compare shipping rates across carriers
+• USPS Form 1583 compliance tracking
+• Push notifications for package arrivals
+• Home Screen and Lock Screen widgets
+• Full offline support with automatic sync
+• iPad Pro optimized with keyboard shortcuts and sidebar
+
+We'd love your feedback — reach out at support@getshipos.com.

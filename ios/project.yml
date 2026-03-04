@@ -26,6 +26,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - ShipOS
+    resources:
+      - path: ShipOS/PrivacyInfo.xcprivacy
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos
