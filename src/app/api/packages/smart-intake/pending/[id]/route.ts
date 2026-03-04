@@ -43,33 +43,75 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
 
     // ── Handle approval ──────────────────────────────────────────────────
     if (action === 'approve') {
-      // Create the actual Package record
+      // BAR-382: Create the actual Package record with proper tenant scoping
       let customerId: string | null = null;
+      let warning: string | undefined;
+
       if (existing.pmbNumber) {
         const customer = await prisma.customer.findFirst({
           where: {
             pmbNumber: existing.pmbNumber,
             status: 'active',
+            // BAR-382: Scope to tenant to prevent cross-tenant matches
+            ...(user.tenantId ? { tenantId: user.tenantId } : {}),
           },
         });
         customerId = customer?.id ?? null;
+
+        // BAR-382: Check if mailbox exists but is closed/suspended
+        if (!customerId) {
+          const closedCustomer = await prisma.customer.findFirst({
+            where: {
+              pmbNumber: existing.pmbNumber,
+              status: { not: 'active' },
+              ...(user.tenantId ? { tenantId: user.tenantId } : {}),
+            },
+            select: { pmbNumber: true, status: true },
+          });
+          if (closedCustomer) {
+            warning = `Mailbox ${closedCustomer.pmbNumber} is ${closedCustomer.status} — package not created`;
+          }
+        }
       }
 
-      // If no customer found, we still approve but note it
-      const pkg = customerId
-        ? await prisma.package.create({
-            data: {
-              trackingNumber: existing.trackingNumber,
-              carrier: existing.carrier,
-              senderName: existing.senderName,
-              packageType: existing.packageSize || 'medium',
-              status: 'checked_in',
-              customerId,
-              recipientName: existing.recipientName,
-              checkedInById: user.id,
-            },
-          })
-        : null;
+      // BAR-382: Check for duplicate tracking number
+      if (customerId && existing.trackingNumber?.trim()) {
+        const duplicate = await prisma.package.findFirst({
+          where: {
+            trackingNumber: existing.trackingNumber.trim(),
+            customer: { tenantId: user.tenantId },
+            status: { notIn: ['released', 'returned'] },
+          },
+          select: { id: true },
+        });
+        if (duplicate) {
+          warning = `Duplicate tracking number — already exists as package ${duplicate.id}`;
+        }
+      }
+
+      // Create the Package with storeId for proper inventory scoping
+      let pkg = null;
+      if (customerId) {
+        const defaultStore = user.tenantId
+          ? await prisma.store.findFirst({ where: { tenantId: user.tenantId, isDefault: true } })
+          : null;
+
+        pkg = await prisma.package.create({
+          data: {
+            trackingNumber: existing.trackingNumber,
+            carrier: existing.carrier,
+            senderName: existing.senderName,
+            packageType: existing.packageSize || 'medium',
+            status: 'checked_in',
+            customerId,
+            recipientName: existing.recipientName,
+            checkedInById: user.id,
+            storeId: defaultStore?.id ?? null,
+          },
+        });
+      } else if (!warning) {
+        warning = 'No matching customer found for PMB — package not created';
+      }
 
       const updated = await prisma.smartIntakePending.update({
         where: { id },
@@ -85,7 +127,7 @@ export const PATCH = withApiHandler(async (request, { user, params }) => {
         success: true,
         item: serializeItem(updated),
         packageId: pkg?.id ?? null,
-        warning: !customerId ? 'No matching customer found for PMB — package not created' : undefined,
+        warning,
       });
     }
 
