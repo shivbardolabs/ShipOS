@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 // Using native select for inline options
@@ -46,7 +45,7 @@ interface Preset {
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 
-export default function LegacyMigrationPage() {
+export function LegacyImportSection() {
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
   const [preset, setPreset] = useState('postalmate');
@@ -96,11 +95,15 @@ export default function LegacyMigrationPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Legacy Data Migration"
-        description="Import customers and packages from PostalMate, Mail Manager, or custom CSV/JSON files."
-        icon={<Database className="h-6 w-6" />}
-      />
+      <div className="mb-2">
+        <h2 className="text-lg font-bold text-surface-100 flex items-center gap-2">
+          <Database className="h-5 w-5 text-primary-600" />
+          CSV Import
+        </h2>
+        <p className="text-sm text-surface-400 mt-1">
+          Import customers and packages from PostalMate, Mail Manager, or custom CSV/JSON files.
+        </p>
+      </div>
 
       {/* Steps */}
       <div className="flex items-center gap-2 text-sm">
