@@ -1,0 +1,8 @@
+# BAR-379: Fastlane Match (Code Signing)
+git_url(ENV["MATCH_GIT_URL"] || "")
+storage_mode("git")
+type("appstore")
+app_identifier([
+  "ai.bardolabs.shipos",
+  "ai.bardolabs.shipos.widgets"
+])

@@ -1,0 +1,1 @@
+package,mailbox,shipping,parcel,tracking,barcode,scanner,PMB,CMRA,mail,delivery,logistics,check-in,checkout

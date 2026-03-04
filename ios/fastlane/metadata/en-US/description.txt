@@ -1,0 +1,61 @@
+ShipOS is the all-in-one package management platform built for mailbox stores, shipping centers, and parcel lockers.
+
+KEY FEATURES:
+
+📦 Package Management
+• Scan barcodes to check in packages instantly
+• Smart carrier detection (USPS, UPS, FedEx, DHL, Amazon, and more)
+• Track package status from arrival to pickup
+• Batch operations for handling multiple packages at once
+
+📸 AI-Powered Smart Intake
+• Photograph shipping labels and let AI extract all details automatically
+• Vision OCR reads tracking numbers, addresses, and sender info
+• Skip manual data entry entirely
+
+📐 AR Dimension Measurement
+• Use LiDAR and ARKit to measure package dimensions in seconds
+• Accurate length, width, and height capture for shipping quotes
+
+👥 Customer Management
+• Full customer database with PMB (Private Mailbox) numbers
+• Onboarding wizard with ID verification and Form 1583 compliance
+• Notification preferences per customer (SMS, email, push)
+
+🚚 Shipping
+• Compare live rates across carriers
+• Create shipments with a guided 5-step wizard
+• Track outbound shipments
+
+✅ Compliance
+• USPS Form 1583 tracking and management
+• Compliance score dashboard with alerts
+• Automated reminders for expiring documents
+
+📊 Reports & Analytics
+• Revenue tracking, package volume, and customer insights
+• Beautiful charts powered by Swift Charts
+• Export reports as CSV
+
+🔔 Smart Notifications
+• Instant push notifications for package arrivals
+• Batch notify customers about ready packages
+• End-of-day reminders
+
+🔒 Security
+• Face ID / Touch ID authentication
+• Encrypted data storage
+• Certificate pinning for API security
+
+📱 Designed for iPhone & iPad
+• Adaptive layout: TabView on iPhone, sidebar on iPad
+• Keyboard shortcuts for iPad Pro (⌘1–5, ⌘I, ⌘O, ⌘B)
+• Trackpad hover effects and drag-and-drop
+• Home Screen and Lock Screen widgets
+
+🔄 Works Offline
+• Automatic offline queue for uninterrupted operations
+• Background sync when connectivity returns
+• Never lose a check-in or check-out
+
+ShipOS requires a ShipOS account. Visit getshipos.com to get started.
