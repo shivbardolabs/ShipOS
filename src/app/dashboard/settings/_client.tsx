@@ -722,6 +722,52 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     ipostal1: true,
     postscan: true });
 
+  // BAR-387: Mailbox range state (controlled inputs + persistence)
+  const [mailboxRanges, setMailboxRanges] = useState<Record<string, { rangeStart: number; rangeEnd: number }>>({
+    store: { rangeStart: 1, rangeEnd: 550 },
+    anytime: { rangeStart: 700, rangeEnd: 999 },
+    ipostal1: { rangeStart: 1000, rangeEnd: 1200 },
+    postscan: { rangeStart: 2000, rangeEnd: 2999 },
+  });
+  const [rangeSaving, setRangeSaving] = useState(false);
+  const [rangeSaved, setRangeSaved] = useState(false);
+  const [rangeError, setRangeError] = useState<string | null>(null);
+
+  // BAR-387: Fetch saved ranges on mount
+  useEffect(() => {
+    fetch('/api/settings/mailbox-ranges')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ranges) setMailboxRanges(d.ranges);
+      })
+      .catch(() => {});
+  }, []);
+
+  // BAR-387: Save ranges handler
+  const handleSaveRanges = useCallback(async () => {
+    setRangeSaving(true);
+    setRangeError(null);
+    setRangeSaved(false);
+    try {
+      const res = await fetch('/api/settings/mailbox-ranges', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ranges: mailboxRanges, enabledPlatforms: platformEnabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRangeError(data.error || 'Failed to save ranges');
+      } else {
+        setRangeSaved(true);
+        setTimeout(() => setRangeSaved(false), 2000);
+      }
+    } catch {
+      setRangeError('Network error — could not save ranges');
+    } finally {
+      setRangeSaving(false);
+    }
+  }, [mailboxRanges, platformEnabled]);
+
   // Carrier program toggles (BAR-266)
   const [carrierProgramEnabled, setCarrierProgramEnabled] = useState<Record<string, boolean>>({
     ups_ap: false,
@@ -859,6 +905,9 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
               showEditTemplateModal={showEditTemplateModal} setShowEditTemplateModal={setShowEditTemplateModal}
               templateSaving={templateSaving} templateSaved={templateSaved}
               handleSaveTemplate={handleSaveTemplate} handleUploadTemplate={handleUploadTemplate}
+              mailboxRanges={mailboxRanges} setMailboxRanges={setMailboxRanges}
+              handleSaveRanges={handleSaveRanges} rangeSaving={rangeSaving}
+              rangeSaved={rangeSaved} rangeError={rangeError}
             />
           </TabPanel>
 
