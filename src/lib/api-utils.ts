@@ -144,7 +144,7 @@ interface WithApiHandlerOptions {
 export function withApiHandler(handler: ApiHandler, options?: WithApiHandlerOptions) {
   return async (
     request: NextRequest,
-    routeContext?: { params?: Promise<Record<string, string>> },
+    routeContext: { params: Promise<Record<string, string>> },
   ): Promise<NextResponse | Response> => {
     let user: LocalUser | null = null;
 

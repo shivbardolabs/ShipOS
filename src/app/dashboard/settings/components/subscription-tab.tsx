@@ -3,7 +3,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
 import { Building2, Check, Crown, Package, Star, X, Zap } from 'lucide-react';
 
 export interface SubscriptionTabProps {

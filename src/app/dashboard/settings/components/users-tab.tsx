@@ -3,11 +3,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 import type { TenantUser, PendingInvitation } from './types';
-import { Check, Eye, Loader2, Mail, Plus, Shield, Trash2, Users, X } from 'lucide-react';
+import { Check, Eye, Mail, Plus, Shield, Trash2, Users, X } from 'lucide-react';
 
 export interface UsersTabProps {
   localUser: { id: string; role: string; email: string } | null;

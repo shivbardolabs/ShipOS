@@ -10,12 +10,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input, Textarea } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 
 import { useActivityLog } from '@/components/activity-log-provider';
 import { LastUpdatedBy } from '@/components/ui/performed-by';
-import { formatCurrency } from '@/lib/utils';
 import type { UserRole } from '@/lib/permissions';
 import Link from 'next/link';
 import {
@@ -77,8 +75,7 @@ import { SubscriptionTab } from './components/subscription-tab';
 import { AppearanceTab } from './components/appearance-tab';
 import {
   BillingModelsTab, MigrationTab, CustomerDisplayTab,
-  PricingTab, PlatformConfigTab, LegacyMigrationTab,
-} from './components/placeholder-tabs';
+  PricingTab, PlatformConfigTab, LegacyMigrationTab } from './components/placeholder-tabs';
 
 function ToggleSwitch({ checked, onChange, label, description }: ToggleSwitchProps) {
   return (
@@ -239,8 +236,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings/storage-locations', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+        body: JSON.stringify(payload) });
 
       if (res.ok) {
         setShowStorageLocModal(false);
@@ -274,8 +270,7 @@ export default function SettingsPage() {
       await fetch('/api/settings/storage-locations', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order }),
-      });
+        body: JSON.stringify({ order }) });
     } catch {
       fetchStorageLocations(); // revert on error
     }
@@ -317,9 +312,7 @@ export default function SettingsPage() {
           phone: storePhone,
           email: storeEmail,
           taxRate: parseFloat(taxRate) || 0,
-          businessHours: JSON.stringify({ open: openTime, close: closeTime }),
-        }),
-      });
+          businessHours: JSON.stringify({ open: openTime, close: closeTime }) }) });
       await refreshTenant();
       setTenantSaved(true);
       setTimeout(() => setTenantSaved(false), 3000);
@@ -357,8 +350,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role: newRole }),
-      });
+        body: JSON.stringify({ userId, role: newRole }) });
       if (res.ok) {
         const updated = await res.json();
         setTeamUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
@@ -380,8 +372,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, status: newStatus }),
-      });
+        body: JSON.stringify({ userId, status: newStatus }) });
       if (res.ok) {
         const updated = await res.json();
         setTeamUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
@@ -403,8 +394,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
+        body: JSON.stringify({ userId }) });
       if (res.ok) {
         // Re-fetch users to get updated list (may need to keep deleted if showing audit view)
         fetchUsers();
@@ -423,8 +413,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action: 'restore' }),
-      });
+        body: JSON.stringify({ userId, action: 'restore' }) });
       if (res.ok) {
         fetchUsers();
       }
@@ -475,8 +464,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
-      });
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }) });
       if (res.ok) {
         setInviteSuccess(true);
         setInviteEmail('');
@@ -505,8 +493,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/users/invite', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invitationId }),
-      });
+        body: JSON.stringify({ invitationId }) });
       if (res.ok) fetchInvitations();
     } catch (e) {
       console.error('Revoke failed', e);
@@ -633,8 +620,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
       const res = await fetch('/api/settings/agreement-template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: templateContent }),
-      });
+        body: JSON.stringify({ content: templateContent }) });
       if (!res.ok) throw new Error('Failed to save');
       setTemplateSaved(true);
       setTimeout(() => {
@@ -690,9 +676,7 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
           retailRate: parseFloat(editingRate.retailRate),
           marginType: editingRate.marginType,
           marginValue: parseFloat(editingRate.marginValue),
-          isActive: editingRate.isActive,
-        }),
-      });
+          isActive: editingRate.isActive }) });
       if (!res.ok) throw new Error('Failed to save');
       // Update local state
       setCarrierRates((prev) =>
@@ -736,16 +720,14 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     store: true,
     anytime: true,
     ipostal1: true,
-    postscan: true,
-  });
+    postscan: true });
 
   // Carrier program toggles (BAR-266)
   const [carrierProgramEnabled, setCarrierProgramEnabled] = useState<Record<string, boolean>>({
     ups_ap: false,
     fedex_hal: false,
     kinek: false,
-    amazon: false,
-  });
+    amazon: false });
 
   /* ──────────────────────────────────────────────────────────────────── */
   /*  Role-Based Settings Access — BAR-286 & BAR-288                    */
@@ -778,27 +760,22 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
-    },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
     admin: {
       general: 'full', mailbox: 'full', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'full', notifications: 'full', users: 'full',
       billing: 'full', 'billing-models': 'full', subscription: 'full', appearance: 'full', migration: 'full',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full',
-    },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'full', 'legacy-migration': 'full' },
     manager: {
       general: 'view_only', mailbox: 'view_only', rates: 'full', 'storage-locations': 'full', dropoff: 'full',
       receipts: 'full', printers: 'hidden', notifications: 'full', users: 'hidden',
       billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'view_only', migration: 'hidden',
-      'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
-    },
+      'customer-display': 'full', pricing: 'full', 'platform-config': 'hidden', 'legacy-migration': 'hidden' },
     employee: {
       general: 'hidden', mailbox: 'hidden', rates: 'view_only', 'storage-locations': 'view_only', dropoff: 'hidden',
       receipts: 'hidden', printers: 'hidden', notifications: 'hidden', users: 'hidden',
       billing: 'hidden', 'billing-models': 'hidden', subscription: 'hidden', appearance: 'hidden', migration: 'hidden',
-      'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden',
-    },
-  };
+      'customer-display': 'hidden', pricing: 'hidden', 'platform-config': 'hidden', 'legacy-migration': 'hidden' } };
 
   const role = (localUser?.role as UserRole) || 'employee';
   const roleAccess = ROLE_TAB_ACCESS[role] || ROLE_TAB_ACCESS.employee;
