@@ -1,17 +1,31 @@
 'use client';
 
+/**
+ * BAR-204: Online/Offline status indicator (header pill).
+ *
+ * When the OfflineProvider is active (offline_mode flag enabled), this
+ * component reads from the shared context and shows pending-action count.
+ * Otherwise it falls back to a standalone navigator.onLine listener.
+ */
+
 import { useState, useEffect } from 'react';
+import { useOffline } from '@/components/offline-provider';
 
 export function OnlineStatus() {
-  const [isOnline, setIsOnline] = useState(true);
+  // ── Try to consume the OfflineProvider context ───────────────────────
+  // If the provider isn't mounted the defaults (isOnline:true, pendingActions:0,
+  // isOfflineCapable:false) are safe — we just layer local detection on top.
+  const offline = useOffline();
+
+  const [localOnline, setLocalOnline] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    setIsOnline(navigator.onLine);
+    setLocalOnline(navigator.onLine);
 
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
+    const goOnline = () => setLocalOnline(true);
+    const goOffline = () => setLocalOnline(false);
 
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
@@ -24,6 +38,16 @@ export function OnlineStatus() {
 
   // Don't render during SSR to avoid hydration mismatch
   if (!mounted) return null;
+
+  // Prefer context value when the provider is active
+  const isOnline = offline.isOfflineCapable ? offline.isOnline : localOnline;
+  const pending = offline.pendingActions;
+
+  const label = isOnline
+    ? 'Connected'
+    : pending > 0
+      ? `Offline — ${pending} pending`
+      : 'Offline — changes will sync';
 
   return (
     <div
@@ -49,9 +73,7 @@ export function OnlineStatus() {
           }`}
         />
       </span>
-      <span className="hidden sm:inline">
-        {isOnline ? 'Connected' : 'Offline — changes will sync'}
-      </span>
+      <span className="hidden sm:inline">{label}</span>
     </div>
   );
 }
