@@ -1,6 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
 
 // MARK: - Package Status
 
@@ -36,9 +35,6 @@ enum PackageStatus: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var color: Color {
-        ShipOSTheme.Colors.packageStatus(self)
-    }
 }
 
 // MARK: - Package (SwiftData)
