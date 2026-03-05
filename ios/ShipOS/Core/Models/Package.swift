@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 // MARK: - Package Status
 
@@ -33,6 +34,10 @@ enum PackageStatus: String, Codable, CaseIterable, Identifiable {
         case .returned: "arrow.uturn.left.circle.fill"
         case .forwarded: "arrow.right.circle.fill"
         }
+    }
+
+    var color: Color {
+        ShipOSTheme.Colors.packageStatus(self)
     }
 }
 
