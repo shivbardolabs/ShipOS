@@ -93,14 +93,14 @@ struct PackageStatsWidgetView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.indigo)
                 Text("ShipOS")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .font(.system(.caption, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             Text("\(entry.checkedIn)")
-                .font(.system(size: 36, design: .rounded, weight: .bold))
+                .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
 
             Text("Packages Held")
@@ -112,7 +112,7 @@ struct PackageStatsWidgetView: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.green)
                 Text("+\(entry.todayCheckIns) today")
-                    .font(.system(.caption2, design: .rounded, weight: .medium))
+                    .font(.system(.caption2, weight: .medium, design: .rounded))
                     .foregroundStyle(.green)
             }
         }
@@ -130,13 +130,13 @@ struct PackageStatsWidgetView: View {
                     Image(systemName: "shippingbox.fill")
                         .foregroundStyle(.indigo)
                     Text("ShipOS")
-                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .font(.system(.subheadline, weight: .semibold, design: .rounded))
                 }
 
                 Spacer()
 
                 Text("\(entry.todayCheckIns)")
-                    .font(.system(size: 40, design: .rounded, weight: .bold))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
 
                 Text("Check-ins today")
                     .font(.system(.caption, design: .rounded))
@@ -165,7 +165,7 @@ struct PackageStatsWidgetView: View {
                 Image(systemName: "shippingbox.fill")
                     .foregroundStyle(.indigo)
                 Text("ShipOS Dashboard")
-                    .font(.system(.headline, design: .rounded, weight: .semibold))
+                    .font(.system(.headline, weight: .semibold, design: .rounded))
                 Spacer()
                 Text(entry.date, style: .time)
                     .font(.system(.caption, design: .rounded))
@@ -206,7 +206,7 @@ struct PackageStatsWidgetView: View {
                 Image(systemName: "shippingbox.fill")
                     .font(.system(size: 14))
                 Text("\(entry.checkedIn)")
-                    .font(.system(.title3, design: .rounded, weight: .bold))
+                    .font(.system(.title3, weight: .bold, design: .rounded))
             }
         }
     }
@@ -215,10 +215,10 @@ struct PackageStatsWidgetView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("ShipOS")
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
+                    .font(.system(.caption2, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                 Text("\(entry.checkedIn) held")
-                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .font(.system(.headline, weight: .bold, design: .rounded))
                 Text("+\(entry.todayCheckIns) today")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -246,7 +246,7 @@ struct PackageStatsWidgetView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(value)")
-                    .font(.system(.subheadline, design: .rounded, weight: .bold))
+                    .font(.system(.subheadline, weight: .bold, design: .rounded))
                 Text(label)
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -264,7 +264,7 @@ struct PackageStatsWidgetView: View {
             }
 
             Text(value)
-                .font(.system(.title2, design: .rounded, weight: .bold))
+                .font(.system(.title2, weight: .bold, design: .rounded))
 
             Text(title)
                 .font(.system(.caption2, design: .rounded))

@@ -93,7 +93,7 @@ struct EnhancedIPadSidebar: View {
 
             if let badge, badge > 0 {
                 Text("\(badge)")
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
+                    .font(.system(.caption2, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
