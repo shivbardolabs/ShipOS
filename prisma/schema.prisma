@@ -21,6 +21,8 @@ model Tenant {
   country          String    @default("US")
   phone            String?
   email            String?
+  website          String? // Store website URL
+  dba              String? // "Doing business as" name
   timezone         String    @default("America/New_York")
   businessHours    String? // JSON: { mon: { open, close }, tue: … }
   taxRate          Float     @default(0)
@@ -28,6 +30,12 @@ model Tenant {
   status           String    @default("active") // active, paused, disabled, trial
   subscriptionTier String    @default("starter") // starter, pro, enterprise
   trialEndsAt      DateTime? // When trial period expires (null = no trial)
+
+  // Sign-up classification
+  affiliationType  String    @default("independent") // independent, franchise, association, other
+  franchiseType    String? // RSA, PBC, Annex, UPS Store, Other (when affiliationType = franchise)
+  storeCount       Int       @default(1) // Number of stores
+  planId           String? // Reference to selected plan (starter, pro, enterprise)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -76,9 +84,13 @@ model User {
   id                     String    @id @default(cuid())
   auth0Id                String?   @unique // Auth0 `sub` claim — links login to local user
   name                   String
+  firstName              String? // First name (captured during sign-up)
+  lastName               String? // Last name (captured during sign-up)
   email                  String    @unique
+  phone                  String? // Mobile phone number
   password               String    @default("")
   role                   String    @default("admin") // superadmin, admin, manager, employee
+  title                  String? // Owner, Partner, Manager, Other
   avatar                 String?
   status                 String    @default("active") // active, inactive, suspended
   deletedAt              DateTime? // Soft delete timestamp — filtered from queries when set
