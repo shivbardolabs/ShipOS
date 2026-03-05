@@ -21,6 +21,39 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.30.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.30.0',
+    date: '2026-03-05',
+    title: 'Customer Onboarding Overhaul + Public Client Registration',
+    summary:
+      'Major overhaul of the customer creation flow, printer detection, and a brand-new public sign-up page for CLIENT onboarding. 5 tickets closed: BAR-411 (7 compliance bugs), BAR-410 (printer detection rewrite), BAR-421 (BAR-230 spec alignment), BAR-158 (tenant data model), and BAR-394 (public registration form). Over 2,700 lines of new/updated code across 4 PRs.',
+    highlights: ['🛡️ USPS Compliance', '🖨️ Printer Discovery', '📝 Sign-Up Flow', '🗄️ Data Model', '📋 PS1583'],
+    changes: [
+      {
+        text: 'BAR-411 — Fixed 7 bugs in Customer Setup / PMB Onboarding: phone validation, secondary ID auto-populates home address, billing terms removed from Preferences (now in Rate Plan), non-compliant IDs removed from dropdowns (AI-detected instead), secondary ID list corrected to Proof of Address types, Date of Issue replaces Expiration for secondary IDs, minor DOB verification before adding without PS1583',
+        type: 'fix',
+      },
+      {
+        text: 'BAR-410 — Rewrote printer detection from broken server-side `lpstat` to client-side network discovery: Phase 1 checks Zebra Browser Print on localhost, Phase 2 probes common subnets for port 9100 listeners, Phase 3 falls back to server API for self-hosted deployments. Added progress bar, custom subnet input, and improved empty state',
+        type: 'fix',
+      },
+      {
+        text: 'BAR-421 — Aligned customer creation wizard with BAR-230 7-step spec: expanded billing terms (Daily/Monthly/Quarterly/Semi-Annual/Annual), added missing PS1583 fields (§8b-8e applicant phone/email, §9b-9g authorized individual details), employee exception for recipients (Box 12 exemption), mobile camera capture for ID scanning via getUserMedia, and Email/Print buttons for signed MSA + PS1583 with new /api/customers/send-agreement endpoint',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-158 — Extended Tenant data model with 6 new Prisma fields: dba, website, affiliationType (independent/franchise/association/other), franchiseType, storeCount, planId. Added User.title field for owner role tracking. Includes migration',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-394 — Built public-facing /signup registration page (756 lines): 15-field form with business info, owner info, business classification (franchise sub-type selector), and plan comparison cards (Starter $99/mo, Pro $199/mo, Enterprise custom). Real-time validation, duplicate detection, promo code support. New /api/signup endpoint creates Tenant + Owner in atomic Prisma transaction. Success page redirects to "Check your email" confirmation',
+        type: 'feature',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.29.0                                                           */
   /* ------------------------------------------------------------------ */
   {
