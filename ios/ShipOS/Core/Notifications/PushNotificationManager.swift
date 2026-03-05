@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 import UIKit
 import Combine
 
@@ -294,13 +294,18 @@ extension PushNotificationManager: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
+        // Extract values before crossing isolation boundary (non-Sendable types)
+        let actionIdentifier = response.actionIdentifier
         let userInfo = response.notification.request.content.userInfo
+        let packageId = userInfo["packageId"] as? String
+        let customerId = userInfo["customerId"] as? String
+        let deepLink = NotificationDeepLink(userInfo: userInfo)
 
         await MainActor.run {
             // Handle action buttons
-            switch response.actionIdentifier {
+            switch actionIdentifier {
             case "NOTIFY_CUSTOMER":
-                if let packageId = userInfo["packageId"] as? String {
+                if let packageId {
                     pendingDeepLink = .package(id: packageId)
                 }
 
@@ -311,19 +316,19 @@ extension PushNotificationManager: UNUserNotificationCenterDelegate {
                 pendingDeepLink = .compliance
 
             case "VIEW_CUSTOMER":
-                if let customerId = userInfo["customerId"] as? String {
+                if let customerId {
                     pendingDeepLink = .customer(id: customerId)
                 }
 
             case "VIEW_PACKAGE", "VIEW_DETAILS":
-                if let link = NotificationDeepLink(userInfo: userInfo) {
-                    pendingDeepLink = link
+                if let deepLink {
+                    pendingDeepLink = deepLink
                 }
 
             case UNNotificationDefaultActionIdentifier:
                 // User tapped the notification itself
-                if let link = NotificationDeepLink(userInfo: userInfo) {
-                    pendingDeepLink = link
+                if let deepLink {
+                    pendingDeepLink = deepLink
                 }
 
             default:
