@@ -32,8 +32,9 @@ import {
   getAvailableBoxNumbers,
   getRangeStats,
   formatPmbNumber,
+  validateBoxNumber,
 } from '@/lib/pmb-utils';
-import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, ALL_USPS_IDS, validateIdPair } from '@/lib/usps-ids';
+import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
 import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
 import {
@@ -60,11 +61,12 @@ const BUSINESS_DOC_TYPES = [
 ];
 
 const PROOF_OF_ADDRESS_TYPES = [
+  { value: 'drivers_license', label: 'U.S. State/Territory/Tribal Driver License or Nondriver ID Card' },
+  { value: 'current_lease', label: 'Current Lease' },
   { value: 'home_vehicle_insurance', label: 'Home or Vehicle Insurance Policy' },
   { value: 'mortgage_deed_of_trust', label: 'Mortgage or Deed of Trust' },
-  { value: 'current_lease', label: 'Current Lease Agreement' },
-  { value: 'state_drivers_nondriver_id', label: "State Driver's License / Non-Driver ID" },
-  { value: 'voter_id_card', label: 'Voter Registration Card' },
+  { value: 'vehicle_registration', label: 'Vehicle Registration Card' },
+  { value: 'voter_registration', label: 'Voter Registration Card' },
 ];
 
 const BUSINESS_ENTITY_TYPES = [
@@ -159,6 +161,25 @@ interface ExistingCustomerMatch {
   status: string;
 }
 
+/** BAR-411: Format phone number as user types — (555) 555-5555 */
+function formatPhoneNumber(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+/** BAR-411: Calculate age from date-of-birth string */
+function getAgeFromDob(dob: string): number {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 function ExistingCustomerCard({ match, onDismiss }: { match: ExistingCustomerMatch; onDismiss: () => void }) {
   return (
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
@@ -225,7 +246,21 @@ function RecipientRow({
         </div>
       )}
       {recipient.type === 'minor_exception' && (
-        <Input label="Date of Birth *" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} helperText="Minors under 18 are exempt from separate PS1583 per USPS DMM 508.4" leftIcon={<Calendar className="h-4 w-4" />} />
+        <div className="space-y-2">
+          <Input label="Date of Birth *" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} helperText="Minors under 18 are exempt from separate PS1583 per USPS DMM 508.4" leftIcon={<Calendar className="h-4 w-4" />} error={recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 ? `Date of birth indicates this person is ${getAgeFromDob(recipient.dateOfBirth)} years old. Minor exemption requires individual to be under 18.` : undefined} />
+          {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-red-400">This individual is {getAgeFromDob(recipient.dateOfBirth)} years old and does not qualify for the minor exemption. They must complete their own PS Form 1583 as an additional recipient.</p>
+            </div>
+          )}
+          {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) < 18 && getAgeFromDob(recipient.dateOfBirth) >= 0 && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <p className="text-xs text-emerald-400">Age verified: {getAgeFromDob(recipient.dateOfBirth)} years old — qualifies for minor exemption.</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -417,6 +452,10 @@ export default function NewCustomerPage() {
 
   /* ── Handlers ── */
   const updateField = useCallback((field: string, value: string | boolean) => {
+    // BAR-411: Auto-format phone numbers as user types
+    if (field === 'phone' && typeof value === 'string') {
+      value = formatPhoneNumber(value);
+    }
     setCustomerForm((prev) => ({ ...prev, [field]: value }));
     setFormErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
   }, []);
@@ -457,9 +496,6 @@ export default function NewCustomerPage() {
         fullName: customerForm.firstName && customerForm.lastName ? `${customerForm.firstName} ${customerForm.lastName}` : 'John Doe',
         firstName: customerForm.firstName || 'John', lastName: customerForm.lastName || 'Doe',
         dateOfBirth: '1985-06-15',
-        address: customerForm.homeAddress || '456 Oak Avenue',
-        city: customerForm.homeCity || 'Springfield', state: customerForm.homeState || 'CA',
-        zipCode: customerForm.homeZip || '90211',
         idNumber: 'DL' + Math.random().toString(36).substring(2, 10).toUpperCase(),
         expirationDate: new Date(Date.now() + 365 * 3 * 86400000).toISOString().slice(0, 10),
         issuingAuthority: 'State of California',
@@ -467,21 +503,55 @@ export default function NewCustomerPage() {
       setExtractedData(mockExtracted);
       setForm1583((prev) => ({
         ...prev, applicantName: mockExtracted.fullName || '', dateOfBirth: mockExtracted.dateOfBirth || '',
-        homeAddress: mockExtracted.address || '', homeCity: mockExtracted.city || '',
-        homeState: mockExtracted.state || '', homeZip: mockExtracted.zipCode || '',
         primaryIdNumber: mockExtracted.idNumber || '', primaryIdIssuer: mockExtracted.issuingAuthority || '',
         pmbNumber: customerForm.pmbNumber,
       }));
-      if (!customerForm.homeAddress && mockExtracted.address) {
-        setCustomerForm((prev) => ({
-          ...prev, homeAddress: mockExtracted.address || prev.homeAddress,
-          homeCity: mockExtracted.city || prev.homeCity, homeState: mockExtracted.state || prev.homeState,
-          homeZip: mockExtracted.zipCode || prev.homeZip,
-        }));
+      // BAR-411 Bug 5: Check if AI detects a non-compliant ID from the scan
+      const detectedNonCompliant = NON_COMPLIANT_IDS.find((nc) =>
+        mockExtracted.issuingAuthority?.toLowerCase().includes(nc.name.toLowerCase())
+      );
+      if (detectedNonCompliant) {
+        setNonCompliantWarning(`⚠️ AI Detection: The uploaded ID appears to be a ${detectedNonCompliant.name}. ${detectedNonCompliant.reason}\n\n${detectedNonCompliant.suggestion}`);
       }
       setExtracting(false);
     }, 2000);
   }, [primaryIdFile, customerForm]);
+
+  /* ── BAR-411 Bug 2: Secondary ID (address doc) OCR — auto-populates home address ── */
+  const [secondaryExtracting, setSecondaryExtracting] = useState(false);
+  const [secondaryExtractedData, setSecondaryExtractedData] = useState<ExtractedIdData | null>(null);
+
+  const simulateSecondaryOCR = useCallback(() => {
+    if (!secondaryIdFile) return;
+    setSecondaryExtracting(true);
+    setTimeout(() => {
+      const mockExtracted: ExtractedIdData = {
+        address: '456 Oak Avenue',
+        city: 'Springfield',
+        state: 'CA',
+        zipCode: '90211',
+        issueDate: new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10),
+      };
+      setSecondaryExtractedData(mockExtracted);
+      // BAR-411 Bug 2: Auto-populate home address from secondary (address) ID
+      setCustomerForm((prev) => ({
+        ...prev,
+        homeAddress: mockExtracted.address || prev.homeAddress,
+        homeCity: mockExtracted.city || prev.homeCity,
+        homeState: mockExtracted.state || prev.homeState,
+        homeZip: mockExtracted.zipCode || prev.homeZip,
+      }));
+      // Also populate Form 1583 address fields
+      setForm1583((prev) => ({
+        ...prev,
+        homeAddress: mockExtracted.address || prev.homeAddress || '',
+        homeCity: mockExtracted.city || prev.homeCity || '',
+        homeState: mockExtracted.state || prev.homeState || '',
+        homeZip: mockExtracted.zipCode || prev.homeZip || '',
+      }));
+      setSecondaryExtracting(false);
+    }, 2000);
+  }, [secondaryIdFile]);
 
   /* ── BAR-230: Non-compliant ID check ── */
   const checkNonCompliantId = useCallback((idType: string, expirationDate: string) => {
@@ -554,14 +624,28 @@ export default function NewCustomerPage() {
       if (!customerForm.lastName.trim()) errors.lastName = 'Required';
       if (!customerForm.email.trim()) errors.email = 'Required';
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
-      if (!customerForm.phone.trim()) errors.phone = 'Required';
+      // BAR-411 Bug 1: Phone validation — must be 10 digits
+      if (!customerForm.phone.trim()) {
+        errors.phone = 'Required';
+      } else {
+        const phoneDigits = customerForm.phone.replace(/\D/g, '');
+        if (phoneDigits.length !== 10) {
+          errors.phone = 'Phone number must be 10 digits, e.g. (555) 555-5555';
+        }
+      }
       if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
       if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
       if (!customerForm.homeState.trim()) errors.homeState = 'Required';
       if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
     }
     if (stepNum === 1) {
-      if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB number';
+      if (!customerForm.pmbNumber) {
+        errors.pmbNumber = 'Select a PMB number';
+      } else {
+        // BAR-411 Bug 4: Validate the selected PMB is actually available
+        const pmbCheck = validateBoxNumber(parseInt(customerForm.pmbNumber), DEFAULT_MAILBOX_RANGES, mockCustomers);
+        if (!pmbCheck.valid) errors.pmbNumber = pmbCheck.error || 'This PMB is not available';
+      }
     }
     if (stepNum === 2) {
       const idValid = validateIdPair(primaryIdType, secondaryIdType);
@@ -784,11 +868,11 @@ export default function NewCustomerPage() {
               </CardContent>
             </Card>
 
+            {/* BAR-411 Bug 3: Billing Terms removed from Preferences — billing is configured via Rate Plan in Step 1 */}
             <Card padding="md">
               <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Semi-Annual', label: 'Semi-Annual' }, { value: 'Annual', label: 'Annual' }]} value={customerForm.billingTerms} onChange={(e) => updateField('billingTerms', e.target.value)} />
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-surface-300">Notifications</p>
                     <div className="flex gap-4">
@@ -974,11 +1058,8 @@ export default function NewCustomerPage() {
                 <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select primary ID..." options={[
-                      ...USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name })),
-                      { value: '_divider', label: '── Non-Compliant (will be flagged) ──', disabled: true },
-                      ...NON_COMPLIANT_IDS.map((nc) => ({ value: nc.id, label: `⚠️ ${nc.name}` })),
-                    ]} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
+                    {/* BAR-411 Bug 5: Only compliant ID types listed — non-compliant IDs are detected via AI scan, not offered in dropdown */}
+                    <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
                     <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
                     <div>
                       <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
@@ -1017,19 +1098,20 @@ export default function NewCustomerPage() {
               </Card>
 
               {/* Secondary ID */}
+              {/* BAR-411 Bug 6: Secondary ID uses Proof of Address list with Date of Issue */}
               <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Address Verification)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select secondary ID..." options={ALL_USPS_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name }))} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
-                    <Input label="Expiration Date" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
+                    <Select label="Document Type *" placeholder="Select proof of address document..." options={USPS_SECONDARY_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name }))} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} helperText={primaryIdType === 'drivers_license' ? "Driver license is already used as primary ID and cannot be selected here." : "Select the document used to verify the customer's home address."} />
+                    <Input label="Date of Issue *" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the address verification document was issued" />
                     <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document Scan/Photo *</label>
                       <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
                       {secondaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
                         </div>
                       ) : (
@@ -1039,6 +1121,23 @@ export default function NewCustomerPage() {
                       )}
                       {formErrors.secondaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.secondaryFile}</p>}
                     </div>
+                    {/* BAR-411 Bug 2: Extract address data from secondary ID to auto-populate home address */}
+                    {secondaryIdFile && !secondaryExtractedData && (
+                      <Button variant="default" size="sm" onClick={simulateSecondaryOCR} disabled={secondaryExtracting} leftIcon={secondaryExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
+                        {secondaryExtracting ? 'Extracting Address...' : 'Extract Address Data'}
+                      </Button>
+                    )}
+                    {secondaryExtractedData && (
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
+                        <p className="text-xs font-medium text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Address Data Extracted — Home address auto-populated</p>
+                        <div className="grid grid-cols-2 gap-1 text-[11px]">
+                          {secondaryExtractedData.address && <><span className="text-surface-500">Street</span><span className="text-surface-300">{secondaryExtractedData.address}</span></>}
+                          {secondaryExtractedData.city && <><span className="text-surface-500">City</span><span className="text-surface-300">{secondaryExtractedData.city}</span></>}
+                          {secondaryExtractedData.state && <><span className="text-surface-500">State</span><span className="text-surface-300">{secondaryExtractedData.state}</span></>}
+                          {secondaryExtractedData.zipCode && <><span className="text-surface-500">ZIP</span><span className="text-surface-300">{secondaryExtractedData.zipCode}</span></>}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1141,7 +1240,7 @@ export default function NewCustomerPage() {
                     <Input label="Primary ID Type (§10a)" value={USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || primaryIdType} readOnly />
                     <Input label="Primary ID # (§10d)" value={form1583.primaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdNumber: e.target.value }))} placeholder="ID number" />
                     <Input label="Primary ID Issuer (§10e)" value={form1583.primaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdIssuer: e.target.value }))} placeholder="Issuing authority" />
-                    <Input label="Secondary ID Type (§11a)" value={ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || secondaryIdType} readOnly />
+                    <Input label="Secondary ID Type (§11a)" value={USPS_SECONDARY_IDS.find((id) => id.id === secondaryIdType)?.name || secondaryIdType} readOnly />
                     <Input label="Secondary ID # (§11d)" value={form1583.secondaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdNumber: e.target.value }))} />
                     <Input label="Secondary ID Issuer (§11e)" value={form1583.secondaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdIssuer: e.target.value }))} />
                   </div>
@@ -1404,7 +1503,7 @@ export default function NewCustomerPage() {
                       {customerForm.email && (<><p className="text-surface-500">Email</p><p className="text-surface-200">{customerForm.email}</p></>)}
                       {customerForm.phone && (<><p className="text-surface-500">Phone</p><p className="text-surface-200">{customerForm.phone}</p></>)}
                       <p className="text-surface-500">Plan</p><p className="text-surface-200">{selectedPlan?.name || 'None'}{selectedPlan ? ` · $${planPrice.toFixed(2)}/${billingCycle === 'annual' ? 'yr' : 'mo'}` : ''}</p>
-                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{customerForm.billingTerms}</p>
+                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{billingCycle === 'annual' ? 'Annual' : 'Monthly'}</p>
                       <p className="text-surface-500">Notifications</p><p className="text-surface-200">{[customerForm.notifyEmail && 'Email', customerForm.notifySms && 'SMS'].filter(Boolean).join(', ') || 'None'}</p>
                       {recipients.length > 0 && (<><p className="text-surface-500">Recipients</p><p className="text-surface-200">{recipients.length} additional</p></>)}
                     </div>
@@ -1419,7 +1518,7 @@ export default function NewCustomerPage() {
                   <div className="space-y-3">
                     {[
                       { label: 'Primary ID', value: USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || 'Not selected', ok: !!primaryIdFile && !!primaryIdType && !nonCompliantWarning, step: 2 },
-                      { label: 'Secondary ID', value: ALL_USPS_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
+                      { label: 'Secondary ID (Address Verification)', value: USPS_SECONDARY_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
                       ...(isBusinessPmb ? [{ label: 'Business Document', value: BUSINESS_DOC_TYPES.find((d) => d.value === businessDocType)?.label || 'Not selected', ok: !!businessDocFile && !!businessDocType, step: 2 }] : []),
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 3 },
                       { label: 'Proof of Address', value: proofOfAddressType ? (PROOF_OF_ADDRESS_TYPES.find((t) => t.value === proofOfAddressType)?.label || proofOfAddressType) : 'Not selected', ok: !!proofOfAddressType && !!proofOfAddressDateOfIssue, warn: !!proofOfAddressType && !proofOfAddressDateOfIssue, step: 2 },

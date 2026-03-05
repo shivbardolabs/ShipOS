@@ -90,6 +90,20 @@ export const NON_COMPLIANT_IDS: NonCompliantIdRule[] = [
     suggestion: "Provide a government-issued photo ID or an accepted secondary ID.",
     category: 'rejected',
   },
+  {
+    id: 'corporate_id',
+    name: 'Corporate ID',
+    reason: 'Corporate identification cards are not accepted as valid identification for PS Form 1583.',
+    suggestion: "Please provide a government-issued photo ID such as a driver's license, passport, or uniformed service ID.",
+    category: 'rejected',
+  },
+  {
+    id: 'credit_card',
+    name: 'Credit Card / Debit Card',
+    reason: 'Physical credit and debit cards are not accepted as identification for PS Form 1583 address verification.',
+    suggestion: 'For proof of address, use a current lease, insurance policy, mortgage, vehicle registration, or voter registration card.',
+    category: 'rejected',
+  },
 ];
 
 /**

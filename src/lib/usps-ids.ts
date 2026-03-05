@@ -1,132 +1,174 @@
 /**
  * USPS Acceptable Forms of Identification for PS Form 1583
- * Source: https://faq.usps.com/articles/Knowledge/Acceptable-Form-of-Identification
+ * Source: BAR-230 Spec — compliant with USPS PS Form 1583 requirements
  *
  * Two forms of ID are required:
- *   - At least ONE must be a primary (photo) ID
- *   - The second can be primary or secondary
+ *   - Primary: Government-issued photo ID
+ *   - Secondary: Proof of address / address verification document
+ *
+ * NOTE: Driver license / nondriver ID may be used for EITHER primary (photo)
+ *       or secondary (address), but NOT both simultaneously.
  */
 
 import type { AcceptableIdType } from './types';
 
+/**
+ * Primary ID — Government Photo ID
+ * Per BAR-230 spec, only these 9 types are acceptable.
+ */
 export const USPS_PRIMARY_IDS: AcceptableIdType[] = [
   {
     id: 'drivers_license',
-    name: "Valid driver's license or state non-driver's ID card",
+    name: 'U.S. State/Territory/Tribal Driver License or Nondriver ID Card',
     category: 'primary',
-    description: 'Issued by a U.S. state, territory, or the District of Columbia',
+    description: 'Issued by a U.S. state, territory, or tribal authority',
     hasExpiration: true,
   },
   {
-    id: 'armed_forces_id',
-    name: 'Armed forces, government, or university ID card',
+    id: 'uniformed_service_id',
+    name: 'Uniformed Service ID',
     category: 'primary',
-    description: 'Military ID, government employee ID, or college/university ID with photo',
+    description: 'Military / uniformed service photo identification card',
     hasExpiration: true,
   },
   {
     id: 'passport',
-    name: 'Passport (U.S. or foreign)',
+    name: 'Passport',
     category: 'primary',
     description: 'Valid U.S. or foreign government-issued passport',
     hasExpiration: true,
   },
   {
-    id: 'alien_registration',
-    name: 'Alien registration card or certificate of naturalization',
+    id: 'certificate_of_naturalization',
+    name: 'Certificate of Naturalization',
     category: 'primary',
-    description: 'USCIS-issued alien registration or naturalization certificate',
-    hasExpiration: true,
-  },
-  {
-    id: 'certificate_of_citizenship',
-    name: 'Certificate of citizenship',
-    category: 'primary',
-    description: 'USCIS-issued certificate of citizenship',
+    description: 'USCIS-issued certificate of naturalization',
     hasExpiration: false,
   },
   {
-    id: 'corporate_id',
-    name: 'Corporate ID (photo)',
+    id: 'us_access_card',
+    name: 'U.S. Access Card',
     category: 'primary',
-    description: 'Company-issued photo ID card',
+    description: 'U.S. government-issued access card with photo',
+    hasExpiration: true,
+  },
+  {
+    id: 'matricula_consular',
+    name: 'Matricula Consular (Mexico)',
+    category: 'primary',
+    description: 'Mexican government-issued consular identification card',
+    hasExpiration: true,
+  },
+  {
+    id: 'permanent_resident_card',
+    name: 'U.S. Permanent Resident Card',
+    category: 'primary',
+    description: 'USCIS-issued permanent resident (green) card',
+    hasExpiration: true,
+  },
+  {
+    id: 'university_id',
+    name: 'U.S. University ID Card',
+    category: 'primary',
+    description: 'Photo ID card issued by a U.S. university',
+    hasExpiration: true,
+  },
+  {
+    id: 'nexus_card',
+    name: 'NEXUS Card',
+    category: 'primary',
+    description: 'Trusted traveler NEXUS program card',
     hasExpiration: true,
   },
 ];
 
+/**
+ * Secondary ID — Proof of Address / Address Verification
+ * Per BAR-230 spec, only these 6 types are acceptable.
+ *
+ * NOTE: Driver license appears in both lists but may only be used for ONE.
+ */
 export const USPS_SECONDARY_IDS: AcceptableIdType[] = [
   {
-    id: 'social_security_card',
-    name: 'Social Security Card (non-metal replica)',
+    id: 'drivers_license',
+    name: 'U.S. State/Territory/Tribal Driver License or Nondriver ID Card',
     category: 'secondary',
-    description: 'Original SSA-issued Social Security card',
-    hasExpiration: false,
-  },
-  {
-    id: 'credit_card',
-    name: 'Credit card, debit card, or charge card',
-    category: 'secondary',
-    description: 'Major bank-issued credit or debit card',
+    description: 'May be used as address verification if not already used as primary ID',
     hasExpiration: true,
   },
   {
-    id: 'birth_certificate',
-    name: 'Birth certificate (certified)',
+    id: 'current_lease',
+    name: 'Current Lease',
     category: 'secondary',
-    description: 'Certified copy of birth certificate issued by a government entity',
+    description: 'Current signed lease agreement showing residential address',
     hasExpiration: false,
   },
   {
-    id: 'voter_registration',
-    name: 'Voter registration card',
+    id: 'home_vehicle_insurance',
+    name: 'Home or Vehicle Insurance Policy',
     category: 'secondary',
-    description: 'Current voter registration card',
+    description: 'Current home or vehicle insurance policy showing address',
+    hasExpiration: false,
+  },
+  {
+    id: 'mortgage_deed_of_trust',
+    name: 'Mortgage or Deed of Trust',
+    category: 'secondary',
+    description: 'Mortgage document or deed of trust showing residential address',
     hasExpiration: false,
   },
   {
     id: 'vehicle_registration',
-    name: 'Current lease, mortgage, or deed of trust',
+    name: 'Vehicle Registration Card',
     category: 'secondary',
-    description: 'Current vehicle registration, lease agreement, mortgage, or deed of trust',
+    description: 'Current vehicle registration card showing address',
     hasExpiration: false,
   },
   {
-    id: 'home_utility_bill',
-    name: 'Home or vehicle insurance policy',
+    id: 'voter_registration',
+    name: 'Voter Registration Card',
     category: 'secondary',
-    description: 'Current home/vehicle insurance policy or utility bill',
-    hasExpiration: false,
-  },
-  {
-    id: 'form_w2',
-    name: 'Form W-2 (tax)',
-    category: 'secondary',
-    description: 'Most recent W-2 tax form',
-    hasExpiration: false,
-  },
-  {
-    id: 'property_tax',
-    name: 'Property tax receipt',
-    category: 'secondary',
-    description: 'Current property tax receipt or assessment',
+    description: 'Current voter registration card showing address',
     hasExpiration: false,
   },
 ];
 
-export const ALL_USPS_IDS = [...USPS_PRIMARY_IDS, ...USPS_SECONDARY_IDS];
+/** Combined list of all acceptable USPS IDs (deduplicated by id) */
+export const ALL_USPS_IDS: AcceptableIdType[] = [
+  ...USPS_PRIMARY_IDS,
+  ...USPS_SECONDARY_IDS.filter((s) => !USPS_PRIMARY_IDS.some((p) => p.id === s.id)),
+];
 
-/** Validate that two ID selections meet USPS requirements */
+/**
+ * Validate that two ID selections meet USPS requirements.
+ *
+ * Rules:
+ *   1. Primary ID must be from USPS_PRIMARY_IDS
+ *   2. Secondary ID must be from USPS_SECONDARY_IDS
+ *   3. Driver license/nondriver ID may be used for EITHER, but not both
+ */
 export function validateIdPair(
   primaryIdTypeId: string,
   secondaryIdTypeId: string
 ): { valid: boolean; error?: string } {
   if (!primaryIdTypeId) return { valid: false, error: 'Primary ID is required' };
   if (!secondaryIdTypeId) return { valid: false, error: 'Second form of ID is required' };
-  if (primaryIdTypeId === secondaryIdTypeId) return { valid: false, error: 'Two different forms of ID are required' };
 
-  const primaryId = ALL_USPS_IDS.find((id) => id.id === primaryIdTypeId);
-  if (!primaryId || primaryId.category !== 'primary') {
-    return { valid: false, error: 'First ID must be a primary (photo) identification' };
+  if (primaryIdTypeId === secondaryIdTypeId) {
+    return {
+      valid: false,
+      error: 'The same ID type cannot be used for both primary and secondary identification. Driver license / nondriver ID may be used for EITHER photo ID or address verification, but not both.',
+    };
+  }
+
+  const primaryId = USPS_PRIMARY_IDS.find((id) => id.id === primaryIdTypeId);
+  if (!primaryId) {
+    return { valid: false, error: 'First ID must be a USPS-accepted primary (photo) identification' };
+  }
+
+  const secondaryId = USPS_SECONDARY_IDS.find((id) => id.id === secondaryIdTypeId);
+  if (!secondaryId) {
+    return { valid: false, error: 'Second ID must be a valid proof of address document' };
   }
 
   return { valid: true };
