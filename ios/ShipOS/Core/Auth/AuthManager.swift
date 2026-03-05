@@ -166,6 +166,7 @@ final class AuthManager: ObservableObject {
         }
 
         switch context.biometryType {
+        case .none: return .none
         case .faceID: return .faceID
         case .touchID: return .touchID
         case .opticID: return .opticID
@@ -217,9 +218,7 @@ final class AuthManager: ObservableObject {
     private func storeCredentials(_ credentials: Credentials) throws {
         keychain[Keys.accessToken] = credentials.accessToken
         keychain[Keys.refreshToken] = credentials.refreshToken
-        if let idToken = credentials.idToken {
-            keychain[Keys.idToken] = idToken
-        }
+        keychain[Keys.idToken] = credentials.idToken
     }
 
     private func clearCredentials() {
