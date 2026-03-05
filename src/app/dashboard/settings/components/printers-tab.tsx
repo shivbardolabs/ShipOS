@@ -8,16 +8,12 @@ import { Button } from '@/components/ui/button';
 import type { PrinterEntry } from './types';
 import { AlertTriangle, Loader2, Package, Plus, Printer, RefreshCw, RotateCcw, Save, Search, Settings2, TestTube, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { computeRollStatus, useLabelRollTracking } from '@/hooks/use-label-roll-tracking';
-
-/* ── Types ───────────────────────────────────────────────────────────────── */
-
-interface DetectedPrinter {
-  name: string;
-  driver: string;
-  uri: string;
-  isDefault: boolean;
-  status: 'idle' | 'busy' | 'unknown';
-}
+import {
+  discoverPrinters,
+  scanSubnet,
+  type DiscoveredPrinter,
+  type ScanProgress,
+} from '@/lib/printer-discovery';
 
 export interface PrintersTabProps {
   printers: PrinterEntry[];
@@ -42,12 +38,14 @@ export function PrintersTab({
   printersLoading,
   onRefresh,
 }: PrintersTabProps) {
-  // BAR-385: Detected system printers state
-  const [detectedPrinters, setDetectedPrinters] = useState<DetectedPrinter[]>([]);
+  // BAR-410: Client-side printer discovery state
+  const [detectedPrinters, setDetectedPrinters] = useState<DiscoveredPrinter[]>([]);
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
   const [hasDetected, setHasDetected] = useState(false);
   const [savingPrinter, setSavingPrinter] = useState(false);
+  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
+  const [customSubnet, setCustomSubnet] = useState('');
 
   // BAR-386: Label roll tracking state
   const { resetRoll, configureRoll } = useLabelRollTracking();
@@ -95,62 +93,101 @@ export function PrintersTab({
     setRollConfigThreshold('');
   };
 
-  // BAR-385: Detect printers from host machine
+  // BAR-410: Detect printers from the local network (client-side)
   const handleDetectPrinters = async () => {
     setDetecting(true);
     setDetectError(null);
     setDetectedPrinters([]);
+    setScanProgress(null);
     try {
-      const res = await fetch('/api/settings/printer/detect');
-      if (!res.ok) throw new Error('Detection failed');
-      const data = await res.json();
-      const detected: DetectedPrinter[] = data.printers || [];
-      // Filter out printers already added (by name match)
-      const existingNames = new Set(printers.map(p => p.name.toLowerCase()));
-      const newPrinters = detected.filter(d => !existingNames.has(d.name.toLowerCase()));
+      const detected = await discoverPrinters((progress) => {
+        setScanProgress(progress);
+      });
+      // Filter out printers already added (by IP match)
+      const existingIps = new Set(
+        printers.filter((p) => p.ipAddress).map((p) => p.ipAddress!.toLowerCase()),
+      );
+      const newPrinters = detected.filter(
+        (d) => !existingIps.has(d.ip.toLowerCase()),
+      );
       setDetectedPrinters(newPrinters);
       setHasDetected(true);
       if (newPrinters.length === 0 && detected.length > 0) {
         setDetectError('All detected printers are already added.');
-      } else if (detected.length === 0) {
-        setDetectError('No printers found on this machine. You can add one manually below.');
       }
     } catch {
-      setDetectError('Could not detect printers. You can add one manually below.');
+      setDetectError(
+        'Scan failed. Your browser may be blocking local network access. Try adding a printer manually.',
+      );
     } finally {
       setDetecting(false);
+      setScanProgress(null);
     }
   };
 
-  // BAR-385: Add a detected printer to the saved list via API
-  const handleAddDetected = async (detected: DetectedPrinter) => {
+  // BAR-410: Scan a specific subnet (user-initiated deep search)
+  const handleSubnetScan = async () => {
+    const subnet = customSubnet.trim();
+    if (!subnet.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+      setDetectError('Enter a subnet like 192.168.2 or 10.0.1');
+      return;
+    }
+    setDetecting(true);
+    setDetectError(null);
+    setScanProgress(null);
+    try {
+      const found = await scanSubnet(subnet, (progress) => {
+        setScanProgress(progress);
+      });
+      const existingIps = new Set(
+        printers.filter((p) => p.ipAddress).map((p) => p.ipAddress!.toLowerCase()),
+      );
+      const newPrinters = found.filter(
+        (d) => !existingIps.has(d.ip.toLowerCase()),
+      );
+      setDetectedPrinters((prev) => {
+        // Merge with any existing results, dedupe by ip:port
+        const seen = new Set(prev.map((p) => `${p.ip}:${p.port}`));
+        const merged = [...prev];
+        for (const p of newPrinters) {
+          if (!seen.has(`${p.ip}:${p.port}`)) {
+            merged.push(p);
+          }
+        }
+        return merged;
+      });
+      if (newPrinters.length === 0) {
+        setDetectError(`No printers found on ${subnet}.x`);
+      }
+    } catch {
+      setDetectError('Subnet scan failed.');
+    } finally {
+      setDetecting(false);
+      setScanProgress(null);
+    }
+  };
+
+  // BAR-410: Add a detected printer to the saved list via API
+  const handleAddDetected = async (detected: DiscoveredPrinter) => {
     setSavingPrinter(true);
     try {
-      const printerType = detected.driver !== 'unknown' ? detected.driver : 'zpl';
-      // Parse IP from URI if possible (e.g. socket://192.168.1.50:9100)
-      let ipAddress: string | null = null;
-      let port = 9100;
-      const ipMatch = detected.uri.match(/(?:socket|ipp|http|https):\/\/([^:/]+)(?::(\d+))?/);
-      if (ipMatch) {
-        ipAddress = ipMatch[1];
-        if (ipMatch[2]) port = parseInt(ipMatch[2], 10);
-      }
-
       const res = await fetch('/api/settings/printer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: detected.name,
-          type: printerType,
-          ipAddress,
-          port,
-          isDefault: detected.isDefault || printers.length === 0,
+          type: detected.driver !== 'unknown' ? detected.driver : 'zpl',
+          ipAddress: detected.ip || null,
+          port: detected.port,
+          isDefault: printers.length === 0,
         }),
       });
 
       if (res.ok) {
         // Remove from detected list
-        setDetectedPrinters(prev => prev.filter(p => p.name !== detected.name));
+        setDetectedPrinters((prev) =>
+          prev.filter((p) => p.ip !== detected.ip || p.port !== detected.port),
+        );
         // Refresh the full printer list from API
         if (onRefresh) await onRefresh();
       }
@@ -224,6 +261,33 @@ export function PrintersTab({
     </div>
   </div>
 
+  {/* BAR-410: Scan progress indicator */}
+  {detecting && scanProgress && (
+    <div className="mb-4 p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-400" />
+          <span className="text-sm text-surface-300">{scanProgress.phase}</span>
+        </div>
+        {scanProgress.foundCount > 0 && (
+          <Badge variant="success" dot>
+            {scanProgress.foundCount} found
+          </Badge>
+        )}
+      </div>
+      {scanProgress.total > 1 && (
+        <div className="w-full h-1.5 bg-surface-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary-500 rounded-full transition-all duration-150"
+            style={{
+              width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%`,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )}
+
   {/* Test Result Banner */}
   {printerTestResult && (
     <div className={`mb-4 p-3 rounded-lg text-sm ${
@@ -272,11 +336,11 @@ export function PrintersTab({
           </Button>
         </div>
         <p className="text-xs text-surface-500">
-          These printers were found on your machine. Click &ldquo;Add&rdquo; to configure them.
+          These printers were found on your network. Click &ldquo;Add&rdquo; to configure them.
         </p>
         <div className="space-y-2">
           {detectedPrinters.map((dp) => (
-            <div key={dp.name} className="flex items-center justify-between p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
+            <div key={`${dp.ip}:${dp.port}`} className="flex items-center justify-between p-3 rounded-lg bg-surface-800/50 border border-surface-700/50">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500/10">
                   <Printer className="h-4.5 w-4.5 text-primary-400" />
@@ -284,9 +348,10 @@ export function PrintersTab({
                 <div>
                   <p className="text-sm font-medium text-surface-200">{dp.name}</p>
                   <p className="text-xs text-surface-500">
-                    {dp.driver !== 'unknown' ? dp.driver.toUpperCase() : 'Standard'} printer
-                    {dp.uri ? ` · ${dp.uri}` : ''}
-                    {dp.isDefault ? ' · System default' : ''}
+                    {dp.driver !== 'unknown' ? dp.driver.toUpperCase() : 'ZPL'} printer
+                    {dp.ip ? ` · ${dp.ip}:${dp.port}` : ''}
+                    {dp.source === 'zebra-browser-print' ? ' · via Zebra Browser Print' : ''}
+                    {dp.source === 'server-api' ? ' · via system detection' : ''}
                   </p>
                 </div>
               </div>
@@ -304,6 +369,49 @@ export function PrintersTab({
   {detectError && (
     <div className="mb-4 p-3 rounded-lg text-sm bg-surface-800/50 text-surface-400 border border-surface-700/50">
       {detectError}
+    </div>
+  )}
+
+  {/* BAR-410: Enhanced empty state after scan — help the user find printers */}
+  {hasDetected && detectedPrinters.length === 0 && !detectError && !detecting && (
+    <div className="mb-4 p-4 rounded-lg bg-surface-800/50 border border-surface-700/50">
+      <div className="flex items-start gap-3">
+        <Search className="h-5 w-5 text-surface-400 mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-surface-300">No printers found on the network</p>
+          <p className="text-xs text-surface-500 mt-1">
+            This can happen if your printers are on a different subnet, behind a firewall,
+            or if your browser blocks local network access.
+          </p>
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-medium text-surface-400">Try these options:</p>
+            <ul className="text-xs text-surface-500 list-disc pl-4 space-y-1">
+              <li>Click &ldquo;Add Printer&rdquo; and enter the printer&apos;s IP address manually</li>
+              <li>Check the printer&apos;s display or configuration label for its IP</li>
+              <li>Scan a specific subnet if your network uses a custom range</li>
+            </ul>
+          </div>
+          {/* Custom subnet scan input */}
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="e.g. 192.168.2"
+              value={customSubnet}
+              onChange={(e) => setCustomSubnet(e.target.value)}
+              className="w-40 bg-surface-800 border border-surface-700 rounded-md px-3 py-1.5 text-xs text-surface-200 focus:outline-none focus:border-primary-500"
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleSubnetScan}
+              loading={detecting}
+              leftIcon={<Wifi className="h-3.5 w-3.5" />}
+            >
+              Scan Subnet
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )}
 
@@ -392,7 +500,7 @@ export function PrintersTab({
           <Printer className="h-12 w-12 text-surface-600 mx-auto mb-3" />
           <p className="text-surface-400">No printers configured</p>
           <p className="text-sm text-surface-500 mt-1">
-            Click &ldquo;Detect Printers&rdquo; to find printers on this machine, or &ldquo;Add Printer&rdquo; to set one up manually
+            Click &ldquo;Detect Printers&rdquo; to scan your local network, or &ldquo;Add Printer&rdquo; to set one up manually
           </p>
         </div>
       </Card>
