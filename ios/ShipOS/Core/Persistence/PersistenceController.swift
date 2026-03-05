@@ -72,8 +72,9 @@ extension PersistenceController {
     /// Upsert packages from API response into SwiftData.
     func syncPackages(_ dtos: [PackageDTO], context: ModelContext) throws {
         for dto in dtos {
+            let dtoId = dto.id
             let descriptor = FetchDescriptor<Package>(
-                predicate: #Predicate { $0.id == dto.id }
+                predicate: #Predicate { $0.id == dtoId }
             )
 
             if let existing = try context.fetch(descriptor).first {
@@ -101,8 +102,9 @@ extension PersistenceController {
     /// Upsert customers from API response.
     func syncCustomers(_ dtos: [CustomerDTO], context: ModelContext) throws {
         for dto in dtos {
+            let dtoId = dto.id
             let descriptor = FetchDescriptor<Customer>(
-                predicate: #Predicate { $0.id == dto.id }
+                predicate: #Predicate { $0.id == dtoId }
             )
 
             if let existing = try context.fetch(descriptor).first {

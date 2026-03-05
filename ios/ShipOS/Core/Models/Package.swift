@@ -122,6 +122,8 @@ struct CustomerSummary: Codable, Hashable {
     let firstName: String
     let lastName: String
     let pmbNumber: String?
+
+    var fullName: String { "\(firstName) \(lastName)" }
 }
 
 // MARK: - API Request/Response Models
