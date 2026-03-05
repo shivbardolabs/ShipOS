@@ -99,7 +99,7 @@ struct CustomerDetailView: View {
 
             // Status badge
             SOStatusBadge(
-                customer.status?.capitalized ?? "Active",
+                customer.status.capitalized,
                 color: customerStatusColor
             )
         }
@@ -154,7 +154,7 @@ struct CustomerDetailView: View {
                 color: ShipOSTheme.Colors.primary
             )
             MiniStatCard(
-                value: customer.createdAt?.shortFormatted ?? "-",
+                value: customer.createdAt.shortFormatted,
                 label: "Member Since",
                 color: ShipOSTheme.Colors.success
             )
@@ -168,16 +168,7 @@ struct CustomerDetailView: View {
             SOSectionHeader(
                 title: "Packages",
                 count: viewModel.packages.count,
-                action: viewModel.packages.count > 5 ? AnyView(
-                    NavigationLink {
-                        // Full package list filtered to this customer
-                        Text("All packages for \(customer.fullName)")
-                    } label: {
-                        Text("See All")
-                            .font(ShipOSTheme.Typography.caption)
-                            .foregroundStyle(ShipOSTheme.Colors.primary)
-                    }
-                ) : nil
+                actionLabel: viewModel.packages.count > 5 ? "See All" : nil
             )
 
             if viewModel.packages.isEmpty && !viewModel.isLoading {
@@ -334,7 +325,7 @@ final class CustomerDetailViewModel: ObservableObject {
                 API.Packages.list(search: customerId, page: 1, limit: 50)
             )
             packages = response.packages.map { $0.toModel() }
-            totalPackages = response.total ?? packages.count
+            totalPackages = response.total
             activePackages = packages.filter { $0.status == .checkedIn || $0.status == .notified || $0.status == .held }.count
         } catch {
             print("[CustomerDetail] Error loading packages: \(error)")
@@ -346,8 +337,9 @@ final class CustomerDetailViewModel: ObservableObject {
             let body = NotificationSendRequest(
                 customerId: customerId,
                 packageId: nil,
-                channel: "sms",
-                message: nil
+                type: "sms",
+                message: nil,
+                templateId: nil
             )
             let _: NotificationDTO = try await APIClient.shared.request(
                 API.Notifications.send(body: body)
@@ -488,10 +480,7 @@ final class AddCustomerViewModel: ObservableObject {
             address: address.isEmpty ? nil : address,
             city: city.isEmpty ? nil : city,
             state: state.isEmpty ? nil : state,
-            zipCode: zip.isEmpty ? nil : zip,
-            smsOptIn: smsOptIn,
-            emailOptIn: emailOptIn,
-            notes: notes.isEmpty ? nil : notes
+            zipCode: zip.isEmpty ? nil : zip
         )
 
         do {
