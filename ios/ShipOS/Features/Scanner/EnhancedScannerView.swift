@@ -1,5 +1,6 @@
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
+import Vision
 import VisionKit
 
 /// BAR-365: Enhanced Scanner — multi-format barcode/QR scanner with VisionKit DataScanner,

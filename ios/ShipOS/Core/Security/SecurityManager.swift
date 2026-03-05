@@ -398,7 +398,8 @@ actor SecurityAuditLog {
     private init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         fileURL = docs.appendingPathComponent("security_audit.log")
-        deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+        deviceId = ProcessInfo.processInfo.environment["SIMULATOR_UDID"]
+            ?? UUID().uuidString  // Stable per-install via actor singleton
     }
 
     func log(_ level: Level, event: String, details: String? = nil) {

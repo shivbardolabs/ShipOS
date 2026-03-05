@@ -338,12 +338,12 @@ final class StoreInfoViewModel: ObservableObject {
     func save() async {
         let body = TenantUpdateRequest(
             name: storeName,
-            phone: storePhone.isEmpty ? nil : storePhone,
-            email: storeEmail.isEmpty ? nil : storeEmail,
             address: street.isEmpty ? nil : street,
             city: city.isEmpty ? nil : city,
             state: state.isEmpty ? nil : state,
-            zip: zip.isEmpty ? nil : zip
+            zipCode: zip.isEmpty ? nil : zip,
+            phone: storePhone.isEmpty ? nil : storePhone,
+            email: storeEmail.isEmpty ? nil : storeEmail
         )
 
         do {
@@ -387,15 +387,7 @@ struct TenantResponse: Decodable {
     let subscriptionTier: String
 }
 
-struct TenantUpdateRequest: Encodable {
-    var name: String?
-    var phone: String?
-    var email: String?
-    var address: String?
-    var city: String?
-    var state: String?
-    var zip: String?
-}
+// TenantUpdateRequest is defined in Core/Models/User.swift
 
 // MARK: - Notification Settings
 

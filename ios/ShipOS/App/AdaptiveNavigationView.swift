@@ -105,5 +105,4 @@ struct AdaptiveNavigationView: View {
     AdaptiveNavigationView()
         .environmentObject(AppState())
         .environmentObject(AuthManager.shared)
-        .previewDevice("iPad Pro (12.9-inch)")
 }

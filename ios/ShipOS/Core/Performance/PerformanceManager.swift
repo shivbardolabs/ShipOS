@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 import UIKit
 import os.signpost
 import Combine

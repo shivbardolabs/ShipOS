@@ -355,41 +355,7 @@ struct SendNotificationView: View {
     }
 }
 
-struct CustomerPickerInline: View {
-    @Binding var selection: Customer?
-    @State private var searchText = ""
-    @State private var customers: [Customer] = []
-
-    var body: some View {
-        List {
-            ForEach(customers, id: \.id) { customer in
-                Button {
-                    selection = customer
-                } label: {
-                    SOCustomerRow(customer: customer)
-                }
-            }
-        }
-        .listStyle(.plain)
-        .searchable(text: $searchText, prompt: "Search customers...")
-        .navigationTitle("Select Customer")
-        .task { await loadCustomers() }
-        .onChange(of: searchText) { _, _ in
-            Task { await loadCustomers() }
-        }
-    }
-
-    private func loadCustomers() async {
-        do {
-            let response: CustomerListResponse = try await APIClient.shared.request(
-                API.Customers.list(search: searchText.isEmpty ? nil : searchText, page: 1, limit: 50)
-            )
-            customers = response.customers.map { $0.toModel() }
-        } catch {
-            print("[CustomerPicker] Error: \(error)")
-        }
-    }
-}
+// CustomerPickerInline is defined in CustomerPickerInline.swift
 
 #Preview {
     NavigationStack {

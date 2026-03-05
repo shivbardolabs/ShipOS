@@ -234,13 +234,13 @@ struct AnyEncodable: Encodable {
 // MARK: - ISO 8601 Formatters
 
 extension ISO8601DateFormatter {
-    static let withFractionalSeconds: ISO8601DateFormatter = {
+    nonisolated(unsafe) static let withFractionalSeconds: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
 
-    static let standard: ISO8601DateFormatter = {
+    nonisolated(unsafe) static let standard: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter

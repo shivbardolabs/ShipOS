@@ -395,17 +395,6 @@ struct TimelineRow: View {
 // MARK: - Package Status Extensions
 
 extension PackageStatus {
-    var displayName: String {
-        switch self {
-        case .checkedIn: "Checked In"
-        case .notified: "Notified"
-        case .held: "Held"
-        case .released: "Released"
-        case .returned: "Returned"
-        case .forwarded: "Forwarded"
-        }
-    }
-
     var color: Color {
         switch self {
         case .checkedIn: ShipOSTheme.Colors.info

@@ -286,74 +286,7 @@ struct DetailRow: View {
     }
 }
 
-// MARK: - Signature Pad
-
-struct SignaturePadView: UIViewRepresentable {
-    @Binding var signature: UIImage?
-
-    func makeUIView(context: Context) -> SignatureUIView {
-        let view = SignatureUIView()
-        view.onSignatureChanged = { image in
-            signature = image
-        }
-        return view
-    }
-
-    func updateUIView(_ uiView: SignatureUIView, context: Context) {
-        if signature == nil {
-            uiView.clear()
-        }
-    }
-}
-
-class SignatureUIView: UIView {
-    var onSignatureChanged: ((UIImage?) -> Void)?
-    private var path = UIBezierPath()
-    private var lastPoint: CGPoint?
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        isMultipleTouchEnabled = false
-        path.lineWidth = 2.5
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    override func draw(_ rect: CGRect) {
-        UIColor.label.setStroke()
-        path.stroke()
-    }
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        lastPoint = touch.location(in: self)
-        path.move(to: lastPoint!)
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let currentPoint = touch.location(in: self)
-        path.addLine(to: currentPoint)
-        lastPoint = currentPoint
-        setNeedsDisplay()
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        let renderer = UIGraphicsImageRenderer(bounds: bounds)
-        let image = renderer.image { ctx in
-            layer.render(in: ctx.cgContext)
-        }
-        onSignatureChanged?(image)
-    }
-
-    func clear() {
-        path.removeAllPoints()
-        setNeedsDisplay()
-        onSignatureChanged?(nil)
-    }
-}
+// SignaturePadView is defined in CustomerOnboardingView.swift
 
 // MARK: - View Model
 
