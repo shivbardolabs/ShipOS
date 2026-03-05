@@ -93,7 +93,7 @@ struct PackageStatsWidgetView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.indigo)
                 Text("ShipOS")
-                    .font(.system(.caption, weight: .semibold, design: .rounded))
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
 
@@ -112,7 +112,7 @@ struct PackageStatsWidgetView: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.green)
                 Text("+\(entry.todayCheckIns) today")
-                    .font(.system(.caption2, weight: .medium, design: .rounded))
+                    .font(.system(.caption2, design: .rounded, weight: .medium))
                     .foregroundStyle(.green)
             }
         }
@@ -130,7 +130,7 @@ struct PackageStatsWidgetView: View {
                     Image(systemName: "shippingbox.fill")
                         .foregroundStyle(.indigo)
                     Text("ShipOS")
-                        .font(.system(.subheadline, weight: .semibold, design: .rounded))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 }
 
                 Spacer()
@@ -165,7 +165,7 @@ struct PackageStatsWidgetView: View {
                 Image(systemName: "shippingbox.fill")
                     .foregroundStyle(.indigo)
                 Text("ShipOS Dashboard")
-                    .font(.system(.headline, weight: .semibold, design: .rounded))
+                    .font(.system(.headline, design: .rounded, weight: .semibold))
                 Spacer()
                 Text(entry.date, style: .time)
                     .font(.system(.caption, design: .rounded))
@@ -206,7 +206,7 @@ struct PackageStatsWidgetView: View {
                 Image(systemName: "shippingbox.fill")
                     .font(.system(size: 14))
                 Text("\(entry.checkedIn)")
-                    .font(.system(.title3, weight: .bold, design: .rounded))
+                    .font(.system(.title3, design: .rounded, weight: .bold))
             }
         }
     }
@@ -215,10 +215,10 @@ struct PackageStatsWidgetView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("ShipOS")
-                    .font(.system(.caption2, weight: .semibold, design: .rounded))
+                    .font(.system(.caption2, design: .rounded, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Text("\(entry.checkedIn) held")
-                    .font(.system(.headline, weight: .bold, design: .rounded))
+                    .font(.system(.headline, design: .rounded, weight: .bold))
                 Text("+\(entry.todayCheckIns) today")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -246,7 +246,7 @@ struct PackageStatsWidgetView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(value)")
-                    .font(.system(.subheadline, weight: .bold, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .bold))
                 Text(label)
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -264,7 +264,7 @@ struct PackageStatsWidgetView: View {
             }
 
             Text(value)
-                .font(.system(.title2, weight: .bold, design: .rounded))
+                .font(.system(.title2, design: .rounded, weight: .bold))
 
             Text(title)
                 .font(.system(.caption2, design: .rounded))
