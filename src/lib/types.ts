@@ -338,7 +338,24 @@ export interface PS1583FormData {
   forwardingCountry?: string;
   cmraSignatureUrl?: string;
   cmraSignedBy?: string;
+  /** BAR-421 §8b-8e: Applicant telephone & email */
+  applicantPhone?: string;
+  applicantEmail?: string;
+  /** BAR-421 §9b-9g: Authorized Individual fields */
+  authorizedIndividualName?: string;
+  authorizedIndividualAddress?: string;
+  authorizedIndividualCity?: string;
+  authorizedIndividualState?: string;
+  authorizedIndividualZip?: string;
+  authorizedIndividualPhone?: string;
+  authorizedIndividualEmail?: string;
+  authorizedIndividualDob?: string;
+  authorizedIndividualIdType?: string;
+  authorizedIndividualIdNumber?: string;
 }
+
+/** BAR-421: Billing cycle options per BAR-230 spec */
+export type BillingCycle = 'daily' | 'monthly' | 'quarterly' | 'semi-annual' | 'annual';
 
 export interface PmbRecipientData {
   id?: string;
@@ -359,6 +376,8 @@ export interface PmbRecipientData {
   secondaryIdIssuer?: string;
   dateOfBirth?: string;
   form1583Status?: string;
+  /** BAR-421: Employee flag — employees are exempt from separate PS1583 per Box 12 */
+  isEmployee?: boolean;
 }
 
 export interface IdValidationResult {

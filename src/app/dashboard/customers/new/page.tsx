@@ -36,13 +36,14 @@ import {
 } from '@/lib/pmb-utils';
 import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
-import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
+import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod, BillingCycle } from '@/lib/types';
 import {
   ArrowLeft, ArrowRight, User, CreditCard, FileText, Shield,
   ClipboardCheck, Upload, CheckCircle2, AlertCircle, X, Scan,
   Building2, Mail, Phone, MapPin, Calendar, DollarSign,
   Loader2, Mailbox, Info, ChevronDown, Search, Lock,
   UserPlus, Crown, Trash2, AlertTriangle, Banknote, Smartphone,
+  Camera, Printer, Send, VideoOff,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -84,6 +85,15 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string; desc
   { value: 'tap_to_glass', label: 'Tap to Glass', icon: '📲', description: 'Customer taps phone/card on device' },
   { value: 'nfc', label: 'NFC / Contactless', icon: '📡', description: 'Contactless card reader' },
   { value: 'cash', label: 'Cash', icon: '💵', description: 'Record cash payment' },
+];
+
+/** BAR-421: All billing cycle options per BAR-230 */
+const BILLING_CYCLE_OPTIONS: { value: BillingCycle; label: string; shortLabel: string; months: number }[] = [
+  { value: 'daily', label: 'Daily', shortLabel: 'day', months: 0 },
+  { value: 'monthly', label: 'Monthly', shortLabel: 'mo', months: 1 },
+  { value: 'quarterly', label: 'Quarterly', shortLabel: 'qtr', months: 3 },
+  { value: 'semi-annual', label: 'Semi-Annual', shortLabel: '6mo', months: 6 },
+  { value: 'annual', label: 'Annual (Yearly)', shortLabel: 'yr', months: 12 },
 ];
 
 const STORE_INFO = {
@@ -243,6 +253,8 @@ function RecipientRow({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Phone" value={recipient.phone || ''} onChange={(e) => onChange(index, 'phone', e.target.value)} placeholder="Phone" leftIcon={<Phone className="h-4 w-4" />} />
           <Input label="Email" value={recipient.email || ''} onChange={(e) => onChange(index, 'email', e.target.value)} placeholder="Email" leftIcon={<Mail className="h-4 w-4" />} />
+          <Input label="Address" value={recipient.address || ''} onChange={(e) => onChange(index, 'address', e.target.value)} placeholder="Street address" leftIcon={<MapPin className="h-4 w-4" />} />
+          <Input label="Date of Birth" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} />
         </div>
       )}
       {recipient.type === 'minor_exception' && (
@@ -260,6 +272,19 @@ function RecipientRow({
               <p className="text-xs text-emerald-400">Age verified: {getAgeFromDob(recipient.dateOfBirth)} years old — qualifies for minor exemption.</p>
             </div>
           )}
+        </div>
+      )}
+      {/* BAR-421: Employee exception — employees exempt from separate PS1583 per Box 12 */}
+      {recipient.type === 'employee_exception' && (
+        <div className="space-y-2">
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+            <p className="text-xs text-emerald-400">Employee of the business — exempt from separate PS1583 filing per USPS Box 12 exemptions.</p>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-surface-300 cursor-pointer">
+            <input type="checkbox" checked={recipient.isEmployee !== false} onChange={(e) => onChange(index, 'isEmployee', String(e.target.checked))} className="rounded border-surface-600 bg-surface-800 text-primary-500" />
+            Confirm this person is an employee of {recipient.firstName || 'the applicant'}
+          </label>
         </div>
       )}
     </div>
@@ -305,7 +330,7 @@ export default function NewCustomerPage() {
   const [planTiers, setPlanTiers] = useState<PlanTierOption[]>([]);
   const [planTiersLoading, setPlanTiersLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
 
   /* ── Step 2: ID state ── */
   const [primaryIdType, setPrimaryIdType] = useState('');
@@ -324,6 +349,14 @@ export default function NewCustomerPage() {
   // BAR-230: Non-compliant ID detection
   const [nonCompliantWarning, setNonCompliantWarning] = useState<string | null>(null);
   const [expirationWarning, setExpirationWarning] = useState<string | null>(null);
+
+  /* ── BAR-421: Camera capture for ID scanning ── */
+  const [cameraMode, setCameraMode] = useState<'upload' | 'camera'>('upload');
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraSlot, setCameraSlot] = useState<'primary' | 'secondary'>('primary');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   /* ── Step 2 continued: Proof of Address ── */
   const [proofOfAddressType, setProofOfAddressType] = useState('');
@@ -367,7 +400,13 @@ export default function NewCustomerPage() {
   const selectedPlan = useMemo(() => planTiers.find((t) => t.id === selectedPlanId), [planTiers, selectedPlanId]);
   const planPrice = useMemo(() => {
     if (!selectedPlan) return 0;
-    return billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
+    const cycleOpt = BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle);
+    if (!cycleOpt) return selectedPlan.priceMonthly;
+    if (billingCycle === 'annual') return selectedPlan.priceAnnual;
+    if (billingCycle === 'daily') return +(selectedPlan.priceMonthly / 30).toFixed(2);
+    if (billingCycle === 'quarterly') return +(selectedPlan.priceMonthly * 3 * (1 - selectedPlan.annualDiscountPct * 0.25 / 100)).toFixed(2);
+    if (billingCycle === 'semi-annual') return +(selectedPlan.priceMonthly * 6 * (1 - selectedPlan.annualDiscountPct * 0.5 / 100)).toFixed(2);
+    return selectedPlan.priceMonthly;
   }, [selectedPlan, billingCycle]);
 
   const WIZARD_STEPS: Step[] = useMemo(() => [
@@ -486,6 +525,57 @@ export default function NewCustomerPage() {
       else { setSecondaryIdFile(file); setSecondaryIdPreview(url); }
     };
     reader.readAsDataURL(file);
+  }, []);
+
+  /* ── BAR-421: Camera capture handlers ── */
+  const startCamera = useCallback(async (slot: 'primary' | 'secondary') => {
+    setCameraSlot(slot);
+    setCameraActive(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.error('Camera access denied:', err);
+      setCameraActive(false);
+      setCameraMode('upload');
+    }
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  const captureFrame = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `id-capture-${cameraSlot}-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      handleFileUpload(file, cameraSlot);
+      stopCamera();
+      setCameraMode('upload');
+    }, 'image/jpeg', 0.92);
+  }, [cameraSlot, handleFileUpload, stopCamera]);
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => { if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop()); };
   }, []);
 
   const simulateOCR = useCallback(() => {
@@ -611,10 +701,9 @@ export default function NewCustomerPage() {
   /* ── Auto-calculate payment amount from plan ── */
   useEffect(() => {
     if (selectedPlan && !paymentAmount) {
-      const price = billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
-      setPaymentAmount(price.toFixed(2));
+      setPaymentAmount(planPrice.toFixed(2));
     }
-  }, [selectedPlan, billingCycle]);
+  }, [selectedPlan, billingCycle, planPrice]);
 
   /* ── Validation ── */
   const validateStep = useCallback((stepNum: number): boolean => {
@@ -691,7 +780,7 @@ export default function NewCustomerPage() {
           pmbNumber: customerForm.pmbNumber ? `PMB ${customerForm.pmbNumber}` : undefined,
           platform: customerForm.platform || 'physical',
           billingTerms: customerForm.billingTerms,
-          renewalTermMonths: billingCycle === 'annual' ? 12 : (customerForm.billingTerms === 'Monthly' ? 1 : customerForm.billingTerms === 'Quarterly' ? 3 : customerForm.billingTerms === 'Semi-Annual' ? 6 : 12),
+          renewalTermMonths: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.months ?? 1,
           autoRenew: false,
           homeAddress: customerForm.homeAddress,
           homeCity: customerForm.homeCity,
@@ -773,6 +862,52 @@ export default function NewCustomerPage() {
               <div className="text-sm font-semibold text-emerald-400">{agreementSigned && cmraSigned ? 'Dual Signed' : agreementSigned ? 'Customer Signed' : 'Pending'}</div>
             </div>
           </div>
+          {/* BAR-421: Email/Print MSA + PS1583 actions */}
+          <div className="rounded-lg border border-surface-700 bg-surface-900/50 p-4 max-w-xl mx-auto">
+            <p className="text-sm font-medium text-surface-300 mb-3">Send Signed Agreement</p>
+            <div className="flex items-center justify-center gap-3">
+              <Button variant="ghost" size="sm" leftIcon={<Send className="h-4 w-4" />} onClick={async () => {
+                try {
+                  const res = await fetch('/api/customers/send-agreement', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email: customerForm.email,
+                      customerName: `${customerForm.firstName} ${customerForm.lastName}`,
+                      pmbNumber: customerForm.pmbNumber,
+                      planName: selectedPlan?.name,
+                      billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label,
+                      signatureDataUrl,
+                      cmraSignatureUrl,
+                      cmraSignedBy,
+                    }),
+                  });
+                  if (res.ok) { alert('Agreement emailed to ' + customerForm.email); }
+                  else { alert('Failed to send email. The agreement can be resent from the customer profile.'); }
+                } catch { alert('Failed to send email. The agreement can be resent from the customer profile.'); }
+              }}>Email to Customer</Button>
+              <Button variant="ghost" size="sm" leftIcon={<Printer className="h-4 w-4" />} onClick={() => {
+                const printWin = window.open('', '_blank');
+                if (!printWin) return;
+                const agreementText = getAgreementText({
+                  customerName: `${customerForm.firstName} ${customerForm.lastName}`,
+                  pmbNumber: customerForm.pmbNumber,
+                  storeName: STORE_INFO.name,
+                  storeAddress: STORE_INFO.address,
+                  storeCity: STORE_INFO.city,
+                  storeState: STORE_INFO.state,
+                  storeZip: STORE_INFO.zip,
+                  openDate: new Date().toLocaleDateString(),
+                  billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly',
+                }, isBusinessPmb, selectedPlan?.name);
+                printWin.document.write(`<html><head><title>MSA + PS1583 — ${customerForm.firstName} ${customerForm.lastName}</title><style>body{font-family:serif;white-space:pre-wrap;max-width:800px;margin:2em auto;line-height:1.6;font-size:12pt}h2{font-family:sans-serif}@media print{body{margin:0.5in}}</style></head><body><h2>Mailbox Service Agreement</h2>${agreementText.replace(/\n/g, '<br/>')}<br/><br/><strong>Customer Signature:</strong> ${signatureDataUrl ? '<img src="' + signatureDataUrl + '" style="height:60px;"/>' : '____________________'}<br/><strong>Date:</strong> ${new Date().toLocaleDateString()}<br/><br/><strong>CMRA Countersignature:</strong> ${cmraSignatureUrl ? '<img src="' + cmraSignatureUrl + '" style="height:60px;"/>' : '____________________'}<br/><strong>Signed by:</strong> ${cmraSignedBy || '____________________'}</body></html>`);
+                printWin.document.close();
+                printWin.focus();
+                printWin.print();
+              }}>Print Agreement</Button>
+            </div>
+          </div>
+
           <div className="flex items-center justify-center gap-3 pt-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/customers')}>View All Customers</Button>
             <Button onClick={() => window.location.reload()}>Add Another Customer</Button>
@@ -969,10 +1104,11 @@ export default function NewCustomerPage() {
             <Card padding="md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Crown className="h-4 w-4 text-amber-500" />Rate Plan</CardTitle>
-                {/* Billing cycle toggle */}
-                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5">
-                  <button className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'monthly' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('monthly')}>Monthly</button>
-                  <button className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'annual' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('annual')}>Annual</button>
+                {/* BAR-421: Expanded billing cycle selector (Daily, Monthly, Quarterly, Semi-Annual, Annual) */}
+                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5 flex-wrap">
+                  {BILLING_CYCLE_OPTIONS.map((opt) => (
+                    <button key={opt.value} className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap', billingCycle === opt.value ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle(opt.value)}>{opt.label}</button>
+                  ))}
                 </div>
               </CardHeader>
               <CardContent>
@@ -983,10 +1119,11 @@ export default function NewCustomerPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {planTiers.map((tier) => {
-                      const price = billingCycle === 'annual' ? tier.priceAnnual : tier.priceMonthly;
+                      const cycleOpt = BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle);
+                      const price = billingCycle === 'annual' ? tier.priceAnnual : billingCycle === 'daily' ? +(tier.priceMonthly / 30).toFixed(2) : billingCycle === 'quarterly' ? +(tier.priceMonthly * 3 * (1 - tier.annualDiscountPct * 0.25 / 100)).toFixed(2) : billingCycle === 'semi-annual' ? +(tier.priceMonthly * 6 * (1 - tier.annualDiscountPct * 0.5 / 100)).toFixed(2) : tier.priceMonthly;
                       const isSelected = selectedPlanId === tier.id;
-                      const monthlyEquiv = billingCycle === 'annual' ? (tier.priceAnnual / 12) : tier.priceMonthly;
-                      const savings = billingCycle === 'annual' ? ((tier.priceMonthly * 12) - tier.priceAnnual) : 0;
+                      const monthlyEquiv = billingCycle === 'daily' ? +(price * 30).toFixed(2) : billingCycle === 'annual' ? +(tier.priceAnnual / 12).toFixed(2) : billingCycle === 'quarterly' ? +(price / 3).toFixed(2) : billingCycle === 'semi-annual' ? +(price / 6).toFixed(2) : tier.priceMonthly;
+                      const savings = billingCycle !== 'monthly' && billingCycle !== 'daily' ? +((tier.priceMonthly * (cycleOpt?.months || 1)) - price).toFixed(0) : 0;
                       return (
                         <button key={tier.id} onClick={() => setSelectedPlanId(tier.id)} className={cn('relative p-4 rounded-lg border text-left transition-all', isSelected ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                           {isSelected && <div className="absolute -top-2 -right-2"><CheckCircle2 className="h-5 w-5 text-primary-500 bg-surface-950 rounded-full" /></div>}
@@ -998,10 +1135,10 @@ export default function NewCustomerPage() {
                             <div>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-surface-100">${price.toFixed(0)}</span>
-                                <span className="text-xs text-surface-500">/{billingCycle === 'annual' ? 'yr' : 'mo'}</span>
+                                <span className="text-xs text-surface-500">/{cycleOpt?.shortLabel || 'mo'}</span>
                               </div>
-                              {billingCycle === 'annual' && (
-                                <p className="text-[11px] text-emerald-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings.toFixed(0)}/yr</p>
+                              {savings > 0 && (
+                                <p className="text-[11px] text-emerald-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings}/{cycleOpt?.shortLabel || 'mo'}</p>
                               )}
                             </div>
                             <div className="space-y-1.5 text-[11px] text-surface-400">
@@ -1062,13 +1199,31 @@ export default function NewCustomerPage() {
                     <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
                     <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
                     <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-sm font-medium text-surface-300">Upload or Scan ID *</label>
+                        {/* BAR-421: Toggle between Upload and Camera modes */}
+                        {!primaryIdPreview && (
+                          <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
+                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
+                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('primary'); }}><Camera className="h-3 w-3" />Camera</button>
+                          </div>
+                        )}
+                      </div>
                       <input ref={fileInputRef1} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'primary'); }} />
                       {primaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
                           <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
+                        </div>
+                      ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'primary' ? (
+                        <div className="rounded-lg border border-primary-500/30 overflow-hidden bg-black relative">
+                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
+                          <canvas ref={canvasRef} className="hidden" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
+                            <button onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
+                            <button onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
+                          </div>
                         </div>
                       ) : (
                         <div onClick={() => fileInputRef1.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
@@ -1106,13 +1261,31 @@ export default function NewCustomerPage() {
                     <Select label="Document Type *" placeholder="Select proof of address document..." options={USPS_SECONDARY_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name }))} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} helperText={primaryIdType === 'drivers_license' ? "Driver license is already used as primary ID and cannot be selected here." : "Select the document used to verify the customer's home address."} />
                     <Input label="Date of Issue *" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the address verification document was issued" />
                     <div>
-                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document Scan/Photo *</label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-sm font-medium text-surface-300">Upload or Scan Document *</label>
+                        {/* BAR-421: Camera option for secondary ID */}
+                        {!secondaryIdPreview && (
+                          <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
+                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' || cameraSlot !== 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
+                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' && cameraSlot === 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('secondary'); }}><Camera className="h-3 w-3" />Camera</button>
+                          </div>
+                        )}
+                      </div>
                       <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
                       {secondaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
                           <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
+                        </div>
+                      ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'secondary' ? (
+                        <div className="rounded-lg border border-primary-500/30 overflow-hidden bg-black relative">
+                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
+                          <canvas ref={canvasRef} className="hidden" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
+                            <button onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
+                            <button onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
+                          </div>
                         </div>
                       ) : (
                         <div onClick={() => fileInputRef2.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
@@ -1223,6 +1396,32 @@ export default function NewCustomerPage() {
                     <Input label="CMRA Name (§4a)" value={form1583.cmraName || ''} readOnly leftIcon={<Lock className="h-4 w-4" />} />
                   </div>
 
+                  {/* BAR-421 §8b-8e: Applicant telephone & email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input label="Applicant Telephone (§8b)" value={form1583.applicantPhone || customerForm.phone || ''} onChange={(e) => setForm1583((p) => ({ ...p, applicantPhone: e.target.value }))} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
+                    <Input label="Applicant Email (§8e)" value={form1583.applicantEmail || customerForm.email || ''} onChange={(e) => setForm1583((p) => ({ ...p, applicantEmail: e.target.value }))} placeholder="email@example.com" leftIcon={<Mail className="h-4 w-4" />} />
+                  </div>
+
+                  {/* BAR-421 §9b-9g: Authorized Individual */}
+                  <div className="border-t border-surface-700 pt-4 mt-2">
+                    <p className="text-sm font-medium text-surface-300 mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4 text-primary-500" /> Authorized Individual (§9)</p>
+                    <p className="text-[11px] text-surface-500 mb-3">Optional — designate an individual authorized to sign for and accept mail on behalf of the applicant.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input label="Name (§9b)" value={form1583.authorizedIndividualName || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualName: e.target.value }))} placeholder="Full name" leftIcon={<User className="h-4 w-4" />} />
+                      <Input label="Date of Birth (§9c)" type="date" value={form1583.authorizedIndividualDob || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualDob: e.target.value }))} leftIcon={<Calendar className="h-4 w-4" />} />
+                      <Input label="Address (§9d)" value={form1583.authorizedIndividualAddress || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualAddress: e.target.value }))} placeholder="Street address" leftIcon={<MapPin className="h-4 w-4" />} />
+                      <div className="grid grid-cols-3 gap-3">
+                        <Input label="City (§9e)" value={form1583.authorizedIndividualCity || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualCity: e.target.value }))} />
+                        <Input label="State (§9f)" value={form1583.authorizedIndividualState || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualState: e.target.value }))} />
+                        <Input label="ZIP (§9g)" value={form1583.authorizedIndividualZip || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualZip: e.target.value }))} />
+                      </div>
+                      <Input label="Telephone (§9h)" value={form1583.authorizedIndividualPhone || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualPhone: e.target.value }))} placeholder="Phone" leftIcon={<Phone className="h-4 w-4" />} />
+                      <Input label="Email (§9i)" value={form1583.authorizedIndividualEmail || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualEmail: e.target.value }))} placeholder="Email" leftIcon={<Mail className="h-4 w-4" />} />
+                      <Input label="ID Type (§9j)" value={form1583.authorizedIndividualIdType || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualIdType: e.target.value }))} placeholder="ID document type" />
+                      <Input label="ID Number (§9k)" value={form1583.authorizedIndividualIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualIdNumber: e.target.value }))} placeholder="ID number" className="font-mono" />
+                    </div>
+                  </div>
+
                   {/* Court-protected individual (§4k) */}
                   <div className="rounded-lg border border-surface-700 bg-surface-900/50 p-4">
                     <label className="flex items-center gap-2 text-sm text-surface-300 cursor-pointer">
@@ -1294,7 +1493,7 @@ export default function NewCustomerPage() {
                 {recipients.length === 0 ? (
                   <div className="text-center py-6 text-surface-500 text-sm">
                     <p>No additional recipients. Click "Add" to register additional people authorized to receive mail at this PMB.</p>
-                    <p className="text-[11px] mt-1">Each additional recipient (non-minor, non-employee) needs their own PS1583.</p>
+                    <p className="text-[11px] mt-1">Each additional recipient needs their own PS1583. Minors (&lt;18) and employees are exempt per Box 12.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1329,7 +1528,7 @@ export default function NewCustomerPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-surface-200">{selectedPlan.name}</p>
-                          <p className="text-[11px] text-surface-500">{billingCycle === 'annual' ? 'Annual' : 'Monthly'} billing</p>
+                          <p className="text-[11px] text-surface-500">{BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly'} billing</p>
                         </div>
                         <p className="text-lg font-bold text-surface-100">${planPrice.toFixed(2)}</p>
                       </div>
@@ -1430,7 +1629,7 @@ export default function NewCustomerPage() {
               <CardContent>
                 <p className="text-xs text-surface-400 mb-4">Review the agreement below. This is auto-populated with customer and store details. Stores can customize this template in Settings → Mailbox Configuration.</p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-6 max-h-[400px] overflow-y-auto font-mono text-xs text-surface-300 leading-relaxed whitespace-pre-wrap">
-                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: billingCycle === 'annual' ? 'Annual' : 'Monthly' }, isBusinessPmb, selectedPlan?.name)}
+                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly' }, isBusinessPmb, selectedPlan?.name)}
                 </div>
               </CardContent>
             </Card>
@@ -1502,8 +1701,8 @@ export default function NewCustomerPage() {
                       <p className="text-surface-500">Platform</p><p className="text-surface-200">{platformLabels[customerForm.platform as MailboxPlatform]?.label}</p>
                       {customerForm.email && (<><p className="text-surface-500">Email</p><p className="text-surface-200">{customerForm.email}</p></>)}
                       {customerForm.phone && (<><p className="text-surface-500">Phone</p><p className="text-surface-200">{customerForm.phone}</p></>)}
-                      <p className="text-surface-500">Plan</p><p className="text-surface-200">{selectedPlan?.name || 'None'}{selectedPlan ? ` · $${planPrice.toFixed(2)}/${billingCycle === 'annual' ? 'yr' : 'mo'}` : ''}</p>
-                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{billingCycle === 'annual' ? 'Annual' : 'Monthly'}</p>
+                      <p className="text-surface-500">Plan</p><p className="text-surface-200">{selectedPlan?.name || 'None'}{selectedPlan ? ` · $${planPrice.toFixed(2)}/${BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.shortLabel || 'mo'}` : ''}</p>
+                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly'}</p>
                       <p className="text-surface-500">Notifications</p><p className="text-surface-200">{[customerForm.notifyEmail && 'Email', customerForm.notifySms && 'SMS'].filter(Boolean).join(', ') || 'None'}</p>
                       {recipients.length > 0 && (<><p className="text-surface-500">Recipients</p><p className="text-surface-200">{recipients.length} additional</p></>)}
                     </div>
