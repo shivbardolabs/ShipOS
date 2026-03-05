@@ -53,8 +53,6 @@ targets:
     dependencies:
       - package: Auth0
       - package: KeychainAccess
-      - target: ShipOSWidgets
-        embed: true
     postBuildScripts:
       - name: "SwiftLint"
         script: |
@@ -112,7 +110,6 @@ schemes:
     build:
       targets:
         ShipOS: all
-        ShipOSWidgets: all
         ShipOSTests: [test]
         ShipOSUITests: [test]
     run:
