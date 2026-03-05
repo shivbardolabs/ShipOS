@@ -4,7 +4,6 @@
 
 name: ShipOS
 options:
-  bundleIdPrefix: ai.bardolabs
   deploymentTarget:
     iOS: "17.0"
   xcodeVersion: "15.4"
@@ -91,6 +90,9 @@ targets:
     platform: iOS
     sources:
       - ShipOSTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos.tests
     dependencies:
       - target: ShipOS
 
@@ -99,6 +101,9 @@ targets:
     platform: iOS
     sources:
       - ShipOSUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos.uitests
     dependencies:
       - target: ShipOS
 
