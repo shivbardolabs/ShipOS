@@ -210,7 +210,10 @@ struct PackageUpdateRequest: Encodable {
 
 struct PackageCheckOutRequest: Encodable {
     let status: String = "released"
-    let signatureUrl: String?
+    var signatureUrl: String? = nil
+    var signatureData: String? = nil
+    var idType: String? = nil
+    var idVerified: Bool? = nil
     let notes: String?
 }
 
