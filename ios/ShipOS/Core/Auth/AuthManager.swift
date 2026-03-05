@@ -67,7 +67,6 @@ final class AuthManager: ObservableObject {
                 .webAuth()
                 .scope("openid profile email offline_access")
                 .audience(AppConfiguration.apiIdentifier)
-                .useHTTPS()
                 .start()
 
             try storeCredentials(credentials)

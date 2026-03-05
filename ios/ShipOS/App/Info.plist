@@ -51,6 +51,17 @@
     <string>ShipOS needs camera access to scan barcodes and capture package labels</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Use Face ID to unlock ShipOS quickly</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>auth0</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>ai.bardolabs.shipos</string>
+            </array>
+        </dict>
+    </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>UIBackgroundModes</key>
