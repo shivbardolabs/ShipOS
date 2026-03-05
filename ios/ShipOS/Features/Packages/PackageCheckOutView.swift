@@ -182,9 +182,9 @@ struct PackageCheckOutView: View {
             SignaturePadView(signature: $viewModel.signatureImage)
                 .frame(height: 200)
                 .background(ShipOSTheme.Colors.surfaceSecondary)
-                .clipShape(RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.md))
+                .clipShape(RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.medium))
                 .overlay(
-                    RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.md)
+                    RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.medium)
                         .stroke(ShipOSTheme.Colors.border, lineWidth: 1)
                 )
                 .padding(.horizontal)

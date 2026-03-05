@@ -491,7 +491,7 @@ struct RateCard: View {
                 VStack(alignment: .trailing) {
                     Text("$\(String(format: "%.2f", rate.estimatedCost))")
                         .font(ShipOSTheme.Typography.headline)
-                        .foregroundStyle(isSelected ? ShipOSTheme.Colors.primary : ShipOSTheme.Colors.text)
+                        .foregroundStyle(isSelected ? ShipOSTheme.Colors.primary : ShipOSTheme.Colors.textPrimary)
 
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
@@ -500,7 +500,7 @@ struct RateCard: View {
                 }
             }
             .padding()
-            .background(isSelected ? ShipOSTheme.Colors.primary.opacity(0.06) : ShipOSTheme.Colors.surface)
+            .background(isSelected ? ShipOSTheme.Colors.primary.opacity(0.06) : ShipOSTheme.Colors.surfacePrimary)
             .overlay(
                 RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.medium)
                     .stroke(isSelected ? ShipOSTheme.Colors.primary : ShipOSTheme.Colors.border, lineWidth: isSelected ? 2 : 1)

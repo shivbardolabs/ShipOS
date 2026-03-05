@@ -285,7 +285,7 @@ struct MiniStatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, ShipOSTheme.Spacing.md)
         .background(ShipOSTheme.Colors.surfaceSecondary)
-        .clipShape(RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.md))
+        .clipShape(RoundedRectangle(cornerRadius: ShipOSTheme.CornerRadius.medium))
     }
 }
 

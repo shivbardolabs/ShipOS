@@ -215,7 +215,7 @@ final class NotificationListViewModel: ObservableObject {
 
             let (notifResponse, pendingResponse) = try await (notifTask, pendingTask)
             notifications = notifResponse.notifications.map { $0.toModel() }
-            pendingNotifyCount = pendingResponse.total ?? 0
+            pendingNotifyCount = pendingResponse.total
             currentPage = 1
             hasMore = notifResponse.notifications.count >= pageSize
         } catch {
@@ -337,8 +337,9 @@ struct SendNotificationView: View {
         let body = NotificationSendRequest(
             customerId: customer.id,
             packageId: nil,
-            channel: channel,
-            message: message.isEmpty ? nil : message
+            type: channel,
+            message: message.isEmpty ? nil : message,
+            templateId: nil
         )
 
         do {
