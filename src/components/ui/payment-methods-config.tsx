@@ -18,6 +18,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -134,6 +135,9 @@ export function PaymentMethodsConfigPanel({
 
   return (
     <Card className={cn('p-6', className)}>
+      {/* Demo mode indicator */}
+      <DemoModeBadge variant="banner" className="mb-4" />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

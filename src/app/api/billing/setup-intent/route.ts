@@ -1,5 +1,7 @@
 import { withApiHandler, ok, badRequest, forbidden, notFound, ApiError } from '@/lib/api-utils';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { isDemoMode } from '@/lib/payment-mode';
+import { DemoPaymentProcessor } from '@/lib/demo-payment';
 import prisma from '@/lib/prisma';
 
 /**
@@ -8,6 +10,8 @@ import prisma from '@/lib/prisma';
  * Creates a Stripe SetupIntent for securely adding a payment method.
  * Returns the client_secret needed by the frontend to collect card details
  * via Stripe Elements (PCI-compliant — card data never touches our servers).
+ *
+ * In demo mode, returns a mock client_secret without calling Stripe.
  */
 export const POST = withApiHandler(async (_request, { user }) => {
   if (user.role !== 'superadmin' && user.role !== 'admin') {
@@ -18,6 +22,17 @@ export const POST = withApiHandler(async (_request, { user }) => {
     badRequest('No tenant found');
   }
 
+  // ── Demo mode: return mock SetupIntent ──────────────────────────────────
+  if (isDemoMode()) {
+    const demo = DemoPaymentProcessor.createSetupIntent(user.tenantId!);
+    return ok({
+      clientSecret: demo.clientSecret,
+      customerId: demo.customerId,
+      demo: true,
+    });
+  }
+
+  // ── Live mode: real Stripe ──────────────────────────────────────────────
   if (!isStripeConfigured()) {
     throw new ApiError('Stripe is not configured. Set STRIPE_SECRET_KEY in your environment variables.', 503);
   }

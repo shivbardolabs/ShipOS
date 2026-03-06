@@ -1,5 +1,6 @@
 import { withApiHandler, ok, forbidden, ApiError } from '@/lib/api-utils';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { isDemoMode } from '@/lib/payment-mode';
 import { PLAN_DEFINITIONS } from '@/lib/billing';
 import prisma from '@/lib/prisma';
 
@@ -7,10 +8,47 @@ import prisma from '@/lib/prisma';
  * POST /api/stripe/products
  * Sync local billing plans with Stripe products and prices.
  * Admin-only operation.
+ *
+ * In demo mode, seeds plans locally without Stripe sync.
  */
 export const POST = withApiHandler(async (_request, { user }) => {
   if (user.role !== 'superadmin' && user.role !== 'admin') {
     forbidden('Admin role required');
+  }
+
+  // Demo mode: seed plans locally without Stripe
+  if (isDemoMode()) {
+    const results: Array<{ plan: string; localPlanId: string }> = [];
+
+    for (const plan of PLAN_DEFINITIONS) {
+      const billingPlan = await prisma.billingPlan.upsert({
+        where: { slug: plan.slug },
+        update: {
+          name: plan.name,
+          priceMonthly: plan.priceMonthly,
+          priceYearly: plan.priceYearly,
+          maxMailboxes: plan.maxMailboxes,
+          maxUsers: plan.maxUsers,
+          maxStores: plan.maxStores,
+          features: JSON.stringify(plan.features),
+        },
+        create: {
+          name: plan.name,
+          slug: plan.slug,
+          priceMonthly: plan.priceMonthly,
+          priceYearly: plan.priceYearly,
+          maxMailboxes: plan.maxMailboxes,
+          maxUsers: plan.maxUsers,
+          maxStores: plan.maxStores,
+          features: JSON.stringify(plan.features),
+          sortOrder: PLAN_DEFINITIONS.indexOf(plan),
+        },
+      });
+
+      results.push({ plan: plan.name, localPlanId: billingPlan.id });
+    }
+
+    return ok({ synced: results, demo: true, message: 'Plans seeded locally (demo mode — no Stripe sync)' });
   }
 
   if (!isStripeConfigured()) {

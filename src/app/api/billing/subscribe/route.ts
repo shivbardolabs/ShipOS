@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { withApiHandler, validateBody, ok, badRequest, forbidden, notFound } from '@/lib/api-utils';
 import { z } from 'zod';
 import { isStripeConfigured } from '@/lib/stripe';
+import { isDemoMode } from '@/lib/payment-mode';
+import { DemoPaymentProcessor } from '@/lib/demo-payment';
 import prisma from '@/lib/prisma';
 
 /* ── Schema ─────────────────────────────────────────────────────────────────── */
@@ -50,8 +52,9 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
     });
   }
 
-  // If Stripe is configured and plan has a Stripe price, redirect to checkout
-  if (isStripeConfigured() && plan.stripePriceId) {
+  // In demo mode, skip Stripe checkout entirely — create subscription directly
+  // In live mode with Stripe configured and plan has a Stripe price, redirect to checkout
+  if (!isDemoMode() && isStripeConfigured() && plan.stripePriceId) {
     return ok({
       mode: 'stripe',
       message: 'Use /api/stripe/checkout to create a Stripe Checkout session',
@@ -60,7 +63,7 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
     });
   }
 
-  // Otherwise, create a manual subscription
+  // Demo mode or no Stripe — create a local subscription
   // Cancel any existing active subscription
   await prisma.subscription.updateMany({
     where: { tenantId: user.tenantId!, status: 'active' },
@@ -75,11 +78,13 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
     periodEnd.setMonth(periodEnd.getMonth() + 1);
   }
 
+  const subscriptionStatus = isDemoMode() ? 'active' : 'manual';
+
   const subscription = await prisma.subscription.create({
     data: {
       tenantId: user.tenantId!,
       planId: plan.id,
-      status: 'manual',
+      status: subscriptionStatus,
       billingCycle,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
@@ -87,8 +92,44 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
     include: { plan: true },
   });
 
+  // In demo mode, also create a mock payment record
+  if (isDemoMode()) {
+    const price = billingCycle === 'yearly' ? (plan.priceYearly ?? plan.priceMonthly * 12) : plan.priceMonthly;
+    const demoCharge = DemoPaymentProcessor.charge(price);
+    const billingPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    await prisma.paymentRecord.upsert({
+      where: {
+        unique_tenant_billing_period: {
+          tenantId: user.tenantId!,
+          billingPeriod,
+        },
+      },
+      update: {
+        amount: price,
+        status: 'succeeded',
+        method: 'demo',
+        description: `Demo payment — ${plan.name} (${billingCycle})`,
+        stripePaymentId: demoCharge.transactionId,
+      },
+      create: {
+        tenantId: user.tenantId!,
+        amount: price,
+        currency: 'usd',
+        status: 'succeeded',
+        method: 'demo',
+        description: `Demo payment — ${plan.name} (${billingCycle})`,
+        stripePaymentId: demoCharge.transactionId,
+        billingPeriod,
+        periodStart: now,
+        periodEnd,
+      },
+    });
+  }
+
   return ok({
-    mode: 'manual',
+    mode: isDemoMode() ? 'demo' : 'manual',
+    demo: isDemoMode(),
     subscription: {
       id: subscription.id,
       planName: subscription.plan.name,

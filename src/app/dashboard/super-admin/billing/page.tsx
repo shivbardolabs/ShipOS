@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 import {
   BarChart3,
   DollarSign,
@@ -221,6 +222,9 @@ export default function BillingReportingPage() {
           </div>
         }
       />
+
+      {/* Demo Mode Banner */}
+      <DemoModeBadge variant="banner" />
 
       <Tabs
         tabs={[

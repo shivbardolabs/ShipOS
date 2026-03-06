@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Building2, Check, CreditCard, FileText, Save } from 'lucide-react';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 
 export interface BillingTabProps {
   cardholderName: string; setCardholderName: (v: string) => void;
@@ -23,6 +24,9 @@ export function BillingTab({ cardholderName, setCardholderName, cardNumber, setC
   return (
     <>
   <div className="space-y-6">
+    {/* Demo Mode Banner */}
+    <DemoModeBadge variant="banner" />
+
     {/* Payment Method */}
     <Card>
       <CardHeader>

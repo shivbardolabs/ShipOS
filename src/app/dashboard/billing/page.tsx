@@ -9,6 +9,7 @@ import { Tabs, TabPanel } from '@/components/ui/tabs';
 import { Select } from '@/components/ui/select';
 import { SearchInput } from '@/components/ui/input';
 import { useTenant } from '@/components/tenant-provider';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   DollarSign,
@@ -491,6 +492,9 @@ export default function BillingDashboardPage() {
           </div>
         }
       />
+
+      {/* Demo Mode Banner */}
+      <DemoModeBadge variant="banner" />
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

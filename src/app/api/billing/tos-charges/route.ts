@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withApiHandler, validateQuery, validateBody, ok, badRequest, notFound } from '@/lib/api-utils';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import { isDemoMode } from '@/lib/payment-mode';
+import { DemoPaymentProcessor } from '@/lib/demo-payment';
 
 /* ── Schemas ────────────────────────────────────────────────────────────────── */
 
@@ -156,6 +158,11 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
     }
   }
 
+  // In demo mode, immediate charges always "succeed" with a demo transaction ID
+  const demoPaymentRef = isDemoMode() && isImmediate
+    ? DemoPaymentProcessor.generateTransactionId()
+    : null;
+
   const charge = await prisma.tosCharge.create({
     data: {
       tenantId: user.tenantId!,
@@ -167,6 +174,7 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
       status: isImmediate ? 'paid' : 'pending',
       mode: chargeMode,
       paymentMethod: isImmediate ? paymentMethod : null,
+      paymentRef: demoPaymentRef,
       paidAt: isImmediate ? new Date() : null,
       dueDate,
       referenceType: referenceType || null,
@@ -183,6 +191,7 @@ export const POST = withApiHandler(async (request: NextRequest, { user }) => {
       mode: charge.mode,
       createdAt: charge.createdAt.toISOString(),
       dueDate: charge.dueDate?.toISOString() ?? null,
+      ...(demoPaymentRef && { transactionId: demoPaymentRef, demo: true }),
     },
   });
 });

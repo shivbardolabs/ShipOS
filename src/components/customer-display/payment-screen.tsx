@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 import {
   CreditCard,
   Banknote,
@@ -161,6 +162,9 @@ export function PaymentScreen({
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-lg space-y-6">
+        {/* Demo Mode Banner */}
+        <DemoModeBadge variant="banner" />
+
         {/* Header */}
         <div className="text-center space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold text-white">Payment</h1>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 import { useTenant } from '@/components/tenant-provider';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 import { formatDate } from '@/lib/utils';
 import {
   CreditCard,
@@ -177,6 +178,9 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
 
   return (
     <div className="space-y-4">
+      {/* Demo Mode indicator */}
+      <DemoModeBadge variant="banner" />
+
       {/* Header row with Add button */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-surface-400">
