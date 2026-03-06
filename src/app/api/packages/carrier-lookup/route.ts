@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateBody, ok } from '@/lib/api-utils';
 import { lookupCarrierTracking } from '@/lib/carrier-api';
-import { withApiHandler } from '@/lib/api-utils';
+import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
 /*  POST /api/packages/carrier-lookup                                         */
@@ -10,36 +10,18 @@ import { withApiHandler } from '@/lib/api-utils';
 /*  sender/recipient data from the carrier's tracking API.                    */
 /* -------------------------------------------------------------------------- */
 
-interface LookupBody {
-  trackingNumber: string;
-  carrier: string;
-}
+const LookupSchema = z.object({
+  trackingNumber: z.string().min(1, 'trackingNumber is required'),
+  carrier: z.string().min(1, 'carrier is required'),
+});
 
 export const POST = withApiHandler(async (request, { user }) => {
-  try {
-    const body: LookupBody = await request.json();
+  const { trackingNumber, carrier } = await validateBody(request, LookupSchema);
 
-    if (!body.trackingNumber || !body.carrier) {
-      return NextResponse.json(
-        { error: 'trackingNumber and carrier are required' },
-        { status: 400 }
-      );
-    }
+  const result = await lookupCarrierTracking(trackingNumber, carrier);
 
-    const result = await lookupCarrierTracking(
-      body.trackingNumber,
-      body.carrier
-    );
-
-    return NextResponse.json({
-      success: !result.error,
-      data: result,
-    });
-  } catch (error) {
-    console.error('[carrier-lookup] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to look up carrier tracking data' },
-      { status: 500 }
-    );
-  }
-}, { public: true });
+  return ok({
+    success: !result.error,
+    data: result,
+  });
+});

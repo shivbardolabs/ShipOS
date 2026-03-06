@@ -1,6 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateBody, validateQuery, ok, created, badRequest, forbidden } from '@/lib/api-utils';
+import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { withApiHandler } from '@/lib/api-utils';
+
+/* ── Schemas ───────────────────────────────────────────────────────────────── */
+
+const LegalQuerySchema = z.object({
+  type: z.enum(['terms', 'privacy']).optional(),
+});
+
+const CreateLegalSchema = z.object({
+  type: z.enum(['terms', 'privacy']),
+  content: z.string().min(1),
+});
 
 /**
  * GET /api/admin/legal?type=terms|privacy
@@ -9,30 +20,19 @@ import { withApiHandler } from '@/lib/api-utils';
  * Superadmin only.
  */
 export const GET = withApiHandler(async (request, { user }) => {
-  try {
-    if (user.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
-
-    const type = request.nextUrl.searchParams.get('type');
-    if (type && !['terms', 'privacy'].includes(type)) {
-      return NextResponse.json(
-        { error: 'Query param "type" must be "terms" or "privacy"' },
-        { status: 400 }
-      );
-    }
-
-    const where = type ? { type } : {};
-    const docs = await prisma.legalDocument.findMany({
-      where,
-      orderBy: [{ type: 'asc' }, { version: 'desc' }],
-    });
-
-    return NextResponse.json({ docs });
-  } catch (err) {
-    console.error('[GET /api/admin/legal]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  if (user.role !== 'superadmin') {
+    forbidden('Superadmin access required');
   }
+
+  const query = validateQuery(request, LegalQuerySchema);
+  const where = query.type ? { type: query.type } : {};
+
+  const docs = await prisma.legalDocument.findMany({
+    where,
+    orderBy: [{ type: 'asc' }, { version: 'desc' }],
+  });
+
+  return ok({ docs });
 });
 
 /**
@@ -41,56 +41,43 @@ export const GET = withApiHandler(async (request, { user }) => {
  * Create a new version of a legal document (terms or privacy).
  * Automatically deactivates previous versions of the same type.
  * Superadmin only.
- *
- * Body: { type: 'terms' | 'privacy', content: string }
  */
 export const POST = withApiHandler(async (request, { user }) => {
-  try {
-    if (user.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
-
-    const { type, content } = await request.json();
-    if (!type || !['terms', 'privacy'].includes(type)) {
-      return NextResponse.json({ error: '"type" must be "terms" or "privacy"' }, { status: 400 });
-    }
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return NextResponse.json({ error: '"content" is required' }, { status: 400 });
-    }
-
-    // Find the current highest version for this type
-    const latest = await prisma.legalDocument.findFirst({
-      where: { type },
-      orderBy: { version: 'desc' },
-      select: { version: true },
-    });
-    const nextVersion = (latest?.version ?? 0) + 1;
-
-    // Deactivate all previous versions, then create the new one
-    await prisma.$transaction([
-      prisma.legalDocument.updateMany({
-        where: { type, isActive: true },
-        data: { isActive: false },
-      }),
-      prisma.legalDocument.create({
-        data: {
-          type,
-          content: content.trim(),
-          version: nextVersion,
-          publishedBy: user.id,
-          isActive: true,
-        },
-      }),
-    ]);
-
-    // Re-fetch the newly created doc
-    const doc = await prisma.legalDocument.findFirst({
-      where: { type, version: nextVersion },
-    });
-
-    return NextResponse.json({ doc }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/admin/legal]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  if (user.role !== 'superadmin') {
+    forbidden('Superadmin access required');
   }
+
+  const { type, content } = await validateBody(request, CreateLegalSchema);
+
+  // Find the current highest version for this type
+  const latest = await prisma.legalDocument.findFirst({
+    where: { type },
+    orderBy: { version: 'desc' },
+    select: { version: true },
+  });
+  const nextVersion = (latest?.version ?? 0) + 1;
+
+  // Deactivate all previous versions, then create the new one
+  await prisma.$transaction([
+    prisma.legalDocument.updateMany({
+      where: { type, isActive: true },
+      data: { isActive: false },
+    }),
+    prisma.legalDocument.create({
+      data: {
+        type,
+        content: content.trim(),
+        version: nextVersion,
+        publishedBy: user.id,
+        isActive: true,
+      },
+    }),
+  ]);
+
+  // Re-fetch the newly created doc
+  const doc = await prisma.legalDocument.findFirst({
+    where: { type, version: nextVersion },
+  });
+
+  return created({ doc });
 });

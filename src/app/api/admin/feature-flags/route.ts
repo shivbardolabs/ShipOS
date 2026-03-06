@@ -1,7 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiHandler, validateBody, ok, badRequest, forbidden } from '@/lib/api-utils';
+import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { FEATURE_FLAG_DEFINITIONS } from '@/lib/feature-flag-definitions';
-import { withApiHandler } from '@/lib/api-utils';
+
+/* ── Schemas ───────────────────────────────────────────────────────────────── */
+
+const PatchFlagSchema = z.object({
+  flagId: z.string().min(1),
+  defaultEnabled: z.boolean(),
+});
 
 /**
  * GET /api/admin/feature-flags
@@ -10,75 +17,62 @@ import { withApiHandler } from '@/lib/api-utils';
  * for the override UI. Superadmin only.
  */
 export const GET = withApiHandler(async (request, { user }) => {
-  try {
-    if (user.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
-
-    // Auto-seed any missing flags from definitions
-    await seedMissingFlags();
-
-    // Fetch all flags with overrides
-    const flags = await prisma.featureFlag.findMany({
-      orderBy: [{ category: 'asc' }, { name: 'asc' }],
-      include: {
-        overrides: {
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-    });
-
-    // Also fetch tenants and users for the override UI
-    const [tenants, users] = await Promise.all([
-      prisma.tenant.findMany({
-        orderBy: { name: 'asc' },
-        select: { id: true, name: true, slug: true },
-      }),
-      prisma.user.findMany({
-        orderBy: { name: 'asc' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          tenant: { select: { id: true, name: true } },
-        },
-      }),
-    ]);
-
-    return NextResponse.json({ flags, tenants, users });
-  } catch (err) {
-    console.error('[GET /api/admin/feature-flags]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  if (user.role !== 'superadmin') {
+    forbidden('Superadmin access required');
   }
+
+  // Auto-seed any missing flags from definitions
+  await seedMissingFlags();
+
+  // Fetch all flags with overrides
+  const flags = await prisma.featureFlag.findMany({
+    orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    include: {
+      overrides: {
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+  // Also fetch tenants and users for the override UI
+  const [tenants, users] = await Promise.all([
+    prisma.tenant.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, slug: true },
+    }),
+    prisma.user.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        tenant: { select: { id: true, name: true } },
+      },
+    }),
+  ]);
+
+  return ok({ flags, tenants, users });
 });
 
 /**
  * PATCH /api/admin/feature-flags
  *
- * Update a flag's default state. Body: { flagId, defaultEnabled }
+ * Update a flag's default state.
  */
 export const PATCH = withApiHandler(async (request, { user }) => {
-  try {
-    if (user.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
-
-    const { flagId, defaultEnabled } = await request.json();
-    if (!flagId || typeof defaultEnabled !== 'boolean') {
-      return NextResponse.json({ error: 'flagId and defaultEnabled required' }, { status: 400 });
-    }
-
-    const flag = await prisma.featureFlag.update({
-      where: { id: flagId },
-      data: { defaultEnabled },
-    });
-
-    return NextResponse.json(flag);
-  } catch (err) {
-    console.error('[PATCH /api/admin/feature-flags]', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  if (user.role !== 'superadmin') {
+    forbidden('Superadmin access required');
   }
+
+  const { flagId, defaultEnabled } = await validateBody(request, PatchFlagSchema);
+
+  const flag = await prisma.featureFlag.update({
+    where: { id: flagId },
+    data: { defaultEnabled },
+  });
+
+  return ok(flag);
 });
 
 /* ── Auto-seed missing flags ─────────────────────────────────────────────── */
