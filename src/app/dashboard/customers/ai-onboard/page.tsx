@@ -104,10 +104,10 @@ function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
     pct >= 90
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30'
       : pct >= 75
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/20 text-red-400 border-red-500/30';
+        ? 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30'
+        : 'bg-status-error-500/20 text-status-error-400 border-status-error-500/30';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
       <Sparkles className="h-3 w-3" />
@@ -370,7 +370,7 @@ export default function AiOnboardPage() {
         title="AI Customer Onboard"
         description="Scan ID, onboard in seconds."
         badge={
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-blue-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-status-violet-500/20 to-status-info-500/20 border border-status-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />
             AI Powered
           </span>
@@ -379,7 +379,7 @@ export default function AiOnboardPage() {
           <div className="flex items-center gap-3">
             {createdCount > 0 && (
               <span className="text-sm text-surface-400">
-                <span className="font-bold text-emerald-400">{createdCount}</span> onboarded today
+                <span className="font-bold text-status-success-400">{createdCount}</span> onboarded today
               </span>
             )}
           </div>
@@ -402,7 +402,7 @@ export default function AiOnboardPage() {
                     className={cn(
                       'flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all',
                       selectedIdType === type
-                        ? 'bg-violet-500/15 border-violet-500/40 text-violet-300'
+                        ? 'bg-status-violet-500/15 border-status-violet-500/40 text-violet-300'
                         : 'bg-surface-800/50 border-surface-700 text-surface-400 hover:border-surface-600 hover:text-surface-300'
                     )}
                   >
@@ -416,8 +416,8 @@ export default function AiOnboardPage() {
 
           {/* Capture card */}
           <Card className="p-6 text-center border-dashed border-2 border-surface-600/60">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/30 mb-4">
-              <ScanLine className="h-8 w-8 text-violet-400" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-status-violet-500/20 to-status-info-500/20 border border-status-violet-500/30 mb-4">
+              <ScanLine className="h-8 w-8 text-status-violet-400" />
             </div>
             <h3 className="text-lg font-semibold text-surface-100 mb-2">
               Scan {idTypeLabels[selectedIdType]}
@@ -427,7 +427,7 @@ export default function AiOnboardPage() {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/30 text-status-error-400 text-sm flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 {error}
               </div>
@@ -446,12 +446,12 @@ export default function AiOnboardPage() {
                 {/* Scanning frame overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-[85%] h-[55%] border-2 border-white/40 rounded-lg relative">
-                    <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-2 border-l-2 border-violet-400 rounded-tl-md" />
-                    <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-2 border-r-2 border-violet-400 rounded-tr-md" />
-                    <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-2 border-l-2 border-violet-400 rounded-bl-md" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-2 border-r-2 border-violet-400 rounded-br-md" />
+                    <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-2 border-l-2 border-status-violet-400 rounded-tl-md" />
+                    <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-2 border-r-2 border-status-violet-400 rounded-tr-md" />
+                    <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-2 border-l-2 border-status-violet-400 rounded-bl-md" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-2 border-r-2 border-status-violet-400 rounded-br-md" />
                     {/* Scanning line animation */}
-                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-400 to-transparent animate-pulse" />
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-status-violet-400 to-transparent animate-pulse" />
                   </div>
                 </div>
                 {/* ID outline hint */}
@@ -466,7 +466,7 @@ export default function AiOnboardPage() {
                   </Button>
                   <Button
                     onClick={capturePhoto}
-                    className="bg-white text-black hover:bg-gray-100 font-bold px-6"
+                    className="bg-white text-black hover:bg-surface-800 font-bold px-6"
                     size="sm"
                   >
                     <Camera className="h-4 w-4 mr-1" /> Capture
@@ -480,7 +480,7 @@ export default function AiOnboardPage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   onClick={startCamera}
-                  className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8 py-6 text-base"
+                  className="bg-gradient-to-r from-status-violet-600 to-status-info-600 hover:from-status-violet-500 hover:to-status-info-500 text-white font-semibold px-8 py-6 text-base"
                 >
                   <Camera className="h-5 w-5 mr-2" />
                   Open Camera
@@ -504,7 +504,7 @@ export default function AiOnboardPage() {
             )}
 
             {cameraError && (
-              <p className="text-amber-400 text-sm mt-3 flex items-center justify-center gap-1.5">
+              <p className="text-status-warning-400 text-sm mt-3 flex items-center justify-center gap-1.5">
                 <AlertTriangle className="h-4 w-4" />
                 {cameraError}
               </p>
@@ -514,9 +514,9 @@ export default function AiOnboardPage() {
           {/* How it works */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: Camera, label: 'Scan ID', desc: 'Photo the ID', color: 'text-violet-400' },
-              { icon: Sparkles, label: 'AI Extracts', desc: 'Reads all fields', color: 'text-blue-400' },
-              { icon: UserPlus, label: 'Create', desc: 'One-click onboard', color: 'text-emerald-400' },
+              { icon: Camera, label: 'Scan ID', desc: 'Photo the ID', color: 'text-status-violet-400' },
+              { icon: Sparkles, label: 'AI Extracts', desc: 'Reads all fields', color: 'text-status-info-400' },
+              { icon: UserPlus, label: 'Create', desc: 'One-click onboard', color: 'text-status-success-400' },
             ].map((step) => (
               <div key={step.label} className="text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-800 border border-surface-700 mb-2">
@@ -542,10 +542,10 @@ export default function AiOnboardPage() {
                 <div className="absolute inset-0 flex items-center justify-center bg-surface-950/50">
                   <div className="flex flex-col items-center gap-3">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full border-4 border-violet-500/30 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 text-violet-400 animate-spin" />
+                      <div className="w-16 h-16 rounded-full border-4 border-status-violet-500/30 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-status-violet-400 animate-spin" />
                       </div>
-                      <div className="absolute -inset-2 rounded-full border-2 border-violet-400/20 animate-ping" />
+                      <div className="absolute -inset-2 rounded-full border-2 border-status-violet-400/20 animate-ping" />
                     </div>
                     <div>
                       <p className="text-white font-semibold">Reading ID...</p>
@@ -559,7 +559,7 @@ export default function AiOnboardPage() {
             <div className="flex justify-center gap-6 text-sm text-surface-400">
               {['Reading name', 'Extracting address', 'Verifying ID #'].map((step, i) => (
                 <span key={step} className="flex items-center gap-1.5 animate-pulse" style={{ animationDelay: `${i * 400}ms` }}>
-                  <Sparkles className="h-3 w-3 text-violet-400" />
+                  <Sparkles className="h-3 w-3 text-status-violet-400" />
                   {step}
                 </span>
               ))}
@@ -596,8 +596,8 @@ export default function AiOnboardPage() {
                   Fields auto-populated from AI scan — review and edit as needed
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-violet-500/10 border border-violet-500/30">
-                <IdTypeIcon className="h-3.5 w-3.5 text-violet-400" />
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-status-violet-500/10 border border-status-violet-500/30">
+                <IdTypeIcon className="h-3.5 w-3.5 text-status-violet-400" />
                 <span className="text-[11px] font-semibold text-violet-300">{idTypeLabels[formData.idType]}</span>
               </div>
             </div>
@@ -606,7 +606,7 @@ export default function AiOnboardPage() {
           {/* ── Personal Information ────────────────────────────────────── */}
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-surface-700/50">
-              <User className="h-4 w-4 text-violet-400" />
+              <User className="h-4 w-4 text-status-violet-400" />
               <h4 className="text-sm font-semibold text-surface-200">Personal Information</h4>
               <span className="text-[11px] text-surface-500 ml-auto">Extracted from ID</span>
             </div>
@@ -671,7 +671,7 @@ export default function AiOnboardPage() {
           {/* ── Address ─────────────────────────────────────────────────── */}
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-surface-700/50">
-              <MapPin className="h-4 w-4 text-blue-400" />
+              <MapPin className="h-4 w-4 text-status-info-400" />
               <h4 className="text-sm font-semibold text-surface-200">Address</h4>
               <span className="text-[11px] text-surface-500 ml-auto">From ID</span>
             </div>
@@ -717,7 +717,7 @@ export default function AiOnboardPage() {
           {/* ── PMB & Contact ───────────────────────────────────────────── */}
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-surface-700/50">
-              <Building2 className="h-4 w-4 text-emerald-400" />
+              <Building2 className="h-4 w-4 text-status-success-400" />
               <h4 className="text-sm font-semibold text-surface-200">Mailbox & Contact</h4>
             </div>
 
@@ -764,7 +764,7 @@ export default function AiOnboardPage() {
           {/* ── Form 1583 Compliance ────────────────────────────────────── */}
           <Card className="p-5">
             <div className="flex items-center gap-2 pb-3 border-b border-surface-700/50 mb-3">
-              <Shield className="h-4 w-4 text-amber-400" />
+              <Shield className="h-4 w-4 text-status-warning-400" />
               <h4 className="text-sm font-semibold text-surface-200">Form 1583 Compliance</h4>
             </div>
 
@@ -805,7 +805,7 @@ export default function AiOnboardPage() {
               <Button
                 onClick={createCustomer}
                 disabled={!isFormValid}
-                className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold disabled:opacity-40"
+                className="bg-gradient-to-r from-status-violet-600 to-status-info-600 hover:from-status-violet-500 hover:to-status-info-500 text-white font-semibold disabled:opacity-40"
               >
                 <UserPlus className="h-4 w-4 mr-1" />
                 Create Customer
@@ -820,8 +820,8 @@ export default function AiOnboardPage() {
         <div className="max-w-lg mx-auto text-center space-y-6">
           <Card className="p-8">
             {/* Success animation */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 mb-4 animate-[bounceIn_0.5s_ease-out]">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-status-success-500/20 border-2 border-status-success-500/40 mb-4 animate-[bounceIn_0.5s_ease-out]">
+              <CheckCircle2 className="h-10 w-10 text-status-success-400" />
             </div>
             <h2 className="text-2xl font-bold text-surface-100 mb-2">
               Customer Created
@@ -886,11 +886,11 @@ export default function AiOnboardPage() {
             {/* Compliance status */}
             <div className="flex justify-center gap-3 mb-6">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-800 border border-surface-700 text-sm">
-                <Shield className="h-3.5 w-3.5 text-amber-400" />
+                <Shield className="h-3.5 w-3.5 text-status-warning-400" />
                 <span className="text-surface-300">Form 1583 pending</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-800 border border-surface-700 text-sm">
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <Check className="h-3.5 w-3.5 text-status-success-400" />
                 <span className="text-surface-300">ID verified</span>
               </div>
             </div>
@@ -898,7 +898,7 @@ export default function AiOnboardPage() {
             <div className="flex justify-center gap-3">
               <Button
                 onClick={startNew}
-                className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8"
+                className="bg-gradient-to-r from-status-violet-600 to-status-info-600 hover:from-status-violet-500 hover:to-status-info-500 text-white font-semibold px-8"
               >
                 <UserPlus className="h-5 w-5 mr-2" />
                 Onboard Another
@@ -918,7 +918,7 @@ export default function AiOnboardPage() {
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-violet-400" />
+              <Zap className="h-3.5 w-3.5 text-status-violet-400" />
               ~5 sec per customer
             </span>
           </div>

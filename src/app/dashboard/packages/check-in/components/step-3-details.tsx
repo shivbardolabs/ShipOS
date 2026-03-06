@@ -80,18 +80,18 @@ export function Step3PackageDetails(props: Step3Props) {
         <div className={cn(
           'p-4 rounded-xl border flex items-start gap-3',
           duplicateAcknowledged
-            ? 'border-emerald-500/30 bg-emerald-500/5'
-            : 'border-amber-500/30 bg-amber-500/5'
+            ? 'border-status-success-500/30 bg-status-success-500/5'
+            : 'border-status-warning-500/30 bg-status-warning-500/5'
         )}>
           {duplicateAcknowledged ? (
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="h-5 w-5 text-status-success-400 shrink-0 mt-0.5" />
           ) : (
-            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-status-warning-400 shrink-0 mt-0.5" />
           )}
           <div>
             {duplicateAcknowledged ? (
               <>
-                <p className="text-sm font-medium text-emerald-300">Duplicate override active</p>
+                <p className="text-sm font-medium text-status-success-300">Duplicate override active</p>
                 <p className="text-xs text-surface-400 mt-1">
                   Proceeding with re-check-in for tracking number already assigned to {duplicatePackage.customerName} ({duplicatePackage.customerPmb}).
                   {duplicateOverrideReason && <> Reason: {duplicateOverrideReason}</>}
@@ -99,7 +99,7 @@ export function Step3PackageDetails(props: Step3Props) {
               </>
             ) : (
               <>
-                <p className="text-sm font-medium text-amber-300">Duplicate tracking number detected</p>
+                <p className="text-sm font-medium text-status-warning-300">Duplicate tracking number detected</p>
                 <p className="text-xs text-surface-400 mt-1">
                   This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
                 </p>
@@ -156,13 +156,13 @@ export function Step3PackageDetails(props: Step3Props) {
       <div className="flex flex-wrap gap-4">
         <ToggleSwitch
           label="Hazardous Materials"
-          icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
+          icon={<AlertTriangle className="h-4 w-4 text-status-warning-600" />}
           checked={hazardous}
           onChange={setHazardous}
         />
         <ToggleSwitch
           label="Perishable"
-          icon={<Snowflake className="h-4 w-4 text-blue-600" />}
+          icon={<Snowflake className="h-4 w-4 text-status-info-600" />}
           checked={perishable}
           onChange={(val) => {
             setPerishable(val);
@@ -171,7 +171,7 @@ export function Step3PackageDetails(props: Step3Props) {
         />
         <ToggleSwitch
           label="Requires Signature"
-          icon={<CheckCircle2 className="h-4 w-4 text-purple-500" />}
+          icon={<CheckCircle2 className="h-4 w-4 text-status-violet-500" />}
           checked={requiresSignature}
           onChange={setRequiresSignature}
         />
@@ -182,17 +182,17 @@ export function Step3PackageDetails(props: Step3Props) {
         <div className={cn(
           'p-4 rounded-xl border space-y-2',
           hazardous
-            ? 'bg-amber-500/5 border-amber-500/20'
-            : 'bg-blue-500/5 border-blue-500/20'
+            ? 'bg-status-warning-500/5 border-status-warning-500/20'
+            : 'bg-status-info-500/5 border-status-info-500/20'
         )}>
           {hazardous && (
-            <div className="flex items-center gap-2 text-sm text-amber-400">
+            <div className="flex items-center gap-2 text-sm text-status-warning-400">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <span><strong>Hazardous Materials:</strong> Package must be stored in hazmat-designated area. Notify manager on duty.</span>
             </div>
           )}
           {perishable && (
-            <div className="flex items-center gap-2 text-sm text-blue-400">
+            <div className="flex items-center gap-2 text-sm text-status-info-400">
               <Snowflake className="h-4 w-4 shrink-0" />
               <span><strong>Perishable:</strong> Customer will receive an urgent notification. Package should be released within 24 hours.</span>
             </div>
@@ -226,7 +226,7 @@ export function Step3PackageDetails(props: Step3Props) {
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-lg border transition-all',
             condition !== 'good'
-              ? 'border-amber-500/50 bg-amber-500/10 text-amber-400 animate-pulse hover:bg-amber-500/20'
+              ? 'border-status-warning-500/50 bg-status-warning-500/10 text-status-warning-400 animate-pulse hover:bg-status-warning-500/20'
               : 'border-surface-600/50 bg-surface-800/50 text-surface-400 hover:border-surface-500 hover:text-surface-300'
           )}
           title="Take photo of package condition"
@@ -248,7 +248,7 @@ export function Step3PackageDetails(props: Step3Props) {
               <button
                 type="button"
                 onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
-                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-status-error-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <XIcon className="h-3 w-3" />
               </button>

@@ -293,11 +293,11 @@ export default function SuperAdminUsersPage() {
           <p className="text-xs text-surface-400">Total Admins</p>
         </div>
         <div className="glass-card p-4">
-          <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
+          <p className="text-2xl font-bold text-status-success-400">{stats.active}</p>
           <p className="text-xs text-surface-400">Active</p>
         </div>
         <div className="glass-card p-4">
-          <p className="text-2xl font-bold text-yellow-400">{stats.pending}</p>
+          <p className="text-2xl font-bold text-status-warning-400">{stats.pending}</p>
           <p className="text-xs text-surface-400">Pending Invite</p>
         </div>
         <div className="glass-card p-4">
@@ -360,13 +360,13 @@ export default function SuperAdminUsersPage() {
                   {admin.status === 'pending' && (
                     <div className="mt-3 rounded-lg bg-surface-800/50 p-2.5">
                       <div className="flex items-center gap-2 text-xs">
-                        <Mail className="h-3.5 w-3.5 text-yellow-400" />
+                        <Mail className="h-3.5 w-3.5 text-status-warning-400" />
                         <span className="text-surface-300">
                           Invitation sent{admin.invitedBy ? ` by ${admin.invitedBy}` : ''}
                         </span>
                       </div>
                       {inviteExpired ? (
-                        <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                        <p className="text-xs text-status-error-400 mt-1 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           Invite expired — resend to continue
                         </p>
@@ -389,13 +389,13 @@ export default function SuperAdminUsersPage() {
                       </Button>
                     )}
                     {admin.status === 'active' && !isSelf && !isLastActive && (
-                      <Button variant="ghost" size="sm" leftIcon={<ShieldOff className="h-3 w-3 text-red-400" />} onClick={() => toggleStatus(admin.id)}>
-                        <span className="text-red-400">Deactivate</span>
+                      <Button variant="ghost" size="sm" leftIcon={<ShieldOff className="h-3 w-3 text-status-error-400" />} onClick={() => toggleStatus(admin.id)}>
+                        <span className="text-status-error-400">Deactivate</span>
                       </Button>
                     )}
                     {admin.status === 'inactive' && (
-                      <Button variant="ghost" size="sm" leftIcon={<ShieldCheck className="h-3 w-3 text-emerald-400" />} onClick={() => toggleStatus(admin.id)}>
-                        <span className="text-emerald-400">Reactivate</span>
+                      <Button variant="ghost" size="sm" leftIcon={<ShieldCheck className="h-3 w-3 text-status-success-400" />} onClick={() => toggleStatus(admin.id)}>
+                        <span className="text-status-success-400">Reactivate</span>
                       </Button>
                     )}
                     {isSelf && (

@@ -90,7 +90,7 @@ export default function TagManagerAdminPage() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div>
         <h1 className="text-2xl font-bold text-surface-100 flex items-center gap-2">
-          <Tag className="h-7 w-7 text-indigo-400" />
+          <Tag className="h-7 w-7 text-primary-400" />
           Tag Manager
         </h1>
         <p className="text-surface-400 mt-1">
@@ -103,7 +103,7 @@ export default function TagManagerAdminPage() {
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
-              <Code2 className="h-5 w-5 text-blue-400" />
+              <Code2 className="h-5 w-5 text-status-info-400" />
               Google Tag Manager
             </h2>
             <p className="text-surface-400 text-sm mt-1">
@@ -114,11 +114,11 @@ export default function TagManagerAdminPage() {
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
               gtmId
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                ? 'bg-status-success-500/10 text-status-success-400 border border-status-success-500/20'
+                : 'bg-status-warning-500/10 text-status-warning-400 border border-status-warning-500/20'
             }`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${gtmId ? 'bg-green-400' : 'bg-yellow-400'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${gtmId ? 'bg-status-success-400' : 'bg-status-warning-400'}`} />
             {gtmId ? 'Active' : 'Not configured'}
           </span>
         </div>
@@ -141,7 +141,7 @@ export default function TagManagerAdminPage() {
             href="https://tagmanager.google.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-primary-400 hover:text-primary-300 transition-colors"
           >
             Open GTM Console
             <ExternalLink className="h-3.5 w-3.5" />
@@ -161,7 +161,7 @@ export default function TagManagerAdminPage() {
       {/* ── Setup Instructions ─────────────────────────────────────────── */}
       <Card>
         <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
-          <Settings className="h-5 w-5 text-indigo-400" />
+          <Settings className="h-5 w-5 text-primary-400" />
           How to Add Tags
         </h2>
         <div className="mt-3 space-y-3 text-sm text-surface-400">
@@ -173,7 +173,7 @@ export default function TagManagerAdminPage() {
                 href="https://tagmanager.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-indigo-400 hover:underline"
+                className="text-primary-400 hover:underline"
               >
                 tagmanager.google.com
               </a>
@@ -202,7 +202,7 @@ export default function TagManagerAdminPage() {
       {/* ── Active Integrations ────────────────────────────────────────── */}
       <Card>
         <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-indigo-400" />
+          <Activity className="h-5 w-5 text-primary-400" />
           Integrations
         </h2>
         <p className="text-surface-400 text-sm mt-1 mb-4">
@@ -217,7 +217,7 @@ export default function TagManagerAdminPage() {
             >
               <div className="flex items-center gap-3">
                 {integration.configured ? (
-                  <CheckCircle2 className="h-4.5 w-4.5 text-green-400 shrink-0" />
+                  <CheckCircle2 className="h-4.5 w-4.5 text-status-success-400 shrink-0" />
                 ) : (
                   <XCircle className="h-4.5 w-4.5 text-surface-600 shrink-0" />
                 )}
@@ -235,7 +235,7 @@ export default function TagManagerAdminPage() {
                     href={integration.dashboardUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-surface-500 hover:text-indigo-400 transition-colors"
+                    className="text-surface-500 hover:text-primary-400 transition-colors"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>

@@ -333,12 +333,12 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         className="relative w-full max-w-[560px] mx-4 overflow-hidden rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-top-4 duration-200"
         style={{
           background: 'rgba(255, 255, 255, 0.98)',
-          borderColor: '#e2e8f0',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.05)',
+          borderColor: 'var(--color-surface-700)',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 5%, transparent)',
         }}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#e2e8f0' }}>
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--color-surface-700)' }}>
           <Search className="h-5 w-5 text-surface-500 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -354,7 +354,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           <button
             onClick={onClose}
             className="flex h-6 items-center rounded border px-1.5 text-[11px] font-medium text-surface-500 transition-colors hover:text-surface-300"
-            style={{ borderColor: '#cbd5e1' }}
+            style={{ borderColor: 'var(--color-surface-700)' }}
           >
             ESC
           </button>
@@ -425,7 +425,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       {item.shortcut && (
                         <span
                           className="flex-shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-mono text-surface-500"
-                          style={{ borderColor: '#e2e8f0' }}
+                          style={{ borderColor: 'var(--color-surface-700)' }}
                         >
                           {item.shortcut}
                         </span>
@@ -441,7 +441,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         {/* Footer */}
         <div
           className="flex items-center justify-between px-4 py-2.5 text-[11px] text-surface-600 border-t"
-          style={{ borderColor: '#e2e8f0' }}
+          style={{ borderColor: 'var(--color-surface-700)' }}
         >
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

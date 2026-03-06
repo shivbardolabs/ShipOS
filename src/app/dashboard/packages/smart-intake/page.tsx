@@ -82,16 +82,16 @@ const carrierLabels: Record<string, string> = {
 };
 
 const carrierColors: Record<string, string> = {
-  amazon: 'border-orange-500/40 bg-orange-500/10 text-orange-400',
-  ups: 'border-amber-700/40 bg-amber-900/20 text-amber-500',
-  fedex: 'border-indigo-300/40 bg-indigo-50 text-indigo-600',
-  usps: 'border-blue-500/40 bg-blue-50 text-blue-600',
-  dhl: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400',
-  lasership: 'border-green-500/40 bg-green-500/10 text-green-400',
-  temu: 'border-orange-600/40 bg-orange-600/10 text-orange-500',
-  ontrac: 'border-blue-600/40 bg-blue-600/10 text-blue-300',
-  walmart: 'border-blue-500/40 bg-blue-500/10 text-blue-400',
-  target: 'border-red-500/40 bg-red-50 text-red-600',
+  amazon: 'border-status-warning-alt/40 bg-status-warning-alt/10 text-status-warning-400',
+  ups: 'border-status-warning-700/40 bg-amber-900/20 text-status-warning-500',
+  fedex: 'border-primary-300/40 bg-primary-50 text-primary-600',
+  usps: 'border-status-info-500/40 bg-status-info-50 text-status-info-600',
+  dhl: 'border-status-warning-500/40 bg-status-warning-500/10 text-status-warning-400',
+  lasership: 'border-status-success-500/40 bg-status-success-500/10 text-status-success-400',
+  temu: 'border-status-warning-600/40 bg-status-warning-600/10 text-status-warning-alt',
+  ontrac: 'border-status-info-600/40 bg-status-info-600/10 text-status-info-300',
+  walmart: 'border-status-info-500/40 bg-status-info-500/10 text-status-info-400',
+  target: 'border-status-error-500/40 bg-status-error-50 text-status-error-600',
   other: 'border-surface-600/40 bg-surface-700/20 text-surface-400',
 };
 
@@ -178,10 +178,10 @@ function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
     pct >= 90
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30'
       : pct >= 75
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/20 text-red-400 border-red-500/30';
+        ? 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30'
+        : 'bg-status-error-500/20 text-status-error-400 border-status-error-500/30';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
       <Sparkles className="h-3 w-3" />
@@ -731,7 +731,7 @@ export default function SmartIntakePage() {
         title="Smart Intake"
         description="Snap a photo, we handle it."
         badge={
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-blue-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-status-violet-500/20 to-status-info-500/20 border border-status-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />
             AI Powered
           </span>
@@ -740,7 +740,7 @@ export default function SmartIntakePage() {
           <div className="flex items-center gap-3">
             {checkedInCount > 0 && (
               <span className="text-sm text-surface-400">
-                <span className="font-bold text-emerald-400">{checkedInCount}</span> checked in today
+                <span className="font-bold text-status-success-400">{checkedInCount}</span> checked in today
               </span>
             )}
             <div className="flex items-center gap-2 bg-surface-800 rounded-lg p-1 border border-surface-700">
@@ -778,11 +778,11 @@ export default function SmartIntakePage() {
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Mode description */}
           <Card className="p-6 text-center border-dashed border-2 border-surface-600/60">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/30 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-status-violet-500/20 to-status-info-500/20 border border-status-violet-500/30 mb-4">
               {batchMode ? (
-                <Layers className="h-8 w-8 text-violet-400" />
+                <Layers className="h-8 w-8 text-status-violet-400" />
               ) : (
-                <ScanLine className="h-8 w-8 text-violet-400" />
+                <ScanLine className="h-8 w-8 text-status-violet-400" />
               )}
             </div>
             <h3 className="text-lg font-semibold text-surface-100 mb-2">
@@ -795,7 +795,7 @@ export default function SmartIntakePage() {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/30 text-status-error-400 text-sm flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 {error}
               </div>
@@ -808,7 +808,7 @@ export default function SmartIntakePage() {
                 {!cameraReady && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80">
                     <div className="text-center">
-                      <Loader2 className="h-8 w-8 text-violet-400 animate-spin mx-auto mb-3" />
+                      <Loader2 className="h-8 w-8 text-status-violet-400 animate-spin mx-auto mb-3" />
                       <p className="text-surface-400 text-sm">Starting camera…</p>
                     </div>
                   </div>
@@ -825,11 +825,11 @@ export default function SmartIntakePage() {
                 {/* Scanning frame overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-[85%] h-[50%] border-2 border-white/40 rounded-lg relative">
-                    <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-3 border-l-3 border-violet-400 rounded-tl-md" />
-                    <div className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-3 border-r-3 border-violet-400 rounded-tr-md" />
-                    <div className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-3 border-l-3 border-violet-400 rounded-bl-md" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-3 border-r-3 border-violet-400 rounded-br-md" />
-                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-400 to-transparent animate-pulse" />
+                    <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-3 border-l-3 border-status-violet-400 rounded-tl-md" />
+                    <div className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-3 border-r-3 border-status-violet-400 rounded-tr-md" />
+                    <div className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-3 border-l-3 border-status-violet-400 rounded-bl-md" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-3 border-r-3 border-status-violet-400 rounded-br-md" />
+                    <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-status-violet-400 to-transparent animate-pulse" />
                   </div>
                 </div>
 
@@ -851,7 +851,7 @@ export default function SmartIntakePage() {
                   <Button
                     onClick={capturePhoto}
                     disabled={!cameraReady}
-                    className="bg-white text-black hover:bg-gray-100 font-bold px-8 rounded-full shadow-lg disabled:opacity-50"
+                    className="bg-white text-black hover:bg-surface-800 font-bold px-8 rounded-full shadow-lg disabled:opacity-50"
                     size="lg"
                   >
                     <Camera className="h-5 w-5 mr-2" /> Capture
@@ -866,7 +866,7 @@ export default function SmartIntakePage() {
                 <Button
                   onClick={startCamera}
                   disabled={cameraLoading}
-                  className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8 py-6 text-base disabled:opacity-70"
+                  className="bg-gradient-to-r from-status-violet-600 to-status-info-600 hover:from-status-violet-500 hover:to-status-info-500 text-white font-semibold px-8 py-6 text-base disabled:opacity-70"
                 >
                   {cameraLoading ? (
                     <>
@@ -899,8 +899,8 @@ export default function SmartIntakePage() {
             )}
 
             {cameraError && (
-              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto">
-                <p className="text-amber-400 text-sm flex items-center gap-1.5 mb-2">
+              <div className="mt-4 p-4 rounded-xl bg-status-warning-500/10 border border-status-warning-500/30 max-w-md mx-auto">
+                <p className="text-status-warning-400 text-sm flex items-center gap-1.5 mb-2">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   {cameraError}
                 </p>
@@ -908,7 +908,7 @@ export default function SmartIntakePage() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="mt-2 w-full border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+                    className="mt-2 w-full border-status-warning-500/30 text-status-warning-300 hover:bg-status-warning-500/10"
                     onClick={() => { setCameraError(null); setCameraPermDenied(false); fileInputRef.current?.click(); }}
                   >
                     <Upload className="h-4 w-4 mr-1.5" />
@@ -922,9 +922,9 @@ export default function SmartIntakePage() {
           {/* How it works */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: Camera, label: 'Snap', desc: 'Photo the label', color: 'text-violet-400' },
-              { icon: Sparkles, label: 'AI Reads', desc: 'Extracts all data', color: 'text-blue-400' },
-              { icon: CheckCircle2, label: 'Confirm', desc: 'One tap check-in', color: 'text-emerald-400' },
+              { icon: Camera, label: 'Snap', desc: 'Photo the label', color: 'text-status-violet-400' },
+              { icon: Sparkles, label: 'AI Reads', desc: 'Extracts all data', color: 'text-status-info-400' },
+              { icon: CheckCircle2, label: 'Confirm', desc: 'One tap check-in', color: 'text-status-success-400' },
             ].map((step) => (
               <div key={step.label} className="text-center">
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-800 border border-surface-700 mb-2">
@@ -950,10 +950,10 @@ export default function SmartIntakePage() {
                 <div className="absolute inset-0 flex items-center justify-center bg-surface-950/50">
                   <div className="flex flex-col items-center gap-3">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full border-4 border-violet-500/30 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 text-violet-400 animate-spin" />
+                      <div className="w-16 h-16 rounded-full border-4 border-status-violet-500/30 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-status-violet-400 animate-spin" />
                       </div>
-                      <div className="absolute -inset-2 rounded-full border-2 border-violet-400/20 animate-ping" />
+                      <div className="absolute -inset-2 rounded-full border-2 border-status-violet-400/20 animate-ping" />
                     </div>
                     <div>
                       <p className="text-white font-semibold">Analyzing Label...</p>
@@ -967,7 +967,7 @@ export default function SmartIntakePage() {
             <div className="flex justify-center gap-6 text-sm text-surface-400">
               {['Reading carrier', 'Extracting tracking #', 'Matching customer'].map((step, i) => (
                 <span key={step} className="flex items-center gap-1.5 animate-pulse" style={{ animationDelay: `${i * 400}ms` }}>
-                  <Sparkles className="h-3 w-3 text-violet-400" />
+                  <Sparkles className="h-3 w-3 text-status-violet-400" />
                   {step}
                 </span>
               ))}
@@ -998,7 +998,7 @@ export default function SmartIntakePage() {
                   size="sm"
                   onClick={confirmAll}
                   disabled={allConfirmed || eligibleCount === 0}
-                  className="bg-emerald-600 hover:bg-emerald-500"
+                  className="bg-status-success-600 hover:bg-status-success-500"
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Check In All ({eligibleCount})
@@ -1030,16 +1030,16 @@ export default function SmartIntakePage() {
                 key={idx}
                 className={cn(
                   'p-5 transition-all duration-300',
-                  pkg.confirmed && 'border-emerald-500/40 bg-emerald-500/5',
-                  !pkg.customer && !pkg.confirmed && 'border-amber-500/40'
+                  pkg.confirmed && 'border-status-success-500/40 bg-status-success-500/5',
+                  !pkg.customer && !pkg.confirmed && 'border-status-warning-500/40'
                 )}
               >
                 {/* Confirmed overlay */}
                 {pkg.confirmed && (
-                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-emerald-500/20">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                    <span className="text-sm font-semibold text-emerald-400">Checked In Successfully</span>
-                    <span className="ml-auto text-xs text-emerald-400/60">just now</span>
+                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-status-success-500/20">
+                    <CheckCircle2 className="h-5 w-5 text-status-success-400" />
+                    <span className="text-sm font-semibold text-status-success-400">Checked In Successfully</span>
+                    <span className="ml-auto text-xs text-status-success-400/60">just now</span>
                   </div>
                 )}
 
@@ -1115,16 +1115,16 @@ export default function SmartIntakePage() {
                               <p className="text-[11px] text-surface-400">{pkg.customer.businessName}</p>
                             )}
                           </div>
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                          <CheckCircle2 className="h-5 w-5 text-status-success-400 flex-shrink-0" />
                         </div>
                       ) : pkg.closedMailboxPmb ? (
                         /* BAR-382: Closed mailbox warning — show specific message */
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
-                            <X className="h-4 w-4 text-red-400" />
+                          <div className="w-9 h-9 rounded-full bg-status-error-500/15 flex items-center justify-center flex-shrink-0">
+                            <X className="h-4 w-4 text-status-error-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-red-400">Mailbox Closed</p>
+                            <p className="text-sm font-medium text-status-error-400">Mailbox Closed</p>
                             <p className="text-[11px] text-surface-500">
                               {pkg.closedMailboxPmb} is closed/inactive — cannot check in packages for this mailbox
                             </p>
@@ -1132,11 +1132,11 @@ export default function SmartIntakePage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-                            <AlertTriangle className="h-4 w-4 text-amber-400" />
+                          <div className="w-9 h-9 rounded-full bg-status-warning-500/15 flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-status-warning-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-amber-400">No customer match</p>
+                            <p className="text-sm font-medium text-status-warning-400">No customer match</p>
                             <p className="text-[11px] text-surface-500">
                               PMB &quot;{effective.pmbNumber || 'not detected'}&quot; — select customer manually
                             </p>
@@ -1159,13 +1159,13 @@ export default function SmartIntakePage() {
                         <div className={cn(
                           'mt-2 p-3 rounded-lg border',
                           pkg.duplicateOverride
-                            ? 'bg-amber-500/5 border-amber-500/20'
-                            : 'bg-red-500/10 border-red-500/30'
+                            ? 'bg-status-warning-500/5 border-status-warning-500/20'
+                            : 'bg-status-error-500/10 border-status-error-500/30'
                         )}>
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className={cn('h-4 w-4 flex-shrink-0 mt-0.5', pkg.duplicateOverride ? 'text-amber-400' : 'text-red-400')} />
+                            <AlertTriangle className={cn('h-4 w-4 flex-shrink-0 mt-0.5', pkg.duplicateOverride ? 'text-status-warning-400' : 'text-status-error-400')} />
                             <div className="flex-1 min-w-0">
-                              <p className={cn('text-sm font-medium', pkg.duplicateOverride ? 'text-amber-400' : 'text-red-400')}>
+                              <p className={cn('text-sm font-medium', pkg.duplicateOverride ? 'text-status-warning-400' : 'text-status-error-400')}>
                                 {pkg.duplicateOverride ? 'Duplicate Override' : 'Duplicate Tracking Number'}
                               </p>
                               <p className="text-[11px] text-surface-400 mt-0.5">
@@ -1176,7 +1176,7 @@ export default function SmartIntakePage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="mt-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 text-xs px-2"
+                                  className="mt-1.5 text-status-warning-400 hover:text-status-warning-300 hover:bg-status-warning-500/10 h-7 text-xs px-2"
                                   onClick={() => overrideDuplicate(idx, 'Re-delivery / replacement')}
                                 >
                                   Override — Check In Anyway
@@ -1189,9 +1189,9 @@ export default function SmartIntakePage() {
 
                       {/* BAR-382: Check-in error message */}
                       {pkg.checkInError && (
-                        <div className="mt-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
-                          <p className="text-xs text-red-400">{pkg.checkInError}</p>
+                        <div className="mt-2 p-2.5 rounded-lg bg-status-error-500/10 border border-status-error-500/30 flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-status-error-400 flex-shrink-0" />
+                          <p className="text-xs text-status-error-400">{pkg.checkInError}</p>
                         </div>
                       )}
 
@@ -1241,7 +1241,7 @@ export default function SmartIntakePage() {
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {pkg.checkingIn ? (
                       /* BAR-382: Loading state during check-in API call */
-                      <div className="flex flex-col items-center gap-1.5 text-violet-400">
+                      <div className="flex flex-col items-center gap-1.5 text-status-violet-400">
                         <Loader2 className="h-6 w-6 animate-spin" />
                         <span className="text-[11px] font-semibold">Saving…</span>
                       </div>
@@ -1254,7 +1254,7 @@ export default function SmartIntakePage() {
                             || !!pkg.closedMailboxPmb
                             || (!!pkg.duplicateInfo && !pkg.duplicateOverride)
                           }
-                          className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
+                          className="bg-status-success-600 hover:bg-status-success-500 disabled:opacity-40"
                           size="sm"
                         >
                           <Check className="h-4 w-4 mr-1" />
@@ -1266,7 +1266,7 @@ export default function SmartIntakePage() {
                         </Button>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center gap-1.5 text-emerald-400">
+                      <div className="flex flex-col items-center gap-1.5 text-status-success-400">
                         <CheckCircle2 className="h-6 w-6" />
                         <span className="text-[11px] font-semibold">Done</span>
                       </div>
@@ -1281,7 +1281,7 @@ export default function SmartIntakePage() {
           {confirmedCount > 0 && (
             <div className="flex items-center justify-between pt-4 border-t border-surface-700/50">
               <p className="text-sm text-surface-400">
-                <span className="font-bold text-emerald-400">{confirmedCount}</span> of{' '}
+                <span className="font-bold text-status-success-400">{confirmedCount}</span> of{' '}
                 {matchedPackages.length} checked in
               </p>
               <div className="flex gap-2">
@@ -1302,8 +1302,8 @@ export default function SmartIntakePage() {
         <div className="max-w-lg mx-auto text-center space-y-6">
           <Card className="p-8">
             {/* Success animation */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 mb-4 animate-[bounceIn_0.5s_ease-out]">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-status-success-500/20 border-2 border-status-success-500/40 mb-4 animate-[bounceIn_0.5s_ease-out]">
+              <CheckCircle2 className="h-10 w-10 text-status-success-400" />
             </div>
             <h2 className="text-2xl font-bold text-surface-100 mb-2">
               {confirmedCount} Package{confirmedCount !== 1 ? 's' : ''} Checked In
@@ -1327,7 +1327,7 @@ export default function SmartIntakePage() {
             <div className="flex justify-center gap-3">
               <Button
                 onClick={startNew}
-                className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold px-8"
+                className="bg-gradient-to-r from-status-violet-600 to-status-info-600 hover:from-status-violet-500 hover:to-status-info-500 text-white font-semibold px-8"
               >
                 <Camera className="h-5 w-5 mr-2" />
                 Scan Next Package
@@ -1347,7 +1347,7 @@ export default function SmartIntakePage() {
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-violet-400" />
+              <Zap className="h-3.5 w-3.5 text-status-violet-400" />
               ~3 sec per package
             </span>
           </div>

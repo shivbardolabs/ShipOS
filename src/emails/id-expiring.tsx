@@ -68,12 +68,12 @@ const heading: React.CSSProperties = {
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   lineHeight: '24px',
-  color: '#374151',
+  color: 'var(--color-surface-300)',
   margin: '0 0 16px',
 };
 
 const warningBox: React.CSSProperties = {
-  backgroundColor: '#fffbeb',
+  backgroundColor: 'var(--color-status-warning-50)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',
@@ -82,13 +82,13 @@ const warningBox: React.CSSProperties = {
 
 const warningText: React.CSSProperties = {
   fontSize: '14px',
-  color: '#92400e',
+  color: 'var(--color-status-warning-800)',
   margin: 0,
   lineHeight: '22px',
 };
 
 const urgentBox: React.CSSProperties = {
-  backgroundColor: '#fef2f2',
+  backgroundColor: 'var(--color-status-error-50)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',

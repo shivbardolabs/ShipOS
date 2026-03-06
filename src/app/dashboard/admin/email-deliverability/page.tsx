@@ -223,7 +223,7 @@ export default function EmailDeliverabilityPage() {
   if (localUser?.role !== 'superadmin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
-        <ShieldAlert className="h-10 w-10 text-red-400 mb-3" />
+        <ShieldAlert className="h-10 w-10 text-status-error-400 mb-3" />
         <h2 className="text-lg font-semibold text-surface-200 mb-1">Access Denied</h2>
         <p className="text-sm text-surface-400">This page requires superadmin access.</p>
       </div>
@@ -232,8 +232,8 @@ export default function EmailDeliverabilityPage() {
 
   // ── Status helpers ──────────────────────────────────────────────────
   const statusIcon = (s: DnsCheckStatus) => {
-    if (s === 'pass') return <ShieldCheck className="h-5 w-5 text-emerald-400" />;
-    if (s === 'fail') return <ShieldAlert className="h-5 w-5 text-red-400" />;
+    if (s === 'pass') return <ShieldCheck className="h-5 w-5 text-status-success-400" />;
+    if (s === 'fail') return <ShieldAlert className="h-5 w-5 text-status-error-400" />;
     return <Shield className="h-5 w-5 text-surface-500" />;
   };
 
@@ -271,7 +271,7 @@ export default function EmailDeliverabilityPage() {
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-300">
+        <div className="flex items-start gap-2 rounded-lg border border-status-warning-500/30 bg-status-warning-500/10 p-3 text-sm text-yellow-300">
           <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
           <span>{error} — Showing configuration guidance below.</span>
         </div>
@@ -376,7 +376,7 @@ export default function EmailDeliverabilityPage() {
                                   title="Copy value"
                                 >
                                   {copiedValue === record.value ? (
-                                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                                    <Check className="h-3.5 w-3.5 text-status-success-400" />
                                   ) : (
                                     <Copy className="h-3.5 w-3.5" />
                                   )}
@@ -448,7 +448,7 @@ export default function EmailDeliverabilityPage() {
                 <div className={`
                   mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center text-xs
                   ${checklistState[item.id]
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                    ? 'bg-status-success-500/20 border-status-success-500 text-status-success-400'
                     : 'border-surface-600 text-transparent'}
                 `}>
                   {checklistState[item.id] && <Check className="h-3 w-3" />}
@@ -457,7 +457,7 @@ export default function EmailDeliverabilityPage() {
                   <span className={`text-sm font-medium ${checklistState[item.id] ? 'text-surface-400 line-through' : 'text-surface-200'}`}>
                     {item.label}
                     {item.critical && (
-                      <span className="ml-1.5 text-[10px] text-red-400 font-normal">(Required)</span>
+                      <span className="ml-1.5 text-[10px] text-status-error-400 font-normal">(Required)</span>
                     )}
                   </span>
                   <p className="text-xs text-surface-500 mt-0.5">{item.description}</p>

@@ -50,16 +50,16 @@ export function AppearanceTab({ theme, setTheme }: AppearanceTabProps) {
               )}
             </div>
             {/* Mini preview */}
-            <div className="rounded-lg border border-slate-200 bg-white p-2.5 space-y-1.5">
+            <div className="rounded-lg border border-surface-700 bg-white p-2.5 space-y-1.5">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                <div className="h-1.5 w-16 rounded bg-slate-200" />
+                <div className="h-2 w-2 rounded-full bg-primary-500" />
+                <div className="h-1.5 w-16 rounded bg-surface-700" />
               </div>
-              <div className="h-1.5 w-full rounded bg-slate-100" />
-              <div className="h-1.5 w-3/4 rounded bg-slate-100" />
+              <div className="h-1.5 w-full rounded bg-surface-800" />
+              <div className="h-1.5 w-3/4 rounded bg-surface-800" />
               <div className="flex gap-1.5 mt-1">
-                <div className="h-4 w-12 rounded bg-indigo-500" />
-                <div className="h-4 w-12 rounded bg-slate-200" />
+                <div className="h-4 w-12 rounded bg-primary-500" />
+                <div className="h-4 w-12 rounded bg-surface-700" />
               </div>
             </div>
           </button>
@@ -92,16 +92,16 @@ export function AppearanceTab({ theme, setTheme }: AppearanceTabProps) {
               )}
             </div>
             {/* Mini preview */}
-            <div className="rounded-lg border border-slate-700 bg-slate-900 p-2.5 space-y-1.5">
+            <div className="rounded-lg border border-surface-300 bg-surface-100 p-2.5 space-y-1.5">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-indigo-400" />
-                <div className="h-1.5 w-16 rounded bg-slate-700" />
+                <div className="h-2 w-2 rounded-full bg-primary-400" />
+                <div className="h-1.5 w-16 rounded bg-surface-300" />
               </div>
-              <div className="h-1.5 w-full rounded bg-slate-800" />
-              <div className="h-1.5 w-3/4 rounded bg-slate-800" />
+              <div className="h-1.5 w-full rounded bg-surface-200" />
+              <div className="h-1.5 w-3/4 rounded bg-surface-200" />
               <div className="flex gap-1.5 mt-1">
-                <div className="h-4 w-12 rounded bg-indigo-500" />
-                <div className="h-4 w-12 rounded bg-slate-700" />
+                <div className="h-4 w-12 rounded bg-primary-500" />
+                <div className="h-4 w-12 rounded bg-surface-300" />
               </div>
             </div>
           </button>

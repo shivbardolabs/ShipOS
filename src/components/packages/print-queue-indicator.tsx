@@ -38,12 +38,12 @@ export function PrintQueueIndicator({ className }: PrintQueueIndicatorProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 px-4 py-3',
+        'flex items-center justify-between gap-4 rounded-xl border border-primary-500/30 bg-primary-500/5 px-4 py-3',
         className
       )}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-400">
           <Printer className="h-5 w-5" />
         </div>
         <div>

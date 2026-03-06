@@ -60,7 +60,7 @@ export function CopyButton({
         'inline-flex items-center gap-1.5 rounded-md transition-all duration-100 cursor-pointer select-none',
         size === 'sm' ? 'px-1.5 py-1 text-xs' : 'px-2 py-1.5 text-sm',
         copied
-          ? 'text-accent-emerald bg-emerald-50'
+          ? 'text-accent-emerald bg-status-success-50'
           : 'text-surface-500 hover:text-surface-300 hover:bg-surface-800',
         className,
       )}

@@ -94,7 +94,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
       {children}
       {/* Offline Banner */}
       {!isOnline && (
-        <div className="fixed bottom-0 left-0 right-0 bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium z-50 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-status-warning-500 text-yellow-900 text-center py-2 text-sm font-medium z-50 shadow-lg">
           📡 You&apos;re offline — changes will sync when you reconnect
           {pendingActions > 0 && ` (${pendingActions} pending)`}
         </div>

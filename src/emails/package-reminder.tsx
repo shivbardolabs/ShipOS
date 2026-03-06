@@ -60,12 +60,12 @@ const heading: React.CSSProperties = {
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   lineHeight: '24px',
-  color: '#374151',
+  color: 'var(--color-surface-300)',
   margin: '0 0 16px',
 };
 
 const alertBox: React.CSSProperties = {
-  backgroundColor: '#fffbeb',
+  backgroundColor: 'var(--color-status-warning-50)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',
@@ -74,7 +74,7 @@ const alertBox: React.CSSProperties = {
 
 const alertText: React.CSSProperties = {
   fontSize: '14px',
-  color: '#92400e',
+  color: 'var(--color-status-warning-800)',
   margin: 0,
   lineHeight: '22px',
 };

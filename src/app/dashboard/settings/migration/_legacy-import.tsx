@@ -185,8 +185,8 @@ export function LegacyImportSection() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
                     { label: 'Total Rows', value: result.totalRows, bg: 'bg-surface-50', text: 'text-surface-900' },
-                    { label: result.mode === 'execute' ? 'Imported' : 'Valid', value: result.importedCount ?? result.validRows, bg: 'bg-green-50', text: 'text-green-700' },
-                    { label: 'Skipped', value: result.skippedRows, bg: 'bg-yellow-50', text: 'text-yellow-700' },
+                    { label: result.mode === 'execute' ? 'Imported' : 'Valid', value: result.importedCount ?? result.validRows, bg: 'bg-status-success-50', text: 'text-status-success-700' },
+                    { label: 'Skipped', value: result.skippedRows, bg: 'bg-status-warning-50', text: 'text-yellow-700' },
                     { label: 'Duplicates', value: result.duplicateRows, bg: 'bg-orange-50', text: 'text-orange-700' },
                   ].map((stat) => (
                     <div key={stat.label} className={`p-3 ${stat.bg} rounded-lg text-center`}>
@@ -197,7 +197,7 @@ export function LegacyImportSection() {
                 </div>
 
                 {step === 'done' && (
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 text-status-success-600 bg-status-success-50 p-4 rounded-lg">
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="font-medium">Import complete! {result.importedCount} records imported successfully.</span>
                   </div>
@@ -206,7 +206,7 @@ export function LegacyImportSection() {
                 {result.errors.length > 0 && (
                   <div>
                     <h4 className="text-sm font-medium text-surface-700 mb-2 flex items-center gap-1">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <AlertTriangle className="h-4 w-4 text-status-warning-500" />
                       Validation Errors ({result.errors.length})
                     </h4>
                     <div className="max-h-48 overflow-y-auto border rounded-lg">
@@ -223,7 +223,7 @@ export function LegacyImportSection() {
                             <tr key={i} className="border-t">
                               <td className="p-2 font-mono">{err.row}</td>
                               <td className="p-2 font-mono">{err.field}</td>
-                              <td className="p-2 text-red-600">{err.message}</td>
+                              <td className="p-2 text-status-error-600">{err.message}</td>
                             </tr>
                           ))}
                         </tbody>

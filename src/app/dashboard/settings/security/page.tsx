@@ -91,8 +91,8 @@ export default function SecurityPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                <Smartphone className="h-5 w-5 text-emerald-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-success-500/10">
+                <Smartphone className="h-5 w-5 text-status-success-500" />
               </div>
               <div>
                 <p className="text-sm text-surface-400">MFA Status</p>
@@ -107,8 +107,8 @@ export default function SecurityPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-warning-500/10">
+                <AlertTriangle className="h-5 w-5 text-status-warning-500" />
               </div>
               <div>
                 <p className="text-sm text-surface-400">Failed Logins</p>
@@ -217,12 +217,12 @@ export default function SecurityPage() {
                     <tr key={session.id} className="border-b border-surface-800">
                       <td className="py-3 pr-4">
                         {session.success ? (
-                          <span className="flex items-center gap-1.5 text-emerald-400">
+                          <span className="flex items-center gap-1.5 text-status-success-400">
                             <CheckCircle2 className="h-4 w-4" />
                             Success
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-red-400">
+                          <span className="flex items-center gap-1.5 text-status-error-400">
                             <XCircle className="h-4 w-4" />
                             Failed
                           </span>

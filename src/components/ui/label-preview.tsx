@@ -85,7 +85,7 @@ export function LabelPreview({
       </div>
 
       {error && (
-        <p className="text-xs text-red-400">{error}</p>
+        <p className="text-xs text-status-error-400">{error}</p>
       )}
 
       {showPreview && html && (

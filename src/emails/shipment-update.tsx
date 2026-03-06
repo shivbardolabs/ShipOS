@@ -100,12 +100,12 @@ const heading: React.CSSProperties = {
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   lineHeight: '24px',
-  color: '#374151',
+  color: 'var(--color-surface-300)',
   margin: '0 0 16px',
 };
 
 const detailsBox: React.CSSProperties = {
-  backgroundColor: '#f9fafb',
+  backgroundColor: 'var(--color-surface-900)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',
@@ -114,7 +114,7 @@ const detailsBox: React.CSSProperties = {
 
 const detailLabel: React.CSSProperties = {
   fontSize: '13px',
-  color: '#6b7280',
+  color: 'var(--color-surface-500)',
   padding: '4px 0',
   width: '100px',
 };
@@ -122,6 +122,6 @@ const detailLabel: React.CSSProperties = {
 const detailValue: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: '600',
-  color: '#1f2937',
+  color: 'var(--color-surface-200)',
   padding: '4px 0',
 };

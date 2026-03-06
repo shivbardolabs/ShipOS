@@ -60,26 +60,26 @@ const mailTypeConfig: Record<
   letter: {
     icon: Mail,
     label: 'Letter',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/15 border-blue-500/30',
+    color: 'text-status-info-400',
+    bgColor: 'bg-status-info-500/15 border-status-info-500/30',
   },
   magazine: {
     icon: BookOpen,
     label: 'Magazine',
-    color: 'text-indigo-400',
-    bgColor: 'bg-indigo-500/15 border-indigo-500/30',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/15 border-primary-500/30',
   },
   catalog: {
     icon: ScrollText,
     label: 'Catalog',
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/15 border-amber-500/30',
+    color: 'text-status-warning-400',
+    bgColor: 'bg-status-warning-500/15 border-status-warning-500/30',
   },
   legal: {
     icon: FileText,
     label: 'Legal',
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/15 border-red-500/30',
+    color: 'text-status-error-400',
+    bgColor: 'bg-status-error-500/15 border-status-error-500/30',
   },
   other: {
     icon: Inbox,
@@ -124,10 +124,10 @@ function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
     pct >= 90
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30'
       : pct >= 75
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/20 text-red-400 border-red-500/30';
+        ? 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30'
+        : 'bg-status-error-500/20 text-status-error-400 border-status-error-500/30';
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}
@@ -162,22 +162,22 @@ function MailTypeIcon({ type }: { type: string }) {
 function ScanningAnimation() {
   return (
     <div className="relative w-full max-w-md mx-auto">
-      <div className="aspect-[4/3] rounded-2xl border-2 border-violet-500/30 bg-surface-900/80 overflow-hidden relative">
+      <div className="aspect-[4/3] rounded-2xl border-2 border-status-violet-500/30 bg-surface-900/80 overflow-hidden relative">
         <div
-          className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-violet-400 to-transparent"
+          className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-status-violet-400 to-transparent"
           style={{ animation: 'mailScanLine 2.5s ease-in-out infinite' }}
         />
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-4 p-6">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="flex items-center justify-center">
               <div
-                className="h-12 w-16 rounded-lg border border-violet-500/20 bg-violet-500/5 animate-pulse"
+                className="h-12 w-16 rounded-lg border border-status-violet-500/20 bg-status-violet-500/5 animate-pulse"
                 style={{ animationDelay: `${i * 120}ms` }}
               />
             </div>
           ))}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-500/5 via-transparent to-violet-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-b from-status-violet-500/5 via-transparent to-status-violet-500/5" />
       </div>
     </div>
   );
@@ -492,7 +492,7 @@ export default function AIMailSortPage() {
         title="AI Mail Sort"
         description="Snap mail, AI sorts it."
         badge={
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-status-violet-500/20 to-status-violet-500/20 border border-status-violet-500/30 text-violet-300 text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5" />
             AI Powered
           </span>
@@ -501,7 +501,7 @@ export default function AIMailSortPage() {
           <div className="flex items-center gap-3">
             {routedCount > 0 && (
               <span className="text-sm text-surface-400">
-                <span className="font-bold text-emerald-400">
+                <span className="font-bold text-status-success-400">
                   {routedCount}
                 </span>{' '}
                 routed today
@@ -518,7 +518,7 @@ export default function AIMailSortPage() {
       />
 
       {responseMode === 'demo' && phase === 'review' && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-status-warning-500/10 border border-status-warning-500/20 text-status-warning-300 text-sm">
           <Eye className="h-4 w-4 shrink-0" />
           <span>
             <span className="font-semibold">Demo mode</span> — showing sample
@@ -528,12 +528,12 @@ export default function AIMailSortPage() {
       )}
 
       {error && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-status-error-500/10 border border-status-error-500/20 text-status-error-300 text-sm">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-400 hover:text-red-300"
+            className="ml-auto text-status-error-400 hover:text-status-error-300"
           >
             <X className="h-4 w-4" />
           </button>
@@ -555,10 +555,10 @@ export default function AIMailSortPage() {
                 />
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute inset-4 border-2 border-white/20 rounded-lg" />
-                  <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-violet-400 rounded-tl" />
-                  <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-violet-400 rounded-tr" />
-                  <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-violet-400 rounded-bl" />
-                  <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-violet-400 rounded-br" />
+                  <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-status-violet-400 rounded-tl" />
+                  <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-status-violet-400 rounded-tr" />
+                  <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-status-violet-400 rounded-bl" />
+                  <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-status-violet-400 rounded-br" />
                 </div>
                 <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
                   <div className="flex items-center justify-center gap-3">
@@ -568,7 +568,7 @@ export default function AIMailSortPage() {
                     </Button>
                     <button
                       onClick={capturePhoto}
-                      className="h-14 w-14 rounded-full bg-white border-4 border-violet-400 hover:border-violet-300 transition-colors shadow-lg shadow-violet-500/20 flex items-center justify-center"
+                      className="h-14 w-14 rounded-full bg-white border-4 border-status-violet-400 hover:border-violet-300 transition-colors shadow-lg shadow-status-violet-500/20 flex items-center justify-center"
                     >
                       <div className="h-11 w-11 rounded-full bg-white hover:bg-surface-100 transition-colors" />
                     </button>
@@ -591,8 +591,8 @@ export default function AIMailSortPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 mb-5">
-                  <Mail className="h-10 w-10 text-violet-400" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-status-violet-500/20 to-status-violet-500/20 border border-status-violet-500/30 mb-5">
+                  <Mail className="h-10 w-10 text-status-violet-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-surface-100 mb-2">
                   Photograph Mail Batch
@@ -615,7 +615,7 @@ export default function AIMailSortPage() {
                   </Button>
                 </div>
                 {cameraError && (
-                  <p className="mt-3 text-xs text-amber-400">{cameraError}</p>
+                  <p className="mt-3 text-xs text-status-warning-400">{cameraError}</p>
                 )}
               </div>
             )}
@@ -642,7 +642,7 @@ export default function AIMailSortPage() {
                   { step: '4', title: 'Route all', desc: 'One tap to sort and notify all customers' },
                 ].map(({ step, title, desc }) => (
                   <div key={step} className="flex items-start gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-violet-400 text-xs font-bold border border-violet-500/30">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-status-violet-500/20 text-status-violet-400 text-xs font-bold border border-status-violet-500/30">
                       {step}
                     </div>
                     <div>
@@ -656,7 +656,7 @@ export default function AIMailSortPage() {
 
             <Card>
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-violet-400" />
+                <Sparkles className="h-4 w-4 text-status-violet-400" />
                 <h3 className="text-sm font-semibold text-surface-200">
                   Optimized for Batch
                 </h3>
@@ -679,7 +679,7 @@ export default function AIMailSortPage() {
             <ScanningAnimation />
             <div className="mt-8 text-center">
               <div className="flex items-center gap-2 justify-center mb-2">
-                <Loader2 className="h-5 w-5 text-violet-400 animate-spin" />
+                <Loader2 className="h-5 w-5 text-status-violet-400 animate-spin" />
                 <h3 className="text-lg font-semibold text-surface-100">
                   Analyzing Mail...
                 </h3>
@@ -703,13 +703,13 @@ export default function AIMailSortPage() {
                 </span>
                 <span className="text-surface-600">&middot;</span>
                 <span className="text-surface-300">
-                  <span className="font-bold text-emerald-400">{matchedCount}</span> auto-matched
+                  <span className="font-bold text-status-success-400">{matchedCount}</span> auto-matched
                 </span>
                 {unmatchedCount > 0 && (
                   <>
                     <span className="text-surface-600">&middot;</span>
                     <span className="text-surface-300">
-                      <span className="font-bold text-amber-400">{unmatchedCount}</span> need review
+                      <span className="font-bold text-status-warning-400">{unmatchedCount}</span> need review
                     </span>
                   </>
                 )}
@@ -717,7 +717,7 @@ export default function AIMailSortPage() {
                   <>
                     <span className="text-surface-600">&middot;</span>
                     <span className="text-surface-300">
-                      <span className="font-bold text-violet-400">{confirmedCount}</span> routed
+                      <span className="font-bold text-status-violet-400">{confirmedCount}</span> routed
                     </span>
                   </>
                 )}
@@ -747,8 +747,8 @@ export default function AIMailSortPage() {
                   padding="none"
                   className={cn(
                     'transition-all duration-200',
-                    piece.confirmed && 'ring-1 ring-emerald-500/40 bg-emerald-500/5',
-                    isUnmatched && !piece.confirmed && 'ring-1 ring-amber-500/30',
+                    piece.confirmed && 'ring-1 ring-status-success-500/40 bg-status-success-500/5',
+                    isUnmatched && !piece.confirmed && 'ring-1 ring-status-warning-500/30',
                   )}
                 >
                   <div className="p-4">
@@ -785,7 +785,7 @@ export default function AIMailSortPage() {
                           </p>
                         </div>
                         {piece.confirmed ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+                          <CheckCircle2 className="h-5 w-5 text-status-success-400 shrink-0" />
                         ) : (
                           <Badge variant="success" dot={false} className="text-[10px]">
                             Matched
@@ -793,7 +793,7 @@ export default function AIMailSortPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                      <div className="p-2.5 rounded-lg bg-status-warning-500/5 border border-status-warning-500/20">
                         {searchingForIdx === idx ? (
                           <div className="space-y-2">
                             <Input
@@ -837,8 +837,8 @@ export default function AIMailSortPage() {
                         ) : (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4 text-amber-400" />
-                              <span className="text-sm text-amber-300">No PMB match found</span>
+                              <AlertTriangle className="h-4 w-4 text-status-warning-400" />
+                              <span className="text-sm text-status-warning-300">No PMB match found</span>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => setSearchingForIdx(idx)}>
                               <Search className="h-3.5 w-3.5" />
@@ -864,7 +864,7 @@ export default function AIMailSortPage() {
                         </Button>
                       )}
                       {piece.confirmed && (
-                        <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                        <span className="flex items-center gap-1 text-xs text-status-success-400 font-medium">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Routed
                         </span>
@@ -891,15 +891,15 @@ export default function AIMailSortPage() {
       {phase === 'success' && (
         <Card>
           <div className="flex flex-col items-center py-12 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30 mb-5">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-status-success-500/20 border border-status-success-500/30 mb-5">
+              <CheckCircle2 className="h-10 w-10 text-status-success-400" />
             </div>
             <h3 className="text-xl font-bold text-surface-100 mb-2">
               Mail Sorted &amp; Routed
             </h3>
             <p className="text-sm text-surface-400 max-w-md mb-2">
               Successfully routed{' '}
-              <span className="font-semibold text-emerald-400">{totalConfirmed}</span>{' '}
+              <span className="font-semibold text-status-success-400">{totalConfirmed}</span>{' '}
               mail piece{totalConfirmed !== 1 ? 's' : ''} to customer mailboxes.
             </p>
 
@@ -923,7 +923,7 @@ export default function AIMailSortPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-300 text-sm mb-8">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-status-violet-500/10 border border-status-violet-500/20 text-violet-300 text-sm mb-8">
               <Bell className="h-4 w-4" />
               <span>
                 Arrival notifications queued for {uniqueCustomersRouted} customer{uniqueCustomersRouted !== 1 ? 's' : ''}

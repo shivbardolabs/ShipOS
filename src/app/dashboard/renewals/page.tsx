@@ -72,9 +72,9 @@ function getDaysLabel(days: number) {
 }
 
 function getDaysColor(days: number) {
-  if (days < 0) return 'text-red-400 font-medium';
-  if (days <= 7) return 'text-red-400 font-medium';
-  if (days <= 30) return 'text-yellow-400 font-medium';
+  if (days < 0) return 'text-status-error-400 font-medium';
+  if (days <= 7) return 'text-status-error-400 font-medium';
+  if (days <= 30) return 'text-status-warning-400 font-medium';
   return 'text-surface-300';
 }
 
@@ -442,18 +442,18 @@ export default function RenewalsPage() {
               <div className={cn(
                 'rounded-lg p-3 border',
                 actionResult.success
-                  ? 'bg-emerald-950/20 border-emerald-800/40'
-                  : 'bg-red-950/20 border-red-800/40'
+                  ? 'bg-emerald-950/20 border-status-success-800/40'
+                  : 'bg-red-950/20 border-status-error-800/40'
               )}>
                 <div className="flex items-center gap-2">
                   {actionResult.success ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <CheckCircle2 className="h-4 w-4 text-status-success-400" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    <AlertTriangle className="h-4 w-4 text-status-error-400" />
                   )}
                   <span className={cn(
                     'text-sm',
-                    actionResult.success ? 'text-emerald-300' : 'text-red-300'
+                    actionResult.success ? 'text-status-success-300' : 'text-status-error-300'
                   )}>
                     {actionResult.message}
                   </span>

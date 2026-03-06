@@ -42,10 +42,10 @@ export function ReceiptsTab({ emailReceipts, setEmailReceipts, receiptDelivery, 
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3.5 mb-5">
+      <div className="rounded-lg border border-status-success-500/15 bg-status-success-500/5 p-3.5 mb-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 flex-shrink-0 mt-0.5">
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-status-success-50 flex-shrink-0 mt-0.5">
+            <TrendingUp className="h-4 w-4 text-status-success-600" />
           </div>
           <div>
             <p className="text-sm font-medium text-surface-200">📱 75% of customers prefer digital receipts</p>
@@ -165,7 +165,7 @@ export function ReceiptsTab({ emailReceipts, setEmailReceipts, receiptDelivery, 
                 <button
                   type="button"
                   onClick={() => setReceiptLogo(null)}
-                  className="p-1.5 rounded-lg bg-surface-700 hover:bg-red-600/80 text-surface-300 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg bg-surface-700 hover:bg-status-error-600/80 text-surface-300 hover:text-white transition-colors"
                   title="Remove logo"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

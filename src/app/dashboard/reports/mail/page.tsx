@@ -32,11 +32,11 @@ function useMailStats(customers: any[], packages: any[]) {
 
     /* Mail status breakdown */
     const mailByStatus = [
-      { label: 'Received', value: Math.round(totalMail * 0.40), color: '#6366f1' },
-      { label: 'Scanned', value: Math.round(totalMail * 0.25), color: '#10b981' },
-      { label: 'Forwarded', value: Math.round(totalMail * 0.20), color: '#f59e0b' },
-      { label: 'Held', value: Math.round(totalMail * 0.10), color: '#ef4444' },
-      { label: 'Disposed', value: Math.round(totalMail * 0.05), color: '#94a3b8' },
+      { label: 'Received', value: Math.round(totalMail * 0.40), color: 'var(--color-primary-500)' },
+      { label: 'Scanned', value: Math.round(totalMail * 0.25), color: 'var(--color-status-success-500)' },
+      { label: 'Forwarded', value: Math.round(totalMail * 0.20), color: 'var(--color-status-warning-500)' },
+      { label: 'Held', value: Math.round(totalMail * 0.10), color: 'var(--color-status-error-500)' },
+      { label: 'Disposed', value: Math.round(totalMail * 0.05), color: 'var(--color-surface-600)' },
     ];
 
     /* Mail by customer - top 10 */
@@ -57,7 +57,7 @@ function useMailStats(customers: any[], packages: any[]) {
       .map(([label, value], i) => ({
         label,
         value,
-        color: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][i % 5],
+        color: ['var(--color-primary-500)', 'var(--color-status-success-500)', 'var(--color-status-warning-500)', 'var(--color-status-error-500)', 'var(--color-status-violet-500)'][i % 5],
       }));
 
     /* Carrier breakdown for parcels */
@@ -89,11 +89,11 @@ function useMailStats(customers: any[], packages: any[]) {
 
     /* Programs */
     const programParcels = [
-      { label: 'Amazon Counter', value: seededRandom(810, 8, 25), color: 'bg-yellow-500/60' },
-      { label: 'PUDO Point', value: seededRandom(811, 5, 18), color: 'bg-blue-500/60' },
-      { label: 'FedEx HAL', value: seededRandom(812, 4, 15), color: 'bg-purple-500/60' },
-      { label: 'UPS Access Point', value: seededRandom(813, 3, 12), color: 'bg-emerald-500/60' },
-      { label: 'Vinted', value: seededRandom(814, 2, 8), color: 'bg-pink-500/60' },
+      { label: 'Amazon Counter', value: seededRandom(810, 8, 25), color: 'bg-status-warning-500/60' },
+      { label: 'PUDO Point', value: seededRandom(811, 5, 18), color: 'bg-status-info-500/60' },
+      { label: 'FedEx HAL', value: seededRandom(812, 4, 15), color: 'bg-status-violet-500/60' },
+      { label: 'UPS Access Point', value: seededRandom(813, 3, 12), color: 'bg-status-success-500/60' },
+      { label: 'Vinted', value: seededRandom(814, 2, 8), color: 'bg-status-pink-500/60' },
     ];
 
     return {
@@ -254,7 +254,7 @@ export default function MailReportPage() {
           <Card>
             <CardHeader><CardTitle>Daily Mail Volume (30 days)</CardTitle></CardHeader>
             <CardContent>
-              <Sparkline data={data.dailyMail.map((d) => d.value)} color="#6366f1" height={50} />
+              <Sparkline data={data.dailyMail.map((d) => d.value)} color="var(--color-primary-500)" height={50} />
               <div className="flex justify-between mt-2 text-[10px] text-surface-500">
                 <span>{data.dailyMail[0]?.date}</span>
                 <span>{data.dailyMail[data.dailyMail.length - 1]?.date}</span>
@@ -265,7 +265,7 @@ export default function MailReportPage() {
           <Card>
             <CardHeader><CardTitle>Daily Parcel Volume (30 days)</CardTitle></CardHeader>
             <CardContent>
-              <Sparkline data={data.dailyParcels.map((d) => d.value)} color="#10b981" height={50} />
+              <Sparkline data={data.dailyParcels.map((d) => d.value)} color="var(--color-status-success-500)" height={50} />
               <div className="flex justify-between mt-2 text-[10px] text-surface-500">
                 <span>{data.dailyParcels[0]?.date}</span>
                 <span>{data.dailyParcels[data.dailyParcels.length - 1]?.date}</span>
@@ -313,13 +313,13 @@ export default function MailReportPage() {
                             : formatNumber(Math.round(prev))}
                         </td>
                         <td className="py-2 text-right">
-                          <span className={row.change >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                          <span className={row.change >= 0 ? 'text-status-success-400' : 'text-status-error-400'}>
                             {row.change >= 0 ? '+' : ''}{row.change}%
                           </span>
                         </td>
                         <td className="py-2 text-right">
-                          {row.change > 0 ? <TrendingUp className="h-4 w-4 text-emerald-400 inline" /> :
-                           row.change < 0 ? <TrendingDown className="h-4 w-4 text-red-400 inline" /> :
+                          {row.change > 0 ? <TrendingUp className="h-4 w-4 text-status-success-400 inline" /> :
+                           row.change < 0 ? <TrendingDown className="h-4 w-4 text-status-error-400 inline" /> :
                            <span className="text-surface-500">—</span>}
                         </td>
                       </tr>

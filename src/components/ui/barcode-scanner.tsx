@@ -187,7 +187,7 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
         {/* Scan line animation */}
         {scanning && !error && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse" />
+            <div className="w-3/4 h-px bg-gradient-to-r from-transparent via-status-success-400 to-transparent animate-pulse" />
           </div>
         )}
 

@@ -52,7 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     /* Also update meta theme-color for mobile status bar */
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', theme === 'dark' ? '#08081A' : '#4F46E5');
+      meta.setAttribute('content', theme === 'dark' ? '#08081A' : 'var(--color-primary-600)');
     }
   }, [theme, mounted]);
 

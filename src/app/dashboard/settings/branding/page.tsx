@@ -30,7 +30,7 @@ interface BrandingData {
 export default function BrandingPage() {
   const [branding, setBranding] = useState<BrandingData>({
     brandLogo: null,
-    brandAccentColor: '#6366f1',
+    brandAccentColor: 'var(--color-primary-500)',
     brandTagline: null,
     brandFavicon: null,
   });
@@ -45,7 +45,7 @@ export default function BrandingPage() {
         if (d.branding) {
           setBranding({
             brandLogo: d.branding.brandLogo || null,
-            brandAccentColor: d.branding.brandAccentColor || '#6366f1',
+            brandAccentColor: d.branding.brandAccentColor || 'var(--color-primary-500)',
             brandTagline: d.branding.brandTagline || null,
             brandFavicon: d.branding.brandFavicon || null,
           });
@@ -83,7 +83,7 @@ export default function BrandingPage() {
     );
   }
 
-  const accentColor = branding.brandAccentColor || '#6366f1';
+  const accentColor = branding.brandAccentColor || 'var(--color-primary-500)';
 
   return (
     <div className="space-y-6">
@@ -138,7 +138,7 @@ export default function BrandingPage() {
                 <Input
                   value={branding.brandAccentColor || ''}
                   onChange={(e) => setBranding({ ...branding, brandAccentColor: e.target.value })}
-                  placeholder="#6366f1"
+                  placeholder="var(--color-primary-500)"
                   className="font-mono"
                 />
               </div>
@@ -260,7 +260,7 @@ export default function BrandingPage() {
               <CardTitle>Email Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-white rounded-lg p-6 text-gray-900">
+              <div className="bg-white rounded-lg p-6 text-surface-100">
                 <div className="flex items-center gap-2 mb-4">
                   {branding.brandLogo ? (
                     <img
@@ -273,8 +273,8 @@ export default function BrandingPage() {
                     <span className="text-lg font-bold">📦 ShipOS Pro</span>
                   )}
                 </div>
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p className="font-semibold text-gray-900">New Package Arrived!</p>
+                <div className="text-sm text-surface-400 space-y-2">
+                  <p className="font-semibold text-surface-100">New Package Arrived!</p>
                   <p>Hi John, a new UPS package has arrived at your mailbox PMB-0101.</p>
                   <div
                     className="px-4 py-2 rounded-lg text-white text-center text-sm font-medium mt-3 w-fit"

@@ -310,8 +310,8 @@ export default function ChargeEventsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <DollarSign className="h-5 w-5 text-emerald-500" />
+              <div className="p-2 rounded-lg bg-status-success-500/10">
+                <DollarSign className="h-5 w-5 text-status-success-500" />
               </div>
               <div>
                 <p className="text-xs text-surface-500 uppercase tracking-wide">Total Revenue</p>
@@ -323,8 +323,8 @@ export default function ChargeEventsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Package className="h-5 w-5 text-amber-500" />
+              <div className="p-2 rounded-lg bg-status-warning-500/10">
+                <Package className="h-5 w-5 text-status-warning-500" />
               </div>
               <div>
                 <p className="text-xs text-surface-500 uppercase tracking-wide">Total COGS</p>
@@ -336,8 +336,8 @@ export default function ChargeEventsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
+              <div className="p-2 rounded-lg bg-status-info-500/10">
+                <TrendingUp className="h-5 w-5 text-status-info-500" />
               </div>
               <div>
                 <p className="text-xs text-surface-500 uppercase tracking-wide">Margin</p>
@@ -519,7 +519,7 @@ export default function ChargeEventsPage() {
                               {isAdmin && event.status !== 'void' && (
                                 <button
                                   onClick={() => handleVoid(event.id)}
-                                  className="p-1 rounded hover:bg-red-500/10 text-surface-400 hover:text-red-400"
+                                  className="p-1 rounded hover:bg-status-error-500/10 text-surface-400 hover:text-status-error-400"
                                   title="Void charge"
                                 >
                                   <Ban className="h-4 w-4" />
@@ -646,11 +646,11 @@ export default function ChargeEventsPage() {
               )}
 
               {selectedEvent.voidedAt && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+                  <AlertTriangle className="h-4 w-4 text-status-error-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-red-300 font-medium">Voided</p>
-                    <p className="text-xs text-red-400">{selectedEvent.voidReason}</p>
+                    <p className="text-sm text-status-error-300 font-medium">Voided</p>
+                    <p className="text-xs text-status-error-400">{selectedEvent.voidReason}</p>
                     <p className="text-xs text-surface-500 mt-1">{formatDateTime(selectedEvent.voidedAt)}</p>
                   </div>
                 </div>
@@ -665,7 +665,7 @@ export default function ChargeEventsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className="text-status-error-400 hover:text-status-error-300 hover:bg-status-error-500/10"
                     onClick={() => handleVoid(selectedEvent.id)}
                   >
                     <Ban className="h-4 w-4 mr-1" />
@@ -721,7 +721,7 @@ export default function ChargeEventsPage() {
                   </div>
                 )}
                 {newCharge.customerId && (
-                  <p className="text-xs text-emerald-400 mt-1">✓ Customer selected</p>
+                  <p className="text-xs text-status-success-400 mt-1">✓ Customer selected</p>
                 )}
               </div>
 

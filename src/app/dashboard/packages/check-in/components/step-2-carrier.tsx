@@ -83,9 +83,9 @@ export function Step2CarrierSender(props: Step2Props) {
 
         {/* BAR-11: Scan success feedback */}
         {scanFeedback && (
-          <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 animate-in fade-in-0 duration-200">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-            <p className="text-xs text-emerald-300 font-medium">{scanFeedback}</p>
+          <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-status-success-500/10 border border-status-success-500/30 animate-in fade-in-0 duration-200">
+            <CheckCircle2 className="h-4 w-4 text-status-success-400 shrink-0" />
+            <p className="text-xs text-status-success-300 font-medium">{scanFeedback}</p>
           </div>
         )}
 
@@ -95,14 +95,14 @@ export function Step2CarrierSender(props: Step2Props) {
           Tap &quot;Scan Barcode&quot; for camera, or use a USB scanner — it auto-detects
         </p>
         {trackingNumber.trim() && !selectedCarrier && (
-          <p className="mt-1 text-xs text-amber-400">
+          <p className="mt-1 text-xs text-status-warning-400">
             <AlertTriangle className="h-3 w-3 inline mr-1" />
             Could not auto-detect carrier — please select below
           </p>
         )}
         {trackingNumber.trim() && selectedCarrier && carrierAutoSuggested && (
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-xs text-emerald-400 flex items-center gap-1">
+            <p className="text-xs text-status-success-400 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" /> Carrier auto-detected: {selectedCarrier.toUpperCase()}
             </p>
             <button
@@ -120,18 +120,18 @@ export function Step2CarrierSender(props: Step2Props) {
         )}
         {/* BAR-328: Inline duplicate warning in Step 2 */}
         {duplicatePackage && !checkingTracking && (
-          <div className="mt-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+          <div className="mt-3 p-3 rounded-lg border border-status-warning-500/30 bg-status-warning-500/5">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 text-status-warning-400 shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-amber-300">
+                <p className="text-sm font-medium text-status-warning-300">
                   Duplicate tracking number detected
                 </p>
                 <p className="text-xs text-surface-400 mt-0.5">
                   Already checked in for {duplicatePackage.customerName} ({duplicatePackage.customerPmb}) — {duplicatePackage.status.replace('_', ' ')} since {new Date(duplicatePackage.checkedInAt).toLocaleDateString()}
                 </p>
                 {duplicateAcknowledged ? (
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-status-success-400">
                     <CheckCircle2 className="h-3 w-3" />
                     Override acknowledged{duplicateOverrideReason ? `: ${duplicateOverrideReason}` : ''}
                   </div>

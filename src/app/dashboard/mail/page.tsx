@@ -52,18 +52,18 @@ import {
 /* -------------------------------------------------------------------------- */
 
 const mailTypeIcon: Record<string, React.ReactNode> = {
-  letter: <Mail className="h-4 w-4 text-blue-600" />,
-  magazine: <BookOpen className="h-4 w-4 text-indigo-600" />,
-  catalog: <ScrollText className="h-4 w-4 text-amber-600" />,
-  legal: <FileText className="h-4 w-4 text-red-600" />,
+  letter: <Mail className="h-4 w-4 text-status-info-600" />,
+  magazine: <BookOpen className="h-4 w-4 text-primary-600" />,
+  catalog: <ScrollText className="h-4 w-4 text-status-warning-600" />,
+  legal: <FileText className="h-4 w-4 text-status-error-600" />,
   other: <Inbox className="h-4 w-4 text-surface-400" />,
 };
 
 const mailTypeIconClass: Record<string, { icon: typeof Mail; color: string }> = {
-  letter: { icon: Mail, color: 'text-blue-400' },
-  magazine: { icon: BookOpen, color: 'text-indigo-400' },
-  catalog: { icon: ScrollText, color: 'text-amber-400' },
-  legal: { icon: FileText, color: 'text-red-400' },
+  letter: { icon: Mail, color: 'text-status-info-400' },
+  magazine: { icon: BookOpen, color: 'text-primary-400' },
+  catalog: { icon: ScrollText, color: 'text-status-warning-400' },
+  legal: { icon: FileText, color: 'text-status-error-400' },
   other: { icon: Inbox, color: 'text-surface-400' },
 };
 
@@ -129,13 +129,13 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             bar: Math.round((count / rtTotal) * 100),
             barColor:
               type === 'letter'
-                ? 'bg-blue-500'
+                ? 'bg-status-info-500'
                 : type === 'legal'
-                  ? 'bg-red-400'
+                  ? 'bg-status-error-400'
                   : type === 'magazine'
-                    ? 'bg-indigo-400'
+                    ? 'bg-primary-400'
                     : type === 'catalog'
-                      ? 'bg-amber-400'
+                      ? 'bg-status-warning-400'
                       : 'bg-surface-500',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
@@ -156,7 +156,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: name,
             value: count,
             icon: User,
-            iconColor: 'text-blue-400',
+            iconColor: 'text-status-info-400',
           })),
       },
     ];
@@ -174,10 +174,10 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: status.charAt(0).toUpperCase() + status.slice(1),
             value: count,
             bar: Math.round((count / pendTotal) * 100),
-            barColor: status === 'received' ? 'bg-yellow-400' : 'bg-cyan-400',
+            barColor: status === 'received' ? 'bg-status-warning-400' : 'bg-cyan-400',
             icon: status === 'received' ? Inbox : ScanLine,
             iconColor:
-              status === 'received' ? 'text-yellow-400' : 'text-cyan-400',
+              status === 'received' ? 'text-status-warning-400' : 'text-cyan-400',
           })),
       },
       {
@@ -190,13 +190,13 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             bar: Math.round((count / pendTotal) * 100),
             barColor:
               type === 'letter'
-                ? 'bg-blue-400'
+                ? 'bg-status-info-400'
                 : type === 'legal'
-                  ? 'bg-red-400'
+                  ? 'bg-status-error-400'
                   : type === 'magazine'
-                    ? 'bg-indigo-400'
+                    ? 'bg-primary-400'
                     : type === 'catalog'
-                      ? 'bg-amber-400'
+                      ? 'bg-status-warning-400'
                       : 'bg-surface-400',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
@@ -217,7 +217,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: name,
             value: count,
             icon: User,
-            iconColor: 'text-yellow-400',
+            iconColor: 'text-status-warning-400',
           })),
       },
     ];
@@ -234,7 +234,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: type.charAt(0).toUpperCase() + type.slice(1),
             value: count,
             bar: Math.round((count / fwdTotal) * 100),
-            barColor: 'bg-indigo-400',
+            barColor: 'bg-primary-400',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
           })),
@@ -254,7 +254,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: name,
             value: count,
             icon: User,
-            iconColor: 'text-indigo-400',
+            iconColor: 'text-primary-400',
           })),
       },
     ];
@@ -280,7 +280,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: type.charAt(0).toUpperCase() + type.slice(1),
             value: count,
             bar: Math.round((count / heldTotal) * 100),
-            barColor: 'bg-amber-400',
+            barColor: 'bg-status-warning-400',
             icon: mailTypeIconClass[type]?.icon || Inbox,
             iconColor: mailTypeIconClass[type]?.color || 'text-surface-400',
           })),
@@ -292,25 +292,25 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: '< 24 hours',
             value: heldDuration.under24h,
             bar: Math.round((heldDuration.under24h / heldTotal) * 100),
-            barColor: 'bg-emerald-400',
+            barColor: 'bg-status-success-400',
           },
           {
             label: '1\u20133 days',
             value: heldDuration.d1to3,
             bar: Math.round((heldDuration.d1to3 / heldTotal) * 100),
-            barColor: 'bg-yellow-400',
+            barColor: 'bg-status-warning-400',
           },
           {
             label: '4\u20137 days',
             value: heldDuration.d4to7,
             bar: Math.round((heldDuration.d4to7 / heldTotal) * 100),
-            barColor: 'bg-orange-400',
+            barColor: 'bg-status-warning-400',
           },
           {
             label: '7+ days',
             value: heldDuration.over7,
             bar: Math.round((heldDuration.over7 / heldTotal) * 100),
-            barColor: 'bg-red-400',
+            barColor: 'bg-status-error-400',
           },
         ].filter((r) => r.value > 0),
       },
@@ -329,7 +329,7 @@ function useMailStats(mailPieces: MailPiece[] = []) {
             label: name,
             value: count,
             icon: User,
-            iconColor: 'text-amber-400',
+            iconColor: 'text-status-warning-400',
           })),
       },
     ];
@@ -754,34 +754,34 @@ function MailContent() {
       {/* Expandable Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <ExpandableStatCard
-          icon={<Inbox className="h-5 w-5 text-blue-400" />}
+          icon={<Inbox className="h-5 w-5 text-status-info-400" />}
           title="Received Today"
           value={stats.receivedToday}
-          className="[&_div.bg-primary-50]:bg-blue-500/15 [&_div.text-primary-600]:text-blue-400"
+          className="[&_div.bg-primary-50]:bg-status-info-500/15 [&_div.text-primary-600]:text-status-info-400"
           details={stats.receivedTodayDetails}
           detailSummary={stats.receivedTodaySummary}
         />
         <ExpandableStatCard
-          icon={<Clock className="h-5 w-5 text-yellow-400" />}
+          icon={<Clock className="h-5 w-5 text-status-warning-400" />}
           title="Pending Action"
           value={stats.pending}
-          className="[&_div.bg-primary-50]:bg-yellow-500/15 [&_div.text-primary-600]:text-yellow-400"
+          className="[&_div.bg-primary-50]:bg-status-warning-500/15 [&_div.text-primary-600]:text-status-warning-400"
           details={stats.pendingDetails}
           detailSummary={stats.pendingSummary}
         />
         <ExpandableStatCard
-          icon={<ArrowUpRight className="h-5 w-5 text-indigo-400" />}
+          icon={<ArrowUpRight className="h-5 w-5 text-primary-400" />}
           title="Forwarded"
           value={stats.forwarded}
-          className="[&_div.bg-primary-50]:bg-indigo-500/15 [&_div.text-primary-600]:text-indigo-400"
+          className="[&_div.bg-primary-50]:bg-primary-500/15 [&_div.text-primary-600]:text-primary-400"
           details={stats.forwardedDetails}
           detailSummary={stats.forwardedSummary}
         />
         <ExpandableStatCard
-          icon={<Hand className="h-5 w-5 text-amber-400" />}
+          icon={<Hand className="h-5 w-5 text-status-warning-400" />}
           title="Held"
           value={stats.held}
-          className="[&_div.bg-primary-50]:bg-amber-500/15 [&_div.text-primary-600]:text-amber-400"
+          className="[&_div.bg-primary-50]:bg-status-warning-500/15 [&_div.text-primary-600]:text-status-warning-400"
           details={stats.heldDetails}
           detailSummary={stats.heldSummary}
         />
@@ -1002,7 +1002,7 @@ function MailContent() {
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setScanImage(null); }}
-                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-status-error-500/80 transition-colors"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -1041,7 +1041,7 @@ function MailContent() {
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setScanImageBack(null); }}
-                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-status-error-500/80 transition-colors"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -1060,7 +1060,7 @@ function MailContent() {
             {/* ── Customer PMB Lookup ─────────────────────────── */}
             <div>
               <label className="block text-xs font-medium text-surface-400 mb-1.5">
-                Customer <span className="text-red-400">*</span>
+                Customer <span className="text-status-error-400">*</span>
               </label>
               {selectedCustomer ? (
                 <div className="flex items-center justify-between p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
@@ -1165,9 +1165,9 @@ function MailContent() {
 
             {/* ── Error ───────────────────────────────────────── */}
             {scanError && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2.5">
-                <X className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
-                <p className="text-xs text-red-400">{scanError}</p>
+              <div className="flex items-center gap-2 rounded-lg bg-status-error-500/10 border border-status-error-500/20 px-3 py-2.5">
+                <X className="h-3.5 w-3.5 text-status-error-400 flex-shrink-0" />
+                <p className="text-xs text-status-error-400">{scanError}</p>
               </div>
             )}
           </div>
@@ -1175,8 +1175,8 @@ function MailContent() {
           <div className="space-y-5 py-2">
             {/* Success icon */}
             <div className="flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500/30">
-                <CheckCircle2 className="h-8 w-8 text-green-400" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-500/10 border-2 border-status-success-500/30">
+                <CheckCircle2 className="h-8 w-8 text-status-success-400" />
               </div>
             </div>
 
@@ -1215,8 +1215,8 @@ function MailContent() {
               </div>
             </div>
 
-            <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3">
-              <p className="text-xs text-amber-400 font-medium">
+            <div className="rounded-lg bg-status-warning-500/10 border border-status-warning-500/20 px-4 py-3">
+              <p className="text-xs text-status-warning-400 font-medium">
                 {'\u26a0\ufe0f'} Write this code clearly on the physical mail
                 piece before filing it.
               </p>

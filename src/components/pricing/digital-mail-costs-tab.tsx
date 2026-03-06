@@ -56,11 +56,11 @@ const COST_CATEGORY_LABELS: Record<CostCategory, string> = {
 };
 
 const COST_CATEGORY_COLORS: Record<CostCategory, string> = {
-  platform_fee: 'text-blue-400 bg-blue-500/10',
-  per_transaction: 'text-amber-400 bg-amber-500/10',
-  revenue_share: 'text-violet-400 bg-violet-500/10',
-  setup_fee: 'text-emerald-400 bg-emerald-500/10',
-  api_fee: 'text-cyan-400 bg-cyan-500/10',
+  platform_fee: 'text-status-info-400 bg-status-info-500/10',
+  per_transaction: 'text-status-warning-400 bg-status-warning-500/10',
+  revenue_share: 'text-status-violet-400 bg-status-violet-500/10',
+  setup_fee: 'text-status-success-400 bg-status-success-500/10',
+  api_fee: 'text-cyan-400 bg-accent-teal/10',
 };
 
 /* ── Platform definitions ───────────────────────────────────────────────── */
@@ -74,10 +74,10 @@ interface DigitalMailPlatform {
 }
 
 const PLATFORMS: DigitalMailPlatform[] = [
-  { id: 'anytime', name: 'Anytime Mailbox', logo: '📬', color: 'bg-blue-500/15 text-blue-400 border-blue-500/20' },
-  { id: 'ipostal', name: 'iPostal1', logo: '📮', color: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20' },
-  { id: 'postscan', name: 'PostScan Mail', logo: '📧', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' },
-  { id: 'boxfo', name: 'Boxfo', logo: '📦', color: 'bg-orange-500/15 text-orange-400 border-orange-500/20' },
+  { id: 'anytime', name: 'Anytime Mailbox', logo: '📬', color: 'bg-status-info-500/15 text-status-info-400 border-status-info-500/20' },
+  { id: 'ipostal', name: 'iPostal1', logo: '📮', color: 'bg-primary-500/15 text-primary-400 border-primary-500/20' },
+  { id: 'postscan', name: 'PostScan Mail', logo: '📧', color: 'bg-status-success-500/15 text-status-success-400 border-status-success-500/20' },
+  { id: 'boxfo', name: 'Boxfo', logo: '📦', color: 'bg-status-warning-alt/15 text-status-warning-400 border-status-warning-alt/20' },
   { id: 'other', name: 'Other Platform', logo: '📋', color: 'bg-surface-700/30 text-surface-400 border-surface-700/30' },
 ];
 
@@ -170,8 +170,8 @@ export function DigitalMailCostsTab() {
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
-            <Mail className="h-5 w-5 text-violet-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-violet-500/10">
+            <Mail className="h-5 w-5 text-status-violet-400" />
           </div>
           <div>
             <h2 className="text-base font-semibold text-surface-100">Digital Mail Platform Costs</h2>
@@ -219,8 +219,8 @@ export function DigitalMailCostsTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10">
-              <DollarSign className="h-4 w-4 text-violet-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-violet-500/10">
+              <DollarSign className="h-4 w-4 text-status-violet-400" />
             </div>
             <div>
               <p className="text-xs text-surface-500">Total This Month</p>
@@ -230,8 +230,8 @@ export function DigitalMailCostsTab() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
-              <Building2 className="h-4 w-4 text-blue-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-info-500/10">
+              <Building2 className="h-4 w-4 text-status-info-400" />
             </div>
             <div>
               <p className="text-xs text-surface-500">Active Platforms</p>
@@ -241,8 +241,8 @@ export function DigitalMailCostsTab() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-              <BarChart3 className="h-4 w-4 text-amber-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-warning-500/10">
+              <BarChart3 className="h-4 w-4 text-status-warning-400" />
             </div>
             <div>
               <p className="text-xs text-surface-500">Cost Entries</p>
@@ -252,8 +252,8 @@ export function DigitalMailCostsTab() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-success-500/10">
+              <TrendingUp className="h-4 w-4 text-status-success-400" />
             </div>
             <div>
               <p className="text-xs text-surface-500">Avg per Platform</p>

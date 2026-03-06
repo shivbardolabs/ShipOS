@@ -58,7 +58,7 @@ function useCarrierData(shipments: any[]) {
         cost: byCarrier['FEDEX']?.cost ?? seededRandom(102, 3000, 8000),
         avgHoldTime: seededRandom(103, 12, 48),
         onTimePickupPct: seededRandom(104, 82, 97),
-        color: '#4F46E5',
+        color: 'var(--color-primary-600)',
       },
       {
         id: 'fedex_hal',
@@ -70,7 +70,7 @@ function useCarrierData(shipments: any[]) {
         cost: seededRandom(112, 800, 2500),
         avgHoldTime: seededRandom(113, 24, 72),
         onTimePickupPct: seededRandom(114, 75, 95),
-        color: '#818CF8',
+        color: 'var(--color-primary-400)',
       },
       {
         id: 'ups',
@@ -81,7 +81,7 @@ function useCarrierData(shipments: any[]) {
         cost: byCarrier['UPS']?.cost ?? seededRandom(122, 2500, 7000),
         avgHoldTime: seededRandom(123, 10, 36),
         onTimePickupPct: seededRandom(124, 85, 98),
-        color: '#D97706',
+        color: 'var(--color-status-warning-600)',
       },
       {
         id: 'ups_ap',
@@ -93,7 +93,7 @@ function useCarrierData(shipments: any[]) {
         cost: seededRandom(132, 700, 2200),
         avgHoldTime: seededRandom(133, 18, 60),
         onTimePickupPct: seededRandom(134, 78, 96),
-        color: '#FBBF24',
+        color: 'var(--color-status-warning-400)',
       },
       {
         id: 'usps',
@@ -104,7 +104,7 @@ function useCarrierData(shipments: any[]) {
         cost: byCarrier['USPS']?.cost ?? seededRandom(142, 2000, 5500),
         avgHoldTime: seededRandom(143, 8, 24),
         onTimePickupPct: seededRandom(144, 88, 99),
-        color: '#2563EB',
+        color: 'var(--color-status-info-600)',
       },
       {
         id: 'dhl',
@@ -115,7 +115,7 @@ function useCarrierData(shipments: any[]) {
         cost: seededRandom(152, 700, 2200),
         avgHoldTime: seededRandom(153, 14, 40),
         onTimePickupPct: seededRandom(154, 80, 94),
-        color: '#DC2626',
+        color: 'var(--color-status-error-600)',
       },
       {
         id: 'amazon',
@@ -126,7 +126,7 @@ function useCarrierData(shipments: any[]) {
         cost: seededRandom(162, 1200, 3200),
         avgHoldTime: seededRandom(163, 6, 18),
         onTimePickupPct: seededRandom(164, 90, 99),
-        color: '#F97316',
+        color: 'var(--color-status-warning-alt)',
       },
     ];
 
@@ -228,7 +228,7 @@ export default function CarrierReportPage() {
                 data={data.carriers.map((c) => ({
                   label: c.name,
                   value: c.volume,
-                  color: c.isProgram ? 'bg-purple-500/60' : 'bg-primary-500/60',
+                  color: c.isProgram ? 'bg-status-violet-500/60' : 'bg-primary-500/60',
                 }))}
                 barHeight={28}
               />
@@ -332,7 +332,7 @@ export default function CarrierReportPage() {
                   .map((c) => ({
                     label: c.name,
                     value: c.revenue > 0 ? Math.round(((c.revenue - c.cost) / c.revenue) * 100) : 0,
-                    color: 'bg-emerald-500/60',
+                    color: 'bg-status-success-500/60',
                   }))
                   .sort((a, b) => b.value - a.value)}
                 barHeight={32}
@@ -350,7 +350,7 @@ export default function CarrierReportPage() {
                   .map((c) => ({
                     label: c.name,
                     value: c.onTimePickupPct,
-                    color: c.onTimePickupPct >= 90 ? 'bg-emerald-500/60' : c.onTimePickupPct >= 80 ? 'bg-yellow-500/60' : 'bg-red-500/60',
+                    color: c.onTimePickupPct >= 90 ? 'bg-status-success-500/60' : c.onTimePickupPct >= 80 ? 'bg-status-warning-500/60' : 'bg-status-error-500/60',
                   }))}
                 barHeight={28}
                 formatValue={(v) => `${v}%`}
@@ -367,7 +367,7 @@ export default function CarrierReportPage() {
                   .map((c) => ({
                     label: c.name,
                     value: c.avgHoldTime,
-                    color: c.avgHoldTime <= 24 ? 'bg-emerald-500/60' : c.avgHoldTime <= 48 ? 'bg-yellow-500/60' : 'bg-red-500/60',
+                    color: c.avgHoldTime <= 24 ? 'bg-status-success-500/60' : c.avgHoldTime <= 48 ? 'bg-status-warning-500/60' : 'bg-status-error-500/60',
                   }))}
                 barHeight={28}
                 formatValue={(v) => `${v}h`}
@@ -422,7 +422,7 @@ export default function CarrierReportPage() {
                     </div>
                     <div>
                       <p className="text-surface-400">Revenue</p>
-                      <p className="text-lg font-semibold text-emerald-400">{formatCurrency(c.revenue)}</p>
+                      <p className="text-lg font-semibold text-status-success-400">{formatCurrency(c.revenue)}</p>
                     </div>
                     <div>
                       <p className="text-surface-400">Cost</p>
@@ -453,7 +453,7 @@ export default function CarrierReportPage() {
                         color={c.color}
                         height={36}
                       />
-                      <span className="text-xs text-emerald-400 flex items-center gap-1">
+                      <span className="text-xs text-status-success-400 flex items-center gap-1">
                         <ArrowUpRight className="h-3 w-3" /> +{seededRandom(c.volume + 800, 3, 18)}%
                       </span>
                     </div>

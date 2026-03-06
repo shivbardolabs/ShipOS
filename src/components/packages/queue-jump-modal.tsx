@@ -125,8 +125,8 @@ export function QueueJumpModal({
       {!selectedPkg ? (
         <div className="space-y-4">
           {/* Explanation banner */}
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <UserCheck className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-status-warning-500/5 border border-status-warning-500/20">
+            <UserCheck className="h-5 w-5 text-status-warning-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-medium text-surface-200">
                 Customer is here to pick up a package
@@ -261,8 +261,8 @@ export function QueueJumpModal({
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-status-success-500/5 border border-status-success-500/20">
+            <CheckCircle2 className="h-5 w-5 text-status-success-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-medium text-surface-200">
                 Ready for queue jump

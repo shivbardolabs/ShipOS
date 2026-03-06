@@ -15,8 +15,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-950 relative overflow-hidden">
       {/* Ambient indigo orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full" style={{ background: 'rgba(99, 102, 241, 0.05)', filter: 'blur(100px)' }} />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full" style={{ background: 'rgba(99, 102, 241, 0.03)', filter: 'blur(80px)' }} />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full" style={{ background: 'color-mix(in srgb, var(--color-primary-500) 5%, transparent)', filter: 'blur(100px)' }} />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full" style={{ background: 'color-mix(in srgb, var(--color-primary-500) 3%, transparent)', filter: 'blur(80px)' }} />
 
       <div className="relative z-10 w-full max-w-md px-6 text-center">
         {/* Logo */}
@@ -37,7 +37,7 @@ export default function LoginPage() {
         </div>
 
         {/* Loading state while redirecting */}
-        <div className="rounded-2xl p-8 shadow-2xl shadow-slate-200/30 dark:shadow-slate-900/40 layout-card-surface">
+        <div className="rounded-2xl p-8 shadow-2xl shadow-surface-700/30 dark:shadow-surface-100/40 layout-card-surface">
           <div className="flex flex-col items-center gap-4">
             <svg className="h-6 w-6 animate-spin text-primary-600" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

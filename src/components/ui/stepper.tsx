@@ -32,7 +32,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
               <div
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-300 flex-shrink-0',
-                  isComplete && 'border-emerald-500 bg-emerald-500/20 text-emerald-400',
+                  isComplete && 'border-status-success-500 bg-status-success-500/20 text-status-success-400',
                   isCurrent && 'border-primary-500 bg-primary-500/20 text-primary-400 ring-4 ring-primary-500/10',
                   isUpcoming && 'border-surface-700 bg-surface-800 text-surface-500'
                 )}
@@ -47,7 +47,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                 <p
                   className={cn(
                     'text-sm font-medium leading-tight truncate',
-                    isComplete && 'text-emerald-400',
+                    isComplete && 'text-status-success-400',
                     isCurrent && 'text-surface-100',
                     isUpcoming && 'text-surface-500'
                   )}
@@ -68,7 +68,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                 <div
                   className={cn(
                     'h-0.5 rounded-full transition-colors duration-300',
-                    isComplete ? 'bg-emerald-500/60' : 'bg-surface-700'
+                    isComplete ? 'bg-status-success-500/60' : 'bg-surface-700'
                   )}
                 />
               </div>

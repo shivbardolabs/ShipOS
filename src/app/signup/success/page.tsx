@@ -10,7 +10,7 @@ export default function SignupSuccessPage() {
       {/* Ambient orbs */}
       <div
         className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: "rgba(99, 102, 241, 0.05)", filter: "blur(100px)" }}
+        style={{ background: "color-mix(in srgb, var(--color-primary-500) 5%, transparent)", filter: "blur(100px)" }}
       />
       <div
         className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full pointer-events-none"
@@ -35,11 +35,11 @@ export default function SignupSuccessPage() {
         </div>
 
         {/* Success card */}
-        <div className="rounded-2xl p-8 shadow-2xl shadow-slate-200/30 dark:shadow-slate-900/40 layout-card-surface">
+        <div className="rounded-2xl p-8 shadow-2xl shadow-surface-700/30 dark:shadow-surface-100/40 layout-card-surface">
           <div className="flex flex-col items-center gap-5">
             {/* Animated check icon */}
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
-              <MailCheck className="h-8 w-8 text-emerald-500" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-500/10">
+              <MailCheck className="h-8 w-8 text-status-success-500" />
             </div>
 
             <div>

@@ -59,9 +59,9 @@ function AnimatedCheckmark() {
       show ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
     )}>
       {/* Glow ring */}
-      <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
-      <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/20 ring-2 ring-emerald-500/40">
-        <CheckCircle2 className="h-12 w-12 text-emerald-400" />
+      <div className="absolute inset-0 rounded-full bg-status-success-500/20 animate-ping" />
+      <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-status-success-500/20 ring-2 ring-status-success-500/40">
+        <CheckCircle2 className="h-12 w-12 text-status-success-400" />
       </div>
     </div>
   );
@@ -171,7 +171,7 @@ export function ConfirmationScreen({
                 <span className="text-sm font-mono text-surface-300 truncate flex-1">
                   {parcel.trackingNumber}
                 </span>
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
               </div>
             ))}
           </div>
@@ -188,7 +188,7 @@ export function ConfirmationScreen({
                 onClick={handleEmailReceipt}
                 className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/60 p-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors min-h-[80px]"
               >
-                <MailIcon className="h-6 w-6 text-blue-400" />
+                <MailIcon className="h-6 w-6 text-status-info-400" />
                 <span className="text-xs font-medium text-surface-300">
                   Email
                 </span>
@@ -197,7 +197,7 @@ export function ConfirmationScreen({
                 onClick={handlePrintReceipt}
                 className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/60 p-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors min-h-[80px]"
               >
-                <Printer className="h-6 w-6 text-emerald-400" />
+                <Printer className="h-6 w-6 text-status-success-400" />
                 <span className="text-xs font-medium text-surface-300">
                   Print
                 </span>
@@ -214,7 +214,7 @@ export function ConfirmationScreen({
             </div>
           </div>
         ) : (
-          <div className="text-center text-sm text-emerald-400 flex items-center justify-center gap-2">
+          <div className="text-center text-sm text-status-success-400 flex items-center justify-center gap-2">
             <CheckCircle2 className="h-4 w-4" />
             Receipt sent
           </div>
@@ -262,7 +262,7 @@ export function ConfirmationScreen({
             </div>
             <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
               <div
-                className="h-full bg-emerald-600/40 transition-all duration-1000"
+                className="h-full bg-status-success-600/40 transition-all duration-1000"
                 style={{ width: `${(timeLeft / autoTimeoutSeconds) * 100}%` }}
               />
             </div>

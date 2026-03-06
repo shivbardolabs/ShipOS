@@ -40,7 +40,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'w-full appearance-none rounded-lg border bg-surface-900 px-3.5 py-2 pr-10 text-sm text-surface-100',
               'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
               'transition-colors duration-150 outline-none cursor-pointer',
-              error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
+              error && 'border-status-error-500 focus:border-status-error-500 focus:ring-status-error-500/30',
               className
             )}
             {...props}
@@ -60,7 +60,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             <ChevronDown className="h-4 w-4" />
           </div>
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-error-600">{error}</p>}
         {!error && helperText && (
           <p className="text-xs text-surface-500">{helperText}</p>
         )}

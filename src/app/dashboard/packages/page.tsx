@@ -43,16 +43,16 @@ import type { Package as PackageType } from '@/lib/types';
 /*  Carrier styling                                                           */
 /* -------------------------------------------------------------------------- */
 const carrierConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  ups: { label: 'UPS', bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { label: 'FedEx', bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
-  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
-  amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
-  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  lasership: { label: 'LaserShip', bg: 'bg-green-900/30', text: 'text-green-400', dot: 'bg-green-400' },
-  temu: { label: 'Temu', bg: 'bg-orange-900/30', text: 'text-orange-500', dot: 'bg-orange-500' },
-  ontrac: { label: 'OnTrac', bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
-  walmart: { label: 'Walmart', bg: 'bg-blue-900/30', text: 'text-blue-300', dot: 'bg-blue-400' },
-  target: { label: 'Target', bg: 'bg-red-900/30', text: 'text-red-400', dot: 'bg-red-400' } };
+  ups: { label: 'UPS', bg: 'bg-amber-900/30', text: 'text-status-warning-500', dot: 'bg-status-warning-500' },
+  fedex: { label: 'FedEx', bg: 'bg-primary-900/30', text: 'text-primary-600', dot: 'bg-primary-400' },
+  usps: { label: 'USPS', bg: 'bg-blue-900/30', text: 'text-status-info-600', dot: 'bg-status-info-400' },
+  amazon: { label: 'Amazon', bg: 'bg-orange-900/30', text: 'text-status-warning-400', dot: 'bg-status-warning-400' },
+  dhl: { label: 'DHL', bg: 'bg-yellow-900/30', text: 'text-status-warning-400', dot: 'bg-status-warning-400' },
+  lasership: { label: 'LaserShip', bg: 'bg-green-900/30', text: 'text-status-success-400', dot: 'bg-status-success-400' },
+  temu: { label: 'Temu', bg: 'bg-orange-900/30', text: 'text-status-warning-alt', dot: 'bg-status-warning-alt' },
+  ontrac: { label: 'OnTrac', bg: 'bg-blue-900/30', text: 'text-status-info-400', dot: 'bg-status-info-400' },
+  walmart: { label: 'Walmart', bg: 'bg-blue-900/30', text: 'text-status-info-300', dot: 'bg-status-info-400' },
+  target: { label: 'Target', bg: 'bg-red-900/30', text: 'text-status-error-400', dot: 'bg-status-error-400' } };
 
 function CarrierBadge({ carrier }: { carrier: string }) {
   const cfg = carrierConfig[carrier.toLowerCase()] || {
@@ -119,7 +119,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
   }, [onDismiss]);
 
   return (
-    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>
+    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg ${toast.type === 'success' ? 'bg-status-success-600 text-white' : 'bg-status-info-600 text-white'}`}>
       <span>{toast.message}</span>
       <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100">✕</button>
     </div>
@@ -871,9 +871,9 @@ function PackagesContent() {
                           className={cn(
                             'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold',
                             isOverdue
-                              ? 'bg-red-100 text-red-600'
+                              ? 'bg-status-error-100 text-status-error-600'
                               : held > 3
-                                ? 'bg-yellow-500/20 text-yellow-400'
+                                ? 'bg-status-warning-500/20 text-status-warning-400'
                                 : 'bg-surface-700/50 text-surface-400'
                           )}
                         >
@@ -905,7 +905,7 @@ function PackagesContent() {
                               }}
                               title="Notify"
                             >
-                              <Bell className="h-4 w-4 text-amber-600" />
+                              <Bell className="h-4 w-4 text-status-warning-600" />
                             </Button>
                           )}
                           {pkg.status !== 'released' && (
@@ -919,7 +919,7 @@ function PackagesContent() {
                               }}
                               title="Release"
                             >
-                              <PackageCheck className="h-4 w-4 text-emerald-600" />
+                              <PackageCheck className="h-4 w-4 text-status-success-600" />
                             </Button>
                           )}
                         </div>

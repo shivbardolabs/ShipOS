@@ -238,13 +238,13 @@ export default function BillingReportingPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
           <div className="glass-card p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-info-500/20 text-status-info-400">
                 <Building2 className="h-5 w-5" />
               </div>
             </div>
             <p className="text-2xl font-bold text-surface-100">{summary.totalClients}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-emerald-400">{summary.activeClients} active</span>
+              <span className="text-xs text-status-success-400">{summary.activeClients} active</span>
               <span className="text-xs text-surface-600">·</span>
               <span className="text-xs text-surface-500">{summary.inactiveClients} inactive</span>
             </div>
@@ -253,13 +253,13 @@ export default function BillingReportingPage() {
 
           <div className="glass-card p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20 text-purple-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-violet-500/20 text-status-violet-400">
                 <Store className="h-5 w-5" />
               </div>
             </div>
             <p className="text-2xl font-bold text-surface-100">{summary.totalStores}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-emerald-400">{summary.activeStores} active</span>
+              <span className="text-xs text-status-success-400">{summary.activeStores} active</span>
               <span className="text-xs text-surface-600">·</span>
               <span className="text-xs text-surface-500">{summary.inactiveStores} inactive</span>
             </div>
@@ -268,10 +268,10 @@ export default function BillingReportingPage() {
 
           <div className="glass-card p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-success-500/20 text-status-success-400">
                 <DollarSign className="h-5 w-5" />
               </div>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-status-success-400">
                 <TrendingUp className="h-3 w-3" />
                 12.5%
               </span>
@@ -282,21 +282,21 @@ export default function BillingReportingPage() {
 
           <div className="glass-card p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/20 text-orange-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-warning-alt/20 text-status-warning-400">
                 <CreditCard className="h-5 w-5" />
               </div>
             </div>
             <div className="flex items-baseline gap-3">
               <div>
-                <span className="text-lg font-bold text-emerald-400">{summary.paidCount}</span>
+                <span className="text-lg font-bold text-status-success-400">{summary.paidCount}</span>
                 <span className="text-xs text-surface-500 ml-1">paid</span>
               </div>
               <div>
-                <span className="text-lg font-bold text-yellow-400">{summary.pendingCount}</span>
+                <span className="text-lg font-bold text-status-warning-400">{summary.pendingCount}</span>
                 <span className="text-xs text-surface-500 ml-1">pending</span>
               </div>
               <div>
-                <span className="text-lg font-bold text-red-400">{summary.overdueCount}</span>
+                <span className="text-lg font-bold text-status-error-400">{summary.overdueCount}</span>
                 <span className="text-xs text-surface-500 ml-1">overdue</span>
               </div>
             </div>
@@ -374,7 +374,7 @@ export default function BillingReportingPage() {
                         </td>
                         <td className="px-4 py-3 font-medium text-surface-200">{client.clientName}</td>
                         <td className="px-4 py-3 text-center text-surface-300">
-                          <span className="text-emerald-400">{client.activeStores}</span>
+                          <span className="text-status-success-400">{client.activeStores}</span>
                           <span className="text-surface-600"> / </span>
                           {client.totalStores}
                         </td>
@@ -421,7 +421,7 @@ export default function BillingReportingPage() {
               <tfoot>
                 <tr className="border-t border-surface-700 bg-surface-800/30">
                   <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-surface-300">Totals</td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-emerald-400">{formatCurrency(summary.totalMRR)}</td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-status-success-400">{formatCurrency(summary.totalMRR)}</td>
                   <td colSpan={2}></td>
                 </tr>
               </tfoot>
@@ -431,7 +431,7 @@ export default function BillingReportingPage() {
 
         {/* Revenue verification note */}
         <div className="flex items-start gap-2 rounded-lg bg-surface-800/30 px-4 py-3 text-xs text-surface-500">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+          <CheckCircle2 className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
           <div>
             <strong className="text-surface-400">Revenue calculation:</strong> Monthly revenue = (per-store fee) × (active stores).
             Inactive stores do not incur fees. Pro-rated billing applies for mid-month activations/deactivations.
@@ -450,19 +450,19 @@ export default function BillingReportingPage() {
               <p className="text-xs text-surface-400">Total Invoices</p>
             </div>
             <div className="glass-card p-4">
-              <p className="text-2xl font-bold text-emerald-400">
+              <p className="text-2xl font-bold text-status-success-400">
                 {formatCurrency(invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0))}
               </p>
               <p className="text-xs text-surface-400">Collected</p>
             </div>
             <div className="glass-card p-4">
-              <p className="text-2xl font-bold text-yellow-400">
+              <p className="text-2xl font-bold text-status-warning-400">
                 {formatCurrency(invoices.filter((i) => i.status === 'pending').reduce((s, i) => s + i.amount, 0))}
               </p>
               <p className="text-xs text-surface-400">Pending</p>
             </div>
             <div className="glass-card p-4">
-              <p className="text-2xl font-bold text-red-400">
+              <p className="text-2xl font-bold text-status-error-400">
                 {formatCurrency(invoices.filter((i) => i.status === 'overdue').reduce((s, i) => s + i.amount, 0))}
               </p>
               <p className="text-xs text-surface-400">Overdue</p>
@@ -515,7 +515,7 @@ export default function BillingReportingPage() {
                           )}
                           {inv.status === 'pending' && (
                             <Button variant="ghost" size="sm" iconOnly title="Mark as paid">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                              <CheckCircle2 className="h-3.5 w-3.5 text-status-success-400" />
                             </Button>
                           )}
                         </div>
@@ -529,7 +529,7 @@ export default function BillingReportingPage() {
 
           {/* Billing info note */}
           <div className="flex items-start gap-2 rounded-lg bg-surface-800/30 px-4 py-3 text-xs text-surface-500">
-            <Receipt className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />
+            <Receipt className="h-4 w-4 text-status-info-400 flex-shrink-0 mt-0.5" />
             <div>
               <strong className="text-surface-400">Billing cycle:</strong> Invoices are generated on the 1st of each month.
               Payment is due within {overdueThreshold} days. Subscriptions are billed at
@@ -586,19 +586,19 @@ export default function BillingReportingPage() {
             <CardContent>
               <div className="space-y-3 text-sm text-surface-400">
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
                   <p>Mid-month activation: prorated based on remaining calendar days</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
                   <p>Mid-month deactivation: charged only for active days</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
                   <p>Fee changes mid-month: blended rate using each fee&apos;s active period</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
                   <p>Inactive stores are excluded from billing entirely</p>
                 </div>
               </div>

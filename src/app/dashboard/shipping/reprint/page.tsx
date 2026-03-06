@@ -134,12 +134,12 @@ export default function ReprintPage() {
       />
 
       {/* Info Banner */}
-      <Card padding="md" className="border-blue-500/20 bg-blue-500/5">
+      <Card padding="md" className="border-status-info-500/20 bg-status-info-500/5">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-status-info-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-300">No Duplicate Shipment</p>
-            <p className="text-xs text-blue-400/70">
+            <p className="text-sm font-medium text-status-info-300">No Duplicate Shipment</p>
+            <p className="text-xs text-status-info-400/70">
               Reprinting a label does NOT create a new shipment or tracking number.
               It simply re-outputs the same label for printing. Labels are available
               for the current session.

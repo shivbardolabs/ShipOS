@@ -45,12 +45,12 @@ import { DropdownMenu } from '@/components/ui/dropdown-menu';
 /* -------------------------------------------------------------------------- */
 
 const notifTypeIcon: Record<string, React.ReactNode> = {
-  package_arrival: <Package className="h-4 w-4 text-blue-600" />,
-  package_reminder: <CalendarClock className="h-4 w-4 text-amber-600" />,
-  mail_received: <MailOpen className="h-4 w-4 text-indigo-600" />,
-  id_expiring: <AlertTriangle className="h-4 w-4 text-red-600" />,
-  renewal_reminder: <Clock className="h-4 w-4 text-yellow-400" />,
-  shipment_update: <Truck className="h-4 w-4 text-emerald-600" />,
+  package_arrival: <Package className="h-4 w-4 text-status-info-600" />,
+  package_reminder: <CalendarClock className="h-4 w-4 text-status-warning-600" />,
+  mail_received: <MailOpen className="h-4 w-4 text-primary-600" />,
+  id_expiring: <AlertTriangle className="h-4 w-4 text-status-error-600" />,
+  renewal_reminder: <Clock className="h-4 w-4 text-status-warning-400" />,
+  shipment_update: <Truck className="h-4 w-4 text-status-success-600" />,
   welcome: <UserPlus className="h-4 w-4 text-primary-600" /> };
 
 type NotifRow = Notification & Record<string, unknown>;
@@ -192,13 +192,13 @@ export default function NotificationsPage() {
       render: (row) => (
         <div className="flex items-center gap-1.5">
           {(row.channel === 'email' || row.channel === 'both') && (
-            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">
+            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-status-info-100 text-status-info-600 border-status-info-500/30">
               <Mail className="h-3 w-3" />
               Email
             </span>
           )}
           {(row.channel === 'sms' || row.channel === 'both') && (
-            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">
+            <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-status-success-100 text-status-success-600 border-status-success-200">
               <Smartphone className="h-3 w-3" />
               SMS
             </span>
@@ -238,7 +238,7 @@ export default function NotificationsPage() {
             <button
               onClick={(e) => { e.stopPropagation(); handleRetry(row.id); }}
               disabled={retryingId === row.id}
-              className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+              className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-medium bg-status-error-500/10 text-status-error-400 hover:bg-status-error-500/20 transition-colors disabled:opacity-50"
               title="Retry sending this notification"
             >
               <RefreshCw className={`h-3 w-3 ${retryingId === row.id ? 'animate-spin' : ''}`} />
@@ -417,12 +417,12 @@ export default function NotificationsPage() {
                 <p className="text-xs text-surface-500">Channel</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   {(detailModal.channel === 'email' || detailModal.channel === 'both') && (
-                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">
+                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-status-info-100 text-status-info-600 border-status-info-500/30">
                       <Mail className="h-3 w-3" /> Email
                     </span>
                   )}
                   {(detailModal.channel === 'sms' || detailModal.channel === 'both') && (
-                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">
+                    <span className="inline-flex items-center gap-1 status-badge text-[10px] bg-status-success-100 text-status-success-600 border-status-success-200">
                       <Smartphone className="h-3 w-3" /> SMS
                     </span>
                   )}

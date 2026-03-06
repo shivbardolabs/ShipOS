@@ -162,7 +162,7 @@ export default function FranchiseReportPage() {
                   </div>
                   <div>
                     <p className="text-xs text-surface-500">Profit</p>
-                    <p className="font-semibold text-emerald-400">{formatCurrency(profit)}</p>
+                    <p className="font-semibold text-status-success-400">{formatCurrency(profit)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-surface-500">Packages</p>
@@ -176,7 +176,7 @@ export default function FranchiseReportPage() {
                 <div className="mt-3">
                   <Sparkline
                     data={Array.from({ length: 14 }, (_, j) => seededRandom(3000 + i * 100 + j, 400, 1200))}
-                    color={store.growth > 0 ? '#10b981' : '#ef4444'}
+                    color={store.growth > 0 ? 'var(--color-status-success-500)' : 'var(--color-status-error-500)'}
                     height={24}
                   />
                 </div>
@@ -216,7 +216,7 @@ export default function FranchiseReportPage() {
                         <td className="py-2.5 text-surface-400">{store.location}</td>
                         <td className="py-2.5 text-right text-surface-200">{formatCurrency(store.revenue)}</td>
                         <td className="py-2.5 text-right text-surface-400">{formatCurrency(store.expenses)}</td>
-                        <td className="py-2.5 text-right text-emerald-400">{formatCurrency(profit)}</td>
+                        <td className="py-2.5 text-right text-status-success-400">{formatCurrency(profit)}</td>
                         <td className="py-2.5 text-right">
                           <Badge variant={storeMargin > 40 ? 'success' : storeMargin > 25 ? 'warning' : 'danger'} dot={false}>
                             {storeMargin.toFixed(1)}%
@@ -225,7 +225,7 @@ export default function FranchiseReportPage() {
                         <td className="py-2.5 text-right text-surface-300">{formatNumber(store.packages)}</td>
                         <td className="py-2.5 text-right text-surface-300">{formatNumber(store.customers)}</td>
                         <td className="py-2.5 text-right">
-                          <span className={`flex items-center justify-end gap-1 ${store.growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span className={`flex items-center justify-end gap-1 ${store.growth >= 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                             {store.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                             {store.growth >= 0 ? '+' : ''}{store.growth}%
                           </span>
@@ -239,7 +239,7 @@ export default function FranchiseReportPage() {
                     <td className="py-2.5 font-semibold text-surface-100" colSpan={2}>Franchise Total</td>
                     <td className="py-2.5 text-right font-semibold text-surface-100">{formatCurrency(data.totalRevenue)}</td>
                     <td className="py-2.5 text-right font-semibold text-surface-300">{formatCurrency(data.totalExpenses)}</td>
-                    <td className="py-2.5 text-right font-semibold text-emerald-400">{formatCurrency(data.totalProfit)}</td>
+                    <td className="py-2.5 text-right font-semibold text-status-success-400">{formatCurrency(data.totalProfit)}</td>
                     <td className="py-2.5 text-right">
                       <Badge variant="success" dot={false}>
                         {(data.totalRevenue > 0 ? ((data.totalProfit / data.totalRevenue) * 100) : 0).toFixed(1)}%
@@ -247,7 +247,7 @@ export default function FranchiseReportPage() {
                     </td>
                     <td className="py-2.5 text-right font-semibold text-surface-200">{formatNumber(data.totalPackages)}</td>
                     <td className="py-2.5 text-right font-semibold text-surface-200">{formatNumber(data.totalCustomers)}</td>
-                    <td className="py-2.5 text-right font-semibold text-emerald-400">+{data.avgGrowth.toFixed(1)}%</td>
+                    <td className="py-2.5 text-right font-semibold text-status-success-400">+{data.avgGrowth.toFixed(1)}%</td>
                   </tr>
                 </tfoot>
               </table>
@@ -277,7 +277,7 @@ export default function FranchiseReportPage() {
               <div className="space-y-3">
                 {data.byRevenue.map((store, i) => (
                   <div key={store.id} className="flex items-center gap-3">
-                    <span className={`text-lg font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-orange-400' : 'text-surface-500'}`}>
+                    <span className={`text-lg font-bold ${i === 0 ? 'text-status-warning-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-status-warning-400' : 'text-surface-500'}`}>
                       #{i + 1}
                     </span>
                     <div className="flex-1">
@@ -297,7 +297,7 @@ export default function FranchiseReportPage() {
               <div className="space-y-3">
                 {data.byPackages.map((store, i) => (
                   <div key={store.id} className="flex items-center gap-3">
-                    <span className={`text-lg font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-orange-400' : 'text-surface-500'}`}>
+                    <span className={`text-lg font-bold ${i === 0 ? 'text-status-warning-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-status-warning-400' : 'text-surface-500'}`}>
                       #{i + 1}
                     </span>
                     <div className="flex-1">
@@ -317,7 +317,7 @@ export default function FranchiseReportPage() {
               <div className="space-y-3">
                 {data.byGrowth.map((store, i) => (
                   <div key={store.id} className="flex items-center gap-3">
-                    <span className={`text-lg font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-orange-400' : 'text-surface-500'}`}>
+                    <span className={`text-lg font-bold ${i === 0 ? 'text-status-warning-400' : i === 1 ? 'text-surface-300' : i === 2 ? 'text-status-warning-400' : 'text-surface-500'}`}>
                       #{i + 1}
                     </span>
                     <div className="flex-1">

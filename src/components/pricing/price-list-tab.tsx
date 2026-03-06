@@ -229,7 +229,7 @@ export function PriceListTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><div className="text-center"><p className="text-2xl font-bold text-surface-100">{stats.active}</p><p className="text-xs text-surface-400 mt-1">Active Prices</p></div></Card>
         <Card><div className="text-center"><p className="text-2xl font-bold text-surface-100">{stats.total}</p><p className="text-xs text-surface-400 mt-1">Total Entries</p></div></Card>
-        <Card><div className="text-center"><p className="text-2xl font-bold text-emerald-400">{stats.avgMargin.toFixed(1)}%</p><p className="text-xs text-surface-400 mt-1">Avg Margin</p></div></Card>
+        <Card><div className="text-center"><p className="text-2xl font-bold text-status-success-400">{stats.avgMargin.toFixed(1)}%</p><p className="text-xs text-surface-400 mt-1">Avg Margin</p></div></Card>
         <Card><div className="text-center"><p className="text-2xl font-bold text-primary-400">{stats.overrideCount}</p><p className="text-xs text-surface-400 mt-1">Price Overrides</p></div></Card>
       </div>
 
@@ -290,7 +290,7 @@ export function PriceListTab() {
                       </div>
                       <div className="text-right w-20">
                         <p className="text-surface-400 text-[10px]">Margin</p>
-                        <p className={`font-semibold ${entry.marginPct >= 50 ? 'text-emerald-400' : entry.marginPct >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        <p className={`font-semibold ${entry.marginPct >= 50 ? 'text-status-success-400' : entry.marginPct >= 0 ? 'text-status-warning-400' : 'text-status-error-400'}`}>
                           {formatCurrency(entry.margin)} <span className="text-[10px]">({entry.marginPct.toFixed(0)}%)</span>
                         </p>
                       </div>
@@ -303,7 +303,7 @@ export function PriceListTab() {
                       <Button size="sm" variant="ghost" iconOnly onClick={() => startEdit(entry)}><Edit3 className="h-3.5 w-3.5" /></Button>
                       <Button size="sm" variant="ghost" iconOnly onClick={() => setHistoryModal({ open: true, itemName: entry.name })}><History className="h-3.5 w-3.5" /></Button>
                       <Button size="sm" variant="ghost" iconOnly onClick={() => toggleActive(entry.id)}>
-                        {entry.isActive ? <ToggleRight className="h-4 w-4 text-emerald-400" /> : <ToggleLeft className="h-4 w-4 text-surface-500" />}
+                        {entry.isActive ? <ToggleRight className="h-4 w-4 text-status-success-400" /> : <ToggleLeft className="h-4 w-4 text-surface-500" />}
                       </Button>
                     </div>
                   )}
@@ -329,7 +329,7 @@ export function PriceListTab() {
                               <Icon className="h-3.5 w-3.5 text-surface-500" />
                               <span className="text-surface-300 flex-1">{ov.targetLabel}</span>
                               {ov.retailPrice !== null && <span className="text-surface-200">{formatCurrency(ov.retailPrice)}</span>}
-                              <Button size="sm" variant="ghost" iconOnly><Trash2 className="h-3 w-3 text-red-400" /></Button>
+                              <Button size="sm" variant="ghost" iconOnly><Trash2 className="h-3 w-3 text-status-error-400" /></Button>
                             </div>
                           );
                         })}
@@ -385,9 +385,9 @@ export function PriceListTab() {
               <div className="flex-1">
                 <span className="text-surface-300 font-medium">{v.field}</span>
                 <span className="text-surface-500 mx-2">changed from</span>
-                <span className="text-red-400 line-through">{v.oldValue}</span>
+                <span className="text-status-error-400 line-through">{v.oldValue}</span>
                 <span className="text-surface-500 mx-2">to</span>
-                <span className="text-emerald-400">{v.newValue}</span>
+                <span className="text-status-success-400">{v.newValue}</span>
               </div>
               <div className="text-right text-xs text-surface-500">
                 <p>{v.changedBy}</p>

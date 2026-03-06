@@ -99,10 +99,10 @@ function formatDateTime(iso: string): string {
 /*  Role color map for inline styles                                          */
 /* -------------------------------------------------------------------------- */
 const roleColors: Record<string, { bg: string; text: string; border: string }> = {
-  superadmin: { bg: '#e11d4810', text: '#e11d48', border: '#e11d4830' },
-  admin: { bg: '#7c3aed10', text: '#7c3aed', border: '#7c3aed30' },
-  manager: { bg: '#d9770610', text: '#d97706', border: '#d9770630' },
-  employee: { bg: '#0891b210', text: '#0891b2', border: '#0891b230' },
+  superadmin: { bg: 'color-mix(in srgb, var(--color-status-error-600) 6%, transparent)', text: 'var(--color-status-error-600)', border: 'color-mix(in srgb, var(--color-status-error-600) 19%, transparent)' },
+  admin: { bg: 'color-mix(in srgb, var(--color-status-violet-600) 6%, transparent)', text: 'var(--color-status-violet-600)', border: 'color-mix(in srgb, var(--color-status-violet-600) 19%, transparent)' },
+  manager: { bg: 'color-mix(in srgb, var(--color-status-warning-600) 6%, transparent)', text: 'var(--color-status-warning-600)', border: 'color-mix(in srgb, var(--color-status-warning-600) 19%, transparent)' },
+  employee: { bg: 'color-mix(in srgb, var(--color-accent-teal) 6%, transparent)', text: '#0891b2', border: 'color-mix(in srgb, var(--color-accent-teal) 19%, transparent)' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -118,12 +118,12 @@ function OnlineIndicator({ lastLogin }: { lastLogin: string | null }) {
         {isRecent && (
           <span
             className="absolute inline-flex h-full w-full rounded-full opacity-50 animate-ping"
-            style={{ backgroundColor: '#22c55e' }}
+            style={{ backgroundColor: 'var(--color-status-success-500)' }}
           />
         )}
         <span
           className="relative inline-flex h-2 w-2 rounded-full"
-          style={{ backgroundColor: isRecent ? '#22c55e' : '#6b7280' }}
+          style={{ backgroundColor: isRecent ? 'var(--color-status-success-500)' : 'var(--color-surface-500)' }}
         />
       </span>
       <span className="text-xs text-surface-500">{timeAgo(lastLogin)}</span>
@@ -154,7 +154,7 @@ function TabButton({
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
         active
-          ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+          ? 'bg-status-error-500/15 text-status-error-400 border border-status-error-500/30'
           : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800/50'
       }`}
     >
@@ -163,7 +163,7 @@ function TabButton({
       {count !== undefined && (
         <span
           className={`ml-1 px-1.5 py-0 text-[10px] font-bold rounded-full ${
-            active ? 'bg-rose-500/25 text-rose-300' : 'bg-surface-700 text-surface-400'
+            active ? 'bg-status-error-500/25 text-rose-300' : 'bg-surface-700 text-surface-400'
           }`}
         >
           {count}
@@ -270,7 +270,7 @@ function EditUserModal({
             }
             className={
               saveSuccess
-                ? 'bg-green-600 hover:bg-green-600'
+                ? 'bg-status-success-600 hover:bg-status-success-600'
                 : undefined
             }
           >
@@ -351,9 +351,9 @@ function EditUserModal({
         {hasChanges && (
           <div
             className="p-3 rounded-lg border"
-            style={{ background: '#f59e0b08', borderColor: '#f59e0b25' }}
+            style={{ background: 'color-mix(in srgb, var(--color-status-warning-500) 3%, transparent)', borderColor: 'color-mix(in srgb, var(--color-status-warning-500) 15%, transparent)' }}
           >
-            <p className="text-xs font-semibold text-amber-400 mb-2">Pending Changes</p>
+            <p className="text-xs font-semibold text-status-warning-400 mb-2">Pending Changes</p>
             <div className="space-y-1">
               {selectedRole !== user.role && (
                 <p className="text-xs text-surface-300">
@@ -576,14 +576,14 @@ export default function MasterAdminPage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
         <div
           className="flex h-16 w-16 items-center justify-center rounded-2xl mb-4"
-          style={{ background: '#e11d4815' }}
+          style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 8%, transparent)' }}
         >
-          <ShieldCheck className="h-8 w-8" style={{ color: '#e11d48' }} />
+          <ShieldCheck className="h-8 w-8" style={{ color: 'var(--color-status-error-600)' }} />
         </div>
         <h2 className="text-xl font-bold text-surface-200 mb-2">Access Restricted</h2>
         <p className="text-surface-500 max-w-md">
           The Master Admin panel is only available to users with the{' '}
-          <strong className="text-rose-400">Super Admin</strong> role.
+          <strong className="text-status-error-400">Super Admin</strong> role.
         </p>
       </div>
     );
@@ -596,9 +596,9 @@ export default function MasterAdminPage() {
         <div className="flex items-center gap-3 mb-1">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl"
-            style={{ background: '#e11d4815' }}
+            style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 8%, transparent)' }}
           >
-            <ShieldCheck className="h-5 w-5" style={{ color: '#e11d48' }} />
+            <ShieldCheck className="h-5 w-5" style={{ color: 'var(--color-status-error-600)' }} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-surface-100">Master Admin</h1>
@@ -615,9 +615,9 @@ export default function MasterAdminPage() {
           <div className="flex items-center justify-between mb-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ background: '#6366f115' }}
+              style={{ background: 'color-mix(in srgb, var(--color-primary-500) 8%, transparent)' }}
             >
-              <Users className="h-4.5 w-4.5" style={{ color: '#6366f1' }} />
+              <Users className="h-4.5 w-4.5" style={{ color: 'var(--color-primary-500)' }} />
             </div>
           </div>
           <p className="text-2xl font-bold text-surface-100">{stats.totalUsers}</p>
@@ -628,9 +628,9 @@ export default function MasterAdminPage() {
           <div className="flex items-center justify-between mb-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ background: '#22c55e15' }}
+              style={{ background: 'color-mix(in srgb, var(--color-status-success-500) 8%, transparent)' }}
             >
-              <UserCheck className="h-4.5 w-4.5" style={{ color: '#22c55e' }} />
+              <UserCheck className="h-4.5 w-4.5" style={{ color: 'var(--color-status-success-500)' }} />
             </div>
           </div>
           <p className="text-2xl font-bold text-surface-100">{stats.activeUsers}</p>
@@ -641,9 +641,9 @@ export default function MasterAdminPage() {
           <div className="flex items-center justify-between mb-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ background: '#f59e0b15' }}
+              style={{ background: 'color-mix(in srgb, var(--color-status-warning-500) 8%, transparent)' }}
             >
-              <Building2 className="h-4.5 w-4.5" style={{ color: '#f59e0b' }} />
+              <Building2 className="h-4.5 w-4.5" style={{ color: 'var(--color-status-warning-500)' }} />
             </div>
           </div>
           <p className="text-2xl font-bold text-surface-100">{stats.tenants}</p>
@@ -654,9 +654,9 @@ export default function MasterAdminPage() {
           <div className="flex items-center justify-between mb-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ background: '#e11d4815' }}
+              style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 8%, transparent)' }}
             >
-              <LogIn className="h-4.5 w-4.5" style={{ color: '#e11d48' }} />
+              <LogIn className="h-4.5 w-4.5" style={{ color: 'var(--color-status-error-600)' }} />
             </div>
           </div>
           <p className="text-2xl font-bold text-surface-100">{stats.todaySessions}</p>
@@ -666,10 +666,10 @@ export default function MasterAdminPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="flex items-center gap-3 p-4 rounded-xl border" style={{ background: '#f59e0b10', borderColor: '#f59e0b30' }}>
-          <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+        <div className="flex items-center gap-3 p-4 rounded-xl border" style={{ background: 'color-mix(in srgb, var(--color-status-warning-500) 6%, transparent)', borderColor: 'color-mix(in srgb, var(--color-status-warning-500) 19%, transparent)' }}>
+          <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--color-status-warning-500)' }} />
           <div>
-            <p className="text-sm font-medium text-amber-400">{error}</p>
+            <p className="text-sm font-medium text-status-warning-400">{error}</p>
             <p className="text-xs text-surface-500 mt-0.5">
               Showing mock data based on Auth0 session fallback.
             </p>
@@ -870,8 +870,8 @@ function UsersTable({
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
                   style={
                     hasLoggedIn
-                      ? { background: '#22c55e15', color: '#22c55e', border: '1px solid #22c55e30' }
-                      : { background: '#6b728015', color: '#6b7280', border: '1px solid #6b728030' }
+                      ? { background: 'color-mix(in srgb, var(--color-status-success-500) 8%, transparent)', color: 'var(--color-status-success-500)', border: '1px solid #22c55e30' }
+                      : { background: 'color-mix(in srgb, var(--color-surface-500) 8%, transparent)', color: 'var(--color-surface-500)', border: '1px solid #6b728030' }
                   }
                 >
                   {hasLoggedIn ? 'Active' : 'Pending'}
@@ -885,7 +885,7 @@ function UsersTable({
                   size="sm"
                   iconOnly
                   onClick={() => onEdit(user)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-surface-400 hover:text-rose-400"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-surface-400 hover:text-status-error-400"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
@@ -912,10 +912,10 @@ function UsersTable({
 /*  Tenants Table — Status badges, tier, and activate/pause/disable toggle    */
 /* -------------------------------------------------------------------------- */
 const tenantStatusConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  active: { label: 'Active', bg: '#22c55e15', text: '#22c55e', border: '#22c55e30' },
-  paused: { label: 'Paused', bg: '#f59e0b15', text: '#f59e0b', border: '#f59e0b30' },
-  disabled: { label: 'Disabled', bg: '#ef444415', text: '#ef4444', border: '#ef444430' },
-  trial: { label: 'Trial', bg: '#6366f115', text: '#6366f1', border: '#6366f130' },
+  active: { label: 'Active', bg: 'color-mix(in srgb, var(--color-status-success-500) 8%, transparent)', text: 'var(--color-status-success-500)', border: 'color-mix(in srgb, var(--color-status-success-500) 19%, transparent)' },
+  paused: { label: 'Paused', bg: 'color-mix(in srgb, var(--color-status-warning-500) 8%, transparent)', text: 'var(--color-status-warning-500)', border: 'color-mix(in srgb, var(--color-status-warning-500) 19%, transparent)' },
+  disabled: { label: 'Disabled', bg: 'color-mix(in srgb, var(--color-status-error-500) 8%, transparent)', text: 'var(--color-status-error-500)', border: 'color-mix(in srgb, var(--color-status-error-500) 19%, transparent)' },
+  trial: { label: 'Trial', bg: 'color-mix(in srgb, var(--color-primary-500) 8%, transparent)', text: 'var(--color-primary-500)', border: 'color-mix(in srgb, var(--color-primary-500) 19%, transparent)' },
 };
 
 const tierLabels: Record<string, string> = {
@@ -1032,7 +1032,7 @@ function TenantsTable({
                   <button
                     onClick={() => handleStatusChange(tenant.id, 'active')}
                     disabled={isUpdating}
-                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 disabled:opacity-50"
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-success-500/15 text-status-success-400 border border-status-success-500/20 disabled:opacity-50"
                     title="Activate tenant"
                   >
                     Activate
@@ -1042,7 +1042,7 @@ function TenantsTable({
                   <button
                     onClick={() => handleStatusChange(tenant.id, 'paused')}
                     disabled={isUpdating}
-                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-amber-500/15 text-amber-400 border border-amber-500/20 disabled:opacity-50"
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-warning-500/15 text-status-warning-400 border border-status-warning-500/20 disabled:opacity-50"
                     title="Pause tenant"
                   >
                     Pause
@@ -1052,7 +1052,7 @@ function TenantsTable({
                   <button
                     onClick={() => handleStatusChange(tenant.id, 'disabled')}
                     disabled={isUpdating}
-                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-red-500/15 text-red-400 border border-red-500/20 disabled:opacity-50"
+                    className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-error-500/15 text-status-error-400 border border-status-error-500/20 disabled:opacity-50"
                     title="Disable tenant"
                   >
                     Disable

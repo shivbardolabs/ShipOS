@@ -160,7 +160,7 @@ export function ReportsAuditTab() {
                     <td className="px-3 py-3 text-right text-surface-300">{r.volume.toLocaleString()}</td>
                     <td className="px-3 py-3 text-right text-surface-300">{formatCurrency(r.avgRevenue)}</td>
                     <td className="px-5 py-3 text-right">
-                      <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${r.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${r.change >= 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                         {r.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {Math.abs(r.change)}%
                       </span>
@@ -232,11 +232,11 @@ export function ReportsAuditTab() {
                   </div>
                   <div className="bg-surface-800/50 rounded-lg p-3 text-center">
                     <p className="text-[10px] text-surface-500 uppercase">Costs</p>
-                    <p className="text-sm font-bold text-red-400">{formatCurrency(p.cost)}</p>
+                    <p className="text-sm font-bold text-status-error-400">{formatCurrency(p.cost)}</p>
                   </div>
                   <div className="bg-surface-800/50 rounded-lg p-3 text-center">
                     <p className="text-[10px] text-surface-500 uppercase">Profit</p>
-                    <p className="text-sm font-bold text-emerald-400">{formatCurrency(p.profit)}</p>
+                    <p className="text-sm font-bold text-status-success-400">{formatCurrency(p.profit)}</p>
                   </div>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export function ReportsAuditTab() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-sm text-surface-100">{p.name}</h4>
-                    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${p.trend >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${p.trend >= 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                       {p.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                       {Math.abs(p.trend)}%
                     </span>
@@ -306,11 +306,11 @@ export function ReportsAuditTab() {
                   </div>
                   <div>
                     <p className="text-[10px] text-surface-500">Costs</p>
-                    <p className="text-sm font-bold text-red-400">{formatCurrency(p.costs)}</p>
+                    <p className="text-sm font-bold text-status-error-400">{formatCurrency(p.costs)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-surface-500">Profit</p>
-                    <p className="text-sm font-bold text-emerald-400">{formatCurrency(p.profit)}</p>
+                    <p className="text-sm font-bold text-status-success-400">{formatCurrency(p.profit)}</p>
                   </div>
                 </div>
               </div>
@@ -353,7 +353,7 @@ export function ReportsAuditTab() {
                     <td className="px-3 py-3 text-surface-400">{a.type}</td>
                     <td className="px-3 py-3 text-right text-surface-100">{formatCurrency(a.expected)}</td>
                     <td className="px-3 py-3 text-right text-surface-100">{formatCurrency(a.actual)}</td>
-                    <td className={`px-3 py-3 text-right font-medium ${a.difference === 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <td className={`px-3 py-3 text-right font-medium ${a.difference === 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                       {a.difference === 0 ? '—' : formatCurrency(a.difference)}
                     </td>
                     <td className="px-5 py-3 text-center">

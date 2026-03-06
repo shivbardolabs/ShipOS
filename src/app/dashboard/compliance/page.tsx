@@ -76,10 +76,10 @@ interface ComplianceRecord {
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
 const statusConfig: Record<string, { color: string; bg: string; border: string; icon: typeof ShieldCheck; label: string }> = {
-  compliant: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: ShieldCheck, label: 'Compliant' },
-  warning: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: AlertTriangle, label: 'Warning' },
-  critical: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', icon: ShieldAlert, label: 'Critical' },
-  expired: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: ShieldX, label: 'Expired' },
+  compliant: { color: 'text-status-success-400', bg: 'bg-status-success-500/10', border: 'border-status-success-500/20', icon: ShieldCheck, label: 'Compliant' },
+  warning: { color: 'text-status-warning-400', bg: 'bg-status-warning-500/10', border: 'border-status-warning-500/20', icon: AlertTriangle, label: 'Warning' },
+  critical: { color: 'text-status-warning-400', bg: 'bg-status-warning-alt/10', border: 'border-status-warning-alt/20', icon: ShieldAlert, label: 'Critical' },
+  expired: { color: 'text-status-error-400', bg: 'bg-status-error-500/10', border: 'border-status-error-500/20', icon: ShieldX, label: 'Expired' },
   missing: { color: 'text-surface-400', bg: 'bg-surface-800/50', border: 'border-surface-700/50', icon: ShieldOff, label: 'Missing' },
 };
 
@@ -197,12 +197,12 @@ export default function ComplianceDashboardPage() {
           <Card className="col-span-2 sm:col-span-1">
             <div className="flex flex-col items-center text-center">
               <div className={`flex h-14 w-14 items-center justify-center rounded-full mb-2 ${
-                summary.complianceScore >= 90 ? 'bg-emerald-500/20' :
-                summary.complianceScore >= 70 ? 'bg-yellow-500/20' : 'bg-red-500/20'
+                summary.complianceScore >= 90 ? 'bg-status-success-500/20' :
+                summary.complianceScore >= 70 ? 'bg-status-warning-500/20' : 'bg-status-error-500/20'
               }`}>
                 <span className={`text-2xl font-bold ${
-                  summary.complianceScore >= 90 ? 'text-emerald-400' :
-                  summary.complianceScore >= 70 ? 'text-yellow-400' : 'text-red-400'
+                  summary.complianceScore >= 90 ? 'text-status-success-400' :
+                  summary.complianceScore >= 70 ? 'text-status-warning-400' : 'text-status-error-400'
                 }`}>
                   {summary.complianceScore}%
                 </span>
@@ -227,11 +227,11 @@ export default function ComplianceDashboardPage() {
           {/* Compliant */}
           <Card>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
-                <ShieldCheck className="h-5 w-5 text-emerald-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-success-500/20">
+                <ShieldCheck className="h-5 w-5 text-status-success-400" />
               </div>
               <div>
-                <p className="text-xl font-bold text-emerald-400">{summary.compliant}</p>
+                <p className="text-xl font-bold text-status-success-400">{summary.compliant}</p>
                 <p className="text-xs text-surface-500">Compliant</p>
               </div>
             </div>
@@ -240,11 +240,11 @@ export default function ComplianceDashboardPage() {
           {/* Warning / Expiring Soon */}
           <Card>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/20">
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-warning-500/20">
+                <AlertTriangle className="h-5 w-5 text-status-warning-400" />
               </div>
               <div>
-                <p className="text-xl font-bold text-yellow-400">{summary.warning + summary.critical}</p>
+                <p className="text-xl font-bold text-status-warning-400">{summary.warning + summary.critical}</p>
                 <p className="text-xs text-surface-500">Expiring Soon</p>
               </div>
             </div>
@@ -253,11 +253,11 @@ export default function ComplianceDashboardPage() {
           {/* Expired */}
           <Card>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/20">
-                <ShieldX className="h-5 w-5 text-red-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-error-500/20">
+                <ShieldX className="h-5 w-5 text-status-error-400" />
               </div>
               <div>
-                <p className="text-xl font-bold text-red-400">{summary.expired}</p>
+                <p className="text-xl font-bold text-status-error-400">{summary.expired}</p>
                 <p className="text-xs text-surface-500">Expired</p>
               </div>
             </div>
@@ -290,36 +290,36 @@ export default function ComplianceDashboardPage() {
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '30'
-                  ? 'border-red-500/50 bg-red-500/10'
+                  ? 'border-status-error-500/50 bg-status-error-500/10'
                   : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600'
               )}
               onClick={() => setExpirationFilter(expirationFilter === '30' ? 'all' : '30')}
             >
-              <p className="text-2xl font-bold text-red-400">{summary.expiringNext30}</p>
+              <p className="text-2xl font-bold text-status-error-400">{summary.expiringNext30}</p>
               <p className="text-xs text-surface-500">Next 30 Days</p>
             </button>
             <button
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '60'
-                  ? 'border-orange-500/50 bg-orange-500/10'
+                  ? 'border-status-warning-alt/50 bg-status-warning-alt/10'
                   : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600'
               )}
               onClick={() => setExpirationFilter(expirationFilter === '60' ? 'all' : '60')}
             >
-              <p className="text-2xl font-bold text-orange-400">{summary.expiringNext60}</p>
+              <p className="text-2xl font-bold text-status-warning-400">{summary.expiringNext60}</p>
               <p className="text-xs text-surface-500">Next 60 Days</p>
             </button>
             <button
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '90'
-                  ? 'border-yellow-500/50 bg-yellow-500/10'
+                  ? 'border-status-warning-500/50 bg-status-warning-500/10'
                   : 'border-surface-700/50 bg-surface-800/30 hover:border-surface-600'
               )}
               onClick={() => setExpirationFilter(expirationFilter === '90' ? 'all' : '90')}
             >
-              <p className="text-2xl font-bold text-yellow-400">{summary.expiringNext90}</p>
+              <p className="text-2xl font-bold text-status-warning-400">{summary.expiringNext90}</p>
               <p className="text-xs text-surface-500">Next 90 Days</p>
             </button>
           </div>
@@ -362,7 +362,7 @@ export default function ComplianceDashboardPage() {
       ) : error ? (
         <Card>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <XCircle className="h-8 w-8 text-red-400 mb-3" />
+            <XCircle className="h-8 w-8 text-status-error-400 mb-3" />
             <p className="text-sm text-surface-400">{error}</p>
             <Button variant="secondary" size="sm" className="mt-3" onClick={fetchData}>
               Retry
@@ -415,9 +415,9 @@ export default function ComplianceDashboardPage() {
                         {record.daysUntilIdExpiry !== null ? (
                           <div>
                             <span className={cn('text-xs font-medium', 
-                              record.daysUntilIdExpiry <= 0 ? 'text-red-400' :
-                              record.daysUntilIdExpiry <= 30 ? 'text-orange-400' :
-                              record.daysUntilIdExpiry <= 90 ? 'text-yellow-400' : 'text-surface-300'
+                              record.daysUntilIdExpiry <= 0 ? 'text-status-error-400' :
+                              record.daysUntilIdExpiry <= 30 ? 'text-status-warning-400' :
+                              record.daysUntilIdExpiry <= 90 ? 'text-status-warning-400' : 'text-surface-300'
                             )}>
                               {record.daysUntilIdExpiry <= 0 ? 'Expired' : `${record.daysUntilIdExpiry}d`}
                             </span>
@@ -455,7 +455,7 @@ export default function ComplianceDashboardPage() {
                             </span>
                           </div>
                         ) : (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-status-success-500" />
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -543,8 +543,8 @@ export default function ComplianceDashboardPage() {
                 <div>
                   <p className="text-xs text-surface-500">Expiration</p>
                   <p className={cn('text-sm font-medium',
-                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 0 ? 'text-red-400' :
-                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 30 ? 'text-orange-400' :
+                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 0 ? 'text-status-error-400' :
+                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 30 ? 'text-status-warning-400' :
                     'text-surface-200'
                   )}>
                     {selectedRecord.idExpiration ? formatDate(selectedRecord.idExpiration) : 'Unknown'}
@@ -553,10 +553,10 @@ export default function ComplianceDashboardPage() {
                 <div>
                   <p className="text-xs text-surface-500">Days Remaining</p>
                   <p className={cn('text-sm font-bold',
-                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 0 ? 'text-red-400' :
-                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 30 ? 'text-orange-400' :
-                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 90 ? 'text-yellow-400' :
-                    'text-emerald-400'
+                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 0 ? 'text-status-error-400' :
+                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 30 ? 'text-status-warning-400' :
+                    selectedRecord.daysUntilIdExpiry !== null && selectedRecord.daysUntilIdExpiry <= 90 ? 'text-status-warning-400' :
+                    'text-status-success-400'
                   )}>
                     {selectedRecord.daysUntilIdExpiry !== null
                       ? selectedRecord.daysUntilIdExpiry <= 0 ? 'EXPIRED' : `${selectedRecord.daysUntilIdExpiry} days`
@@ -580,7 +580,7 @@ export default function ComplianceDashboardPage() {
                   <div>
                     <p className="text-xs text-surface-500">Expiration</p>
                     <p className={cn('text-sm',
-                      selectedRecord.daysUntilSecondaryExpiry !== null && selectedRecord.daysUntilSecondaryExpiry <= 0 ? 'text-red-400' : 'text-surface-200'
+                      selectedRecord.daysUntilSecondaryExpiry !== null && selectedRecord.daysUntilSecondaryExpiry <= 0 ? 'text-status-error-400' : 'text-surface-200'
                     )}>
                       {selectedRecord.secondaryIdExpiry ? formatDate(selectedRecord.secondaryIdExpiry) : 'Unknown'}
                     </p>

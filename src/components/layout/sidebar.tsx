@@ -162,12 +162,12 @@ function RoleBanner({ role }: { role: UserRole }) {
       className="flex items-center justify-center gap-2 py-1.5"
       style={{ background: `linear-gradient(90deg, ${cfg.stripFrom}, ${cfg.stripTo})` }}
     >
-      <RoleIcon style={{ height: 14, width: 14, color: '#fff' }} />
+      <RoleIcon style={{ height: 14, width: 14, color: 'var(--color-surface-950)' }} />
       <span
         style={{
           fontSize: 11,
           fontWeight: 700,
-          color: '#fff',
+          color: 'var(--color-surface-950)',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
         }}
@@ -191,10 +191,10 @@ function PendingBadge({ count }: { count: number }) {
       className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold leading-none text-white animate-in fade-in duration-200"
       style={{
         background: isUrgent
-          ? 'linear-gradient(135deg, #e11d48, #f43f5e)'
+          ? 'linear-gradient(135deg, var(--color-status-error-600), var(--color-status-error-500))'
           : 'linear-gradient(135deg, #d97706, #f59e0b)',
         boxShadow: isUrgent
-          ? '0 0 8px rgba(225, 29, 72, 0.4)'
+          ? '0 0 8px color-mix(in srgb, var(--color-status-error-600) 40%, transparent)'
           : '0 0 8px rgba(217, 119, 6, 0.3)',
       }}
     >
@@ -293,7 +293,7 @@ export function Sidebar() {
                     'mb-2 px-2 text-[10px] font-bold uppercase tracking-widest',
                     isPlatformSection ? '' : 'text-surface-600'
                   )}
-                  style={isPlatformSection ? { color: '#e11d48' } : undefined}
+                  style={isPlatformSection ? { color: 'var(--color-status-error-600)' } : undefined}
                 >
                   {section.title}
                 </p>
@@ -307,12 +307,12 @@ export function Sidebar() {
                       active
                         ? isPlatformSection ? 'pl-[10px]' : 'nav-active pl-[10px]'
                         : isPlatformSection
-                        ? 'text-rose-400/70 hover:text-rose-300 hover:bg-rose-500/10'
+                        ? 'text-status-error-400/70 hover:text-rose-300 hover:bg-status-error-500/10'
                         : 'text-surface-400 hover:text-surface-200'
                     );
                     const linkStyle =
                       active && isPlatformSection
-                        ? { borderLeft: '3px solid #e11d48', background: 'rgba(225, 29, 72, 0.1)', color: '#fb7185' }
+                        ? { borderLeft: '3px solid #e11d48', background: 'color-mix(in srgb, var(--color-status-error-600) 10%, transparent)', color: '#fb7185' }
                         : undefined;
 
                     const linkContent = (
@@ -322,7 +322,7 @@ export function Sidebar() {
                             'h-[18px] w-[18px] flex-shrink-0',
                             active && !isPlatformSection && 'text-primary-600'
                           )}
-                          style={isPlatformSection ? { color: '#e11d48' } : undefined}
+                          style={isPlatformSection ? { color: 'var(--color-status-error-600)' } : undefined}
                         />
                         <span className="truncate">{item.label}</span>
                         {item.external && (
@@ -363,7 +363,7 @@ export function Sidebar() {
                   })}
                 </div>
                 {isPlatformSection && (
-                  <div className="mt-3 mb-1 border-b" style={{ borderColor: 'rgba(225, 29, 72, 0.2)' }} />
+                  <div className="mt-3 mb-1 border-b" style={{ borderColor: 'color-mix(in srgb, var(--color-status-error-600) 20%, transparent)' }} />
                 )}
               </div>
             );
@@ -425,7 +425,7 @@ export function Sidebar() {
 
                 <a
                   href="/api/auth/logout"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-accent-rose hover:bg-red-50 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-accent-rose hover:bg-status-error-50 transition-colors"
                   title="Sign out"
                 >
                   <LogOut className="h-4 w-4" />

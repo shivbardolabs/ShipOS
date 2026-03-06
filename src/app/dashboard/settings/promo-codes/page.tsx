@@ -222,7 +222,7 @@ export default function PromoCodesPage() {
                             <Edit3 className="h-3.5 w-3.5" />
                           </Button>
                           <Button size="sm" variant="ghost" iconOnly onClick={() => deletePromo(p.id)}>
-                            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                            <Trash2 className="h-3.5 w-3.5 text-status-error-400" />
                           </Button>
                         </div>
                       )}

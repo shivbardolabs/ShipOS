@@ -98,9 +98,9 @@ interface AdminSubscription {
 }
 
 const planIcons: Record<string, React.ReactNode> = {
-  starter: <Star className="h-6 w-6 text-blue-500" />,
+  starter: <Star className="h-6 w-6 text-status-info-500" />,
   pro: <Zap className="h-6 w-6 text-primary-500" />,
-  enterprise: <Crown className="h-6 w-6 text-amber-500" />,
+  enterprise: <Crown className="h-6 w-6 text-status-warning-500" />,
 };
 
 const statusBadgeVariant = (status: string) => {
@@ -253,7 +253,7 @@ export default function BillingPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-status-warning-500 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-surface-200">
                   Stripe Not Configured
@@ -280,8 +280,8 @@ export default function BillingPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10">
-                    <TrendingUp className="h-5 w-5 text-emerald-500" />
+                  <div className="p-2 rounded-lg bg-status-success-500/10">
+                    <TrendingUp className="h-5 w-5 text-status-success-500" />
                   </div>
                   <div>
                     <p className="text-xs text-surface-500 uppercase tracking-wide">MRR</p>
@@ -310,8 +310,8 @@ export default function BillingPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Users className="h-5 w-5 text-blue-500" />
+                  <div className="p-2 rounded-lg bg-status-info-500/10">
+                    <Users className="h-5 w-5 text-status-info-500" />
                   </div>
                   <div>
                     <p className="text-xs text-surface-500 uppercase tracking-wide">Active</p>
@@ -325,8 +325,8 @@ export default function BillingPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-red-500/10">
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                  <div className="p-2 rounded-lg bg-status-error-500/10">
+                    <AlertTriangle className="h-5 w-5 text-status-error-500" />
                   </div>
                   <div>
                     <p className="text-xs text-surface-500 uppercase tracking-wide">Failed</p>
@@ -516,9 +516,9 @@ export default function BillingPage() {
 
                 {/* Cancellation notice */}
                 {subscription.cancelAtPeriodEnd && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                    <p className="text-sm text-amber-300">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-status-warning-500/10 border border-status-warning-500/20">
+                    <AlertTriangle className="h-4 w-4 text-status-warning-500 flex-shrink-0" />
+                    <p className="text-sm text-status-warning-300">
                       Your subscription will cancel at the end of the current period
                       {subscription.currentPeriodEnd && ` (${formatDate(subscription.currentPeriodEnd)})`}.
                     </p>
@@ -583,7 +583,7 @@ export default function BillingPage() {
                   key={plan.slug}
                   className={
                     isCurrentPlan
-                      ? 'ring-2 ring-emerald-500'
+                      ? 'ring-2 ring-status-success-500'
                       : plan.popular
                         ? 'ring-2 ring-primary-500'
                         : ''
@@ -622,7 +622,7 @@ export default function BillingPage() {
                     <ul className="space-y-2 mb-6">
                       {plan.features.map((feature: string, i: number) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-surface-300">
-                          <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <Check className="h-4 w-4 text-status-success-500 mt-0.5 flex-shrink-0" />
                           {feature}
                         </li>
                       ))}
@@ -645,7 +645,7 @@ export default function BillingPage() {
                     )}
 
                     {isCurrentPlan && (
-                      <div className="text-center py-2 text-sm text-emerald-500 font-medium">
+                      <div className="text-center py-2 text-sm text-status-success-500 font-medium">
                         ✓ Your current plan
                       </div>
                     )}

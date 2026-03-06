@@ -67,7 +67,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       >
         {/* Logo / Brand */}
         <div className="flex items-center gap-3 border-b border-surface-800 px-5 py-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-orange-500">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-status-error-500 to-status-warning-alt">
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -131,7 +131,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </div>
             <Link
               href="/api/auth/logout"
-              className="text-surface-500 hover:text-red-400 transition-colors"
+              className="text-surface-500 hover:text-status-error-400 transition-colors"
               title="Log out"
             >
               <LogOut className="h-4 w-4" />
@@ -151,8 +151,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-orange-400" />
-            <span className="text-xs font-medium text-orange-400 uppercase tracking-wider">
+            <ShieldCheck className="h-4 w-4 text-status-warning-400" />
+            <span className="text-xs font-medium text-status-warning-400 uppercase tracking-wider">
               Platform Console
             </span>
           </div>

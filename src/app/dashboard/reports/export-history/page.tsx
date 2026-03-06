@@ -59,10 +59,10 @@ function generateExportHistory(): ExportRecord[] {
 /* -------------------------------------------------------------------------- */
 function FormatIcon({ format }: { format: string }) {
   switch (format) {
-    case 'XLSX': return <FileSpreadsheet className="h-4 w-4 text-emerald-400" />;
-    case 'CSV': return <FileText className="h-4 w-4 text-blue-400" />;
-    case 'PDF': return <File className="h-4 w-4 text-red-400" />;
-    case 'QBO': return <FileText className="h-4 w-4 text-purple-400" />;
+    case 'XLSX': return <FileSpreadsheet className="h-4 w-4 text-status-success-400" />;
+    case 'CSV': return <FileText className="h-4 w-4 text-status-info-400" />;
+    case 'PDF': return <File className="h-4 w-4 text-status-error-400" />;
+    case 'QBO': return <FileText className="h-4 w-4 text-status-violet-400" />;
     default: return <FileText className="h-4 w-4 text-surface-400" />;
   }
 }
@@ -174,10 +174,10 @@ export default function ExportHistoryPage() {
       {/* Export format info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { format: 'Excel (.xlsx)', desc: 'Multi-sheet workbooks with formatting, headers, and data types preserved', color: 'border-emerald-500/30 bg-emerald-500/5' },
-          { format: 'CSV', desc: 'Standard UTF-8 comma-separated values, compatible with all tools', color: 'border-blue-500/30 bg-blue-500/5' },
-          { format: 'QBO', desc: 'QuickBooks Online compatible format for direct import with account mapping', color: 'border-purple-500/30 bg-purple-500/5' },
-          { format: 'PDF', desc: 'Print-ready report with branding, charts, page numbers, and 8.5×11 layout', color: 'border-red-500/30 bg-red-500/5' },
+          { format: 'Excel (.xlsx)', desc: 'Multi-sheet workbooks with formatting, headers, and data types preserved', color: 'border-status-success-500/30 bg-status-success-500/5' },
+          { format: 'CSV', desc: 'Standard UTF-8 comma-separated values, compatible with all tools', color: 'border-status-info-500/30 bg-status-info-500/5' },
+          { format: 'QBO', desc: 'QuickBooks Online compatible format for direct import with account mapping', color: 'border-status-violet-500/30 bg-status-violet-500/5' },
+          { format: 'PDF', desc: 'Print-ready report with branding, charts, page numbers, and 8.5×11 layout', color: 'border-status-error-500/30 bg-status-error-500/5' },
         ].map((info) => (
           <Card key={info.format} className={`border ${info.color}`}>
             <p className="text-sm font-semibold text-surface-200">{info.format}</p>

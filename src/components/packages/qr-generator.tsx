@@ -134,8 +134,8 @@ export function CustomerQRBadge({
     >
       <QRCode value={pmbNumber} size={120} modules={21} />
       <div className="text-center">
-        <p className="text-sm font-bold text-gray-900">{pmbNumber}</p>
-        <p className="text-xs text-gray-600">{customerName}</p>
+        <p className="text-sm font-bold text-surface-100">{pmbNumber}</p>
+        <p className="text-xs text-surface-400">{customerName}</p>
       </div>
     </div>
   );

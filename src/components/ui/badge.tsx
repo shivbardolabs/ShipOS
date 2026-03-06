@@ -26,20 +26,20 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-primary-500/20 text-primary-600 border-primary-200',
-  success: 'bg-emerald-100 text-emerald-600 border-emerald-200',
-  warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  danger: 'bg-red-100 text-red-600 border-red-200',
-  info: 'bg-blue-100 text-blue-600 border-blue-500/30',
+  success: 'bg-status-success-100 text-status-success-600 border-status-success-200',
+  warning: 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30',
+  danger: 'bg-status-error-100 text-status-error-600 border-status-error-200',
+  info: 'bg-status-info-100 text-status-info-600 border-status-info-500/30',
   muted: 'bg-surface-600/30 text-surface-400 border-surface-600/40',
   outline: 'bg-transparent text-surface-300 border-surface-500',
 };
 
 const dotVariantColors: Record<BadgeVariant, string> = {
   default: 'bg-primary-400',
-  success: 'bg-emerald-400',
-  warning: 'bg-yellow-400',
-  danger: 'bg-red-400',
-  info: 'bg-blue-400',
+  success: 'bg-status-success-400',
+  warning: 'bg-status-warning-400',
+  danger: 'bg-status-error-400',
+  info: 'bg-status-info-400',
   muted: 'bg-surface-400',
   outline: 'bg-surface-400',
 };
@@ -59,7 +59,7 @@ export function Badge({
   // When using getStatusColor, extract the text-* class for the dot
   let dotColor = dotVariantColors[resolvedVariant];
   if (colorClass) {
-    // Extract e.g. "text-emerald-600" → "bg-emerald-400"
+    // Extract e.g. "text-status-success-600" → "bg-status-success-400"
     const match = colorClass.match(/text-(\S+-\d+)/);
     if (match) dotColor = `bg-${match[1]}`;
   }

@@ -67,7 +67,7 @@ interface SparklineProps {
   className?: string;
 }
 
-export function Sparkline({ data, color = '#6366f1', height = 32, className }: SparklineProps) {
+export function Sparkline({ data, color = 'var(--color-primary-500)', height = 32, className }: SparklineProps) {
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);

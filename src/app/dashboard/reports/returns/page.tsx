@@ -52,7 +52,7 @@ function useReturnsData() {
         revenuePerReturn: seededRandom(301, 3, 8),
         totalRevenue: seededRandom(302, 1200, 3500),
         avgProcessingTime: seededRandom(303, 5, 12),
-        color: '#4F46E5',
+        color: 'var(--color-primary-600)',
       },
       {
         id: 'happy_returns',
@@ -62,7 +62,7 @@ function useReturnsData() {
         revenuePerReturn: seededRandom(311, 2, 6),
         totalRevenue: seededRandom(312, 800, 2800),
         avgProcessingTime: seededRandom(313, 3, 10),
-        color: '#10B981',
+        color: 'var(--color-status-success-500)',
       },
     ];
 
@@ -72,18 +72,18 @@ function useReturnsData() {
 
     /* Returns by carrier */
     const returnsByCarrier = [
-      { label: 'FedEx', value: seededRandom(320, 100, 250), color: '#4F46E5' },
-      { label: 'UPS', value: seededRandom(321, 60, 180), color: '#D97706' },
-      { label: 'USPS', value: seededRandom(322, 40, 120), color: '#2563EB' },
-      { label: 'Amazon', value: seededRandom(323, 30, 100), color: '#F97316' },
+      { label: 'FedEx', value: seededRandom(320, 100, 250), color: 'var(--color-primary-600)' },
+      { label: 'UPS', value: seededRandom(321, 60, 180), color: 'var(--color-status-warning-600)' },
+      { label: 'USPS', value: seededRandom(322, 40, 120), color: 'var(--color-status-info-600)' },
+      { label: 'Amazon', value: seededRandom(323, 30, 100), color: 'var(--color-status-warning-alt)' },
     ];
 
     /* Returns by platform */
     const returnsByPlatform = [
-      { label: 'In-Store', value: seededRandom(330, 150, 300), color: '#6366F1' },
-      { label: 'AnyTime Mailbox', value: seededRandom(331, 60, 150), color: '#10B981' },
-      { label: 'iPostal1', value: seededRandom(332, 50, 130), color: '#F59E0B' },
-      { label: 'PostScan Mail', value: seededRandom(333, 30, 100), color: '#EF4444' },
+      { label: 'In-Store', value: seededRandom(330, 150, 300), color: 'var(--color-primary-500)' },
+      { label: 'AnyTime Mailbox', value: seededRandom(331, 60, 150), color: 'var(--color-status-success-500)' },
+      { label: 'iPostal1', value: seededRandom(332, 50, 130), color: 'var(--color-status-warning-500)' },
+      { label: 'PostScan Mail', value: seededRandom(333, 30, 100), color: 'var(--color-status-error-500)' },
     ];
 
     /* Top merchants by returns */
@@ -191,7 +191,7 @@ export default function ReturnsReportPage() {
                   </div>
                   <div>
                     <p className="text-surface-400">Revenue</p>
-                    <p className="text-xl font-bold text-emerald-400">{formatCurrency(p.totalRevenue)}</p>
+                    <p className="text-xl font-bold text-status-success-400">{formatCurrency(p.totalRevenue)}</p>
                   </div>
                   <div>
                     <p className="text-surface-400">Rev / Return</p>
@@ -271,11 +271,11 @@ export default function ReturnsReportPage() {
           <CardContent>
             <div className="flex items-center gap-4 mb-4">
               <span className="text-xl font-bold text-surface-100">{formatNumber(data.totalReturns)} returns</span>
-              <span className="text-xs text-emerald-400 flex items-center gap-1">
+              <span className="text-xs text-status-success-400 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" /> +7.8% vs prior period
               </span>
             </div>
-            <Sparkline data={data.returnsTrend} color="#6366f1" height={60} />
+            <Sparkline data={data.returnsTrend} color="var(--color-primary-500)" height={60} />
           </CardContent>
         </Card>
 
@@ -306,7 +306,7 @@ export default function ReturnsReportPage() {
                         <td className="py-2.5 text-right text-surface-200 font-medium">{total}</td>
                         <td className="py-2.5 text-right">
                           {i > 0 ? (
-                            <span className={change >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                            <span className={change >= 0 ? 'text-status-success-400' : 'text-status-error-400'}>
                               {change >= 0 ? '+' : ''}{change.toFixed(1)}%
                             </span>
                           ) : (
@@ -334,7 +334,7 @@ export default function ReturnsReportPage() {
                 <p className="text-xs text-surface-500 mt-1">{seededRandom(391, 70, 85)}% of total flow</p>
               </div>
               <div className="text-center p-6 rounded-lg bg-surface-800/30">
-                <RotateCcw className="h-8 w-8 mx-auto text-yellow-400 mb-2" />
+                <RotateCcw className="h-8 w-8 mx-auto text-status-warning-400 mb-2" />
                 <p className="text-2xl font-bold text-surface-100">{formatNumber(data.totalReturns)}</p>
                 <p className="text-sm text-surface-400 mt-1">Returns</p>
                 <p className="text-xs text-surface-500 mt-1">{seededRandom(392, 15, 30)}% of total flow</p>

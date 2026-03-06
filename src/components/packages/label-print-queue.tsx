@@ -158,7 +158,7 @@ export function LabelPrintQueue({
       <Card padding="md" className={cn('relative', className)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-400">
               <Layers className="h-5 w-5" />
             </div>
             <div>
@@ -211,12 +211,12 @@ export function LabelPrintQueue({
         </div>
 
         {printError && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-red-400 bg-red-500/5 rounded-lg p-2">
+          <div className="mt-3 flex items-center gap-2 text-sm text-status-error-400 bg-status-error-500/5 rounded-lg p-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             {printError}
             <button
               onClick={handlePrintAll}
-              className="ml-auto text-xs font-medium text-red-300 hover:text-red-200 underline"
+              className="ml-auto text-xs font-medium text-status-error-300 hover:text-status-error-200 underline"
             >
               Retry
             </button>
@@ -255,7 +255,7 @@ export function LabelPrintQueue({
                   </button>
                   <button
                     onClick={() => onRemoveFromQueue(label.id)}
-                    className="p-1.5 rounded-md text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-1.5 rounded-md text-surface-500 hover:text-status-error-400 hover:bg-status-error-500/10 transition-colors"
                     title="Remove from queue"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -313,7 +313,7 @@ export function LabelPrintQueue({
         {queue[previewIndex] && (
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-surface-400">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-status-success-400" />
               <span>
                 {queue[previewIndex].customerName} —{' '}
                 <span className="font-mono text-primary-400">

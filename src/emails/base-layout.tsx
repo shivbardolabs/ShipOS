@@ -86,14 +86,14 @@ const logoText: React.CSSProperties = {
 };
 
 const content: React.CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-surface-950)',
   borderRadius: '12px',
   padding: '32px',
   border: '1px solid #e5e7eb',
 };
 
 const hr: React.CSSProperties = {
-  borderColor: '#e5e7eb',
+  borderColor: 'var(--color-surface-700)',
   margin: '24px 0',
 };
 
@@ -109,6 +109,6 @@ const footerText: React.CSSProperties = {
 };
 
 const footerLink: React.CSSProperties = {
-  color: '#6366f1',
+  color: 'var(--color-primary-500)',
   textDecoration: 'none',
 };

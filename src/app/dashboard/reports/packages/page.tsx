@@ -152,7 +152,7 @@ export default function PackageReportPage() {
     { key: 'pmb', label: 'PMB' },
     { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
     { key: 'daysHeld', label: 'Days Held', align: 'right', render: (r) => (
-      <span className={r.daysHeld > 14 ? 'text-red-400 font-semibold' : 'text-surface-300'}>
+      <span className={r.daysHeld > 14 ? 'text-status-error-400 font-semibold' : 'text-surface-300'}>
         {r.daysHeld}
       </span>
     )},
@@ -173,7 +173,7 @@ export default function PackageReportPage() {
       Object.entries(data.statusCounts).map(([label, value], i) => ({
         label: label.replace(/_/g, ' '),
         value,
-        color: ['#6366f1', '#f59e0b', '#10b981', '#94a3b8', '#ef4444'][i % 5],
+        color: ['var(--color-primary-500)', 'var(--color-status-warning-500)', 'var(--color-status-success-500)', 'var(--color-surface-600)', 'var(--color-status-error-500)'][i % 5],
       })),
     [data.statusCounts]
   );
@@ -253,7 +253,7 @@ export default function PackageReportPage() {
               data={data.agingBuckets.map((b, i) => ({
                 label: b.label,
                 value: b.count,
-                color: ['bg-emerald-500/60', 'bg-blue-500/60', 'bg-yellow-500/60', 'bg-orange-500/60', 'bg-red-500/60'][i],
+                color: ['bg-status-success-500/60', 'bg-status-info-500/60', 'bg-status-warning-500/60', 'bg-status-warning-alt/60', 'bg-status-error-500/60'][i],
               }))}
               barHeight={36}
             />
@@ -263,9 +263,9 @@ export default function PackageReportPage() {
               <h4 className="text-sm font-semibold text-surface-300">Configurable Alert Thresholds</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { label: 'Warning', days: 7, color: 'border-yellow-500/30 bg-yellow-500/5' },
-                  { label: 'Overdue', days: 14, color: 'border-orange-500/30 bg-orange-500/5' },
-                  { label: 'Storage Fee', days: 30, color: 'border-red-500/30 bg-red-500/5' },
+                  { label: 'Warning', days: 7, color: 'border-status-warning-500/30 bg-status-warning-500/5' },
+                  { label: 'Overdue', days: 14, color: 'border-status-warning-alt/30 bg-status-warning-alt/5' },
+                  { label: 'Storage Fee', days: 30, color: 'border-status-error-500/30 bg-status-error-500/5' },
                 ].map((threshold) => (
                   <div key={threshold.label} className={`p-4 rounded-lg border ${threshold.color}`}>
                     <p className="text-sm font-semibold text-surface-200">{threshold.label}</p>
@@ -300,7 +300,7 @@ export default function PackageReportPage() {
               <MiniBarChart
                 data={Object.entries(data.platformCounts)
                   .sort((a, b) => b[1] - a[1])
-                  .map(([label, value]) => ({ label, value, color: 'bg-emerald-500/60' }))}
+                  .map(([label, value]) => ({ label, value, color: 'bg-status-success-500/60' }))}
                 barHeight={28}
               />
             </CardContent>
@@ -317,11 +317,11 @@ export default function PackageReportPage() {
             <CardContent>
               <MiniBarChart
                 data={[
-                  { label: 'Amazon Counter', value: seededRandom(50, 5, 18), color: 'bg-yellow-500/60' },
-                  { label: 'PUDO Point', value: seededRandom(51, 3, 12), color: 'bg-blue-500/60' },
-                  { label: 'Vinted', value: seededRandom(52, 2, 8), color: 'bg-purple-500/60' },
-                  { label: 'The Return', value: seededRandom(53, 1, 6), color: 'bg-red-500/60' },
-                  { label: 'Return Queen', value: seededRandom(54, 1, 5), color: 'bg-pink-500/60' },
+                  { label: 'Amazon Counter', value: seededRandom(50, 5, 18), color: 'bg-status-warning-500/60' },
+                  { label: 'PUDO Point', value: seededRandom(51, 3, 12), color: 'bg-status-info-500/60' },
+                  { label: 'Vinted', value: seededRandom(52, 2, 8), color: 'bg-status-violet-500/60' },
+                  { label: 'The Return', value: seededRandom(53, 1, 6), color: 'bg-status-error-500/60' },
+                  { label: 'Return Queen', value: seededRandom(54, 1, 5), color: 'bg-status-pink-500/60' },
                 ]}
                 barHeight={28}
               />

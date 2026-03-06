@@ -66,7 +66,7 @@ export default function DeliverabilityDashboard() {
   if (localUser?.role !== 'superadmin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
-        <ShieldAlert className="h-10 w-10 text-red-400 mb-3" />
+        <ShieldAlert className="h-10 w-10 text-status-error-400 mb-3" />
         <h2 className="text-lg font-semibold text-surface-200 mb-1">Access Denied</h2>
         <p className="text-sm text-surface-400">This page requires superadmin access.</p>
       </div>
@@ -76,11 +76,11 @@ export default function DeliverabilityDashboard() {
   const healthIcon = (status: ChannelHealth['status']) => {
     switch (status) {
       case 'healthy':
-        return <ShieldCheck className="h-4 w-4 text-emerald-400" />;
+        return <ShieldCheck className="h-4 w-4 text-status-success-400" />;
       case 'warning':
-        return <ShieldAlert className="h-4 w-4 text-yellow-400" />;
+        return <ShieldAlert className="h-4 w-4 text-status-warning-400" />;
       case 'critical':
-        return <ShieldAlert className="h-4 w-4 text-red-400" />;
+        return <ShieldAlert className="h-4 w-4 text-status-error-400" />;
       default:
         return <Activity className="h-4 w-4 text-surface-500" />;
     }
@@ -168,8 +168,8 @@ export default function DeliverabilityDashboard() {
         </Card>
         <Card padding="sm">
           <div className="flex items-center gap-3 p-2">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <Globe className="h-5 w-5 text-emerald-400" />
+            <div className="h-9 w-9 rounded-lg bg-status-success-500/10 flex items-center justify-center">
+              <Globe className="h-5 w-5 text-status-success-400" />
             </div>
             <div>
               <p className="text-sm font-semibold text-surface-200">Templates</p>
@@ -179,8 +179,8 @@ export default function DeliverabilityDashboard() {
         </Card>
         <Card padding="sm">
           <div className="flex items-center gap-3 p-2">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <UserCheck className="h-5 w-5 text-emerald-400" />
+            <div className="h-9 w-9 rounded-lg bg-status-success-500/10 flex items-center justify-center">
+              <UserCheck className="h-5 w-5 text-status-success-400" />
             </div>
             <div>
               <p className="text-sm font-semibold text-surface-200">Compliance</p>

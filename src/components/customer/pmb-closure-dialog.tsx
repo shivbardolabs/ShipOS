@@ -173,7 +173,7 @@ export function PmbClosureDialog({ customerId, open, onClose, onStatusChange }: 
             {data.preflight.hasInventory && (
               <div className="rounded-lg p-3 bg-yellow-950/30 border border-yellow-800/50">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4 w-4 text-status-warning-400 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-yellow-300">
                     This customer has {data.preflight.activePackageCount} package(s) and{' '}
                     {data.preflight.activeMailCount} mail piece(s) still on-site. Closing the PMB will
@@ -253,16 +253,16 @@ export function PmbClosureDialog({ customerId, open, onClose, onStatusChange }: 
       case 'confirm':
         return (
           <div className="space-y-4">
-            <div className="rounded-lg p-4 bg-red-950/20 border border-red-800/40">
+            <div className="rounded-lg p-4 bg-red-950/20 border border-status-error-800/40">
               <div className="flex items-start gap-3">
-                <Ban className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <Ban className="h-5 w-5 text-status-error-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-red-300">Confirm PMB Closure</h4>
-                  <p className="text-xs text-red-300/70 mt-1">
+                  <h4 className="text-sm font-semibold text-status-error-300">Confirm PMB Closure</h4>
+                  <p className="text-xs text-status-error-300/70 mt-1">
                     This will permanently close {data.pmbNumber} for {data.customerName}. The following
                     actions will be taken automatically:
                   </p>
-                  <ul className="mt-2 space-y-1 text-xs text-red-300/60">
+                  <ul className="mt-2 space-y-1 text-xs text-status-error-300/60">
                     <li>• Customer status set to &quot;Closed&quot;</li>
                     <li>• All active packages marked for RTS</li>
                     <li>• No new mail/packages will be accepted</li>

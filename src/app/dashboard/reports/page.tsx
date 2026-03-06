@@ -191,11 +191,11 @@ export default function ReportsPage() {
             <CardContent>
               <div className="flex items-center gap-4 mb-3">
                 <span className="text-2xl font-bold text-surface-100">{formatCurrency(stats.totalRevenue)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                <span className="text-xs text-status-success-400 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" /> +12.4%
                 </span>
               </div>
-              <Sparkline data={revenueTrend} color="#10b981" height={40} />
+              <Sparkline data={revenueTrend} color="var(--color-status-success-500)" height={40} />
               <p className="text-xs text-surface-500 mt-2">vs. previous period</p>
             </CardContent>
           </Card>
@@ -206,11 +206,11 @@ export default function ReportsPage() {
             <CardContent>
               <div className="flex items-center gap-4 mb-3">
                 <span className="text-2xl font-bold text-surface-100">{formatNumber(stats.totalPackages)}</span>
-                <span className="text-xs text-red-400 flex items-center gap-1">
+                <span className="text-xs text-status-error-400 flex items-center gap-1">
                   <TrendingDown className="h-3 w-3" /> -3.2%
                 </span>
               </div>
-              <Sparkline data={packageTrend} color="#6366f1" height={40} />
+              <Sparkline data={packageTrend} color="var(--color-primary-500)" height={40} />
               <p className="text-xs text-surface-500 mt-2">daily check-ins</p>
             </CardContent>
           </Card>
@@ -221,11 +221,11 @@ export default function ReportsPage() {
             <CardContent>
               <div className="flex items-center gap-4 mb-3">
                 <span className="text-2xl font-bold text-surface-100">{formatNumber(stats.activeCustomers)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                <span className="text-xs text-status-success-400 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" /> +5.8%
                 </span>
               </div>
-              <Sparkline data={customerTrend} color="#f59e0b" height={40} />
+              <Sparkline data={customerTrend} color="var(--color-status-warning-500)" height={40} />
               <p className="text-xs text-surface-500 mt-2">active PMB holders</p>
             </CardContent>
           </Card>
@@ -269,7 +269,7 @@ export default function ReportsPage() {
                               <td className="py-2 text-right text-surface-300">{data.count}</td>
                               <td className="py-2 text-right text-surface-300">{formatCurrency(data.revenue)}</td>
                               <td className="py-2 text-right text-surface-300">{formatCurrency(data.cost)}</td>
-                              <td className="py-2 text-right text-emerald-400">{formatCurrency(profit)}</td>
+                              <td className="py-2 text-right text-status-success-400">{formatCurrency(profit)}</td>
                               <td className="py-2 text-right">
                                 <Badge variant={margin > 30 ? 'success' : margin > 15 ? 'warning' : 'danger'} dot={false}>
                                   {margin.toFixed(1)}%

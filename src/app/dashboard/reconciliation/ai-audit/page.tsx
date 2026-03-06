@@ -53,13 +53,13 @@ const discrepancyLabels: Record<string, string> = {
 };
 
 const discrepancyColors: Record<string, string> = {
-  weight_overcharge: 'bg-red-500/15 text-red-400 border-red-500/25',
-  service_mismatch: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
-  duplicate_charge: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
-  invalid_surcharge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  address_correction: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
-  residential_surcharge: 'bg-pink-500/15 text-pink-400 border-pink-500/25',
-  late_delivery: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
+  weight_overcharge: 'bg-status-error-500/15 text-status-error-400 border-status-error-500/25',
+  service_mismatch: 'bg-status-warning-alt/15 text-status-warning-400 border-status-warning-alt/25',
+  duplicate_charge: 'bg-status-error-500/15 text-status-error-400 border-status-error-500/25',
+  invalid_surcharge: 'bg-status-warning-500/15 text-status-warning-400 border-status-warning-500/25',
+  address_correction: 'bg-status-warning-500/15 text-status-warning-400 border-status-warning-500/25',
+  residential_surcharge: 'bg-status-pink-500/15 text-status-pink-400 border-status-pink-500/25',
+  late_delivery: 'bg-status-violet-500/15 text-status-violet-400 border-status-violet-500/25',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -79,10 +79,10 @@ function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
     pct >= 90
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30'
       : pct >= 75
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/20 text-red-400 border-red-500/30';
+        ? 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30'
+        : 'bg-status-error-500/20 text-status-error-400 border-status-error-500/30';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
       <Sparkles className="h-3 w-3" />
@@ -385,7 +385,7 @@ export default function AIAuditPage() {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="text-red-400 font-semibold text-sm">
+        <span className="text-status-error-400 font-semibold text-sm">
           +{formatCurrency(row.overchargeAmount as number)}
         </span>
       ),
@@ -403,7 +403,7 @@ export default function AIAuditPage() {
       render: (row) => {
         const isDisputed = disputedIds.has(row.id as string);
         return isDisputed ? (
-          <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
+          <span className="inline-flex items-center gap-1 text-xs text-status-success-400 font-medium">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Disputed
           </span>
@@ -411,7 +411,7 @@ export default function AIAuditPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+            className="text-status-violet-400 hover:text-violet-300 hover:bg-status-violet-500/10"
             onClick={(e) => {
               e.stopPropagation();
               handleDispute(row.id as string);
@@ -430,10 +430,10 @@ export default function AIAuditPage() {
     <div className="space-y-6">
       <PageHeader
         title="AI Carrier Bill Auditor"
-        icon={<Sparkles className="h-5 w-5 text-violet-400" />}
+        icon={<Sparkles className="h-5 w-5 text-status-violet-400" />}
         description="AI finds carrier overcharges."
         badge={
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/15 text-violet-400 border border-violet-500/25">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-status-violet-500/15 text-status-violet-400 border border-status-violet-500/25">
             <Zap className="h-3 w-3" />
             AI-Powered
           </span>
@@ -479,7 +479,7 @@ export default function AIAuditPage() {
                       className={cn(
                         'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
                         selectedCarrier === c.id
-                          ? 'border-violet-500/50 bg-violet-500/10 shadow-lg shadow-violet-500/5'
+                          ? 'border-status-violet-500/50 bg-status-violet-500/10 shadow-lg shadow-status-violet-500/5'
                           : 'border-surface-700 bg-surface-900 hover:border-surface-600 hover:bg-surface-800'
                       )}
                     >
@@ -506,7 +506,7 @@ export default function AIAuditPage() {
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-4 p-10 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-300',
                   dragOver
-                    ? 'border-violet-400 bg-violet-500/10 scale-[1.01]'
+                    ? 'border-status-violet-400 bg-status-violet-500/10 scale-[1.01]'
                     : 'border-surface-700 bg-surface-900/50 hover:border-surface-500 hover:bg-surface-800/50'
                 )}
               >
@@ -514,7 +514,7 @@ export default function AIAuditPage() {
                   className={cn(
                     'flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300',
                     dragOver
-                      ? 'bg-violet-500/20 text-violet-400 scale-110'
+                      ? 'bg-status-violet-500/20 text-status-violet-400 scale-110'
                       : 'bg-surface-800 text-surface-400'
                   )}
                 >
@@ -523,7 +523,7 @@ export default function AIAuditPage() {
                 <div className="text-center">
                   <p className="text-sm font-medium text-surface-200">
                     Drop your carrier invoice here, or{' '}
-                    <span className="text-violet-400 underline underline-offset-2">browse</span>
+                    <span className="text-status-violet-400 underline underline-offset-2">browse</span>
                   </p>
                   <p className="text-xs text-surface-500 mt-1.5">
                     Supports PDF and CSV formats • Max 25MB
@@ -539,9 +539,9 @@ export default function AIAuditPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
-                  <p className="text-sm text-red-400">{error}</p>
+                <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+                  <XCircle className="h-4 w-4 text-status-error-400 flex-shrink-0" />
+                  <p className="text-sm text-status-error-400">{error}</p>
                 </div>
               )}
             </div>
@@ -552,7 +552,7 @@ export default function AIAuditPage() {
             <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-400" />
+                  <Sparkles className="h-4 w-4 text-status-violet-400" />
                   How It Works
                 </h3>
                 <p className="text-xs text-surface-500 mt-1">
@@ -584,7 +584,7 @@ export default function AIAuditPage() {
                   },
                 ].map((step, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400 flex-shrink-0 mt-0.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-status-violet-500/10 text-status-violet-400 flex-shrink-0 mt-0.5">
                       {step.icon}
                     </div>
                     <div>
@@ -613,10 +613,10 @@ export default function AIAuditPage() {
           <div className="flex flex-col items-center py-6 space-y-6">
             {/* Animated spinner with glow */}
             <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-violet-500/15 border border-violet-500/20">
-                <Loader2 className="h-10 w-10 text-violet-400 animate-spin" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-status-violet-500/15 border border-status-violet-500/20">
+                <Loader2 className="h-10 w-10 text-status-violet-400 animate-spin" />
               </div>
-              <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-xl animate-pulse" />
+              <div className="absolute inset-0 rounded-2xl bg-status-violet-500/10 blur-xl animate-pulse" />
             </div>
 
             <div className="text-center">
@@ -633,17 +633,17 @@ export default function AIAuditPage() {
                   key={i}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-500',
-                    step.status === 'active' && 'bg-violet-500/10 border border-violet-500/20',
-                    step.status === 'complete' && 'bg-emerald-500/5 border border-emerald-500/15',
+                    step.status === 'active' && 'bg-status-violet-500/10 border border-status-violet-500/20',
+                    step.status === 'complete' && 'bg-status-success-500/5 border border-status-success-500/15',
                     step.status === 'pending' && 'bg-surface-900 border border-surface-800'
                   )}
                 >
                   <div className="flex-shrink-0">
                     {step.status === 'complete' && (
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                      <CheckCircle2 className="h-5 w-5 text-status-success-400" />
                     )}
                     {step.status === 'active' && (
-                      <Loader2 className="h-5 w-5 text-violet-400 animate-spin" />
+                      <Loader2 className="h-5 w-5 text-status-violet-400 animate-spin" />
                     )}
                     {step.status === 'pending' && (
                       <div className="h-5 w-5 rounded-full border-2 border-surface-600" />
@@ -653,14 +653,14 @@ export default function AIAuditPage() {
                     className={cn(
                       'text-sm font-medium transition-colors duration-300',
                       step.status === 'active' && 'text-violet-300',
-                      step.status === 'complete' && 'text-emerald-400',
+                      step.status === 'complete' && 'text-status-success-400',
                       step.status === 'pending' && 'text-surface-500'
                     )}
                   >
                     {step.label}
                   </span>
                   {step.status === 'active' && (
-                    <ArrowRight className="h-4 w-4 text-violet-400 ml-auto animate-pulse" />
+                    <ArrowRight className="h-4 w-4 text-status-violet-400 ml-auto animate-pulse" />
                   )}
                 </div>
               ))}
@@ -674,15 +674,15 @@ export default function AIAuditPage() {
         <>
           {/* Hero stat */}
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-violet-500/10 to-emerald-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-r from-status-violet-600/5 via-status-violet-500/10 to-status-success-500/5" />
             <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6 py-2">
               <div className="flex items-center gap-5">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/20">
-                  <DollarSign className="h-8 w-8 text-emerald-400" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-status-success-500/15 border border-status-success-500/20">
+                  <DollarSign className="h-8 w-8 text-status-success-400" />
                 </div>
                 <div>
                   <p className="text-sm text-surface-400 font-medium">Total Overcharges Found</p>
-                  <p className="text-4xl font-bold text-emerald-400 tabular-nums">
+                  <p className="text-4xl font-bold text-status-success-400 tabular-nums">
                     {formatCurrency(animatedOvercharges)}
                   </p>
                   <p className="text-xs text-surface-500 mt-1">
@@ -696,14 +696,14 @@ export default function AIAuditPage() {
                 {disputedIds.size < auditResult.discrepancies.length && (
                   <Button
                     leftIcon={<ShieldAlert className="h-4 w-4" />}
-                    className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 shadow-sm shadow-violet-900/30"
+                    className="bg-status-violet-600 hover:bg-status-violet-500 active:bg-status-violet-700 shadow-sm shadow-violet-900/30"
                     onClick={handleDisputeAll}
                   >
                     Dispute All ({auditResult.discrepancies.length - disputedIds.size})
                   </Button>
                 )}
                 {disputedIds.size === auditResult.discrepancies.length && auditResult.discrepancies.length > 0 && (
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-status-success-500/10 border border-status-success-500/20 text-status-success-400 text-sm font-medium">
                     <CheckCircle2 className="h-4 w-4" />
                     All disputes filed
                   </span>
@@ -729,14 +729,14 @@ export default function AIAuditPage() {
 
             <Card>
               <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-error-500/10 text-status-error-400">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
                 <Badge variant="danger" dot>
                   {auditResult.summary.totalOvercharges > 50 ? 'High' : 'Low'}
                 </Badge>
               </div>
-              <p className="mt-3 text-2xl font-bold text-red-400">
+              <p className="mt-3 text-2xl font-bold text-status-error-400">
                 {formatCurrency(auditResult.summary.totalOvercharges)}
               </p>
               <p className="mt-1 text-xs text-surface-400">Overcharges Found</p>
@@ -744,7 +744,7 @@ export default function AIAuditPage() {
 
             <Card>
               <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-violet-500/10 text-status-violet-400">
                   <BarChart3 className="h-5 w-5" />
                 </div>
               </div>
@@ -760,7 +760,7 @@ export default function AIAuditPage() {
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-400" />
+                  <Sparkles className="h-4 w-4 text-status-violet-400" />
                   Discrepancy Details
                 </h3>
                 <p className="text-xs text-surface-500 mt-1">

@@ -38,14 +38,14 @@ type KioskScreen =
 /*  Carrier options for drop-off                                              */
 /* -------------------------------------------------------------------------- */
 const carriers = [
-  { id: 'amazon', label: 'Amazon', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-  { id: 'ups', label: 'UPS', color: 'bg-amber-100 text-amber-600 border-amber-200' },
-  { id: 'fedex', label: 'FedEx', color: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
-  { id: 'usps', label: 'USPS', color: 'bg-blue-100 text-blue-600 border-blue-500/30' },
-  { id: 'dhl', label: 'DHL', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { id: 'lasership', label: 'LaserShip', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { id: 'temu', label: 'Temu', color: 'bg-orange-600/20 text-orange-500 border-orange-600/30' },
-  { id: 'ontrac', label: 'OnTrac', color: 'bg-blue-600/20 text-blue-300 border-blue-600/30' },
+  { id: 'amazon', label: 'Amazon', color: 'bg-status-warning-alt/20 text-status-warning-400 border-status-warning-alt/30' },
+  { id: 'ups', label: 'UPS', color: 'bg-status-warning-100 text-status-warning-600 border-status-warning-200' },
+  { id: 'fedex', label: 'FedEx', color: 'bg-primary-100 text-primary-600 border-primary-200' },
+  { id: 'usps', label: 'USPS', color: 'bg-status-info-100 text-status-info-600 border-status-info-500/30' },
+  { id: 'dhl', label: 'DHL', color: 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30' },
+  { id: 'lasership', label: 'LaserShip', color: 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' },
+  { id: 'temu', label: 'Temu', color: 'bg-status-warning-600/20 text-status-warning-alt border-status-warning-600/30' },
+  { id: 'ontrac', label: 'OnTrac', color: 'bg-status-info-600/20 text-status-info-300 border-status-info-600/30' },
   { id: 'other', label: 'Other', color: 'bg-surface-600/30 text-surface-400 border-surface-600/40' },
 ];
 
@@ -273,7 +273,7 @@ export default function KioskPage() {
                 </div>
               </div>
               {pickupError && (
-                <p className="text-sm text-red-600 text-center mt-2">{pickupError}</p>
+                <p className="text-sm text-status-error-600 text-center mt-2">{pickupError}</p>
               )}
             </div>
 
@@ -300,7 +300,7 @@ export default function KioskPage() {
               className={cn(
                 'mt-4 w-full max-w-xs mx-auto flex items-center justify-center gap-2 py-4 rounded-xl text-lg font-bold transition-all',
                 pmbDigits
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-700 shadow-lg shadow-emerald-900/30'
+                  ? 'bg-status-success-600 text-white hover:bg-status-success-500 active:bg-status-success-700 shadow-lg shadow-emerald-900/30'
                   : 'bg-surface-800 text-surface-600 cursor-not-allowed'
               )}
             >
@@ -362,7 +362,7 @@ export default function KioskPage() {
 
                 <button
                   onClick={handleCollectAll}
-                  className="w-full py-5 rounded-2xl bg-emerald-600 text-white text-xl font-bold hover:bg-emerald-500 active:bg-emerald-700 transition-colors shadow-lg shadow-emerald-900/30"
+                  className="w-full py-5 rounded-2xl bg-status-success-600 text-white text-xl font-bold hover:bg-status-success-500 active:bg-status-success-700 transition-colors shadow-lg shadow-emerald-900/30"
                 >
                   <div className="flex items-center justify-center gap-3">
                     <PackageCheck className="h-6 w-6" />
@@ -538,28 +538,28 @@ function KioskShell({ children }: { children: React.ReactNode }) {
 /* ============================================================================ */
 const tileColors: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
   emerald: {
-    bg: 'hover:bg-emerald-500/5 active:bg-emerald-50',
-    border: 'border-emerald-500/20 hover:border-emerald-500/40',
-    text: 'text-emerald-600',
-    iconBg: 'bg-emerald-50',
+    bg: 'hover:bg-status-success-500/5 active:bg-status-success-50',
+    border: 'border-status-success-500/20 hover:border-status-success-500/40',
+    text: 'text-status-success-600',
+    iconBg: 'bg-status-success-50',
   },
   blue: {
-    bg: 'hover:bg-blue-500/5 active:bg-blue-50',
-    border: 'border-blue-500/20 hover:border-blue-500/40',
-    text: 'text-blue-600',
-    iconBg: 'bg-blue-50',
+    bg: 'hover:bg-status-info-500/5 active:bg-status-info-50',
+    border: 'border-status-info-500/20 hover:border-status-info-500/40',
+    text: 'text-status-info-600',
+    iconBg: 'bg-status-info-50',
   },
   cyan: {
-    bg: 'hover:bg-cyan-500/5 active:bg-cyan-500/10',
-    border: 'border-cyan-500/20 hover:border-cyan-500/40',
-    text: 'text-cyan-600',
-    iconBg: 'bg-cyan-500/15',
+    bg: 'hover:bg-accent-teal/5 active:bg-accent-teal/10',
+    border: 'border-accent-teal/20 hover:border-accent-teal/40',
+    text: 'text-accent-teal',
+    iconBg: 'bg-accent-teal/15',
   },
   indigo: {
-    bg: 'hover:bg-indigo-50/60 active:bg-indigo-50',
-    border: 'border-indigo-100 hover:border-indigo-300',
-    text: 'text-indigo-600',
-    iconBg: 'bg-indigo-50',
+    bg: 'hover:bg-primary-50/60 active:bg-primary-50',
+    border: 'border-primary-100 hover:border-primary-300',
+    text: 'text-primary-600',
+    iconBg: 'bg-primary-50',
   },
 };
 
@@ -649,12 +649,12 @@ function SuccessScreen({
     <div className="text-center max-w-md mx-auto animate-in fade-in-0 zoom-in-95 duration-300">
       {/* Animated checkmark */}
       <div className="relative mx-auto mb-8">
-        <div className="flex h-28 w-28 mx-auto items-center justify-center rounded-full bg-emerald-50 ring-4 ring-emerald-500/10">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/25">
-            <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+        <div className="flex h-28 w-28 mx-auto items-center justify-center rounded-full bg-status-success-50 ring-4 ring-status-success-500/10">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-status-success-500/25">
+            <CheckCircle2 className="h-12 w-12 text-status-success-600" />
           </div>
         </div>
-        <div className="absolute -inset-4 rounded-full bg-emerald-500/5 animate-pulse" />
+        <div className="absolute -inset-4 rounded-full bg-status-success-500/5 animate-pulse" />
       </div>
 
       <h2 className="text-3xl font-bold text-surface-100 mb-2">{title}</h2>

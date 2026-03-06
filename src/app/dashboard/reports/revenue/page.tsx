@@ -34,11 +34,11 @@ function useRevenueData(customers: any[], shipments: any[]) {
 
     /* Revenue by service line */
     const serviceLines = [
-      { label: 'Shipping', revenue: totalRevenue * 0.52, cost: totalCost * 0.55, color: '#6366f1' },
-      { label: 'Mailbox Rental', revenue: seededRandom(300, 3000, 5500), cost: seededRandom(301, 400, 800), color: '#10b981' },
-      { label: 'Package Handling', revenue: seededRandom(302, 2000, 4000), cost: seededRandom(303, 600, 1200), color: '#f59e0b' },
-      { label: 'Add-on Services', revenue: seededRandom(304, 800, 2000), cost: seededRandom(305, 200, 600), color: '#ef4444' },
-      { label: 'Retail Sales', revenue: seededRandom(306, 500, 1500), cost: seededRandom(307, 300, 900), color: '#8b5cf6' },
+      { label: 'Shipping', revenue: totalRevenue * 0.52, cost: totalCost * 0.55, color: 'var(--color-primary-500)' },
+      { label: 'Mailbox Rental', revenue: seededRandom(300, 3000, 5500), cost: seededRandom(301, 400, 800), color: 'var(--color-status-success-500)' },
+      { label: 'Package Handling', revenue: seededRandom(302, 2000, 4000), cost: seededRandom(303, 600, 1200), color: 'var(--color-status-warning-500)' },
+      { label: 'Add-on Services', revenue: seededRandom(304, 800, 2000), cost: seededRandom(305, 200, 600), color: 'var(--color-status-error-500)' },
+      { label: 'Retail Sales', revenue: seededRandom(306, 500, 1500), cost: seededRandom(307, 300, 900), color: 'var(--color-status-violet-500)' },
     ];
 
     /* Carrier profitability */
@@ -72,10 +72,10 @@ function useRevenueData(customers: any[], shipments: any[]) {
 
     /* Revenue by platform */
     const platformRevenue = [
-      { label: 'In-Store Physical', value: totalRevenue * 0.35, color: '#6366f1' },
-      { label: 'iPostal1', value: totalRevenue * 0.28, color: '#10b981' },
-      { label: 'PostScan Mail', value: totalRevenue * 0.22, color: '#f59e0b' },
-      { label: 'AnyTime Mailbox', value: totalRevenue * 0.15, color: '#ef4444' },
+      { label: 'In-Store Physical', value: totalRevenue * 0.35, color: 'var(--color-primary-500)' },
+      { label: 'iPostal1', value: totalRevenue * 0.28, color: 'var(--color-status-success-500)' },
+      { label: 'PostScan Mail', value: totalRevenue * 0.22, color: 'var(--color-status-warning-500)' },
+      { label: 'AnyTime Mailbox', value: totalRevenue * 0.15, color: 'var(--color-status-error-500)' },
     ];
 
     /* Trend data */
@@ -164,11 +164,11 @@ export default function RevenueReportPage() {
             <CardContent>
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-xl font-bold text-surface-100">{formatCurrency(data.totalRevenue)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                <span className="text-xs text-status-success-400 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" /> +12.4% vs prior period
                 </span>
               </div>
-              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="#10b981" height={60} />
+              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="var(--color-status-success-500)" height={60} />
               <div className="flex justify-between mt-2 text-[10px] text-surface-500">
                 <span>{data.revenueTrend[0]?.date}</span>
                 <span>{data.revenueTrend[data.revenueTrend.length - 1]?.date}</span>
@@ -207,13 +207,13 @@ export default function RevenueReportPage() {
           <CardContent>
             <MiniBarChart
               data={[
-                { label: 'Amazon Counter', value: seededRandom(401, 1200, 3500), color: 'bg-yellow-500/60' },
-                { label: 'PUDO Point', value: seededRandom(402, 800, 2200), color: 'bg-blue-500/60' },
-                { label: 'FedEx Easy Returns', value: seededRandom(403, 600, 1800), color: 'bg-purple-500/60' },
-                { label: 'Happy Returns', value: seededRandom(404, 400, 1500), color: 'bg-emerald-500/60' },
-                { label: 'Vinted', value: seededRandom(405, 300, 1000), color: 'bg-pink-500/60' },
-                { label: 'The Return', value: seededRandom(406, 200, 800), color: 'bg-orange-500/60' },
-                { label: 'Return Queen', value: seededRandom(407, 100, 600), color: 'bg-red-500/60' },
+                { label: 'Amazon Counter', value: seededRandom(401, 1200, 3500), color: 'bg-status-warning-500/60' },
+                { label: 'PUDO Point', value: seededRandom(402, 800, 2200), color: 'bg-status-info-500/60' },
+                { label: 'FedEx Easy Returns', value: seededRandom(403, 600, 1800), color: 'bg-status-violet-500/60' },
+                { label: 'Happy Returns', value: seededRandom(404, 400, 1500), color: 'bg-status-success-500/60' },
+                { label: 'Vinted', value: seededRandom(405, 300, 1000), color: 'bg-status-pink-500/60' },
+                { label: 'The Return', value: seededRandom(406, 200, 800), color: 'bg-status-warning-alt/60' },
+                { label: 'Return Queen', value: seededRandom(407, 100, 600), color: 'bg-status-error-500/60' },
               ]}
               barHeight={28}
               formatValue={(v) => formatCurrency(v)}
@@ -254,7 +254,7 @@ export default function RevenueReportPage() {
                         </td>
                         <td className="py-2.5 text-right text-surface-200">{formatCurrency(svc.revenue)}</td>
                         <td className="py-2.5 text-right text-surface-400">{formatCurrency(svc.cost)}</td>
-                        <td className="py-2.5 text-right text-emerald-400">{formatCurrency(profit)}</td>
+                        <td className="py-2.5 text-right text-status-success-400">{formatCurrency(profit)}</td>
                         <td className="py-2.5 text-right">
                           <Badge variant={svcMargin > 50 ? 'success' : svcMargin > 25 ? 'warning' : 'danger'} dot={false}>
                             {svcMargin.toFixed(1)}%
@@ -270,7 +270,7 @@ export default function RevenueReportPage() {
                     <td className="py-2.5 font-semibold text-surface-100">Total</td>
                     <td className="py-2.5 text-right font-semibold text-surface-100">{formatCurrency(data.serviceLines.reduce((s, l) => s + l.revenue, 0))}</td>
                     <td className="py-2.5 text-right font-semibold text-surface-300">{formatCurrency(data.serviceLines.reduce((s, l) => s + l.cost, 0))}</td>
-                    <td className="py-2.5 text-right font-semibold text-emerald-400">{formatCurrency(data.serviceLines.reduce((s, l) => s + l.revenue - l.cost, 0))}</td>
+                    <td className="py-2.5 text-right font-semibold text-status-success-400">{formatCurrency(data.serviceLines.reduce((s, l) => s + l.revenue - l.cost, 0))}</td>
                     <td className="py-2.5 text-right"><Badge variant="success" dot={false}>{data.margin.toFixed(1)}%</Badge></td>
                     <td className="py-2.5 text-right text-surface-400">100%</td>
                   </tr>
@@ -317,7 +317,7 @@ export default function RevenueReportPage() {
                       <td className="py-2.5 text-right text-surface-300">{cp.count}</td>
                       <td className="py-2.5 text-right text-surface-400">{formatCurrency(cp.cost)}</td>
                       <td className="py-2.5 text-right text-surface-200">{formatCurrency(cp.revenue)}</td>
-                      <td className="py-2.5 text-right text-emerald-400">{formatCurrency(cp.profit)}</td>
+                      <td className="py-2.5 text-right text-status-success-400">{formatCurrency(cp.profit)}</td>
                       <td className="py-2.5 text-right">
                         <Badge variant={cp.margin > 30 ? 'success' : cp.margin > 15 ? 'warning' : 'danger'} dot={false}>
                           {cp.margin.toFixed(1)}%

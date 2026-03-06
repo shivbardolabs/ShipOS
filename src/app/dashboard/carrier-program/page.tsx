@@ -307,8 +307,8 @@ export default function CarrierProgramPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-indigo-500/10">
-              <Package className="h-5 w-5 text-indigo-400" />
+            <div className="p-2 rounded-lg bg-primary-500/10">
+              <Package className="h-5 w-5 text-primary-400" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{stats.total}</div>
@@ -318,8 +318,8 @@ export default function CarrierProgramPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-status-success-500/10">
+              <CheckCircle2 className="h-5 w-5 text-status-success-400" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{stats.ok}</div>
@@ -329,8 +329,8 @@ export default function CarrierProgramPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10">
-              <AlertTriangle className="h-5 w-5 text-amber-400" />
+            <div className="p-2 rounded-lg bg-status-warning-500/10">
+              <AlertTriangle className="h-5 w-5 text-status-warning-400" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{stats.warning}</div>
@@ -340,8 +340,8 @@ export default function CarrierProgramPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/10">
-              <XCircle className="h-5 w-5 text-red-400" />
+            <div className="p-2 rounded-lg bg-status-error-500/10">
+              <XCircle className="h-5 w-5 text-status-error-400" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{stats.overdue}</div>
@@ -514,26 +514,26 @@ export default function CarrierProgramPage() {
             </div>
 
             <div className="grid grid-cols-4 gap-4">
-              <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 text-center">
-                <div className="text-xl font-bold text-amber-400">
+              <div className="p-3 rounded-lg bg-status-warning-500/5 border border-status-warning-500/10 text-center">
+                <div className="text-xl font-bold text-status-warning-400">
                   {MOCK_CHECKOUTS.filter((c) => c.uploadStatus === 'pending').length}
                 </div>
                 <div className="text-xs text-zinc-400">Pending</div>
               </div>
-              <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 text-center">
-                <div className="text-xl font-bold text-blue-400">
+              <div className="p-3 rounded-lg bg-status-info-500/5 border border-status-info-500/10 text-center">
+                <div className="text-xl font-bold text-status-info-400">
                   {MOCK_CHECKOUTS.filter((c) => c.uploadStatus === 'uploaded').length}
                 </div>
                 <div className="text-xs text-zinc-400">Uploaded</div>
               </div>
-              <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-center">
-                <div className="text-xl font-bold text-emerald-400">
+              <div className="p-3 rounded-lg bg-status-success-500/5 border border-status-success-500/10 text-center">
+                <div className="text-xl font-bold text-status-success-400">
                   {MOCK_CHECKOUTS.filter((c) => c.uploadStatus === 'confirmed').length}
                 </div>
                 <div className="text-xs text-zinc-400">Confirmed</div>
               </div>
-              <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
-                <div className="text-xl font-bold text-red-400">
+              <div className="p-3 rounded-lg bg-status-error-500/5 border border-status-error-500/10 text-center">
+                <div className="text-xl font-bold text-status-error-400">
                   {MOCK_CHECKOUTS.filter((c) => c.uploadStatus === 'failed').length}
                 </div>
                 <div className="text-xs text-zinc-400">Failed</div>
@@ -582,7 +582,7 @@ export default function CarrierProgramPage() {
                   <div className="text-xs text-zinc-400">Confirmed</div>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-emerald-400">
+                  <div className="text-lg font-bold text-status-success-400">
                     {formatCurrency((MOCK_CHECKOUTS.filter((c) => c.program === id).length) * 3.00)}
                   </div>
                   <div className="text-xs text-zinc-400">Est. Compensation</div>
@@ -616,7 +616,7 @@ export default function CarrierProgramPage() {
             {/* ID Verification */}
             <div>
               <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                <ShieldCheck className="h-4 w-4 text-primary-400" />
                 Photo ID Verification
               </h4>
               <p className="text-xs text-zinc-400 mb-3">
@@ -638,7 +638,7 @@ export default function CarrierProgramPage() {
                   type="checkbox"
                   checked={idVerified}
                   onChange={(e) => setIdVerified(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-zinc-600 text-indigo-500"
+                  className="mt-0.5 h-4 w-4 rounded border-zinc-600 text-primary-500"
                 />
                 <div>
                   <div className="text-sm font-medium text-white">I have verified this ID</div>
@@ -707,7 +707,7 @@ export default function CarrierProgramPage() {
               ]}
             />
             {intakeProgram && intakeTracking && (
-              <p className="text-xs text-emerald-400 mt-1">
+              <p className="text-xs text-status-success-400 mt-1">
                 ✓ Auto-detected from tracking number prefix
               </p>
             )}

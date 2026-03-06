@@ -83,11 +83,11 @@ export function RatesTab({ carrierTab, setCarrierTab, carrierTabs, filteredRates
                       {rate.marginType}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right text-emerald-600 font-medium">{rate.marginValue}%</td>
+                  <td className="px-4 py-3 text-right text-status-success-600 font-medium">{rate.marginValue}%</td>
                   <td className="px-4 py-3 text-center">
                     {rate.isActive ? (
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100">
-                        <Check className="h-3 w-3 text-emerald-600" />
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-status-success-100">
+                        <Check className="h-3 w-3 text-status-success-600" />
                       </span>
                     ) : (
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-surface-700">

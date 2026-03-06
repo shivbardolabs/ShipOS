@@ -321,7 +321,7 @@ export default function MigrationPage() {
                 step === s
                   ? 'bg-primary-600 text-white'
                   : (['upload', 'analysis', 'configure', 'migrating', 'complete'].indexOf(step) > i)
-                    ? 'bg-green-600/20 text-green-400 border border-green-600/30'
+                    ? 'bg-status-success-600/20 text-status-success-400 border border-status-success-600/30'
                     : 'bg-surface-800 text-surface-500'
               }`}
             >
@@ -340,11 +340,11 @@ export default function MigrationPage() {
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-900/20 border border-red-700/30 rounded-lg p-4 flex items-start gap-3">
-          <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="mb-6 bg-red-900/20 border border-status-error-700/30 rounded-lg p-4 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-status-error-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-red-300 text-sm font-medium">Error</p>
-            <p className="text-red-600/80 text-sm">{error}</p>
+            <p className="text-status-error-300 text-sm font-medium">Error</p>
+            <p className="text-status-error-600/80 text-sm">{error}</p>
           </div>
         </div>
       )}
@@ -589,11 +589,11 @@ export default function MigrationPage() {
             </CardContent>
           </Card>
 
-          <div className="bg-amber-900/20 border border-amber-700/30 rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-amber-900/20 border border-status-warning-700/30 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-status-warning-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-amber-300 text-sm font-medium">Important</p>
-              <p className="text-amber-600/80 text-sm">
+              <p className="text-status-warning-300 text-sm font-medium">Important</p>
+              <p className="text-status-warning-600/80 text-sm">
                 Migration may take several minutes depending on data size.
                 All migrated records are tagged with a migration ID so they can be rolled back if needed.
               </p>
@@ -667,7 +667,7 @@ export default function MigrationPage() {
                         <div className="w-full bg-surface-900 rounded-full h-1.5">
                           <div
                             className={`h-1.5 rounded-full transition-all duration-500 ${
-                              data.status === 'completed' ? 'bg-green-500' :
+                              data.status === 'completed' ? 'bg-status-success-500' :
                               data.status === 'in_progress' ? 'bg-primary-500' :
                               'bg-surface-700'
                             }`}
@@ -679,7 +679,7 @@ export default function MigrationPage() {
                       )}
                       <div className="flex gap-4 mt-1 text-xs text-surface-500">
                         <span>{fmt(data.migrated)} migrated</span>
-                        {data.errors > 0 && <span className="text-red-600">{data.errors} errors</span>}
+                        {data.errors > 0 && <span className="text-status-error-600">{data.errors} errors</span>}
                         {data.skipped > 0 && <span>{data.skipped} skipped</span>}
                       </div>
                     </div>
@@ -712,9 +712,9 @@ export default function MigrationPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {progress.status === 'completed' ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  <CheckCircle2 className="h-5 w-5 text-status-success-400" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-status-error-600" />
                 )}
                 Migration {progress.status === 'completed' ? 'Complete' : 'Failed'}
               </CardTitle>
@@ -730,7 +730,7 @@ export default function MigrationPage() {
                       <p className="text-lg font-semibold text-surface-200">{fmt(data.migrated)}</p>
                       <p className="text-xs text-surface-500">{entityLabel(entity)}</p>
                       {data.errors > 0 && (
-                        <p className="text-xs text-red-600 mt-1">{data.errors} errors</p>
+                        <p className="text-xs text-status-error-600 mt-1">{data.errors} errors</p>
                       )}
                     </div>
                   )
@@ -738,13 +738,13 @@ export default function MigrationPage() {
               </div>
 
               {progress.errors.length > 0 && (
-                <div className="bg-red-900/10 border border-red-800/20 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-red-300 mb-2">
+                <div className="bg-red-900/10 border border-status-error-800/20 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-status-error-300 mb-2">
                     Errors ({progress.errors.length})
                   </h4>
                   <div className="max-h-40 overflow-y-auto space-y-1">
                     {progress.errors.map((err, i) => (
-                      <p key={i} className="text-xs text-red-600/80 font-mono">
+                      <p key={i} className="text-xs text-status-error-600/80 font-mono">
                         [{err.entity}:{err.sourceId}] {err.message}
                       </p>
                     ))}

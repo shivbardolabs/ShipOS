@@ -56,9 +56,9 @@ import { QuotaUsageCard } from '@/components/pmb/quota-usage-card';
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
   physical: { label: 'Physical', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
-  iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
-  anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' } };
+  iPostal: { label: 'iPostal', classes: 'bg-status-info-100 text-status-info-600 border-status-info-500/30' },
+  anytime: { label: 'Anytime', classes: 'bg-status-success-100 text-status-success-600 border-status-success-200' },
+  postscan: { label: 'PostScan', classes: 'bg-primary-100 text-primary-600 border-primary-200' } };
 
 function getDaysUntil(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -69,10 +69,10 @@ function getDaysUntil(dateStr?: string): number | null {
 
 function expirationBadge(days: number | null) {
   if (days === null) return null;
-  if (days < 0) return { label: 'EXPIRED', variant: 'danger' as const, color: 'bg-red-500' };
-  if (days <= 30) return { label: `${days} days`, variant: 'danger' as const, color: 'bg-red-500' };
-  if (days <= 90) return { label: `${days} days`, variant: 'warning' as const, color: 'bg-yellow-500' };
-  return { label: `${days} days`, variant: 'success' as const, color: 'bg-emerald-500' };
+  if (days < 0) return { label: 'EXPIRED', variant: 'danger' as const, color: 'bg-status-error-500' };
+  if (days <= 30) return { label: `${days} days`, variant: 'danger' as const, color: 'bg-status-error-500' };
+  if (days <= 90) return { label: `${days} days`, variant: 'warning' as const, color: 'bg-status-warning-500' };
+  return { label: `${days} days`, variant: 'success' as const, color: 'bg-status-success-500' };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -135,10 +135,10 @@ const notifCols: Column<Notification & Record<string, unknown>>[] = [
     render: (row) => (
       <div className="flex items-center gap-1">
         {(row.channel === 'email' || row.channel === 'both') && (
-          <span className="status-badge text-[10px] bg-blue-100 text-blue-600 border-blue-500/30">Email</span>
+          <span className="status-badge text-[10px] bg-status-info-100 text-status-info-600 border-status-info-500/30">Email</span>
         )}
         {(row.channel === 'sms' || row.channel === 'both') && (
-          <span className="status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">SMS</span>
+          <span className="status-badge text-[10px] bg-status-success-100 text-status-success-600 border-status-success-200">SMS</span>
         )}
       </div>
     ) },
@@ -247,9 +247,9 @@ export default function CustomerDetailPage() {
   // ID expiration progress bar
   const idProgressPercent = idDays !== null ? Math.max(0, Math.min(100, (idDays / 365) * 100)) : 100;
   const idProgressColor =
-    idDays !== null && idDays < 0 ? 'bg-red-500' :
-    idDays !== null && idDays <= 30 ? 'bg-red-500' :
-    idDays !== null && idDays <= 90 ? 'bg-yellow-500' : 'bg-emerald-500';
+    idDays !== null && idDays < 0 ? 'bg-status-error-500' :
+    idDays !== null && idDays <= 30 ? 'bg-status-error-500' :
+    idDays !== null && idDays <= 90 ? 'bg-status-warning-500' : 'bg-status-success-500';
 
   const tabs = [
     { id: 'packages', label: 'Packages', icon: <Package className="h-3.5 w-3.5" />, count: customerPackages.length },
@@ -324,7 +324,7 @@ export default function CustomerDetailPage() {
             <Button variant="outline" size="sm" leftIcon={<Send className="h-3.5 w-3.5" />} onClick={() => setShowNotifModal(true)}>
               Send Notification
             </Button>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-300 hover:bg-red-50" leftIcon={<UserX className="h-3.5 w-3.5" />} onClick={() => setShowClosureDialog(true)}>
+            <Button variant="ghost" size="sm" className="text-status-error-600 hover:text-status-error-300 hover:bg-status-error-50" leftIcon={<UserX className="h-3.5 w-3.5" />} onClick={() => setShowClosureDialog(true)}>
               {customer.status === 'closed' ? 'Closure Details' : 'Close PMB'}
             </Button>
           </div>
@@ -398,9 +398,9 @@ export default function CustomerDetailPage() {
                 >
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-800">
                     {entry.entityType === 'package' ? <Package className="h-3.5 w-3.5 text-primary-600" /> :
-                     entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-yellow-400" /> :
-                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-blue-600" /> :
-                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-emerald-600" /> :
+                     entry.entityType === 'notification' ? <Bell className="h-3.5 w-3.5 text-status-warning-400" /> :
+                     entry.entityType === 'mail' ? <Mail className="h-3.5 w-3.5 text-status-info-600" /> :
+                     entry.entityType === 'shipment' ? <Truck className="h-3.5 w-3.5 text-status-success-600" /> :
                      <FileText className="h-3.5 w-3.5 text-surface-400" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -607,7 +607,7 @@ export default function CustomerDetailPage() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5 text-xs">
                     {customer.notifyEmail ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                      <CheckCircle className="h-3.5 w-3.5 text-status-success-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-surface-600" />
                     )}
@@ -615,7 +615,7 @@ export default function CustomerDetailPage() {
                   </span>
                   <span className="flex items-center gap-1.5 text-xs">
                     {customer.notifySms ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                      <CheckCircle className="h-3.5 w-3.5 text-status-success-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-surface-600" />
                     )}
@@ -783,9 +783,9 @@ export default function CustomerDetailPage() {
               {/* Form 1583 Gating Warning */}
               {customer.form1583Status === 'submitted' && (!customer.proofOfAddressType || !customer.proofOfAddressDateOfIssue) && (
                 <div className="pt-3 border-t border-surface-800">
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 flex items-start gap-2">
-                    <Clock className="h-3.5 w-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-amber-300">Form 1583 cannot be approved until proof of address document type and date of issue are on file.</p>
+                  <div className="rounded-lg border border-status-warning-500/30 bg-status-warning-500/10 p-2.5 flex items-start gap-2">
+                    <Clock className="h-3.5 w-3.5 text-status-warning-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-[11px] text-status-warning-300">Form 1583 cannot be approved until proof of address document type and date of issue are on file.</p>
                   </div>
                 </div>
               )}

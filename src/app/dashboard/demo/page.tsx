@@ -178,7 +178,7 @@ export default function DemoPage() {
             </div>
           </div>
           {status && (
-            <div className={`mt-4 flex items-center gap-2 text-sm ${status.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`mt-4 flex items-center gap-2 text-sm ${status.type === 'success' ? 'text-status-success-600' : 'text-status-error-600'}`}>
               {status.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
               {status.message}
             </div>
@@ -223,8 +223,8 @@ export default function DemoPage() {
           <div className="grid gap-3 md:grid-cols-3">
             {[
               { email: 'admin@demo.shipos.app', role: 'Admin', color: 'bg-purple-100 text-purple-700', desc: 'Full access to all features including Super Admin panel' },
-              { email: 'staff@demo.shipos.app', role: 'Staff', color: 'bg-blue-100 text-blue-700', desc: 'Day-to-day operations: packages, mail, customers' },
-              { email: 'viewer@demo.shipos.app', role: 'Viewer', color: 'bg-gray-100 text-gray-700', desc: 'Read-only access to dashboards and reports' },
+              { email: 'staff@demo.shipos.app', role: 'Staff', color: 'bg-status-info-100 text-status-info-700', desc: 'Day-to-day operations: packages, mail, customers' },
+              { email: 'viewer@demo.shipos.app', role: 'Viewer', color: 'bg-surface-800 text-surface-300', desc: 'Read-only access to dashboards and reports' },
             ].map((account) => (
               <div key={account.email} className="p-4 rounded-lg border border-surface-200">
                 <div className="flex items-center gap-2 mb-2">

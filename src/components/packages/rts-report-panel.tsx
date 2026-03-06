@@ -52,13 +52,13 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 const REASON_COLORS = [
-  'bg-red-500',
-  'bg-amber-500',
-  'bg-orange-500',
-  'bg-yellow-500',
-  'bg-blue-500',
-  'bg-indigo-500',
-  'bg-purple-500',
+  'bg-status-error-500',
+  'bg-status-warning-500',
+  'bg-status-warning-alt',
+  'bg-status-warning-500',
+  'bg-status-info-500',
+  'bg-primary-500',
+  'bg-status-violet-500',
   'bg-surface-500',
 ];
 

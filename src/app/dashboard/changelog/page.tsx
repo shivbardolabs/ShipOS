@@ -35,32 +35,32 @@ const typeMeta: Record<
   feature: {
     label: 'New',
     icon: Sparkles,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 border-emerald-200',
+    color: 'text-status-success-600',
+    bgColor: 'bg-status-success-50 border-status-success-200',
   },
   improvement: {
     label: 'Improved',
     icon: Zap,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 border-blue-200',
+    color: 'text-status-info-600',
+    bgColor: 'bg-status-info-50 border-status-info-200',
   },
   fix: {
     label: 'Fix',
     icon: Wrench,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 border-amber-200',
+    color: 'text-status-warning-600',
+    bgColor: 'bg-status-warning-50 border-status-warning-200',
   },
   design: {
     label: 'Design',
     icon: Palette,
-    color: 'text-purple-600',
+    color: 'text-status-violet-600',
     bgColor: 'bg-purple-50 border-purple-200',
   },
   security: {
     label: 'Security',
     icon: ShieldCheck,
-    color: 'text-rose-600',
-    bgColor: 'bg-rose-50 border-rose-200',
+    color: 'text-status-error-600',
+    bgColor: 'bg-status-error-50 border-status-error-200',
   },
 };
 
@@ -157,7 +157,7 @@ function ChangelogCard({
                   {formatReleaseDate(entry.date)}
                 </span>
                 {isLatest && (
-                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  <span className="rounded-full bg-status-success-50 border border-status-success-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-status-success-700">
                     Latest
                   </span>
                 )}
@@ -296,14 +296,14 @@ export default function ChangelogPage() {
           <span className="text-surface-500">releases</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-surface-800/40 px-3.5 py-2">
-          <Sparkles className="h-4 w-4 text-emerald-500" />
+          <Sparkles className="h-4 w-4 text-status-success-500" />
           <span className="font-semibold text-surface-200">
             {totalChanges}
           </span>
           <span className="text-surface-500">updates shipped</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-surface-800/40 px-3.5 py-2">
-          <Calendar className="h-4 w-4 text-blue-500" />
+          <Calendar className="h-4 w-4 text-status-info-500" />
           <span className="text-surface-500">Since</span>
           <span className="font-semibold text-surface-200">
             {formatReleaseDate(changelog[changelog.length - 1].date)}

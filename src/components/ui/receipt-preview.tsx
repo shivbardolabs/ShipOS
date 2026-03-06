@@ -122,8 +122,8 @@ export function ReceiptPreview({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700/50">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10">
-            <FileText className="h-5 w-5 text-emerald-400" />
+          <div className="p-2 rounded-lg bg-status-success-500/10">
+            <FileText className="h-5 w-5 text-status-success-400" />
           </div>
           <div>
             <h3 className="font-semibold text-white">Sales Receipt</h3>
@@ -196,7 +196,7 @@ export function ReceiptPreview({
               </tr>
               <tr className="border-t border-zinc-600">
                 <td colSpan={2} className="px-3 py-2 text-white font-bold text-right">Total</td>
-                <td className="px-3 py-2 text-emerald-400 font-bold text-right text-base">
+                <td className="px-3 py-2 text-status-success-400 font-bold text-right text-base">
                   {formatCurrency(total)}
                 </td>
               </tr>

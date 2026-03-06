@@ -143,7 +143,7 @@ export default function KpiDashboardPage() {
     enabledKpis.forEach((k) => {
       cats[k.category] = (cats[k.category] || 0) + 1;
     });
-    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+    const colors = ['var(--color-primary-500)', 'var(--color-status-success-500)', 'var(--color-status-warning-500)', 'var(--color-status-error-500)', 'var(--color-status-violet-500)'];
     return Object.entries(cats).map(([label, value], i) => ({
       label,
       value,
@@ -206,11 +206,11 @@ export default function KpiDashboardPage() {
                 <p className="text-2xl font-bold text-surface-100">{formatKpiValue(value, kpi.format)}</p>
                 <p className="text-xs text-surface-400 mt-1">{kpi.label}</p>
                 <div className="flex items-center justify-between mt-3">
-                  <span className={`text-xs font-medium flex items-center gap-1 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`text-xs font-medium flex items-center gap-1 ${isPositive ? 'text-status-success-400' : 'text-status-error-400'}`}>
                     {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                     {isPositive ? '+' : ''}{kpi.change}% vs prior
                   </span>
-                  <Sparkline data={kpi.sparkData} color={isPositive ? '#10b981' : '#ef4444'} height={24} />
+                  <Sparkline data={kpi.sparkData} color={isPositive ? 'var(--color-status-success-500)' : 'var(--color-status-error-500)'} height={24} />
                 </div>
               </Card>
             );
@@ -243,13 +243,13 @@ export default function KpiDashboardPage() {
                           <td className="py-2 text-right text-surface-200">{formatKpiValue(current, kpi.format)}</td>
                           <td className="py-2 text-right text-surface-400">{formatKpiValue(prev, kpi.format)}</td>
                           <td className="py-2 text-right">
-                            <span className={kpi.change >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                            <span className={kpi.change >= 0 ? 'text-status-success-400' : 'text-status-error-400'}>
                               {kpi.change >= 0 ? '+' : ''}{kpi.change}%
                             </span>
                           </td>
                           <td className="py-2 text-right">
-                            {kpi.change > 0 ? <TrendingUp className="h-4 w-4 text-emerald-400 inline" /> :
-                             kpi.change < 0 ? <TrendingDown className="h-4 w-4 text-red-400 inline" /> :
+                            {kpi.change > 0 ? <TrendingUp className="h-4 w-4 text-status-success-400 inline" /> :
+                             kpi.change < 0 ? <TrendingDown className="h-4 w-4 text-status-error-400 inline" /> :
                              <Minus className="h-4 w-4 text-surface-500 inline" />}
                           </td>
                         </tr>

@@ -55,32 +55,32 @@ const PAYMENT_METHODS = [
     label: 'Credit / Debit Card',
     description: 'Insert, tap, or swipe',
     icon: CreditCard,
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10 ring-blue-500/20 hover:bg-blue-500/20',
+    color: 'text-status-info-400',
+    bg: 'bg-status-info-500/10 ring-status-info-500/20 hover:bg-status-info-500/20',
   },
   {
     id: 'cash' as const,
     label: 'Cash',
     description: 'Pay at counter',
     icon: Banknote,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10 ring-emerald-500/20 hover:bg-emerald-500/20',
+    color: 'text-status-success-400',
+    bg: 'bg-status-success-500/10 ring-status-success-500/20 hover:bg-status-success-500/20',
   },
   {
     id: 'account' as const,
     label: 'Account Balance',
     description: 'Use store credit',
     icon: Wallet,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10 ring-purple-500/20 hover:bg-purple-500/20',
+    color: 'text-status-violet-400',
+    bg: 'bg-status-violet-500/10 ring-status-violet-500/20 hover:bg-status-violet-500/20',
   },
   {
     id: 'invoice' as const,
     label: 'Charge to Account',
     description: 'Add to monthly invoice',
     icon: FileText,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10 ring-amber-500/20 hover:bg-amber-500/20',
+    color: 'text-status-warning-400',
+    bg: 'bg-status-warning-500/10 ring-status-warning-500/20 hover:bg-status-warning-500/20',
   },
 ];
 
@@ -247,7 +247,7 @@ export function PaymentScreen({
             {selectedMethod === 'card' ? (
               <>
                 <div className="relative inline-flex">
-                  <Wifi className="h-16 w-16 text-blue-400 animate-pulse" />
+                  <Wifi className="h-16 w-16 text-status-info-400 animate-pulse" />
                 </div>
                 <p className="text-lg font-semibold text-white">
                   {processingMessages[selectedMethod || 'card']}
@@ -282,9 +282,9 @@ export function PaymentScreen({
         {paymentState === 'success' && (
           <div className="text-center py-8 space-y-3">
             <div className="relative inline-flex">
-              <CheckCircle2 className="h-16 w-16 text-emerald-400" />
+              <CheckCircle2 className="h-16 w-16 text-status-success-400" />
             </div>
-            <p className="text-xl font-bold text-emerald-400">Payment Successful</p>
+            <p className="text-xl font-bold text-status-success-400">Payment Successful</p>
             <p className="text-sm text-surface-400">
               {formatCurrency(total)} charged via {selectedMethod}
             </p>
@@ -294,8 +294,8 @@ export function PaymentScreen({
         {/* Failed State */}
         {paymentState === 'failed' && (
           <div className="text-center py-8 space-y-4">
-            <XCircle className="h-16 w-16 text-red-400 mx-auto" />
-            <p className="text-xl font-bold text-red-400">Payment Failed</p>
+            <XCircle className="h-16 w-16 text-status-error-400 mx-auto" />
+            <p className="text-xl font-bold text-status-error-400">Payment Failed</p>
             <p className="text-sm text-surface-400">
               Please try again or choose a different payment method.
             </p>
@@ -320,7 +320,7 @@ export function PaymentScreen({
             </button>
 
             {timeLeft === 0 ? (
-              <div className="flex items-center gap-2 text-amber-400 text-sm animate-pulse">
+              <div className="flex items-center gap-2 text-status-warning-400 text-sm animate-pulse">
                 <HelpCircle className="h-4 w-4" />
                 Need help? Please ask staff
               </div>

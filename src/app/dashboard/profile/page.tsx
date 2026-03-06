@@ -52,7 +52,7 @@ export default function ProfilePage() {
       {/* Profile card */}
       <div className="glass-card p-8">
         {/* Avatar + name section */}
-        <div className="flex items-center gap-6 mb-8 pb-8" style={{ borderBottom: '1px solid #e2e8f0' }}>
+        <div className="flex items-center gap-6 mb-8 pb-8" style={{ borderBottom: '1px solid var(--color-surface-700)' }}>
           {user.picture ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -76,7 +76,7 @@ export default function ProfilePage() {
             </div>
             <p className="text-sm text-surface-500">{user.email}</p>
             {user.email_verified && (
-              <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">
+              <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success-50 text-status-success-700 border border-status-success-200">
                 <Shield className="h-3 w-3" />
                 Email verified
               </span>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
           </div>
           <a
             href="/api/auth/logout"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-status-error-600 hover:bg-status-error-50 border border-status-error-200 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Sign Out

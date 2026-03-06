@@ -47,13 +47,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
               'transition-colors duration-100 outline-none',
               leftIcon && 'pl-10',
-              error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
+              error && 'border-status-error-500 focus:border-status-error-500 focus:ring-status-error-500/30',
               className
             )}
             {...props}
           />
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-error-600">{error}</p>}
         {!error && helperText && (
           <p className="text-xs text-surface-500">{helperText}</p>
         )}
@@ -93,12 +93,12 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             'w-full rounded-lg border bg-surface-900 px-3.5 py-2.5 text-sm text-surface-100 placeholder:text-surface-500',
             'border-surface-700 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30',
             'transition-colors duration-100 outline-none resize-y min-h-[80px]',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
+            error && 'border-status-error-500 focus:border-status-error-500 focus:ring-status-error-500/30',
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-error-600">{error}</p>}
         {!error && helperText && (
           <p className="text-xs text-surface-500">{helperText}</p>
         )}

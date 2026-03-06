@@ -88,14 +88,14 @@ function buildCarrierPickups(
   shipments: { carrier: string; status: string; trackingNumber?: string; weight?: number; wholesaleCost?: number; retailPrice?: number }[]
 ): CarrierPickup[] {
   const carrierConfig = [
-    { id: 'ups', name: 'UPS', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBg: 'bg-amber-100' },
-    { id: 'fedex', name: 'FedEx', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', iconBg: 'bg-indigo-100' },
-    { id: 'usps', name: 'USPS', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-500/30', iconBg: 'bg-blue-100' },
-    { id: 'dhl', name: 'DHL', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', iconBg: 'bg-yellow-500/20' },
-    { id: 'amazon', name: 'Amazon', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30', iconBg: 'bg-orange-500/20' },
-    { id: 'lasership', name: 'LaserShip', color: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', iconBg: 'bg-green-500/20' },
-    { id: 'temu', name: 'Temu', color: 'text-orange-500', bgColor: 'bg-orange-600/10', borderColor: 'border-orange-600/30', iconBg: 'bg-orange-600/20' },
-    { id: 'ontrac', name: 'OnTrac', color: 'text-blue-400', bgColor: 'bg-blue-600/10', borderColor: 'border-blue-600/30', iconBg: 'bg-blue-600/20' },
+    { id: 'ups', name: 'UPS', color: 'text-status-warning-600', bgColor: 'bg-status-warning-50', borderColor: 'border-status-warning-200', iconBg: 'bg-status-warning-100' },
+    { id: 'fedex', name: 'FedEx', color: 'text-primary-600', bgColor: 'bg-primary-50', borderColor: 'border-primary-200', iconBg: 'bg-primary-100' },
+    { id: 'usps', name: 'USPS', color: 'text-status-info-600', bgColor: 'bg-status-info-50', borderColor: 'border-status-info-500/30', iconBg: 'bg-status-info-100' },
+    { id: 'dhl', name: 'DHL', color: 'text-status-warning-400', bgColor: 'bg-status-warning-500/10', borderColor: 'border-status-warning-500/30', iconBg: 'bg-status-warning-500/20' },
+    { id: 'amazon', name: 'Amazon', color: 'text-status-warning-400', bgColor: 'bg-status-warning-alt/10', borderColor: 'border-status-warning-alt/30', iconBg: 'bg-status-warning-alt/20' },
+    { id: 'lasership', name: 'LaserShip', color: 'text-status-success-400', bgColor: 'bg-status-success-500/10', borderColor: 'border-status-success-500/30', iconBg: 'bg-status-success-500/20' },
+    { id: 'temu', name: 'Temu', color: 'text-status-warning-alt', bgColor: 'bg-status-warning-600/10', borderColor: 'border-status-warning-600/30', iconBg: 'bg-status-warning-600/20' },
+    { id: 'ontrac', name: 'OnTrac', color: 'text-status-info-400', bgColor: 'bg-status-info-600/10', borderColor: 'border-status-info-600/30', iconBg: 'bg-status-info-600/20' },
   ];
 
   return carrierConfig.map((cfg) => {
@@ -283,17 +283,17 @@ export default function EndOfDayPage() {
             </div>
             <div className="h-8 w-px bg-surface-700" />
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-emerald-600">{totalPickedUp}</p>
+              <p className="text-2xl font-bold text-status-success-600">{totalPickedUp}</p>
               <p className="text-xs text-surface-500">Picked Up</p>
             </div>
             <div className="h-8 w-px bg-surface-700" />
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-yellow-400">{totalPending}</p>
+              <p className="text-2xl font-bold text-status-warning-400">{totalPending}</p>
               <p className="text-xs text-surface-500">Pending</p>
             </div>
             <div className="h-8 w-px bg-surface-700" />
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totalRevenue)}</p>
+              <p className="text-2xl font-bold text-status-success-400">{formatCurrency(totalRevenue)}</p>
               <p className="text-xs text-surface-500">Revenue</p>
             </div>
           </div>
@@ -301,11 +301,11 @@ export default function EndOfDayPage() {
       </Card>
 
       {dayClosed && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-status-success-50 border border-status-success-200">
+          <CheckCircle2 className="h-5 w-5 text-status-success-600" />
           <div>
-            <p className="text-sm font-medium text-emerald-300">Day Closed Successfully</p>
-            <p className="text-xs text-emerald-600/70">
+            <p className="text-sm font-medium text-status-success-300">Day Closed Successfully</p>
+            <p className="text-xs text-status-success-600/70">
               All carrier pickups have been processed for {todayStr}
             </p>
           </div>
@@ -318,16 +318,16 @@ export default function EndOfDayPage() {
           <Card
             key={carrier.id}
             className={`relative overflow-hidden ${
-              carrier.status === 'picked_up' ? 'ring-1 ring-emerald-500/30' : ''
+              carrier.status === 'picked_up' ? 'ring-1 ring-status-success-500/30' : ''
             }`}
           >
             {/* Top accent bar */}
             <div
               className={`absolute top-0 left-0 right-0 h-1 ${
                 carrier.status === 'picked_up'
-                  ? 'bg-emerald-500'
+                  ? 'bg-status-success-500'
                   : carrier.status === 'waiting'
-                  ? 'bg-yellow-500'
+                  ? 'bg-status-warning-500'
                   : 'bg-surface-700'
               }`}
             />
@@ -358,7 +358,7 @@ export default function EndOfDayPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-surface-500">Profit</p>
-                    <p className="text-xs font-semibold text-emerald-400">
+                    <p className="text-xs font-semibold text-status-success-400">
                       {formatCurrency(carrier.totalRetail - carrier.totalWholesale)}
                     </p>
                   </div>
@@ -368,11 +368,11 @@ export default function EndOfDayPage() {
               {/* Status */}
               <div className="mb-4">
                 {carrier.status === 'picked_up' && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-500/20">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-status-success-50 border border-status-success-500/20">
+                    <CheckCircle2 className="h-4 w-4 text-status-success-600" />
                     <div>
-                      <p className="text-xs font-medium text-emerald-300">Picked Up</p>
-                      <p className="text-[10px] text-emerald-600/70">
+                      <p className="text-xs font-medium text-status-success-300">Picked Up</p>
+                      <p className="text-[10px] text-status-success-600/70">
                         {carrier.pickupTime}
                         {carrier.driverName && ` · ${carrier.driverName}`}
                       </p>
@@ -380,8 +380,8 @@ export default function EndOfDayPage() {
                   </div>
                 )}
                 {carrier.status === 'waiting' && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                    <Clock className="h-4 w-4 text-yellow-400" />
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-status-warning-500/10 border border-status-warning-500/20">
+                    <Clock className="h-4 w-4 text-status-warning-400" />
                     <p className="text-xs font-medium text-yellow-300">Waiting for Pickup</p>
                   </div>
                 )}
@@ -497,25 +497,25 @@ export default function EndOfDayPage() {
             </div>
 
             {/* What happens on pickup */}
-            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <h4 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-2">
+            <div className="p-4 rounded-lg bg-status-info-500/10 border border-status-info-500/20">
+              <h4 className="text-xs font-medium text-status-info-400 uppercase tracking-wider mb-2">
                 On Pickup Completion
               </h4>
               <ul className="space-y-1.5">
                 <li className="flex items-center gap-2 text-xs text-surface-300">
-                  <CheckCircle2 className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                  <CheckCircle2 className="h-3 w-3 text-status-info-400 flex-shrink-0" />
                   All {pickupCarrier.name} shipments marked as shipped
                 </li>
                 <li className="flex items-center gap-2 text-xs text-surface-300">
-                  <Upload className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                  <Upload className="h-3 w-3 text-status-info-400 flex-shrink-0" />
                   Shipment data uploaded to {pickupCarrier.name} servers
                 </li>
                 <li className="flex items-center gap-2 text-xs text-surface-300">
-                  <FileText className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                  <FileText className="h-3 w-3 text-status-info-400 flex-shrink-0" />
                   Carrier manifest generated and closed
                 </li>
                 <li className="flex items-center gap-2 text-xs text-surface-300">
-                  <Calendar className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                  <Calendar className="h-3 w-3 text-status-info-400 flex-shrink-0" />
                   Shipping day rolled forward
                 </li>
               </ul>
@@ -573,8 +573,8 @@ export default function EndOfDayPage() {
         {pickupComplete && pickupCarrier && (
           <div className="space-y-5">
             <div className="flex flex-col items-center text-center py-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
-                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-50 mb-4">
+                <CheckCircle2 className="h-8 w-8 text-status-success-600" />
               </div>
               <h3 className="text-lg font-semibold text-surface-100 mb-1">
                 {pickupCarrier.name} Pickup Processed
@@ -586,14 +586,14 @@ export default function EndOfDayPage() {
 
             {/* Carrier actions taken */}
             {pickupCarrier.carrierActions && pickupCarrier.carrierActions.length > 0 && (
-              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-500/20">
-                <h4 className="text-xs font-medium text-emerald-400 uppercase tracking-wider mb-2">
+              <div className="p-4 rounded-lg bg-status-success-50 border border-status-success-500/20">
+                <h4 className="text-xs font-medium text-status-success-400 uppercase tracking-wider mb-2">
                   Actions Completed
                 </h4>
                 <ul className="space-y-1.5">
                   {pickupCarrier.carrierActions.map((action, i) => (
                     <li key={i} className="flex items-center gap-2 text-xs text-surface-300">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                      <CheckCircle2 className="h-3 w-3 text-status-success-500 flex-shrink-0" />
                       {action}
                     </li>
                   ))}
@@ -666,7 +666,7 @@ export default function EndOfDayPage() {
                 <p className="text-xs text-surface-500 mb-1">Revenue / Profit</p>
                 <p className="text-lg font-bold text-surface-100">
                   {formatCurrency(manifestData.summary.totalRetailRevenue)}{' '}
-                  <span className="text-xs text-emerald-400">
+                  <span className="text-xs text-status-success-400">
                     (+{formatCurrency(manifestData.summary.totalProfit)})
                   </span>
                 </p>
@@ -674,10 +674,10 @@ export default function EndOfDayPage() {
             </div>
 
             {/* Manifest type badge */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <ShieldCheck className="h-4 w-4 text-blue-400" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-status-info-500/10 border border-status-info-500/20">
+              <ShieldCheck className="h-4 w-4 text-status-info-400" />
               <div>
-                <p className="text-xs font-medium text-blue-300">Carrier Manifest Type</p>
+                <p className="text-xs font-medium text-status-info-300">Carrier Manifest Type</p>
                 <p className="text-xs text-surface-400">{manifestData.carrierManifestType}</p>
               </div>
             </div>
@@ -758,8 +758,8 @@ export default function EndOfDayPage() {
       >
         <div className="space-y-4">
           {totalPending > 0 && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-status-warning-500/10 border border-status-warning-500/20">
+              <AlertTriangle className="h-4 w-4 text-status-warning-400 flex-shrink-0" />
               <p className="text-sm text-yellow-300">
                 {totalPending} carrier{totalPending > 1 ? 's' : ''} still waiting for pickup
               </p>
@@ -780,9 +780,9 @@ export default function EndOfDayPage() {
               <p className="text-xs text-surface-500">Costs</p>
               <p className="text-sm font-bold text-surface-300">{formatCurrency(totalRevenue - totalProfit)}</p>
             </div>
-            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-500/20 text-center">
+            <div className="p-3 rounded-lg bg-status-success-50 border border-status-success-500/20 text-center">
               <p className="text-xs text-surface-500">Profit</p>
-              <p className="text-sm font-bold text-emerald-400">{formatCurrency(totalProfit)}</p>
+              <p className="text-sm font-bold text-status-success-400">{formatCurrency(totalProfit)}</p>
             </div>
           </div>
 

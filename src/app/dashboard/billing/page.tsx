@@ -130,36 +130,36 @@ const PERIOD_OPTIONS = [
 ];
 
 const SERVICE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  receiving: { label: 'Receiving', icon: '📦', color: '#6366f1' },
-  storage: { label: 'Storage', icon: '🏠', color: '#8b5cf6' },
-  forwarding: { label: 'Forwarding', icon: '📤', color: '#06b6d4' },
-  scanning: { label: 'Scanning', icon: '📄', color: '#10b981' },
-  pickup: { label: 'Pickup', icon: '🚗', color: '#f59e0b' },
-  disposal: { label: 'Disposal', icon: '🗑️', color: '#ef4444' },
-  shipping: { label: 'Shipping', icon: '🚚', color: '#3b82f6' },
-  custom: { label: 'Custom', icon: '⚡', color: '#ec4899' },
+  receiving: { label: 'Receiving', icon: '📦', color: 'var(--color-primary-500)' },
+  storage: { label: 'Storage', icon: '🏠', color: 'var(--color-status-violet-500)' },
+  forwarding: { label: 'Forwarding', icon: '📤', color: 'var(--color-accent-teal)' },
+  scanning: { label: 'Scanning', icon: '📄', color: 'var(--color-status-success-500)' },
+  pickup: { label: 'Pickup', icon: '🚗', color: 'var(--color-status-warning-500)' },
+  disposal: { label: 'Disposal', icon: '🗑️', color: 'var(--color-status-error-500)' },
+  shipping: { label: 'Shipping', icon: '🚚', color: 'var(--color-status-info-500)' },
+  custom: { label: 'Custom', icon: '⚡', color: 'var(--color-status-pink-500)' },
 };
 
 const MODEL_LABELS: Record<string, { label: string; color: string }> = {
-  subscription: { label: 'Subscription', color: '#6366f1' },
-  usage: { label: 'Usage-Based', color: '#06b6d4' },
-  tos: { label: 'Time-of-Service', color: '#f59e0b' },
-  other: { label: 'Other', color: '#94a3b8' },
+  subscription: { label: 'Subscription', color: 'var(--color-primary-500)' },
+  usage: { label: 'Usage-Based', color: 'var(--color-accent-teal)' },
+  tos: { label: 'Time-of-Service', color: 'var(--color-status-warning-500)' },
+  other: { label: 'Other', color: 'var(--color-surface-600)' },
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: '#f59e0b',
-  posted: '#3b82f6',
-  invoiced: '#8b5cf6',
-  paid: '#10b981',
-  void: '#6b7280',
-  disputed: '#ef4444',
+  pending: 'var(--color-status-warning-500)',
+  posted: 'var(--color-status-info-500)',
+  invoiced: 'var(--color-status-violet-500)',
+  paid: 'var(--color-status-success-500)',
+  void: 'var(--color-surface-500)',
+  disputed: 'var(--color-status-error-500)',
 };
 
 const SEVERITY_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-  info: { icon: Lightbulb, color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-  warning: { icon: ShieldAlert, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-  danger: { icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+  info: { icon: Lightbulb, color: 'var(--color-status-info-500)', bg: 'color-mix(in srgb, var(--color-status-info-500) 10%, transparent)' },
+  warning: { icon: ShieldAlert, color: 'var(--color-status-warning-500)', bg: 'color-mix(in srgb, var(--color-status-warning-500) 10%, transparent)' },
+  danger: { icon: AlertTriangle, color: 'var(--color-status-error-500)', bg: 'color-mix(in srgb, var(--color-status-error-500) 10%, transparent)' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -218,7 +218,7 @@ function TrendChart({ data, height = 120 }: { data: TrendPoint[]; height?: numbe
               style={{
                 width: `${barWidth}px`,
                 height: `${Math.max((point.revenue / maxRevenue) * (height - 24), 2)}px`,
-                background: `linear-gradient(to top, #6366f1, #818cf8)`,
+                background: `linear-gradient(to top, var(--color-primary-500), var(--color-primary-400))`,
               }}
             />
             {/* Tooltip */}
@@ -227,7 +227,7 @@ function TrendChart({ data, height = 120 }: { data: TrendPoint[]; height?: numbe
                 <div className="text-surface-300 font-medium">{point.date}</div>
                 <div className="text-surface-400">Rev: {formatCurrency(point.revenue)}</div>
                 <div className="text-surface-400">Cost: {formatCurrency(point.cost)}</div>
-                <div className="text-emerald-400">Profit: {formatCurrency(point.profit)}</div>
+                <div className="text-status-success-400">Profit: {formatCurrency(point.profit)}</div>
                 <div className="text-surface-500">{point.count} charges</div>
               </div>
             </div>
@@ -250,7 +250,7 @@ function TrendChart({ data, height = 120 }: { data: TrendPoint[]; height?: numbe
 
 function AgingChart({ data }: { data: AgingBucket[] }) {
   const total = data.reduce((sum, d) => sum + d.amount, 0);
-  const bucketColors = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
+  const bucketColors = ['var(--color-status-success-500)', 'var(--color-status-warning-500)', 'var(--color-status-warning-alt)', 'var(--color-status-error-500)'];
 
   if (total === 0) {
     return (
@@ -310,7 +310,7 @@ function StatusRing({ data }: { data: StatusBreakdown[] }) {
     const start = acc;
     const pct = (d.count / total) * 100;
     acc += pct;
-    return `${STATUS_COLORS[d.status] || '#6b7280'} ${start}% ${acc}%`;
+    return `${STATUS_COLORS[d.status] || 'var(--color-surface-500)'} ${start}% ${acc}%`;
   });
 
   return (
@@ -327,7 +327,7 @@ function StatusRing({ data }: { data: StatusBreakdown[] }) {
         {data.map((d) => (
           <div key={d.status} className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[d.status] || '#6b7280' }} />
+              <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[d.status] || 'var(--color-surface-500)' }} />
               <span className="text-xs text-surface-300 capitalize">{d.status}</span>
             </div>
             <div className="text-right">
@@ -443,7 +443,7 @@ export default function BillingDashboardPage() {
         />
         <Card>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
+            <AlertTriangle className="h-12 w-12 text-status-warning-500 mb-4" />
             <h3 className="text-lg font-semibold text-surface-200 mb-2">Unable to Load Data</h3>
             <p className="text-sm text-surface-400 mb-4">{error}</p>
             <Button onClick={fetchData}>Try Again</Button>
@@ -557,7 +557,7 @@ export default function BillingDashboardPage() {
                   items={data.revenueByService.map((s) => ({
                     label: `${SERVICE_LABELS[s.serviceType]?.icon || '•'} ${SERVICE_LABELS[s.serviceType]?.label || s.serviceType}`,
                     value: s.revenue,
-                    color: SERVICE_LABELS[s.serviceType]?.color || '#6b7280',
+                    color: SERVICE_LABELS[s.serviceType]?.color || 'var(--color-surface-500)',
                   }))}
                 />
               ) : (
@@ -582,7 +582,7 @@ export default function BillingDashboardPage() {
                   items={data.revenueByModel.map((m) => ({
                     label: MODEL_LABELS[m.model]?.label || m.model,
                     value: m.revenue,
-                    color: MODEL_LABELS[m.model]?.color || '#6b7280',
+                    color: MODEL_LABELS[m.model]?.color || 'var(--color-surface-500)',
                   }))}
                 />
               ) : (
@@ -632,7 +632,7 @@ export default function BillingDashboardPage() {
                 <div className="border-t border-surface-800 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-surface-400">Gross Margin</span>
-                    <span className="text-lg font-bold text-emerald-400">
+                    <span className="text-lg font-bold text-status-success-400">
                       {formatCurrency(overview?.totalMarkup || 0)}
                     </span>
                   </div>
@@ -730,11 +730,11 @@ export default function BillingDashboardPage() {
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1">
                               {Number(marginPct) >= 0 ? (
-                                <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                                <ArrowUpRight className="h-3 w-3 text-status-success-500" />
                               ) : (
-                                <ArrowDownRight className="h-3 w-3 text-red-500" />
+                                <ArrowDownRight className="h-3 w-3 text-status-error-500" />
                               )}
-                              <span className={Number(marginPct) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                              <span className={Number(marginPct) >= 0 ? 'text-status-success-400' : 'text-status-error-400'}>
                                 {marginPct}%
                               </span>
                             </div>
@@ -860,11 +860,11 @@ export default function BillingDashboardPage() {
                   </p>
                   <div className="flex items-center justify-center gap-1 mt-2">
                     {(overview?.revenueChange || 0) >= 0 ? (
-                      <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                      <ArrowUpRight className="h-4 w-4 text-status-success-500" />
                     ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-500" />
+                      <ArrowDownRight className="h-4 w-4 text-status-error-500" />
                     )}
-                    <span className={`text-sm font-medium ${(overview?.revenueChange || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className={`text-sm font-medium ${(overview?.revenueChange || 0) >= 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                       {overview?.revenueChange || 0}% vs previous period
                     </span>
                   </div>
