@@ -78,8 +78,8 @@ const statusVariant = (s: string) => {
   if (s === 'trial') return 'info' as const;
   if (s === 'paused') return 'warning' as const;
   if (s === 'pending_approval') return 'warning' as const;
-  if (s === 'suspended') return 'error' as const;
-  if (s === 'disabled') return 'error' as const;
+  if (s === 'suspended') return 'danger' as const;
+  if (s === 'disabled') return 'danger' as const;
   if (s === 'closed') return 'muted' as const;
   return 'muted' as const;
 };

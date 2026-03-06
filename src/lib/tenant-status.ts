@@ -32,9 +32,11 @@ export type TenantStatus = (typeof TENANT_STATUSES)[number];
 
 /* ── Labels & Metadata ────────────────────────────────────────────────────── */
 
+type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'muted' | 'outline';
+
 export const TENANT_STATUS_META: Record<
   TenantStatus,
-  { label: string; color: string; description: string; badgeVariant: string }
+  { label: string; color: string; description: string; badgeVariant: BadgeVariant }
 > = {
   pending_approval: {
     label: 'Pending Approval',
@@ -64,13 +66,13 @@ export const TENANT_STATUS_META: Record<
     label: 'Suspended',
     color: '#EF4444',
     description: 'STAFF-initiated hold (compliance, investigation)',
-    badgeVariant: 'error',
+    badgeVariant: 'danger',
   },
   disabled: {
     label: 'Disabled',
     color: '#EF4444',
     description: 'Payment failed, grace period expired',
-    badgeVariant: 'error',
+    badgeVariant: 'danger',
   },
   closed: {
     label: 'Closed',
