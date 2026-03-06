@@ -181,7 +181,7 @@ export default function ApprovalQueuePage() {
       <PageHeader
         title="Sign-Up Approval Queue"
         description="Review and approve pending client registrations"
-        icon={ClipboardCheck}
+        icon={<ClipboardCheck className="h-6 w-6" />}
       />
 
       {/* Stats bar */}
