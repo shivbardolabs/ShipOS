@@ -1,40 +1,115 @@
 {
   "version": 1,
   "skills": {
+    "ab-test-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "a41788149deaca12cd735f1ca18a8b036618d8d39b202258cc5d9a7eb3216c4c"
+    },
     "adapt": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "cc2a4e3b438553622819d2e02b996e67c6685a93de8974e3b4189c14a5414237"
+    },
+    "analyze-feature-requests": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "c0c1815f750b4a0ff6dccd5accdec50659ddc4015de80a4dc51e0608b6d71587"
     },
     "animate": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "d9678700cc105ae1af98763fb4f85168ba398395d241aae336ef421836d9dd82"
     },
+    "ansoff-matrix": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "0c198b0ba438e87ba2ff79b301ef7ab0ccf8d4024168547a43470da8f562c65d"
+    },
     "audit": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "49cbdf9ca35de3c03d060363207d70fd40b6ec7390e67710887ca43976244b2c"
+    },
+    "beachhead-segment": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "975e009cd04beffb0a4d68fd970a7677d9cb0ac95dabf058299c240410cef95a"
     },
     "bolder": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "210d2d6c071512370613d3816ee58b256b0c5ea69f74b1363584059a8b2d3669"
     },
+    "brainstorm-experiments-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "0dc5c020f11b04efc82e303a880e998c9a2622a80e889ff3a55b197b2d1cce24"
+    },
+    "brainstorm-experiments-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "368ea29bee623228b631f2e7d9c3e8f8a130e35976dc5e90aac831583383d17e"
+    },
+    "brainstorm-ideas-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "32644235ef2da3916692b0b817aca226309bcc8c4b5007c892d41226fa7a0fd9"
+    },
+    "brainstorm-ideas-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "d996451909bfe18cce853f1838d640505ee00d564fdf8818e3563b790ad8b492"
+    },
+    "brainstorm-okrs": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "fe967be0462ec0fc3b8ccea1922e9eda1ecf08bdda14f5db5ae37d499467109d"
+    },
+    "business-model": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "c6eee0cd2d102bb2982a41c7e6ec49515146be622858f76d5a5e1977e144e755"
+    },
     "clarify": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "848b37fa3e6445008d9a521930a539a9cf9bac254c0419f80f2757010d4d46db"
+    },
+    "cohort-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "8c6adb54ad7c849c581aae723e0cbf37f4f6dfcaa4860ee12bf72a82f9d5c6fa"
     },
     "colorize": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "c6ad8d7ae05771fee9232b72a16a42180e0e111c7372795f9009bf1cc52ccb95"
     },
+    "competitive-battlecard": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "534d760942f79ba510bd3b87e5ad3f3aafb2ee2e2dc342dd1adb2f8be8d31cf6"
+    },
+    "competitor-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "589b2783c3fa6f8a559217ebf053b8311a8dea27627037798c8eba177efe58b7"
+    },
+    "create-prd": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "5c242d3abb9508f59021ed22936230e555971feab690cbf2a90142e06d10e7ae"
+    },
     "critique": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "d1498e1b023ab9df934905b5e7ad0979bfee47d81bca174364c7889f7190013a"
+    },
+    "customer-journey-map": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "793689f403818a1a357e5fac0f36f9a83397fbca2ed9e56de849cfc957010f68"
     },
     "delight": {
       "source": "pbakaus/impeccable",
@@ -46,6 +121,16 @@
       "sourceType": "github",
       "computedHash": "4fb24ad0ca7e75497cc25d98cf1de636a1acbbe0da919c75daab846ec63ba305"
     },
+    "draft-nda": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "0e8ee39d06733a50fbaadb08d60e646bd855297de79b4c5f67ac463511c02cf3"
+    },
+    "dummy-dataset": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "1354aa148920680d38cf78eb49c258a100cccd344d751ad445f419ba6dc436e4"
+    },
     "extract": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
@@ -56,40 +141,280 @@
       "sourceType": "github",
       "computedHash": "5316f00e012e2d4a81f996adda009b6862a6684af4f6eef3f46a69f456121c6a"
     },
+    "grammar-check": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "1954c1532ca62d28d747a79af13ed1db55e5c54e60d40e127d0ffbfc58439686"
+    },
+    "growth-loops": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "7d52ffc8956d15d4aef194bf14e8ac02f9ea50a97ba7c7bf42f3ce679ade91a3"
+    },
+    "gtm-motions": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "db56853aef2211e29eb5e7359c512c41b6f3d47e7eee790b1306d50b15d1796b"
+    },
+    "gtm-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "29fb0efd2a65edbe86b47f85e3f9de06b386a53a2dd870911089d8f18e5c08ef"
+    },
     "harden": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "69cecc4f28fb2f140652669bd45cc492744ad5c3c45083f5e0be5b0a5ef8acd0"
+    },
+    "ideal-customer-profile": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "b4adac9af2dcf7b1408bcbb710a1c22f326795d92db0f4a90eace98d8242e9a3"
+    },
+    "identify-assumptions-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "157566069c0d49a600abef80e05549f6d0c62a19e39fd2814e18392597b55ccc"
+    },
+    "identify-assumptions-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "863667c0d27c925650ebf43fbb755e0f5586ea804bc051eedbf6e92f6785df28"
+    },
+    "interview-script": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "867f90ce30998d6a3120f689dcccbd56d38204da679a0c7f35a3b60d5fcc5bfb"
+    },
+    "job-stories": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "8b4a0d96bffd81266981e7ed0ed979d415995f6734d65e3cf6293cd28399d3a3"
+    },
+    "lean-canvas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "4e470bd694c6535c9c316c17f5ab877299d11aea3967f2fe8b92d1511eeaff93"
+    },
+    "market-segments": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "b80469ab3b88c02e7f26fdd361a704c60681463675874b93be8c574d5dc06c90"
+    },
+    "market-sizing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "bd1fd85b45e848a810141e916ce967e0328072e87c6e8626e48065e8b01b0554"
+    },
+    "marketing-ideas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "3e464a70238d16ca8a6b21c3ebab785594024c8eb80b8dd3a78a021cd92ed61e"
+    },
+    "metrics-dashboard": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "23943ae9700288342b146c60664107bd5533918348ea3888b7ae96b5e4e1fe7e"
+    },
+    "monetization-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "fe59fc0cde884e3e5ae7316b6bcbbdcf1936b7f74fec3cfe5e8a3523db0423b2"
     },
     "normalize": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "a2d2c28085b46b1b0a97aa4133a4df5fec9cf77a7c3cef275b901065e11bc080"
     },
+    "north-star-metric": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "4154f922dd84e7d13f212f70d925ed8543841ccceb1164a91623b39a0616198d"
+    },
     "onboard": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "a6d7f5c09cb2828e622fbb8fa1467bc70b041519ffed2198d9de627325d97b66"
+    },
+    "opportunity-solution-tree": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "0bbc9c2da81f4e6143d17de9e34fa9b275a6c408bf5f351ccc0a76c9ea50b11e"
     },
     "optimize": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "278796e7d0b6febea9a53705f741f47d473cc4725684a5e0bd75fd4a99791b1c"
     },
+    "outcome-roadmap": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "12abd68e440a17578d5dce8d9e80fbaadfb603134ec58ce38f622da7075ef668"
+    },
+    "pestle-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "f6dfcc39873011340d4a3f95f260c34cbf98ab5154884b5fae273b3ed26c5005"
+    },
     "polish": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "72c2426ac9540884eb5032bb438324bb344d0e2dd2b80f300a9fb49fe38d624e"
+    },
+    "porters-five-forces": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "6607f757c39236f444a9cc1681ba064fb608818411590e47ce6d883f35efd342"
+    },
+    "positioning-ideas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "f4b71635d2ffd33ccd4c8885d6bda412b72dbd61e34d4b427969b85c0e1cb91e"
+    },
+    "pre-mortem": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "19ae048852f8e0ea4009e519e6ad6d0627e4c051858ddd31cb229deb64eea68f"
+    },
+    "pricing-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "8b08c790570b59f344430c14d7d5b1dee44d585ced4b50ce9915130ea902cebf"
+    },
+    "prioritization-frameworks": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "c3a9efeb0aff02df481fc5c624b91709e6b21de167b2867e93a2d08bb4b4fa84"
+    },
+    "prioritize-assumptions": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "189b8e88c6654505d91a4b068144197a39c4f8fccf8f5e1ba91952f2ca85e7e3"
+    },
+    "prioritize-features": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "0cd2f0bf0a1440b12aec601470c30d86dafd1bb0f8a507d7caced94f4bc8a2f8"
+    },
+    "privacy-policy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "b7de21713e3b59e8a152b47135f4a501e8ecf22e5e550dc64937f18ced7e6eae"
+    },
+    "product-name": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "37cca037c08948af87728d31b676c2192029fa8ca0a4dd62584ad0839dee55a7"
+    },
+    "product-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "3c3caf28c064bdd863027fb7737133e6efd545682c82ba21beaf85ac9b21da81"
+    },
+    "product-vision": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "6db8717df816928ce4f77e54fc42467f35892967aae84ab0eec8ca5f9edd2c88"
     },
     "quieter": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "139b3e3c9d43b79b4e6ccffaeb874265bc916d7d90662950e9f05581d6e0c06a"
     },
+    "release-notes": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "375e01b5114d4ec892db0129cfb4cb3788fbfa9f2ff0262cdfd2166d77b3108a"
+    },
+    "retro": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "7f71997df63d73af6d0e732148b524fa6c314dacaaf0d383dc0da3e34523dc81"
+    },
+    "review-resume": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "457ce744e2da12f85aa98d0a4f5f08eec71817405cb2c06b45c09575b83b9852"
+    },
+    "sentiment-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "5202a258b4ce2c7bfff3845f269349ca5fa21c68a48610899c62503286b2d410"
+    },
+    "sprint-plan": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "c24b2cef87ecf404548da46dc8f6d473f7b1fc3e2477edc9de7b1e8ab04adad7"
+    },
+    "sql-queries": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "8cd45f46990b642b0ccaa5f6dedbeea051d44f1ea2cc5d67114534e77c29b03a"
+    },
+    "stakeholder-map": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "a721f2737863b48f26cd1d6cc3de3150977fc7a994645d2303cd412ed3315887"
+    },
+    "startup-canvas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "57a15851a385bd7e31c6dad1037a29dfe4cd467ed369a3ff4892d988dd0d81a6"
+    },
+    "summarize-interview": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "4ff332927f929257cda8d6b030a541bb086493b9409ace146cad2973bd874e47"
+    },
+    "summarize-meeting": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "505e6223ea9bcb274bde412e6b4d1d0e4ff8597e688d43ab5f3789c19ac05860"
+    },
+    "swot-analysis": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "e54e0a983dfb825ff3f9008efae0611c895f93d7a13140a53c5331678f2d4ec5"
+    },
     "teach-impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "61855594bf79bc5b2665cfca3580b93840cfe645872c5a2deeaa5ad336570d5a"
+    },
+    "test-scenarios": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "a65c9547fb66a7383323ba6986b18f682a3fa010d6b0b030abc4e68ccb56a54e"
+    },
+    "user-personas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "271152c8d16d09fd3448e3d33707d61373c3c06e4619e8a1e9730d5305c120d4"
+    },
+    "user-segmentation": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "540d00a0b213d4c297f06aae7cb5315612d2b5dd74f204af640f0eff122953fe"
+    },
+    "user-stories": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "b9ba16cb7178e3e71b84cfb6d8e8226244bd04c1a7a957cf41cb793e567dd0d5"
+    },
+    "value-prop-statements": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "5a40288434e0784430bfefa0d3577d57722d0adf5545e24c86764462f7e82cae"
+    },
+    "value-proposition": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "2a2da3df17301089d6dbd9b39392c72e2723117f01291d6d28020d80a6840a5e"
+    },
+    "wwas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "962c1ff4d5d9d5affc9bf6c3f30baa156de85dec71f8379f92de1a256995a4f8"
     }
   }
 }
