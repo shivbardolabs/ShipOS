@@ -19,6 +19,7 @@ import type {
   AuditLog as PrismaAuditLog,
   CarrierRate as PrismaCarrierRate,
   MailboxRange as PrismaMailboxRange,
+  MailboxSize as PrismaMailboxSize,
   CustomerDocument as PrismaCustomerDocument,
   MailboxAgreementTemplate as PrismaMailboxAgreementTemplate,
   CustomerAgreement as PrismaCustomerAgreement,
@@ -135,6 +136,9 @@ export type CarrierRate = Serializable<PrismaCarrierRate>;
 
 /** MailboxRange — Prisma model with serializable dates. */
 export type MailboxRange = Serializable<PrismaMailboxRange>;
+
+/** MailboxSize — BAR-424. Physical mailbox sizes (e.g. "Small Box", "Large Box"). */
+export type MailboxSize = Serializable<PrismaMailboxSize>;
 
 /** CustomerDocument — Prisma model. extractedData is a JSON string in the DB. */
 export type CustomerDocument = Serializable<PrismaCustomerDocument> & {
