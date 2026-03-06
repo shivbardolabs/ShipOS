@@ -320,7 +320,7 @@ export default function ApprovalQueuePage() {
                       )}
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="danger"
                       size="sm"
                       onClick={() => { setRejectApp(app); setRejectReason(''); }}
                       disabled={actionLoading === app.id}
@@ -456,7 +456,7 @@ export default function ApprovalQueuePage() {
                 Approve &amp; Start Trial
               </Button>
               <Button
-                variant="destructive"
+                variant="danger"
                 onClick={() => {
                   setReviewApp(null);
                   setRejectApp(reviewApp);
@@ -516,7 +516,7 @@ export default function ApprovalQueuePage() {
                 Cancel
               </Button>
               <Button
-                variant="destructive"
+                variant="danger"
                 className="flex-1"
                 onClick={handleReject}
                 disabled={actionLoading === rejectApp.id}
