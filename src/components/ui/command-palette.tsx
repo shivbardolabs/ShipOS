@@ -351,7 +351,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             autoComplete="off"
             spellCheck={false}
           />
-          <button
+          <button type="button"
             onClick={onClose}
             className="flex h-6 items-center rounded border px-1.5 text-[11px] font-medium text-surface-500 transition-colors hover:text-surface-300"
             style={{ borderColor: 'var(--color-surface-700)' }}
@@ -387,7 +387,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   const isActive = idx === activeIndex;
 
                   return (
-                    <button
+                    <button type="button"
                       key={item.id}
                       data-index={idx}
                       onClick={() => selectResult(item)}

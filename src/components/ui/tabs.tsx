@@ -43,7 +43,7 @@ export function Tabs({
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
-            <button
+            <button type="button"
               key={tab.id}
               onClick={() => onChange(tab.id)}
               className={cn(
@@ -84,7 +84,7 @@ export function Tabs({
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
         return (
-          <button
+          <button type="button"
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(

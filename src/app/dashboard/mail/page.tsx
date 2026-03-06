@@ -1000,7 +1000,7 @@ function MailContent() {
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span className="text-xs text-white font-medium">Replace</span>
                       </div>
-                      <button
+                      <button type="button"
                         onClick={(e) => { e.stopPropagation(); setScanImage(null); }}
                         className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-status-error-500/80 transition-colors"
                       >
@@ -1039,7 +1039,7 @@ function MailContent() {
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span className="text-xs text-white font-medium">Replace</span>
                       </div>
-                      <button
+                      <button type="button"
                         onClick={(e) => { e.stopPropagation(); setScanImageBack(null); }}
                         className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-status-error-500/80 transition-colors"
                       >
@@ -1075,7 +1075,7 @@ function MailContent() {
                       <p className="text-xs text-surface-500">PMB {selectedCustomer.pmbNumber}</p>
                     </div>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => { setScanCustomerId(''); setCustomerSearch(''); }}
                     className="text-xs text-surface-400 hover:text-surface-200 px-2 py-1 rounded-md hover:bg-surface-700 transition-colors"
                   >
@@ -1195,7 +1195,7 @@ function MailContent() {
                   {generatedCode}
                 </p>
                 <div className="mt-4 flex justify-center">
-                  <button
+                  <button type="button"
                     onClick={handleCopyCode}
                     className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 border border-brand-500/20 transition-colors"
                   >

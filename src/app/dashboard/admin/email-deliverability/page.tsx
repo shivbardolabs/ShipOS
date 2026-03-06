@@ -370,7 +370,7 @@ export default function EmailDeliverabilityPage() {
                               <td className="py-2 pr-3 text-surface-400 font-mono max-w-[250px] truncate">{record.value}</td>
                               <td className="py-2 pr-3">{statusBadge(record.status)}</td>
                               <td className="py-2">
-                                <button
+                                <button type="button"
                                   onClick={() => copyToClipboard(record.value)}
                                   className="text-surface-500 hover:text-surface-300 transition-colors"
                                   title="Copy value"
@@ -440,7 +440,7 @@ export default function EmailDeliverabilityPage() {
         <CardContent>
           <div className="space-y-2">
             {BEST_PRACTICES.map((item) => (
-              <button
+              <button type="button"
                 key={item.id}
                 onClick={() => toggleChecklistItem(item.id)}
                 className="w-full flex items-start gap-3 rounded-lg border border-surface-800 p-3 hover:bg-surface-800/50 transition-colors text-left"
@@ -471,7 +471,7 @@ export default function EmailDeliverabilityPage() {
       {/* ── IP Warming Schedule ────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <button
+          <button type="button"
             onClick={() => setWarmingOpen(!warmingOpen)}
             className="flex items-center gap-2 w-full text-left"
           >

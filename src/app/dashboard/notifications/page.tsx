@@ -235,7 +235,7 @@ export default function NotificationsPage() {
         <div className="flex items-center gap-1">
           {/* Retry button for failed notifications */}
           {(row.status === 'failed' || row.status === 'bounced') && (
-            <button
+            <button type="button"
               onClick={(e) => { e.stopPropagation(); handleRetry(row.id); }}
               disabled={retryingId === row.id}
               className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-medium bg-status-error-500/10 text-status-error-400 hover:bg-status-error-500/20 transition-colors disabled:opacity-50"
@@ -323,7 +323,7 @@ export default function NotificationsPage() {
               className="h-8 w-[200px] rounded-lg border border-surface-700 bg-surface-800 pl-8 pr-3 text-xs text-surface-200 placeholder:text-surface-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/30 transition-colors"
             />
             {customerSearch && (
-              <button
+              <button type="button"
                 onClick={() => setCustomerSearch('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300"
               >
@@ -341,7 +341,7 @@ export default function NotificationsPage() {
           <span>Filtering by customer: &ldquo;{customerSearch}&rdquo;</span>
           <span className="text-surface-500">·</span>
           <span>{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
-          <button
+          <button type="button"
             onClick={() => setCustomerSearch('')}
             className="text-primary-400 hover:text-primary-300 underline"
           >

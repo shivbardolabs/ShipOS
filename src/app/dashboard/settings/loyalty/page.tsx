@@ -87,7 +87,7 @@ export default function LoyaltySettingsPage() {
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Link>
-            <button
+            <button type="button"
               onClick={handleSave}
               className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors"
             >
@@ -105,7 +105,7 @@ export default function LoyaltySettingsPage() {
             <h3 className="text-base font-semibold text-surface-100">Program Basics</h3>
             <p className="text-xs text-surface-500 mt-0.5">Core loyalty program configuration</p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setIsActive(!isActive)}
             className="flex items-center gap-2 text-sm"
           >
@@ -292,7 +292,7 @@ export default function LoyaltySettingsPage() {
             <h3 className="text-base font-semibold text-surface-100">Rewards Catalog</h3>
             <p className="text-xs text-surface-500 mt-0.5">Manage redeemable rewards for customers</p>
           </div>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-surface-800 px-3 py-1.5 text-xs font-medium text-surface-300 hover:text-surface-100 transition-colors">
+          <button type="button" className="inline-flex items-center gap-1.5 rounded-lg bg-surface-800 px-3 py-1.5 text-xs font-medium text-surface-300 hover:text-surface-100 transition-colors">
             <Plus className="h-3.5 w-3.5" />
             Add Reward
           </button>
@@ -328,7 +328,7 @@ export default function LoyaltySettingsPage() {
                   <td className="px-3 py-3 text-right font-medium text-surface-200">{reward.pointsCost}</td>
                   <td className="px-3 py-3 text-right text-surface-400">${reward.value.toFixed(2)}</td>
                   <td className="px-3 py-3 text-center">
-                    <button
+                    <button type="button"
                       onClick={() => {
                         const next = [...rewards];
                         next[i] = { ...next[i], isActive: !next[i].isActive };
@@ -343,7 +343,7 @@ export default function LoyaltySettingsPage() {
                     </button>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <button className="text-surface-500 hover:text-accent-rose transition-colors">
+                    <button type="button" className="text-surface-500 hover:text-accent-rose transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
@@ -361,7 +361,7 @@ export default function LoyaltySettingsPage() {
             <h3 className="text-base font-semibold text-surface-100">Referral Program</h3>
             <p className="text-xs text-surface-500 mt-0.5">Reward customers for referring new business</p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setReferralEnabled(!referralEnabled)}
             className="flex items-center gap-2 text-sm"
           >

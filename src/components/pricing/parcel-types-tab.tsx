@@ -257,7 +257,7 @@ export function ParcelTypesTab() {
                 </div>
 
                 {/* COGS breakdown toggle */}
-                <button
+                <button type="button"
                   onClick={() => setExpandedId(isExpanded ? null : pt.id)}
                   className="mt-3 text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
                 >

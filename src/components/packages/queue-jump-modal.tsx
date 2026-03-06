@@ -158,7 +158,7 @@ export function QueueJumpModal({
               </div>
             ) : (
               filteredPackages.map((pkg) => (
-                <button
+                <button type="button"
                   key={pkg.id}
                   onClick={() => setSelectedId(pkg.id)}
                   className={cn(

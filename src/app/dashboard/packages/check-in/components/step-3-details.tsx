@@ -103,7 +103,7 @@ export function Step3PackageDetails(props: Step3Props) {
                 <p className="text-xs text-surface-400 mt-1">
                   This tracking number is already assigned to a package for {duplicatePackage.customerName} ({duplicatePackage.customerPmb})
                 </p>
-                <button
+                <button type="button"
                   className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
                   onClick={() => setShowDuplicateModal(true)}
                 >
@@ -124,7 +124,7 @@ export function Step3PackageDetails(props: Step3Props) {
           {packageTypeOptions.map((pt) => {
             const isActive = packageType === pt.id;
             return (
-              <button
+              <button type="button"
                 key={pt.id}
                 onClick={() => setPackageType(pt.id)}
                 className={cn(

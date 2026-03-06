@@ -69,13 +69,13 @@ export function PlanComparison({ onSelect }: { onSelect?: (tierId: string, billi
     <div className="space-y-6">
       {/* Billing cycle toggle */}
       <div className="flex items-center justify-center gap-2">
-        <button
+        <button type="button"
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${billingCycle === 'monthly' ? 'bg-brand-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'}`}
           onClick={() => setBillingCycle('monthly')}
         >
           Monthly
         </button>
-        <button
+        <button type="button"
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${billingCycle === 'annual' ? 'bg-brand-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'}`}
           onClick={() => setBillingCycle('annual')}
         >

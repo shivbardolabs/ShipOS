@@ -89,14 +89,14 @@ export function StorageLocationsTab({ isViewOnly, storageLocations, storageLocLo
                     <td className="px-4 py-3">
                       {!isViewOnly && (
                         <div className="flex flex-col gap-0.5">
-                          <button
+                          <button type="button"
                             onClick={() => handleMoveStorageLoc(idx, 'up')}
                             disabled={idx === 0}
                             className="text-surface-500 hover:text-surface-200 disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <ChevronUp className="h-3.5 w-3.5" />
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => handleMoveStorageLoc(idx, 'down')}
                             disabled={idx === storageLocations.length - 1}
                             className="text-surface-500 hover:text-surface-200 disabled:opacity-30 disabled:cursor-not-allowed"

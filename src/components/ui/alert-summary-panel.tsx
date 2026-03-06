@@ -156,7 +156,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
   return (
     <div className={cn('glass-card overflow-hidden', className)}>
       {/* Header */}
-      <button
+      <button type="button"
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full px-5 py-3 hover:bg-surface-800/50 transition-colors"
       >
@@ -177,7 +177,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <button type="button"
             onClick={(e) => {
               e.stopPropagation();
               router.push('/dashboard/notifications');
@@ -302,7 +302,7 @@ function AlertActions({
             {snoozeOpen && (
               <div className="absolute top-full right-0 mt-1 w-44 rounded-lg border border-surface-700 bg-surface-900 shadow-lg z-50">
                 {SNOOZE_OPTIONS.map((opt) => (
-                  <button
+                  <button type="button"
                     key={opt.label}
                     onClick={(e) => {
                       e.stopPropagation();

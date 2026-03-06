@@ -127,9 +127,9 @@ export function NotificationPanel() {
   };
 
   return (
-    <div ref={panelRef} className="relative">
+    <div role="status" aria-live="polite" ref={panelRef} className="relative">
       {/* Bell trigger */}
-      <button
+      <button type="button"
         onClick={() => setOpen(!open)}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800/60 transition-colors cursor-pointer"
         aria-label="Notifications"
@@ -156,7 +156,7 @@ export function NotificationPanel() {
               )}
             </div>
             {unreadCount > 0 && (
-              <button
+              <button type="button"
                 onClick={markAllRead}
                 className="flex items-center gap-1 text-[11px] text-surface-500 hover:text-primary-400 transition-colors"
               >
@@ -187,7 +187,7 @@ export function NotificationPanel() {
               recent.map((notif) => {
                 const isRead = readIds.has(notif.id);
                 return (
-                  <button
+                  <button type="button"
                     key={notif.id}
                     onClick={() => setReadIds((prev) => new Set([...prev, notif.id]))}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-800/60 border-b border-surface-800/50 last:border-0 ${

@@ -221,13 +221,13 @@ export default function BrandingPage() {
 
                 {/* Button preview */}
                 <div className="flex gap-2">
-                  <button
+                  <button type="button"
                     className="px-4 py-2 text-sm font-medium rounded-lg text-white"
                     style={{ backgroundColor: accentColor }}
                   >
                     Primary Button
                   </button>
-                  <button
+                  <button type="button"
                     className="px-4 py-2 text-sm font-medium rounded-lg border"
                     style={{ color: accentColor, borderColor: `${accentColor}50` }}
                   >

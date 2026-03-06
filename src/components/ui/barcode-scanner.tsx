@@ -167,7 +167,7 @@ export function BarcodeScanner({ onScan, className }: BarcodeScannerProps) {
           <ScanBarcode className="h-4 w-4" />
           <span>Point camera at barcode</span>
         </div>
-        <button
+        <button type="button"
           onClick={handleClose}
           className="p-1 rounded hover:bg-surface-700 text-surface-400 hover:text-surface-200 transition-colors"
         >

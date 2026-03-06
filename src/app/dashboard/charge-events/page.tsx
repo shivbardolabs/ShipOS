@@ -509,7 +509,7 @@ export default function ChargeEventsPage() {
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-1">
-                              <button
+                              <button type="button"
                                 onClick={() => setSelectedEvent(event)}
                                 className="p-1 rounded hover:bg-surface-700 text-surface-400 hover:text-surface-200"
                                 title="View details"
@@ -517,7 +517,7 @@ export default function ChargeEventsPage() {
                                 <Eye className="h-4 w-4" />
                               </button>
                               {isAdmin && event.status !== 'void' && (
-                                <button
+                                <button type="button"
                                   onClick={() => handleVoid(event.id)}
                                   className="p-1 rounded hover:bg-status-error-500/10 text-surface-400 hover:text-status-error-400"
                                   title="Void charge"
@@ -574,7 +574,7 @@ export default function ChargeEventsPage() {
           <div className="bg-surface-900 border border-surface-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-surface-700">
               <h3 className="font-semibold text-surface-100">Charge Event Details</h3>
-              <button
+              <button type="button"
                 onClick={() => setSelectedEvent(null)}
                 className="p-1 rounded hover:bg-surface-700 text-surface-400"
               >
@@ -684,7 +684,7 @@ export default function ChargeEventsPage() {
           <div className="bg-surface-900 border border-surface-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-surface-700">
               <h3 className="font-semibold text-surface-100">New Charge Event</h3>
-              <button
+              <button type="button"
                 onClick={() => setShowCreate(false)}
                 className="p-1 rounded hover:bg-surface-700 text-surface-400"
               >
@@ -705,7 +705,7 @@ export default function ChargeEventsPage() {
                 {customers.length > 0 && (
                   <div className="mt-1 border border-surface-700 rounded-md bg-surface-800 max-h-32 overflow-y-auto">
                     {customers.map((c) => (
-                      <button
+                      <button type="button"
                         key={c.id}
                         onClick={() => {
                           setNewCharge({ ...newCharge, customerId: c.id });

@@ -219,7 +219,7 @@ export function PaymentScreen({
               {PAYMENT_METHODS.map((method) => {
                 const Icon = method.icon;
                 return (
-                  <button
+                  <button type="button"
                     key={method.id}
                     onClick={() => handleSelectMethod(method.id)}
                     className={cn(
@@ -299,7 +299,7 @@ export function PaymentScreen({
             <p className="text-sm text-surface-400">
               Please try again or choose a different payment method.
             </p>
-            <button
+            <button type="button"
               onClick={handleRetry}
               className="rounded-xl bg-surface-800 px-8 py-3 text-surface-200 font-semibold hover:bg-surface-700 transition-colors"
             >
@@ -311,7 +311,7 @@ export function PaymentScreen({
         {/* Back / Help */}
         {paymentState === 'select' && (
           <div className="flex items-center justify-between">
-            <button
+            <button type="button"
               onClick={onBack}
               className="flex items-center gap-2 text-sm text-surface-400 hover:text-surface-200 transition-colors"
             >

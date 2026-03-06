@@ -150,11 +150,11 @@ export function SubscriptionsTab() {
         {/* Billing toggle */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 bg-surface-800 rounded-lg p-1">
-            <button
+            <button type="button"
               onClick={() => setBillingToggle('monthly')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${billingToggle === 'monthly' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200'}`}
             >Monthly</button>
-            <button
+            <button type="button"
               onClick={() => setBillingToggle('annual')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${billingToggle === 'annual' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200'}`}
             >Annual</button>

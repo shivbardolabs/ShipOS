@@ -156,7 +156,7 @@ export function CheckoutInventoryTable({
         <thead>
           <tr className="border-b border-surface-700/50">
             <th className="px-3 py-2 w-10">
-              <button onClick={onToggleAll} className="text-surface-400 hover:text-surface-200">
+              <button type="button" onClick={onToggleAll} className="text-surface-400 hover:text-surface-200">
                 {allSelected ? (
                   <CheckSquare className="h-4 w-4 text-primary-500" />
                 ) : someSelected ? (

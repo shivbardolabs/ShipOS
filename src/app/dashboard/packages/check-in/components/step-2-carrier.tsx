@@ -105,7 +105,7 @@ export function Step2CarrierSender(props: Step2Props) {
             <p className="text-xs text-status-success-400 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" /> Carrier auto-detected: {selectedCarrier.toUpperCase()}
             </p>
-            <button
+            <button type="button"
               onClick={() => { setSelectedCarrier(''); setCarrierAutoSuggested(false); }}
               className="text-xs text-primary-400 hover:text-primary-300 underline"
             >
@@ -136,7 +136,7 @@ export function Step2CarrierSender(props: Step2Props) {
                     Override acknowledged{duplicateOverrideReason ? `: ${duplicateOverrideReason}` : ''}
                   </div>
                 ) : (
-                  <button
+                  <button type="button"
                     className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
                     onClick={() => setShowDuplicateModal(true)}
                   >
@@ -158,7 +158,7 @@ export function Step2CarrierSender(props: Step2Props) {
           {carrierOptions.map((carrier) => {
             const isActive = selectedCarrier === carrier.id;
             return (
-              <button
+              <button type="button"
                 key={carrier.id}
                 onClick={() => handleCarrierSelect(carrier.id)}
                 className={cn(
@@ -208,7 +208,7 @@ export function Step2CarrierSender(props: Step2Props) {
             {senderSuggestions
               .filter((s) => s.toLowerCase() !== senderName.toLowerCase())
               .map((suggestion) => (
-                <button
+                <button type="button"
                   key={suggestion}
                   onClick={() => {
                     setSenderName(suggestion);

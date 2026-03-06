@@ -207,7 +207,7 @@ function ExistingCustomerCard({ match, onDismiss }: { match: ExistingCustomerMat
             <div><span className="text-surface-500">Status</span><Badge dot={false} className={cn('text-[10px]', match.status === 'active' ? 'bg-status-success-500/20 text-status-success-400' : 'bg-surface-600/30 text-surface-400')}>{match.status}</Badge></div>
           </div>
         </div>
-        <button onClick={onDismiss} className="p-1 rounded-md text-surface-500 hover:text-surface-300"><X className="h-4 w-4" /></button>
+        <button type="button" onClick={onDismiss} className="p-1 rounded-md text-surface-500 hover:text-surface-300"><X className="h-4 w-4" /></button>
       </div>
     </div>
   );
@@ -242,7 +242,7 @@ function RecipientRow({
           <UserPlus className="h-3.5 w-3.5 text-primary-500" />
           Recipient #{index + 1}
         </h4>
-        <button onClick={() => onRemove(index)} className="p-1 rounded-md text-surface-500 hover:text-status-error-400"><Trash2 className="h-3.5 w-3.5" /></button>
+        <button type="button" onClick={() => onRemove(index)} className="p-1 rounded-md text-surface-500 hover:text-status-error-400"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Select label="Type" options={typeOptions} value={recipient.type} onChange={(e) => onChange(index, 'type', e.target.value)} />
@@ -1050,7 +1050,7 @@ export default function NewCustomerPage() {
                     {rangeStats.map((r) => {
                       const occupancy = r.total > 0 ? Math.round((r.rented / r.total) * 100) : 0;
                       return (
-                        <button key={r.id} onClick={() => { updateField('platform', r.platform); setPmbDropdownOpen(true); }} className={cn('p-3 rounded-lg border text-left transition-all', customerForm.platform === r.platform ? 'border-primary-500 bg-primary-500/10' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
+                        <button type="button" key={r.id} onClick={() => { updateField('platform', r.platform); setPmbDropdownOpen(true); }} className={cn('p-3 rounded-lg border text-left transition-all', customerForm.platform === r.platform ? 'border-primary-500 bg-primary-500/10' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                           <div className="flex items-center gap-2">
                             <Badge dot={false} className={cn('text-[10px] border', platformLabels[r.platform]?.color)}>{platformLabels[r.platform]?.label}</Badge>
                           </div>
@@ -1068,7 +1068,7 @@ export default function NewCustomerPage() {
 
                   {/* PMB picker */}
                   <div className="relative">
-                    <div onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)} className={cn('flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors', customerForm.pmbNumber ? 'border-primary-500/50 bg-primary-500/5' : 'border-surface-700 bg-surface-900/50 hover:border-surface-600', formErrors.pmbNumber && 'border-status-error-500/50')}>
+                    <div role="button" tabIndex={0} onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPmbDropdownOpen(!pmbDropdownOpen); }}} className={cn('flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors', customerForm.pmbNumber ? 'border-primary-500/50 bg-primary-500/5' : 'border-surface-700 bg-surface-900/50 hover:border-surface-600', formErrors.pmbNumber && 'border-status-error-500/50')}>
                       <Mailbox className="h-4 w-4 text-surface-400" />
                       <span className={cn('flex-1 text-sm', customerForm.pmbNumber ? 'text-surface-100 font-mono font-medium' : 'text-surface-500')}>
                         {customerForm.pmbNumber ? formatPmbNumber(parseInt(customerForm.pmbNumber)) : 'Select PMB number...'}
@@ -1086,7 +1086,7 @@ export default function NewCustomerPage() {
                         </div>
                         <div className="max-h-48 overflow-y-auto p-1">
                           {filteredBoxes.map((box) => (
-                            <button key={box.number} onClick={() => selectPmb(box.number, box.platform)} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-surface-800 transition-colors">
+                            <button type="button" key={box.number} onClick={() => selectPmb(box.number, box.platform)} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-surface-800 transition-colors">
                               <span className="font-mono text-surface-200">{box.label}</span>
                               <Badge dot={false} className={cn('text-[10px] border', platformLabels[box.platform]?.color)}>{platformLabels[box.platform]?.label}</Badge>
                             </button>
@@ -1107,7 +1107,7 @@ export default function NewCustomerPage() {
                 {/* BAR-421: Expanded billing cycle selector (Daily, Monthly, Quarterly, Semi-Annual, Annual) */}
                 <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5 flex-wrap">
                   {BILLING_CYCLE_OPTIONS.map((opt) => (
-                    <button key={opt.value} className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap', billingCycle === opt.value ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle(opt.value)}>{opt.label}</button>
+                    <button type="button" key={opt.value} className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap', billingCycle === opt.value ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle(opt.value)}>{opt.label}</button>
                   ))}
                 </div>
               </CardHeader>
@@ -1125,7 +1125,7 @@ export default function NewCustomerPage() {
                       const monthlyEquiv = billingCycle === 'daily' ? +(price * 30).toFixed(2) : billingCycle === 'annual' ? +(tier.priceAnnual / 12).toFixed(2) : billingCycle === 'quarterly' ? +(price / 3).toFixed(2) : billingCycle === 'semi-annual' ? +(price / 6).toFixed(2) : tier.priceMonthly;
                       const savings = billingCycle !== 'monthly' && billingCycle !== 'daily' ? +((tier.priceMonthly * (cycleOpt?.months || 1)) - price).toFixed(0) : 0;
                       return (
-                        <button key={tier.id} onClick={() => setSelectedPlanId(tier.id)} className={cn('relative p-4 rounded-lg border text-left transition-all', isSelected ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
+                        <button type="button" key={tier.id} onClick={() => setSelectedPlanId(tier.id)} className={cn('relative p-4 rounded-lg border text-left transition-all', isSelected ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                           {isSelected && <div className="absolute -top-2 -right-2"><CheckCircle2 className="h-5 w-5 text-primary-500 bg-surface-950 rounded-full" /></div>}
                           <div className="space-y-3">
                             <div>
@@ -1204,8 +1204,8 @@ export default function NewCustomerPage() {
                         {/* BAR-421: Toggle between Upload and Camera modes */}
                         {!primaryIdPreview && (
                           <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
-                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
-                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('primary'); }}><Camera className="h-3 w-3" />Camera</button>
+                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
+                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('primary'); }}><Camera className="h-3 w-3" />Camera</button>
                           </div>
                         )}
                       </div>
@@ -1213,7 +1213,7 @@ export default function NewCustomerPage() {
                       {primaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button type="button" onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
                         </div>
                       ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'primary' ? (
@@ -1221,12 +1221,12 @@ export default function NewCustomerPage() {
                           <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
                           <canvas ref={canvasRef} className="hidden" />
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
-                            <button onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
-                            <button onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
+                            <button type="button" onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
+                            <button type="button" onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
                           </div>
                         </div>
                       ) : (
-                        <div onClick={() => fileInputRef1.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                        <div role="button" tabIndex={0} onClick={() => fileInputRef1.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef1.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
                         </div>
                       )}
@@ -1266,8 +1266,8 @@ export default function NewCustomerPage() {
                         {/* BAR-421: Camera option for secondary ID */}
                         {!secondaryIdPreview && (
                           <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
-                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' || cameraSlot !== 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
-                            <button className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' && cameraSlot === 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('secondary'); }}><Camera className="h-3 w-3" />Camera</button>
+                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' || cameraSlot !== 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
+                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' && cameraSlot === 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('secondary'); }}><Camera className="h-3 w-3" />Camera</button>
                           </div>
                         )}
                       </div>
@@ -1275,7 +1275,7 @@ export default function NewCustomerPage() {
                       {secondaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button type="button" onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
                         </div>
                       ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'secondary' ? (
@@ -1283,12 +1283,12 @@ export default function NewCustomerPage() {
                           <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
                           <canvas ref={canvasRef} className="hidden" />
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
-                            <button onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
-                            <button onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
+                            <button type="button" onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
+                            <button type="button" onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
                           </div>
                         </div>
                       ) : (
-                        <div onClick={() => fileInputRef2.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                        <div role="button" tabIndex={0} onClick={() => fileInputRef2.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef2.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
                         </div>
                       )}
@@ -1329,10 +1329,10 @@ export default function NewCustomerPage() {
                       {businessDocPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={businessDocPreview} alt="Business Doc" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button type="button" onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                         </div>
                       ) : (
-                        <div onClick={() => fileInputRef3.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                        <div role="button" tabIndex={0} onClick={() => fileInputRef3.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef3.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload</p>
                         </div>
                       )}
@@ -1358,11 +1358,11 @@ export default function NewCustomerPage() {
                     {proofOfAddressPreview ? (
                       <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                         <img src={proofOfAddressPreview} alt="Proof of Address" className="w-full h-40 object-cover" />
-                        <div className="absolute top-2 right-2"><button onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                        <div className="absolute top-2 right-2"><button type="button" onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{proofOfAddressFile?.name}</p></div>
                       </div>
                     ) : (
-                      <div onClick={() => fileInputRefPoa.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
+                      <div role="button" tabIndex={0} onClick={() => fileInputRefPoa.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRefPoa.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
                         <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
                       </div>
                     )}
@@ -1547,7 +1547,7 @@ export default function NewCustomerPage() {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {PAYMENT_METHODS.map((pm) => (
-                    <button key={pm.value} onClick={() => setPaymentMethod(pm.value)} className={cn('p-4 rounded-lg border text-left transition-all', paymentMethod === pm.value ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
+                    <button type="button" key={pm.value} onClick={() => setPaymentMethod(pm.value)} className={cn('p-4 rounded-lg border text-left transition-all', paymentMethod === pm.value ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{pm.icon}</span>
                         <div>

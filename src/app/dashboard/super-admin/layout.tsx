@@ -76,7 +76,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               Super Admin
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setSidebarOpen(false)}
             className="ml-auto text-surface-400 hover:text-surface-200 lg:hidden"
           >
@@ -144,7 +144,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       <div className="lg:pl-[260px] flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-surface-800 bg-surface-900/80 px-4 backdrop-blur-md lg:px-6">
-          <button
+          <button type="button"
             onClick={() => setSidebarOpen(true)}
             className="text-surface-400 hover:text-surface-200 lg:hidden"
           >

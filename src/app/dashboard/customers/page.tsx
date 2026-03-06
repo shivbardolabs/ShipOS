@@ -353,13 +353,13 @@ export default function CustomersPage() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAddDropdown(false)} />
                 <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-surface-700 bg-surface-900 shadow-xl py-1">
-                  <button onClick={() => { setShowAddDropdown(false); router.push('/dashboard/customers/new'); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
+                  <button type="button" onClick={() => { setShowAddDropdown(false); router.push('/dashboard/customers/new'); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
                     <User className="h-4 w-4 text-surface-400" /> Full Setup Wizard
                   </button>
-                  <button onClick={() => { setShowAddDropdown(false); setShowAddModal(true); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
+                  <button type="button" onClick={() => { setShowAddDropdown(false); setShowAddModal(true); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
                     <User className="h-4 w-4 text-surface-400" /> Quick Add (Basic)
                   </button>
-                  <button onClick={() => { setShowAddDropdown(false); setShowImportModal(true); resetImport(); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
+                  <button type="button" onClick={() => { setShowAddDropdown(false); setShowImportModal(true); resetImport(); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-surface-300 hover:bg-surface-800 transition-colors">
                     <Upload className="h-4 w-4 text-surface-400" /> Bulk Import (CSV)
                   </button>
                 </div>
@@ -380,7 +380,7 @@ export default function CustomersPage() {
         <div className="flex items-center gap-6 flex-wrap">
           <div className="flex items-center gap-1">
             {STATUS_FILTERS.map((f) => (
-              <button key={f.id} onClick={() => { setStatusFilter(f.id); setPage(0); }}
+              <button type="button" key={f.id} onClick={() => { setStatusFilter(f.id); setPage(0); }}
                 className={cn('px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   statusFilter === f.id ? 'bg-primary-50 text-primary-600 border border-primary-200' : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-transparent')}>
                 {f.label}{f.id !== 'all' && <span className="ml-1.5 text-xs opacity-70">{customers.filter((c) => c.status === f.id).length}</span>}
@@ -389,7 +389,7 @@ export default function CustomersPage() {
           </div>
           <div className="flex items-center gap-1">
             {PLATFORM_FILTERS.map((f) => (
-              <button key={f.id} onClick={() => { setPlatformFilter(f.id); setPage(0); }}
+              <button type="button" key={f.id} onClick={() => { setPlatformFilter(f.id); setPage(0); }}
                 className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   platformFilter === f.id ? 'bg-surface-700 text-surface-200 border border-surface-600' : 'text-surface-500 hover:bg-surface-800 hover:text-surface-300 border border-transparent')}>
                 {f.label}
@@ -570,7 +570,7 @@ export default function CustomersPage() {
 
         {importStep === 'upload' && (
           <div className="space-y-4">
-            <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}
+            <div role="button" tabIndex={0} onDragOver={(e) => e.preventDefault()} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
               className="flex flex-col items-center justify-center gap-3 p-12 rounded-xl border-2 border-dashed border-surface-600 bg-surface-800/30 hover:border-primary-500/50 hover:bg-surface-800/50 transition-all cursor-pointer">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-700/50"><FileSpreadsheet className="h-6 w-6 text-surface-400" /></div>
               <div className="text-center">

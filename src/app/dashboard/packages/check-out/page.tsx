@@ -679,7 +679,7 @@ export default function CheckOutPage() {
 
           {/* Search mode toggle */}
           <div className="flex gap-1 p-1 bg-surface-800/60 rounded-xl mb-4 max-w-md">
-            <button
+            <button type="button"
               onClick={() => { setSearchMode('pmb'); setLookupError(''); setShowNameResults(false); }}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
@@ -691,7 +691,7 @@ export default function CheckOutPage() {
               <Hash className="h-4 w-4" />
               PMB
             </button>
-            <button
+            <button type="button"
               onClick={() => { setSearchMode('name'); setLookupError(''); }}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
@@ -703,7 +703,7 @@ export default function CheckOutPage() {
               <User className="h-4 w-4" />
               Name
             </button>
-            <button
+            <button type="button"
               onClick={() => { setSearchMode('tracking'); setLookupError(''); setShowNameResults(false); }}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
@@ -776,7 +776,7 @@ export default function CheckOutPage() {
                     className="!py-3.5 !text-lg !rounded-xl"
                   />
                   {nameInput && (
-                    <button
+                    <button type="button"
                       onClick={() => { setNameInput(''); setNameResults([]); setShowNameResults(false); setLookupError(''); }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-surface-500 hover:text-surface-300 hover:bg-surface-700/50 transition-colors"
                     >
@@ -797,7 +797,7 @@ export default function CheckOutPage() {
                   {nameResults.map((c) => {
                     const pendingPkgs = (c as Customer & { packageCount?: number }).packageCount ?? 0;
                     return (
-                      <button
+                      <button type="button"
                         key={c.id}
                         onClick={() => handleSelectFromResults(c)}
                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-800/60 transition-colors text-left border-b border-surface-800/50 last:border-b-0"
@@ -950,7 +950,7 @@ export default function CheckOutPage() {
                     </Button>
                     <div className="h-5 w-px bg-surface-700 mx-1" />
                     <div className="flex rounded-lg border border-surface-700 overflow-hidden">
-                      <button
+                      <button type="button"
                         className={cn(
                           'px-2.5 py-1 text-xs font-medium transition-colors',
                           inventoryView === 'cards' ? 'bg-primary-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'
@@ -959,7 +959,7 @@ export default function CheckOutPage() {
                       >
                         Cards
                       </button>
-                      <button
+                      <button type="button"
                         className={cn(
                           'px-2.5 py-1 text-xs font-medium transition-colors',
                           inventoryView === 'table' ? 'bg-primary-600 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200'
@@ -1025,7 +1025,7 @@ export default function CheckOutPage() {
                         )}
                       >
                         {/* Checkbox */}
-                        <button
+                        <button type="button"
                           onClick={(e) => { e.stopPropagation(); toggleSelect(pkg.id); }}
                           className={cn(
                             'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 transition-all',
@@ -1101,7 +1101,7 @@ export default function CheckOutPage() {
                         </div>
 
                         {/* BAR-187: Put-back action */}
-                        <button
+                        <button type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setPutBackPkg(pkg);
@@ -1125,7 +1125,7 @@ export default function CheckOutPage() {
                       <h4 className="text-sm font-semibold text-surface-200">
                         Label Verification Scan
                       </h4>
-                      <button
+                      <button type="button"
                         onClick={() => setShowVerification(!showVerification)}
                         className="ml-auto text-xs text-primary-400 hover:text-primary-300"
                       >
@@ -1203,7 +1203,7 @@ export default function CheckOutPage() {
                     <Card padding="md">
                       <h3 className="text-base font-semibold text-surface-100 mb-4">Payment Method</h3>
                       <div className="grid grid-cols-2 gap-3">
-                        <button
+                        <button type="button"
                           onClick={() => setPaymentMode('post_to_account')}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
@@ -1222,7 +1222,7 @@ export default function CheckOutPage() {
                             paymentMode === 'post_to_account' ? "bg-status-success-100 text-status-success-600" : "bg-surface-700 text-surface-400"
                           )}>Recommended</span>
                         </button>
-                        <button
+                        <button type="button"
                           onClick={() => setPaymentMode('pay_now')}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
@@ -1319,7 +1319,7 @@ export default function CheckOutPage() {
                     <Card padding="md">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-base font-semibold text-surface-100">Pickup Delegation</h3>
-                        <button
+                        <button type="button"
                           onClick={() => setShowDelegate(!showDelegate)}
                           className={cn(
                             "relative flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer",
@@ -1387,7 +1387,7 @@ export default function CheckOutPage() {
                         </label>
                         {/* BAR-189: Capture method toggle */}
                         <div className="flex rounded-lg border border-surface-700 overflow-hidden">
-                          <button
+                          <button type="button"
                             onClick={() => setSignatureMethod('touchscreen')}
                             className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
                               signatureMethod === 'touchscreen'
@@ -1397,7 +1397,7 @@ export default function CheckOutPage() {
                           >
                             Touchscreen
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => {
                               setSignatureMethod('terminal');
                               setTerminalSignatureStatus('idle');
@@ -1423,7 +1423,7 @@ export default function CheckOutPage() {
                             <span className="text-[10px] text-status-success-400 flex items-center gap-1">
                               ✓ Captured via {signatureMethod === 'terminal' ? 'payment terminal' : 'touchscreen'}
                             </span>
-                            <button
+                            <button type="button"
                               onClick={() => {
                                 setReleaseSignature(null);
                                 setTerminalSignatureStatus('idle');
@@ -1446,7 +1446,7 @@ export default function CheckOutPage() {
                           {terminalSignatureStatus === 'idle' && (
                             <>
                               <p className="text-sm text-surface-400 mb-3">Send signature request to payment terminal</p>
-                              <button
+                              <button type="button"
                                 onClick={() => {
                                   setTerminalSignatureStatus('requesting');
                                   // Simulate terminal response after 3s
@@ -1465,7 +1465,7 @@ export default function CheckOutPage() {
                             <div className="flex flex-col items-center gap-2">
                               <div className="h-8 w-8 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
                               <p className="text-sm text-primary-400">Waiting for customer to sign on terminal...</p>
-                              <button
+                              <button type="button"
                                 onClick={() => setTerminalSignatureStatus('idle')}
                                 className="text-xs text-surface-500 hover:text-surface-300"
                               >
@@ -1660,7 +1660,7 @@ export default function CheckOutPage() {
                 { id: 'customer_declined' as const, label: 'Customer declined pickup' },
                 { id: 'other' as const, label: 'Other reason' },
               ]).map((reason) => (
-                <button
+                <button type="button"
                   key={reason.id}
                   onClick={() => setPutBackReason(reason.id)}
                   className={cn(
@@ -1700,7 +1700,7 @@ function ReceiptOption({
   onClick: () => void;
 }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={cn(
         'w-full flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-left',

@@ -111,7 +111,7 @@ export function BottomNav() {
             <span className="text-sm font-semibold text-surface-200">
               More
             </span>
-            <button
+            <button type="button"
               onClick={() => setDrawerOpen(false)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800/50 transition-colors"
             >
@@ -190,7 +190,7 @@ export function BottomNav() {
           })}
 
           {/* More button */}
-          <button
+          <button type="button"
             onClick={() => setDrawerOpen(!drawerOpen)}
             className={cn(
               'relative flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-colors duration-150',

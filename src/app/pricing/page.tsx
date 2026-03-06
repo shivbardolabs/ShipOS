@@ -287,7 +287,7 @@ export default function PricingPage() {
               >
                 Monthly
               </span>
-              <button
+              <button type="button"
                 role="switch"
                 aria-checked={annual}
                 onClick={() => setAnnual(!annual)}
@@ -499,7 +499,7 @@ export default function PricingPage() {
             <div className="space-y-3">
               {faqs.map((faq, i) => (
                 <div key={i} className="glass-card overflow-hidden">
-                  <button
+                  <button type="button"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     className="w-full flex items-center justify-between px-6 py-5 text-left"
                   >

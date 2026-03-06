@@ -175,7 +175,7 @@ export default function KioskPage() {
   /* ---- Header bar (for sub-screens) ---- */
   const SubHeader = ({ title }: { title: string }) => (
     <div className="flex items-center gap-4 mb-8">
-      <button
+      <button type="button"
         onClick={resetToHome}
         className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-800/80 text-surface-400 hover:text-surface-100 hover:bg-surface-700 transition-colors"
       >
@@ -239,9 +239,9 @@ export default function KioskPage() {
           <div className="mt-12 text-center">
             <p className="text-surface-500 text-sm">Need help? Ask a staff member</p>
             <div className="flex items-center justify-center gap-3 mt-3">
-              <button className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors px-2 py-1 rounded">EN</button>
+              <button type="button" className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors px-2 py-1 rounded">EN</button>
               <span className="text-surface-700">|</span>
-              <button className="text-xs font-semibold text-surface-500 hover:text-surface-300 transition-colors px-2 py-1 rounded">ES</button>
+              <button type="button" className="text-xs font-semibold text-surface-500 hover:text-surface-300 transition-colors px-2 py-1 rounded">ES</button>
             </div>
           </div>
         </div>
@@ -294,7 +294,7 @@ export default function KioskPage() {
             </div>
 
             {/* Enter button */}
-            <button
+            <button type="button"
               onClick={() => handleKeypadPress('enter')}
               disabled={!pmbDigits}
               className={cn(
@@ -360,7 +360,7 @@ export default function KioskPage() {
                   ))}
                 </div>
 
-                <button
+                <button type="button"
                   onClick={handleCollectAll}
                   className="w-full py-5 rounded-2xl bg-status-success-600 text-white text-xl font-bold hover:bg-status-success-500 active:bg-status-success-700 transition-colors shadow-lg shadow-emerald-900/30"
                 >
@@ -375,7 +375,7 @@ export default function KioskPage() {
               <div className="py-12">
                 <Package className="mx-auto h-12 w-12 text-surface-600 mb-4" />
                 <p className="text-surface-400 text-lg">No packages waiting for you right now</p>
-                <button
+                <button type="button"
                   onClick={resetToHome}
                   className="mt-6 px-8 py-3 rounded-xl bg-surface-800 text-surface-300 hover:bg-surface-700 transition-colors"
                 >
@@ -420,7 +420,7 @@ export default function KioskPage() {
             <p className="text-surface-400 mb-8">Place barcode in front of scanner, or enter manually below</p>
 
             {/* Scan placeholder */}
-            <button className="w-full py-12 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/60 hover:bg-primary-50 transition-colors mb-6">
+            <button type="button" className="w-full py-12 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/60 hover:bg-primary-50 transition-colors mb-6">
               <ScanLine className="h-12 w-12 text-primary-600 mx-auto mb-3" />
               <p className="text-primary-600 font-semibold">Tap to Scan Barcode</p>
             </button>
@@ -440,7 +440,7 @@ export default function KioskPage() {
                 onChange={(e) => setTrackingInput(e.target.value)}
                 className="flex-1 rounded-xl border-2 border-surface-700 bg-surface-900 px-4 py-4 text-lg text-surface-100 placeholder:text-surface-600 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30 outline-none transition-colors"
               />
-              <button
+              <button type="button"
                 onClick={() => trackingInput && setScreen('dropoff-carrier')}
                 disabled={!trackingInput}
                 className={cn(
@@ -481,7 +481,7 @@ export default function KioskPage() {
             {/* Carrier grid — 3x2 */}
             <div className="grid grid-cols-3 gap-3">
               {carriers.map((c) => (
-                <button
+                <button type="button"
                   key={c.id}
                   onClick={() => handleDropoffCarrierSelect(c.id)}
                   className={cn(
@@ -578,7 +578,7 @@ function KioskTile({
 }) {
   const c = tileColors[color] || tileColors.emerald;
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={cn(
         'flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all duration-150 min-h-[180px]',
@@ -612,7 +612,7 @@ function KeypadButton({
   variant?: 'digit' | 'action';
 }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={cn(
         'flex items-center justify-center h-16 rounded-xl text-xl font-bold transition-all active:scale-95',

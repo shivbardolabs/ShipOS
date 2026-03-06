@@ -219,13 +219,13 @@ export function StatsScreen({
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-4">
-          <button
+          <button type="button"
             onClick={onBack}
             className="flex-1 rounded-xl bg-surface-800 py-4 text-surface-300 font-semibold hover:bg-surface-700 transition-colors text-center min-h-[56px]"
           >
             Back
           </button>
-          <button
+          <button type="button"
             onClick={onContinue}
             className="flex-[2] rounded-xl bg-primary-600 py-4 text-white font-semibold hover:bg-primary-500 transition-colors flex items-center justify-center gap-2 min-h-[56px]"
           >

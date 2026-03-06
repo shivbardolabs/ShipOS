@@ -70,7 +70,7 @@ export function Step1IdentifyCustomer(props: Step1Props) {
           {enabledPrograms.map((prog) => {
             const isActive = packageProgram === prog.id;
             return (
-              <button
+              <button type="button"
                 key={prog.id}
                 onClick={() => {
                   setPackageProgram(prog.id as PackageProgram);
@@ -169,7 +169,7 @@ export function Step1IdentifyCustomer(props: Step1Props) {
               {filteredCustomers.map((cust) => {
                 const isSelected = selectedCustomer?.id === cust.id;
                 return (
-                  <button
+                  <button type="button"
                     key={cust.id}
                     onClick={() => handleCustomerSelect(cust)}
                     className={cn(

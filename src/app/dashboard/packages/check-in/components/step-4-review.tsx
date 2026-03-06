@@ -234,7 +234,7 @@ export function Step4ReviewConfirm(props: Step4Props) {
           <div>
             <p className="text-sm font-medium text-status-error-300">Check-in failed</p>
             <p className="text-xs text-surface-400 mt-1">{submitError}</p>
-            <button
+            <button type="button"
               onClick={() => setSubmitError(null)}
               className="text-xs text-primary-400 hover:text-primary-300 underline mt-1"
             >

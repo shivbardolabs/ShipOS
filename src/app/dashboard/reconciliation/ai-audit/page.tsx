@@ -473,7 +473,7 @@ export default function AIAuditPage() {
                 </label>
                 <div className="grid grid-cols-4 gap-3">
                   {CARRIERS.map((c) => (
-                    <button
+                    <button type="button"
                       key={c.id}
                       onClick={() => setSelectedCarrier(c.id)}
                       className={cn(

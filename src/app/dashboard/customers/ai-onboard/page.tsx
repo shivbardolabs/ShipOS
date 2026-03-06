@@ -396,7 +396,7 @@ export default function AiOnboardPage() {
               {(Object.keys(idTypeLabels) as IdTypeOption[]).map((type) => {
                 const Icon = idTypeIcons[type];
                 return (
-                  <button
+                  <button type="button"
                     key={type}
                     onClick={() => setSelectedIdType(type)}
                     className={cn(

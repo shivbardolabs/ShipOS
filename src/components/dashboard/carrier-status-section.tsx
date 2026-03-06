@@ -168,7 +168,7 @@ export function CarrierStatusSection({ className }: CarrierStatusSectionProps) {
   return (
     <Card className={cn('overflow-hidden', className)} padding="none">
       {/* Header */}
-      <button
+      <button type="button"
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-surface-800/50 transition-colors"
       >
@@ -260,7 +260,7 @@ export function CarrierStatusSection({ className }: CarrierStatusSectionProps) {
             <p className="text-[10px] text-surface-500">
               Statuses reset each business day · Last refreshed just now
             </p>
-            <button className="flex items-center gap-1 text-[10px] text-primary-400 hover:text-primary-300 transition-colors">
+            <button type="button" className="flex items-center gap-1 text-[10px] text-primary-400 hover:text-primary-300 transition-colors">
               <Settings className="h-3 w-3" />
               Configure Carriers
             </button>

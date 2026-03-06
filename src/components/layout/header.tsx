@@ -149,7 +149,7 @@ export function Header() {
         {/* Right – search trigger, online status, notifications, user */}
         <div className="flex items-center gap-3">
           {/* Search trigger — opens command palette */}
-          <button
+          <button type="button"
             onClick={() => setPaletteOpen(true)}
             className="hidden md:flex items-center gap-2 w-64 lg:w-80 rounded-lg border bg-surface-900 px-3.5 py-2 text-sm text-surface-500 transition-colors hover:border-surface-600 hover:text-surface-400 cursor-pointer"
             style={{ borderColor: 'var(--color-surface-700)' }}

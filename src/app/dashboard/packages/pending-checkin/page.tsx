@@ -155,7 +155,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
   return (
     <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg text-white ${bg}`}>
       <span>{toast.message}</span>
-      <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100">✕</button>
+      <button type="button" onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100">✕</button>
     </div>
   );
 }
@@ -458,7 +458,7 @@ export default function PendingCheckinPage() {
               <tr className="border-b border-surface-800 bg-surface-900/80">
                 <th className="px-4 py-3 text-left w-8">
                   {pageSelectableIds.length > 0 && (
-                    <button onClick={toggleSelectAll} className="text-surface-400 hover:text-surface-200">
+                    <button type="button" onClick={toggleSelectAll} className="text-surface-400 hover:text-surface-200">
                       {allSelected ? <CheckSquare className="h-4 w-4 text-primary-500" /> : <Square className="h-4 w-4" />}
                     </button>
                   )}
@@ -509,7 +509,7 @@ export default function PendingCheckinPage() {
                     >
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         {item.status === 'pending' && (
-                          <button onClick={() => toggleSelect(item.id)} className="text-surface-400 hover:text-surface-200">
+                          <button type="button" onClick={() => toggleSelect(item.id)} className="text-surface-400 hover:text-surface-200">
                             {isSelected ? <CheckSquare className="h-4 w-4 text-primary-500" /> : <Square className="h-4 w-4" />}
                           </button>
                         )}

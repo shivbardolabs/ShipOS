@@ -229,7 +229,7 @@ function PlatformCard({
         </div>
 
         {/* Toggle */}
-        <button
+        <button type="button"
           onClick={() => !readOnly && onToggle(platform.id)}
           disabled={readOnly || platform.priority === 'phase2'}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${

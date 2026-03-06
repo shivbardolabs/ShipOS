@@ -282,7 +282,7 @@ export default function MigrationPage() {
 
       {/* Migration mode tabs */}
       <div className="flex gap-2 mb-8 border-b border-surface-800 pb-px">
-        <button
+        <button type="button"
           onClick={() => setMode('postalmate')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
             mode === 'postalmate'
@@ -293,7 +293,7 @@ export default function MigrationPage() {
           <FileArchive className="h-4 w-4" />
           PostalMate Backup
         </button>
-        <button
+        <button type="button"
           onClick={() => setMode('csv')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
             mode === 'csv'

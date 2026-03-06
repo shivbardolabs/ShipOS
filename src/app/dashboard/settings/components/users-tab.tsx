@@ -175,7 +175,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                   <>
                     {member.deletedAt ? (
                       /* Restore button for deleted users */
-                      <button
+                      <button type="button"
                         onClick={() => handleRestoreUser(member.id)}
                         disabled={restoringUser === member.id}
                         className="text-[10px] font-semibold px-2 py-1 rounded-md border text-status-success-400 border-status-success-500/20 hover:bg-status-success-500/10 transition-all disabled:opacity-50"
@@ -202,7 +202,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                           <option value="inactive">Inactive</option>
                         </select>
                         {/* Soft delete button */}
-                        <button
+                        <button type="button"
                           onClick={() => handleSoftDelete(member.id)}
                           disabled={deletingUser === member.id}
                           className="text-[10px] font-semibold px-2 py-1 rounded-md border text-status-error-400 border-status-error-500/20 hover:bg-status-error-500/10 transition-all disabled:opacity-50"
@@ -241,7 +241,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
               <p className="text-xs text-surface-500">They&apos;ll join your team when they sign in</p>
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={() => setShowInviteModal(false)}
             className="rounded-lg p-1.5 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
           >
