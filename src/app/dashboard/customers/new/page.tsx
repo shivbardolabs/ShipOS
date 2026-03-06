@@ -35,11 +35,11 @@ import {
   getRangeStats,
   formatPmbNumber,
 } from '@/lib/pmb-utils';
-import { USPS_PRIMARY_IDS, validateIdPair } from '@/lib/usps-ids';
+import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
 import type { Customer, MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
 import {
-  ArrowLeft, ArrowRight, User, CreditCard, FileText, Shield,
+  ArrowLeft, ArrowRight, User, CreditCard, FileText, Shield, ShieldCheck,
   ClipboardCheck, Upload, CheckCircle2, AlertCircle, X, Scan,
   Building2, Mail, Phone, MapPin, Calendar, DollarSign,
   Loader2, Mailbox, Info, ChevronDown, Search, Lock,
@@ -61,13 +61,11 @@ const BUSINESS_DOC_TYPES = [
   { value: 'other_business_doc', label: 'Other Business Document' },
 ];
 
-const PROOF_OF_ADDRESS_TYPES = [
-  { value: 'home_vehicle_insurance', label: 'Home or Vehicle Insurance Policy' },
-  { value: 'mortgage_deed_of_trust', label: 'Mortgage or Deed of Trust' },
-  { value: 'current_lease', label: 'Current Lease Agreement' },
-  { value: 'state_drivers_nondriver_id', label: "State Driver's License / Non-Driver ID" },
-  { value: 'voter_id_card', label: 'Voter Registration Card' },
-];
+// BAR-429: Secondary ID types imported from usps-ids.ts (USPS_SECONDARY_IDS) — single source of truth
+const PROOF_OF_ADDRESS_TYPES = USPS_SECONDARY_IDS.map((id) => ({
+  value: id.id,
+  label: id.name,
+}));
 
 const BUSINESS_ENTITY_TYPES = [
   { value: 'sole_proprietor', label: 'Sole Proprietorship' },
@@ -272,7 +270,7 @@ export default function NewCustomerPage() {
   const [planTiers, setPlanTiers] = useState<PlanTierOption[]>([]);
   const [planTiersLoading, setPlanTiersLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'daily' | 'monthly' | 'quarterly' | 'semi_annual' | 'annual'>('monthly');
 
   /* ── Step 1: ID state ── */
   const [primaryIdType, setPrimaryIdType] = useState('');
@@ -318,6 +316,7 @@ export default function NewCustomerPage() {
   // BAR-230: CMRA owner/employee countersignature
   const [cmraSignatureUrl, setCmraSignatureUrl] = useState<string | null>(null);
   const [cmraSigned, setCmraSigned] = useState(false);
+  const [ps1583Certified, setPs1583Certified] = useState(false); // BAR-429: mandatory certification checkbox
   const [cmraSignedBy, setCmraSignedBy] = useState('');
 
   /* ── Step 6: Submit ── */
@@ -330,7 +329,16 @@ export default function NewCustomerPage() {
   const selectedPlan = useMemo(() => planTiers.find((t) => t.id === selectedPlanId), [planTiers, selectedPlanId]);
   const planPrice = useMemo(() => {
     if (!selectedPlan) return 0;
-    return billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
+    // BAR-429: Calculate price for any billing cycle
+    const mo = selectedPlan.priceMonthly;
+    const yr = selectedPlan.priceAnnual;
+    switch (billingCycle) {
+      case 'daily': return +(mo / 30).toFixed(2);
+      case 'quarterly': return +(mo * 3).toFixed(2);
+      case 'semi_annual': return +(mo * 6).toFixed(2);
+      case 'annual': return yr;
+      default: return mo;
+    }
   }, [selectedPlan, billingCycle]);
 
   const WIZARD_STEPS: Step[] = useMemo(() => [
@@ -345,12 +353,15 @@ export default function NewCustomerPage() {
 
   /* ── Assigned PMBs from real DB (replaces mock data) ── */
   const [assignedCustomers, setAssignedCustomers] = useState<Customer[]>([]);
+  // BAR-429: Load DB-backed mailbox ranges instead of hardcoded defaults
+  const [dbMailboxRanges, setDbMailboxRanges] = useState<typeof DEFAULT_MAILBOX_RANGES>([]);
+  const activeRanges = dbMailboxRanges.length > 0 ? dbMailboxRanges : DEFAULT_MAILBOX_RANGES;
 
-  const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, assignedCustomers), [assignedCustomers]);
+  const rangeStats = useMemo(() => getRangeStats(activeRanges, assignedCustomers), [activeRanges, assignedCustomers]);
   const availableBoxes = useMemo(() => {
     const platform = customerForm.platform as MailboxPlatform | '';
-    return getAvailableBoxNumbers(DEFAULT_MAILBOX_RANGES, assignedCustomers, platform || undefined);
-  }, [customerForm.platform, assignedCustomers]);
+    return getAvailableBoxNumbers(activeRanges, assignedCustomers, platform || undefined);
+  }, [customerForm.platform, assignedCustomers, activeRanges]);
   const filteredBoxes = useMemo(() => {
     if (!pmbSearch) return availableBoxes.slice(0, 50);
     const q = pmbSearch.toLowerCase();
@@ -383,8 +394,63 @@ export default function NewCustomerPage() {
         console.error('Failed to load assigned PMBs:', err);
       }
     };
+    const loadDbRanges = async () => {
+      try {
+        const res = await fetch('/api/settings/mailbox-ranges');
+        if (res.ok) {
+          const data = await res.json();
+          const allRanges: typeof DEFAULT_MAILBOX_RANGES = [];
+          // Physical ranges from sizes
+          if (data.sizes && Array.isArray(data.sizes)) {
+            for (const size of data.sizes) {
+              if (size.ranges && Array.isArray(size.ranges)) {
+                for (const range of size.ranges) {
+                  if (range.isActive) {
+                    allRanges.push({
+                      id: range.id,
+                      platform: 'physical' as const,
+                      label: `${size.name} (${range.rangeStart}–${range.rangeEnd})`,
+                      rangeStart: range.rangeStart,
+                      rangeEnd: range.rangeEnd,
+                      isActive: true,
+                    });
+                  }
+                }
+              }
+            }
+          }
+          // Non-physical ranges
+          const platformMap: Record<string, { platform: string; label: string }> = {
+            anytime: { platform: 'anytime', label: 'Anytime Mailbox' },
+            ipostal1: { platform: 'iPostal', label: 'iPostal1' },
+            postscan: { platform: 'postscan', label: 'PostScan Mail' },
+          };
+          if (data.ranges && typeof data.ranges === 'object') {
+            for (const [key, range] of Object.entries(data.ranges) as [string, { rangeStart: number; rangeEnd: number }][]) {
+              const pm = platformMap[key];
+              if (pm) {
+                allRanges.push({
+                  id: `range_${key}`,
+                  platform: pm.platform as any,
+                  label: pm.label,
+                  rangeStart: range.rangeStart,
+                  rangeEnd: range.rangeEnd,
+                  isActive: true,
+                });
+              }
+            }
+          }
+          if (allRanges.length > 0) {
+            setDbMailboxRanges(allRanges);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load DB mailbox ranges:', err);
+      }
+    };
     loadTiers();
     loadAssignedPmbs();
+    loadDbRanges();
   }, []);
 
   /* ── Existing customer check ── */
@@ -393,33 +459,40 @@ export default function NewCustomerPage() {
     if (!firstName.trim() || !lastName.trim()) return;
     setExistingCheckLoading(true);
     try {
-      // Search by name first
-      const q = `${firstName} ${lastName}`.trim();
-      const res = await fetch(`/api/customers/search?q=${encodeURIComponent(q)}&mode=name&limit=3`);
+      const matches: ExistingCustomerMatch[] = [];
+      // BAR-429: Search by last name first (more unique), then firstName — separate queries
+      // to avoid the "John Smith" concatenation bug where contains never matches.
+      const res = await fetch(`/api/customers/search?q=${encodeURIComponent(lastName.trim())}&mode=name&limit=5&includeAll=true`);
       if (res.ok) {
         const data = await res.json();
-        const matches = data.customers || [];
-        // Also search by email if provided
-        if (email.trim() && matches.length === 0) {
-          const res2 = await fetch(`/api/customers/search?q=${encodeURIComponent(email)}&limit=3`);
-          if (res2.ok) {
-            const d2 = await res2.json();
-            matches.push(...(d2.customers || []));
-          }
+        const candidates = data.customers || [];
+        // Filter to those whose firstName also matches (case-insensitive)
+        const fnLower = firstName.trim().toLowerCase();
+        const nameMatches = candidates.filter((c: ExistingCustomerMatch) =>
+          c.firstName.toLowerCase().includes(fnLower) || fnLower.includes(c.firstName.toLowerCase())
+        );
+        matches.push(...nameMatches);
+      }
+      // Also search by email if provided and no name match
+      if (email.trim() && matches.length === 0) {
+        const res2 = await fetch(`/api/customers/search?q=${encodeURIComponent(email)}&limit=3&includeAll=true`);
+        if (res2.ok) {
+          const d2 = await res2.json();
+          matches.push(...(d2.customers || []));
         }
-        // Also search by phone if provided
-        if (phone.trim() && matches.length === 0) {
-          const res3 = await fetch(`/api/customers/search?q=${encodeURIComponent(phone)}&mode=phone&limit=3`);
-          if (res3.ok) {
-            const d3 = await res3.json();
-            matches.push(...(d3.customers || []));
-          }
+      }
+      // Also search by phone if provided and still no match
+      if (phone.trim() && matches.length === 0) {
+        const res3 = await fetch(`/api/customers/search?q=${encodeURIComponent(phone)}&mode=phone&limit=3&includeAll=true`);
+        if (res3.ok) {
+          const d3 = await res3.json();
+          matches.push(...(d3.customers || []));
         }
-        if (matches.length > 0) {
-          setExistingMatch(matches[0]);
-        } else {
-          setExistingMatch(null);
-        }
+      }
+      if (matches.length > 0) {
+        setExistingMatch(matches[0]);
+      } else {
+        setExistingMatch(null);
       }
     } catch (err) {
       console.error('Existing customer check failed:', err);
@@ -570,7 +643,7 @@ export default function NewCustomerPage() {
   /* ── Auto-calculate payment amount from plan ── */
   useEffect(() => {
     if (selectedPlan && !paymentAmount) {
-      const price = billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
+      const price = planPrice;
       setPaymentAmount(price.toFixed(2));
     }
   }, [selectedPlan, billingCycle]);
@@ -599,15 +672,22 @@ export default function NewCustomerPage() {
       if (!customerForm.email.trim()) errors.email = 'Required';
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
       if (!customerForm.phone.trim()) errors.phone = 'Required';
+      else if (!/^\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/.test(customerForm.phone.trim())) errors.phone = 'Enter a valid 10-digit US phone number';
       if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
       if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
       if (!customerForm.homeState.trim()) errors.homeState = 'Required';
       if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
     }
-    // Steps 3-5 are softer — allow progression with warnings
+    // Steps 3-4 are softer — allow progression with warnings
+    // BAR-429: Step 5 (Agreement) requires certification checkbox + signatures
+    if (stepNum === 5) {
+      if (!ps1583Certified) errors.certification = 'Customer must certify PS1583';
+      if (!agreementSigned) errors.signature = 'Customer signature required';
+      if (!cmraSigned || !cmraSignedBy.trim()) errors.cmra = 'CMRA countersignature required';
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [customerForm, primaryIdType, secondaryIdType, primaryIdFile, secondaryIdFile, isBusinessPmb, businessDocType, businessDocFile, nonCompliantWarning, expirationWarning]);
+  }, [customerForm, primaryIdType, secondaryIdType, primaryIdFile, secondaryIdFile, isBusinessPmb, businessDocType, businessDocFile, nonCompliantWarning, expirationWarning, ps1583Certified, agreementSigned, cmraSigned, cmraSignedBy]);
 
   const handleNext = useCallback(() => {
     if (validateStep(step)) {
@@ -636,7 +716,7 @@ export default function NewCustomerPage() {
           pmbNumber: customerForm.pmbNumber ? `PMB ${customerForm.pmbNumber}` : undefined,
           platform: customerForm.platform || 'physical',
           billingTerms: customerForm.billingTerms,
-          renewalTermMonths: billingCycle === 'annual' ? 12 : (customerForm.billingTerms === 'Monthly' ? 1 : customerForm.billingTerms === 'Quarterly' ? 3 : customerForm.billingTerms === 'Semi-Annual' ? 6 : 12),
+          renewalTermMonths: billingCycle === 'daily' ? 1 : billingCycle === 'quarterly' ? 3 : billingCycle === 'semi_annual' ? 6 : billingCycle === 'annual' ? 12 : 1,
           autoRenew: false,
           homeAddress: customerForm.homeAddress,
           homeCity: customerForm.homeCity,
@@ -800,7 +880,13 @@ export default function NewCustomerPage() {
                         <div className="max-h-48 overflow-y-auto p-1">
                           {filteredBoxes.map((box) => (
                             <button type="button" key={box.number} onClick={() => selectPmb(box.number, box.platform)} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-surface-800 transition-colors">
-                              <span className="font-mono text-surface-200">{box.label}</span>
+                              <span className="flex items-center gap-2">
+                                <span className="font-mono text-surface-200">{box.label}</span>
+                                {/* BAR-429: Show last closed date if box was previously rented */}
+                                {box.closedDate && (
+                                  <span className="text-[10px] text-surface-500">closed {new Date(box.closedDate).toLocaleDateString()}</span>
+                                )}
+                              </span>
                               <Badge dot={false} className={cn('text-[10px] border', platformLabels[box.platform]?.color)}>{platformLabels[box.platform]?.label}</Badge>
                             </button>
                           ))}
@@ -817,10 +903,17 @@ export default function NewCustomerPage() {
             <Card padding="md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Crown className="h-4 w-4 text-status-warning-500" />Rate Plan</CardTitle>
-                {/* Billing cycle toggle */}
-                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5">
-                  <button type="button" className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'monthly' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('monthly')}>Monthly</button>
-                  <button type="button" className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'annual' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('annual')}>Annual</button>
+                {/* BAR-429: Full billing cycle options per BAR-230 spec */}
+                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5 flex-wrap">
+                  {([
+                    { value: 'daily', label: 'Daily' },
+                    { value: 'monthly', label: 'Monthly' },
+                    { value: 'quarterly', label: 'Quarterly' },
+                    { value: 'semi_annual', label: 'Semi-Annual' },
+                    { value: 'annual', label: 'Yearly' },
+                  ] as const).map((opt) => (
+                    <button key={opt.value} type="button" className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === opt.value ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle(opt.value)}>{opt.label}</button>
+                  ))}
                 </div>
               </CardHeader>
               <CardContent>
@@ -831,10 +924,13 @@ export default function NewCustomerPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {planTiers.map((tier) => {
-                      const price = billingCycle === 'annual' ? tier.priceAnnual : tier.priceMonthly;
+                      const mo = tier.priceMonthly;
+                      const yr = tier.priceAnnual;
+                      const price = billingCycle === 'annual' ? yr : billingCycle === 'semi_annual' ? mo * 6 : billingCycle === 'quarterly' ? mo * 3 : billingCycle === 'daily' ? +(mo / 30).toFixed(2) : mo;
                       const isSelected = selectedPlanId === tier.id;
-                      const monthlyEquiv = billingCycle === 'annual' ? (tier.priceAnnual / 12) : tier.priceMonthly;
-                      const savings = billingCycle === 'annual' ? ((tier.priceMonthly * 12) - tier.priceAnnual) : 0;
+                      const monthlyEquiv = billingCycle === 'annual' ? (yr / 12) : mo;
+                      const savings = billingCycle === 'annual' ? ((mo * 12) - yr) : 0;
+                      const cycleLabel = billingCycle === 'daily' ? 'day' : billingCycle === 'quarterly' ? 'qtr' : billingCycle === 'semi_annual' ? '6mo' : billingCycle === 'annual' ? 'yr' : 'mo';
                       return (
                         <button type="button" key={tier.id} onClick={() => setSelectedPlanId(tier.id)} className={cn('relative p-4 rounded-lg border text-left transition-all', isSelected ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                           {isSelected && <div className="absolute -top-2 -right-2"><CheckCircle2 className="h-5 w-5 text-primary-500 bg-surface-950 rounded-full" /></div>}
@@ -846,7 +942,7 @@ export default function NewCustomerPage() {
                             <div>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-surface-100">${price.toFixed(0)}</span>
-                                <span className="text-xs text-surface-500">/{billingCycle === 'annual' ? 'yr' : 'mo'}</span>
+                                <span className="text-xs text-surface-500">/{cycleLabel}</span>
                               </div>
                               {billingCycle === 'annual' && (
                                 <p className="text-[11px] text-status-success-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings.toFixed(0)}/yr</p>
@@ -905,11 +1001,8 @@ export default function NewCustomerPage() {
                 <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="ID Type *" placeholder="Select primary ID..." options={[
-                      ...USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name })),
-                      { value: '_divider', label: '── Non-Compliant (will be flagged) ──', disabled: true },
-                      ...NON_COMPLIANT_IDS.map((nc) => ({ value: nc.id, label: `⚠️ ${nc.name}` })),
-                    ]} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
+                    {/* BAR-429: Non-compliant IDs removed from dropdown — AI detects them from scanned image instead */}
+                    <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
                     <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
                     <div>
                       <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
@@ -1081,11 +1174,11 @@ export default function NewCustomerPage() {
               </CardContent>
             </Card>
 
+            {/* BAR-429: Billing Terms removed from Preferences — now in Step 0 (Rate Plan) per BAR-411 spec */}
             <Card padding="md">
               <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Semi-Annual', label: 'Semi-Annual' }, { value: 'Annual', label: 'Annual' }]} value={customerForm.billingTerms} onChange={(e) => updateField('billingTerms', e.target.value)} />
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-surface-300">Notifications</p>
                     <div className="flex gap-4">
@@ -1243,7 +1336,7 @@ export default function NewCustomerPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-surface-200">{selectedPlan.name}</p>
-                          <p className="text-[11px] text-surface-500">{billingCycle === 'annual' ? 'Annual' : 'Monthly'} billing</p>
+                          <p className="text-[11px] text-surface-500">{({ daily: 'Daily', monthly: 'Monthly', quarterly: 'Quarterly', semi_annual: 'Semi-Annual', annual: 'Annual' } as const)[billingCycle]} billing</p>
                         </div>
                         <p className="text-lg font-bold text-surface-100">${planPrice.toFixed(2)}</p>
                       </div>
@@ -1344,8 +1437,23 @@ export default function NewCustomerPage() {
               <CardContent>
                 <p className="text-xs text-surface-400 mb-4">Review the agreement below. This is auto-populated with customer and store details. Stores can customize this template in Settings → Mailbox Configuration.</p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-6 max-h-[400px] overflow-y-auto font-mono text-xs text-surface-300 leading-relaxed whitespace-pre-wrap">
-                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: billingCycle === 'annual' ? 'Annual' : 'Monthly' }, isBusinessPmb, selectedPlan?.name)}
+                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: ({ daily: 'Daily', monthly: 'Monthly', quarterly: 'Quarterly', semi_annual: 'Semi-Annual', annual: 'Annual' } as const)[billingCycle] }, isBusinessPmb, selectedPlan?.name)}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* BAR-429: Mandatory PS1583 Certification Checkbox */}
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-status-warning-500" />PS Form 1583 Certification</CardTitle></CardHeader>
+              <CardContent>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" checked={ps1583Certified} onChange={(e) => setPs1583Certified(e.target.checked)} className="mt-1 rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />
+                  <span className="text-xs text-surface-300 leading-relaxed">
+                    I certify that the information provided on PS Form 1583 is accurate and complete. I understand that anyone who furnishes false or misleading information on this form or who omits information requested on this form may be subject to criminal sanctions (including fines and imprisonment) and/or civil sanctions (including civil penalties).
+                    <span className="block mt-1 text-surface-500">18 U.S.C. § 1001</span>
+                  </span>
+                </label>
+                {!ps1583Certified && <p className="text-xs text-status-error-400 mt-2">* Customer must certify before signing</p>}
               </CardContent>
             </Card>
 
@@ -1353,7 +1461,9 @@ export default function NewCustomerPage() {
             <Card padding="md">
               <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary-500" />Customer Signature (§13a)</CardTitle></CardHeader>
               <CardContent>
-                {signatureDataUrl ? (
+                {!ps1583Certified ? (
+                  <p className="text-sm text-surface-500 text-center py-6">Customer must accept the PS1583 certification above before signing.</p>
+                ) : signatureDataUrl ? (
                   <div className="space-y-3">
                     <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-4 flex items-center gap-3">
                       <CheckCircle2 className="h-5 w-5 text-status-success-400" />
@@ -1390,6 +1500,45 @@ export default function NewCustomerPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* BAR-429: Email/Print signed agreement after both signatures */}
+            {agreementSigned && cmraSigned && customerForm.email && (
+              <Card padding="md">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-surface-200">Send Agreement Copy</p>
+                      <p className="text-xs text-surface-500">Email the signed MSA & PS1583 to the customer</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" size="sm" onClick={async () => {
+                        try {
+                          const res = await fetch('/api/customers/send-agreement', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              email: customerForm.email,
+                              customerName: `${customerForm.firstName} ${customerForm.lastName}`,
+                              pmbNumber: customerForm.pmbNumber,
+                              planName: selectedPlan?.name,
+                              billingCycle,
+                              signatureDataUrl,
+                              cmraSignatureUrl,
+                              cmraSignedBy,
+                            }),
+                          });
+                          if (res.ok) {
+                            alert(`Agreement sent to ${customerForm.email}`);
+                          }
+                        } catch (err) {
+                          console.error('Failed to send agreement:', err);
+                        }
+                      }} leftIcon={<FileText className="h-3.5 w-3.5" />}>Email Agreement</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 

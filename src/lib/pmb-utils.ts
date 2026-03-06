@@ -77,13 +77,14 @@ export function getAvailableBoxes(
 }
 
 /**
- * Get only available (unrented, not held) boxes, optionally filtered by platform
+ * Get only available (unrented, not held) boxes, optionally filtered by platform.
+ * BAR-429: Now includes closedDate for boxes that were previously rented.
  */
 export function getAvailableBoxNumbers(
   ranges: MailboxRange[],
   customers: Customer[],
   platform?: string
-): { number: number; platform: string; label: string }[] {
+): { number: number; platform: string; label: string; closedDate?: string | Date }[] {
   const slots = getAvailableBoxes(ranges, customers, platform);
   return slots
     .filter((s) => s.status === 'available')
@@ -91,6 +92,7 @@ export function getAvailableBoxNumbers(
       number: s.number,
       platform: s.platform,
       label: formatPmbNumber(s.number),
+      closedDate: s.closedDate,
     }));
 }
 
