@@ -140,6 +140,58 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
     return false;
   }, [form, customer]);
 
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  /** Build a diff of changed non-protected fields for the PATCH request */
+  const buildChanges = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const changes: Record<string, any> = {};
+    if (form.email !== (customer.email || '')) changes.email = form.email || null;
+    if (form.phone !== (customer.phone || '')) changes.phone = form.phone || null;
+    if (form.businessName !== (customer.businessName || '')) changes.businessName = form.businessName || null;
+    if (form.pmbNumber !== customer.pmbNumber) changes.pmbNumber = form.pmbNumber;
+    if (form.address !== (customer.address || '')) changes.address = form.address || null;
+    if (form.forwardingAddress !== (customer.forwardingAddress || '')) changes.forwardingAddress = form.forwardingAddress || null;
+    if (form.billingTerms !== (customer.billingTerms || 'Monthly')) changes.billingTerms = form.billingTerms;
+    if (form.notifyEmail !== customer.notifyEmail) changes.notifyEmail = form.notifyEmail;
+    if (form.notifySms !== customer.notifySms) changes.notifySms = form.notifySms;
+    if (form.notes !== (customer.notes || '')) changes.notes = form.notes || null;
+    // Include name changes for non-protected save path
+    if (form.firstName !== customer.firstName) changes.firstName = form.firstName;
+    if (form.lastName !== customer.lastName) changes.lastName = form.lastName;
+    return changes;
+  }, [form, customer]);
+
+  /** Persist changes via PATCH /api/customers/[id] */
+  const persistChanges = useCallback(async (changes: Record<string, unknown>) => {
+    if (Object.keys(changes).length === 0) {
+      onSave();
+      return true;
+    }
+    setSaving(true);
+    setSaveError('');
+    try {
+      const res = await fetch(`/api/customers/${customer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changes),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setSaveError(data?.error || 'Failed to save changes');
+        return false;
+      }
+      onSave();
+      return true;
+    } catch {
+      setSaveError('Failed to save changes');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [customer.id, onSave]);
+
   const handleSave = useCallback(async () => {
     if (!validate()) return;
 
@@ -150,35 +202,40 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
       return;
     }
 
-    // No protected changes — save directly
-    onSave();
-  }, [validate, checkProtectedFields, onSave]);
+    // No protected changes — persist all changes via PATCH
+    const changes = buildChanges();
+    await persistChanges(changes);
+  }, [validate, checkProtectedFields, buildChanges, persistChanges]);
 
   const handleConfirmProtectedChanges = useCallback(async () => {
     setChangeGuardLoading(true);
     try {
-      // Apply changes through the change guard API (which handles audit logging)
-      const changes: Record<string, string> = {};
-      if (form.firstName !== customer.firstName) changes.firstName = form.firstName;
-      if (form.lastName !== customer.lastName) changes.lastName = form.lastName;
+      // Apply protected name changes through the change guard API (audit logging)
+      const nameChanges: Record<string, string> = {};
+      if (form.firstName !== customer.firstName) nameChanges.firstName = form.firstName;
+      if (form.lastName !== customer.lastName) nameChanges.lastName = form.lastName;
 
       const confirmedProtectedFields = protectedChanges.map((c) => c.field);
 
       await fetch(`/api/customers/${customer.id}/change-guard`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ changes, confirmedProtectedFields }),
+        body: JSON.stringify({ changes: nameChanges, confirmedProtectedFields }),
       });
 
-      // Also trigger the regular save for non-protected fields
-      onSave();
+      // Also persist non-protected field changes via regular PATCH
+      const allChanges = buildChanges();
+      // Remove name fields (already handled by change-guard)
+      delete allChanges.firstName;
+      delete allChanges.lastName;
+      await persistChanges(allChanges);
       setShowChangeGuard(false);
     } catch (e) {
       console.error('Protected change failed', e);
     } finally {
       setChangeGuardLoading(false);
     }
-  }, [form, customer, protectedChanges, onSave]);
+  }, [form, customer, protectedChanges, buildChanges, persistChanges]);
 
   return (
     <>
