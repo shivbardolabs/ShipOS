@@ -14,6 +14,7 @@ import {
   Users,
   BarChart3,
   ArrowRight,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -22,6 +23,8 @@ import {
 interface DashboardMetrics {
   totalClients: number;
   activeClients: number;
+  pendingApproval: number;
+  trialClients: number;
   inactiveClients: number;
   totalStores: number;
   activeStores: number;
@@ -67,6 +70,8 @@ export default function SuperAdminDashboard() {
           setMetrics({
             totalClients: dashData.totalClients ?? 0,
             activeClients: dashData.activeClients ?? 0,
+            pendingApproval: dashData.pendingApproval ?? 0,
+            trialClients: dashData.trialClients ?? 0,
             inactiveClients: dashData.inactiveClients ?? 0,
             totalStores: dashData.totalStores ?? 0,
             activeStores: dashData.activeStores ?? 0,
@@ -118,6 +123,26 @@ export default function SuperAdminDashboard() {
         description="Platform overview — clients, stores, revenue, and system health"
         icon={<LayoutDashboard className="h-6 w-6" />}
       />
+
+      {/* Pending Approval Banner — BAR-398 */}
+      {metrics.pendingApproval > 0 && (
+        <Link href="/dashboard/super-admin/approvals">
+          <div className="rounded-xl border border-status-warning-500/30 bg-status-warning-500/5 p-4 flex items-center gap-4 card-hover cursor-pointer">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-warning-500/20 shrink-0">
+              <ClipboardCheck className="h-5 w-5 text-status-warning-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-surface-100">
+                {metrics.pendingApproval} pending sign-up{metrics.pendingApproval === 1 ? '' : 's'} awaiting review
+              </p>
+              <p className="text-xs text-surface-400">
+                New client applications need approval before they can access the platform
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-status-warning-400 shrink-0" />
+          </div>
+        </Link>
+      )}
 
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -20,6 +20,7 @@ import {
   Tag,
   Send,
   UserPlus,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -27,6 +28,7 @@ import {
 /* -------------------------------------------------------------------------- */
 const navItems = [
   { label: 'Dashboard', href: '/dashboard/super-admin', icon: LayoutDashboard },
+  { label: 'Approval Queue', href: '/dashboard/super-admin/approvals', icon: ClipboardCheck },
   { label: 'Client Provisioning', href: '/dashboard/super-admin/clients', icon: Building2 },
   { label: 'Provision Account', href: '/dashboard/super-admin/provision', icon: UserPlus },
   { label: 'Admin Users', href: '/dashboard/super-admin/users', icon: Users },

@@ -8,6 +8,10 @@ import { recordLogin } from '@/lib/auth';
  * Auto-provisions a User + Tenant on first call.
  * Records a login session for tracking.
  *
+ * Uses skipTenantCheck so the UI can load user data regardless of tenant
+ * status — TenantStatusGate needs the user object to display the correct
+ * status screen (BAR-399).
+ *
  * Blocks access for inactive/suspended users by returning a 403
  * with a descriptive error message.
  */
@@ -31,4 +35,4 @@ export const GET = withApiHandler(async (_request, { user }) => {
   recordLogin(user.id).catch(() => {});
 
   return ok(user);
-});
+}, { skipTenantCheck: true });
