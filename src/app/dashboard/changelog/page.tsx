@@ -140,7 +140,7 @@ function ChangelogCard({
         padding="none"
       >
         {/* Header */}
-        <button
+        <button type="button"
           onClick={() => setExpanded(!expanded)}
           className="w-full text-left px-6 py-5 cursor-pointer"
         >
@@ -314,7 +314,7 @@ export default function ChangelogPage() {
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {filterOptions.map((opt) => (
-          <button
+          <button type="button"
             key={opt.value}
             onClick={() => setFilter(opt.value)}
             className={cn(

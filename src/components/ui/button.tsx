@@ -65,7 +65,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = disabled || loading;
 
     return (
-      <button
+      <button type="button"
         ref={ref}
         disabled={isDisabled}
         className={cn(

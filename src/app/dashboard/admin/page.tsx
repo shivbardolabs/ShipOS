@@ -150,7 +150,7 @@ function TabButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
         active
@@ -1029,7 +1029,7 @@ function TenantsTable({
               {/* Status actions */}
               <div className="col-span-2 flex items-center justify-center gap-1">
                 {tenant.status !== 'active' && (
-                  <button
+                  <button type="button"
                     onClick={() => handleStatusChange(tenant.id, 'active')}
                     disabled={isUpdating}
                     className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-success-500/15 text-status-success-400 border border-status-success-500/20 disabled:opacity-50"
@@ -1039,7 +1039,7 @@ function TenantsTable({
                   </button>
                 )}
                 {tenant.status !== 'paused' && tenant.status !== 'disabled' && (
-                  <button
+                  <button type="button"
                     onClick={() => handleStatusChange(tenant.id, 'paused')}
                     disabled={isUpdating}
                     className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-warning-500/15 text-status-warning-400 border border-status-warning-500/20 disabled:opacity-50"
@@ -1049,7 +1049,7 @@ function TenantsTable({
                   </button>
                 )}
                 {tenant.status !== 'disabled' && (
-                  <button
+                  <button type="button"
                     onClick={() => handleStatusChange(tenant.id, 'disabled')}
                     disabled={isUpdating}
                     className="px-2 py-1 text-[10px] font-semibold rounded-md transition-all hover:bg-status-error-500/15 text-status-error-400 border border-status-error-500/20 disabled:opacity-50"

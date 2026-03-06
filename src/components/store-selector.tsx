@@ -81,7 +81,7 @@ export function StoreSelector() {
 
   return (
     <div className="relative">
-      <button
+      <button type="button"
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-lg border border-surface-700 bg-surface-900 px-3 py-1.5 text-sm text-surface-300 hover:border-surface-600 hover:text-surface-200 transition-colors"
       >
@@ -100,7 +100,7 @@ export function StoreSelector() {
               </p>
             </div>
             {stores.map((store) => (
-              <button
+              <button type="button"
                 key={store.id}
                 onClick={() => {
                   setActiveStore(store);

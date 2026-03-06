@@ -254,7 +254,7 @@ export function PriceListTab() {
               <div className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   {/* Expand toggle */}
-                  <button onClick={() => toggleExpand(entry.id)} className="text-surface-500 hover:text-surface-300">
+                  <button type="button" onClick={() => toggleExpand(entry.id)} className="text-surface-500 hover:text-surface-300">
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </button>
 

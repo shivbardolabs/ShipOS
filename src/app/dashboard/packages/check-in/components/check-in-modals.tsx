@@ -393,10 +393,10 @@ export function CheckInModals(props: CheckInModalsProps) {
                     Label print failed
                   </span>
                   <div className="flex gap-2">
-                    <button onClick={handleRetryLabelPrint} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
+                    <button type="button" onClick={handleRetryLabelPrint} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
                       Retry
                     </button>
-                    <button onClick={() => setLabelPrintFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
+                    <button type="button" onClick={() => setLabelPrintFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
                       Skip
                     </button>
                   </div>
@@ -409,10 +409,10 @@ export function CheckInModals(props: CheckInModalsProps) {
                     Notification failed
                   </span>
                   <div className="flex gap-2">
-                    <button onClick={handleRetryNotification} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
+                    <button type="button" onClick={handleRetryNotification} className="text-xs text-primary-400 hover:text-primary-300 font-medium">
                       Retry
                     </button>
-                    <button onClick={() => setNotificationFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
+                    <button type="button" onClick={() => setNotificationFailed(false)} className="text-xs text-surface-500 hover:text-surface-400">
                       Skip
                     </button>
                   </div>

@@ -744,7 +744,7 @@ export default function SmartIntakePage() {
               </span>
             )}
             <div className="flex items-center gap-2 bg-surface-800 rounded-lg p-1 border border-surface-700">
-              <button
+              <button type="button"
                 onClick={() => setBatchMode(false)}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
@@ -756,7 +756,7 @@ export default function SmartIntakePage() {
                 <Package className="h-3.5 w-3.5" />
                 Single
               </button>
-              <button
+              <button type="button"
                 onClick={() => setBatchMode(true)}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
@@ -1208,7 +1208,7 @@ export default function SmartIntakePage() {
                           {customerResults.length > 0 && (
                             <div className="space-y-1 max-h-40 overflow-y-auto">
                               {customerResults.map((c) => (
-                                <button
+                                <button type="button"
                                   key={c.id}
                                   onClick={() => assignCustomer(idx, c)}
                                   className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-surface-700/50 transition-colors text-left"
@@ -1226,7 +1226,7 @@ export default function SmartIntakePage() {
                           {searchQuery.length >= 2 && customerResults.length === 0 && (
                             <p className="text-xs text-surface-500 py-2 text-center">No customers found</p>
                           )}
-                          <button
+                          <button type="button"
                             onClick={() => setSearchingForIdx(null)}
                             className="text-xs text-surface-500 hover:text-surface-300 w-full text-center pt-1"
                           >

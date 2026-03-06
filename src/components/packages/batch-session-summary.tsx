@@ -96,7 +96,7 @@ export function BatchSessionSummary({
             </p>
           </div>
         </div>
-        <button onClick={onDismiss} className="text-surface-500 hover:text-surface-300">
+        <button type="button" onClick={onDismiss} className="text-surface-500 hover:text-surface-300">
           <X className="h-4 w-4" />
         </button>
       </div>

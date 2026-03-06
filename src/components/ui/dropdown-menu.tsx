@@ -95,7 +95,7 @@ export function DropdownMenu({
             }
 
             return (
-              <button
+              <button type="button"
                 key={item.id}
                 disabled={item.disabled}
                 onClick={() => {

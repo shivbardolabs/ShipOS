@@ -337,7 +337,7 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
                         <span className="text-xs text-surface-500 ml-2">{person.phone}</span>
                       )}
                     </div>
-                    <button
+                    <button type="button"
                       onClick={() => removePerson(person.id)}
                       className="text-surface-500 hover:text-status-error-400 transition-colors p-1"
                     >

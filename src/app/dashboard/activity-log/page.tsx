@@ -106,7 +106,7 @@ function ActivityEntryRow({ entry }: { entry: import('@/lib/activity-log').Activ
 
   return (
     <div className="rounded-lg hover:bg-surface-800/50 transition-colors">
-      <button
+      <button type="button"
         onClick={() => hasMetadata && setExpanded(!expanded)}
         className={`w-full group flex items-start gap-3 px-3 py-2.5 text-left ${hasMetadata ? 'cursor-pointer' : 'cursor-default'}`}
       >
@@ -274,7 +274,7 @@ export default function ActivityLogPage() {
           description="Track every action in one place."
           icon={<Activity className="h-5 w-5" />}
         />
-        <button
+        <button type="button"
           onClick={refresh}
           disabled={loading}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 transition-colors disabled:opacity-50"

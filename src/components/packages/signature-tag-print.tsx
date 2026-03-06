@@ -274,7 +274,7 @@ export function SignatureTagPrint({
           <div className="p-6 max-w-lg mx-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-surface-100">Signature Tag Preview</h3>
-              <button onClick={() => setShowPreview(false)} className="text-surface-500 hover:text-surface-300">
+              <button type="button" onClick={() => setShowPreview(false)} className="text-surface-500 hover:text-surface-300">
                 <X className="h-5 w-5" />
               </button>
             </div>

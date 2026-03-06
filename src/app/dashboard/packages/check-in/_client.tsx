@@ -1197,7 +1197,7 @@ export default function CheckInPage() {
       <div className="flex items-center gap-2">
         {STEPS.map((s, idx) => (
           <div key={s.id} className="flex items-center">
-            <button
+            <button type="button"
               onClick={() => {
                 if (s.id < step) {
                   if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);

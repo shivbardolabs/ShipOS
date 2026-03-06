@@ -471,7 +471,7 @@ export default function CustomerDetailPage() {
                     <p className="text-xs text-surface-500 mb-0.5">Referral Code</p>
                     <code className="text-lg font-mono font-bold text-primary-400">{loyaltyAccount.referralCode}</code>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => navigator.clipboard.writeText(loyaltyAccount.referralCode)}
                     className="flex items-center gap-1.5 rounded-lg bg-surface-800 px-3 py-1.5 text-xs font-medium text-surface-300 hover:text-surface-100 transition-colors"
                   >
@@ -513,7 +513,7 @@ export default function CustomerDetailPage() {
                             <span className="text-xs font-bold text-primary-400">{reward.pointsCost} pts</span>
                           </div>
                           <p className="text-xs text-surface-500 mb-2">{reward.description}</p>
-                          <button
+                          <button type="button"
                             disabled={!canRedeem}
                             className={cn(
                               'w-full rounded-lg py-1.5 text-xs font-medium transition-colors',
@@ -564,7 +564,7 @@ export default function CustomerDetailPage() {
               <div className="text-center py-12">
                 <Award className="h-10 w-10 text-surface-600 mx-auto mb-3" />
                 <p className="text-sm text-surface-400">Customer is not enrolled in the loyalty program</p>
-                <button className="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors">
+                <button type="button" className="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors">
                   Enroll Customer
                 </button>
               </div>
@@ -817,7 +817,7 @@ export default function CustomerDetailPage() {
                     input.click();
                   }}
                 />
-                <button
+                <button type="button"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';

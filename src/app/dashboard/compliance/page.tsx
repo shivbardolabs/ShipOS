@@ -286,7 +286,7 @@ export default function ComplianceDashboardPage() {
             <h3 className="text-sm font-medium text-surface-200">Upcoming Expirations</h3>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <button
+            <button type="button"
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '30'
@@ -298,7 +298,7 @@ export default function ComplianceDashboardPage() {
               <p className="text-2xl font-bold text-status-error-400">{summary.expiringNext30}</p>
               <p className="text-xs text-surface-500">Next 30 Days</p>
             </button>
-            <button
+            <button type="button"
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '60'
@@ -310,7 +310,7 @@ export default function ComplianceDashboardPage() {
               <p className="text-2xl font-bold text-status-warning-400">{summary.expiringNext60}</p>
               <p className="text-xs text-surface-500">Next 60 Days</p>
             </button>
-            <button
+            <button type="button"
               className={cn(
                 'p-4 rounded-lg border text-center transition-all',
                 expirationFilter === '90'
@@ -459,7 +459,7 @@ export default function ComplianceDashboardPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <button
+                        <button type="button"
                           onClick={() => setSelectedRecord(record)}
                           className="text-surface-500 hover:text-surface-300"
                         >

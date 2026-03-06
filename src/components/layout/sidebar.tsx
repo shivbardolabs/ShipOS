@@ -263,7 +263,7 @@ export function Sidebar() {
           </p>
         </div>
         {/* Mobile close */}
-        <button
+        <button type="button"
           className="lg:hidden text-surface-400 hover:text-surface-200"
           onClick={() => setMobileOpen(false)}
         >
@@ -441,7 +441,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile toggle */}
-      <button
+      <button type="button"
         className="fixed top-4 left-4 z-50 lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-surface-700 bg-surface-950 text-surface-300 hover:text-surface-100"
         onClick={() => setMobileOpen(true)}
       >

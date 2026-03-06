@@ -252,14 +252,14 @@ export function SignatureScreen({
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <button
+          <button type="button"
             onClick={onBack}
             className="flex items-center gap-2 rounded-xl bg-surface-800 px-6 py-4 text-surface-300 font-semibold hover:bg-surface-700 transition-colors min-h-[56px]"
           >
             <ArrowLeft className="h-5 w-5" />
             Back
           </button>
-          <button
+          <button type="button"
             onClick={clearSignature}
             disabled={!hasSignature}
             className="flex items-center gap-2 rounded-xl bg-surface-800 px-6 py-4 text-surface-300 font-semibold hover:bg-surface-700 transition-colors disabled:opacity-40 min-h-[56px]"
@@ -267,7 +267,7 @@ export function SignatureScreen({
             <Eraser className="h-5 w-5" />
             Clear
           </button>
-          <button
+          <button type="button"
             onClick={validateAndSubmit}
             disabled={!hasSignature || submitted}
             className={cn(

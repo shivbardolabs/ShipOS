@@ -250,20 +250,20 @@ export default function ShippingPage() {
           </Button>
           {actionRow === row.id && (
             <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-surface-700 bg-surface-900 shadow-xl py-1">
-              <button
+              <button type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
                 onClick={() => { setDetailShipment(row as Shipment & Record<string, unknown>); setShowDetail(true); setActionRow(null); }}
               >
                 <Eye className="h-3.5 w-3.5" /> View Details
               </button>
-              <button
+              <button type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
                 onClick={() => { if (row.trackingNumber) navigator.clipboard.writeText(row.trackingNumber); setActionRow(null); }}
               >
                 <Copy className="h-3.5 w-3.5" /> Copy Tracking
               </button>
               {(row.status === 'label_created' || row.status === 'pending') && (
-                <button
+                <button type="button"
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-success-400 hover:bg-surface-800"
                   onClick={() => { handleStatusUpdate(row.id, 'shipped'); setActionRow(null); }}
                 >
@@ -271,7 +271,7 @@ export default function ShippingPage() {
                 </button>
               )}
               {row.status === 'shipped' && (
-                <button
+                <button type="button"
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-info-400 hover:bg-surface-800"
                   onClick={() => { handleStatusUpdate(row.id, 'delivered'); setActionRow(null); }}
                 >
@@ -279,14 +279,14 @@ export default function ShippingPage() {
                 </button>
               )}
               {row.paymentStatus === 'unpaid' && (
-                <button
+                <button type="button"
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-warning-400 hover:bg-surface-800"
                   onClick={() => { handlePaymentUpdate(row.id, 'paid'); setActionRow(null); }}
                 >
                   <DollarSign className="h-3.5 w-3.5" /> Mark Paid
                 </button>
               )}
-              <button
+              <button type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800"
                 onClick={() => { setActionRow(null); }}
               >
@@ -690,7 +690,7 @@ export default function ShippingPage() {
             {estimatedRates.length > 0 && (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {estimatedRates.map((rate, i) => (
-                  <button
+                  <button type="button"
                     key={`${rate.carrier}-${rate.service}`}
                     onClick={() => handleSelectRate(i)}
                     className={`flex w-full items-center justify-between p-3 rounded-lg border transition-all ${

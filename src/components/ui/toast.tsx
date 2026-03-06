@@ -68,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               {icons[t.variant]}
               <span className="text-sm font-medium flex-1">{t.message}</span>
-              <button
+              <button type="button"
                 onClick={() => dismiss(t.id)}
                 data-compact="true"
                 className="text-surface-500 hover:text-surface-300 p-0.5"

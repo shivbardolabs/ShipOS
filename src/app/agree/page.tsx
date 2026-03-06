@@ -119,7 +119,7 @@ export default function AgreePage() {
           {/* Checkboxes */}
           <div className="space-y-4 mb-6">
             <label className="flex items-start gap-3 cursor-pointer group">
-              <button
+              <button type="button"
                 onClick={() => setAgreedTerms(!agreedTerms)}
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                   agreedTerms
@@ -151,7 +151,7 @@ export default function AgreePage() {
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer group">
-              <button
+              <button type="button"
                 onClick={() => setAgreedPrivacy(!agreedPrivacy)}
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                   agreedPrivacy
@@ -191,7 +191,7 @@ export default function AgreePage() {
           )}
 
           {/* Continue button */}
-          <button
+          <button type="button"
             onClick={handleContinue}
             disabled={!canContinue || submitting}
             className={`w-full flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all ${

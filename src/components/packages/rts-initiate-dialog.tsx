@@ -177,7 +177,7 @@ export function RtsInitiateDialog({
             {searchResults.length > 0 && (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {searchResults.map((pkg) => (
-                  <button
+                  <button type="button"
                     key={pkg.id}
                     onClick={() => {
                       setSelectedPackage(pkg);

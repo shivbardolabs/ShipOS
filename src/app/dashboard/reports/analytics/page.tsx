@@ -346,7 +346,7 @@ export default function AnalyticsPage() {
               {/* Hover tooltips via clickable day bars */}
               <div className="grid grid-cols-10 gap-0.5 mt-4">
                 {data.revenueTrend.slice(-10).map((d) => (
-                  <button
+                  <button type="button"
                     key={d.fullDate}
                     className="text-center p-1 rounded hover:bg-surface-800/50 transition-colors group"
                     onClick={() => handleDrillDown(d.date)}

@@ -17,7 +17,7 @@ export function ToggleSwitch({
   onChange: (val: boolean) => void;
 }) {
   return (
-    <button
+    <button type="button"
       onClick={() => onChange(!checked)}
       className={cn(
         'flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm transition-all',
@@ -67,7 +67,7 @@ export function CheckboxOption({
         disabled && 'opacity-40 cursor-not-allowed'
       )}
     >
-      <button
+      <button type="button"
         onClick={() => !disabled && onChange(!checked)}
         disabled={disabled}
         className={cn(

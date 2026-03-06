@@ -202,7 +202,7 @@ export default function ProvisionPage() {
           const isDone = i < step;
           return (
             <div key={i} className="flex items-center gap-1">
-              <button
+              <button type="button"
                 onClick={() => i < step && setStep(i)}
                 disabled={i > step}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
@@ -242,7 +242,7 @@ export default function ProvisionPage() {
                 {plans.map((plan) => {
                   const isSelected = form.planId === plan.id;
                   return (
-                    <button
+                    <button type="button"
                       key={plan.id}
                       onClick={() => updateForm({ planId: plan.id })}
                       className={`relative p-4 rounded-lg border text-left transition-all ${
@@ -384,7 +384,7 @@ export default function ProvisionPage() {
                         </p>
                       </div>
                       <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
-                      <button
+                      <button type="button"
                         onClick={() => removeFile(index)}
                         className="text-surface-500 hover:text-status-error-400 transition-colors flex-shrink-0"
                         title="Remove file"

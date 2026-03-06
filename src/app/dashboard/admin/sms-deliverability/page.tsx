@@ -284,7 +284,7 @@ export default function SmsDeliverabilityPage() {
       {/* ── 10DLC Registration Guide ───────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <button
+          <button type="button"
             onClick={() => setRegistrationOpen(!registrationOpen)}
             className="flex items-center gap-2 w-full text-left"
           >
@@ -381,7 +381,7 @@ export default function SmsDeliverabilityPage() {
         <CardContent>
           <div className="space-y-2">
             {CTIA_CHECKLIST.map((item) => (
-              <button
+              <button type="button"
                 key={item.id}
                 onClick={() => toggleChecklistItem(item.id)}
                 className="w-full flex items-start gap-3 rounded-lg border border-surface-800 p-3 hover:bg-surface-800/50 transition-colors text-left"
@@ -445,7 +445,7 @@ export default function SmsDeliverabilityPage() {
       {/* ── SMS Warming Schedule ───────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <button
+          <button type="button"
             onClick={() => setWarmingOpen(!warmingOpen)}
             className="flex items-center gap-2 w-full text-left"
           >

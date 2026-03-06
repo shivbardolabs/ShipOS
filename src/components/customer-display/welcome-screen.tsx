@@ -89,7 +89,7 @@ function MarketingCarousel({
       {images.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
           {images.map((_, idx) => (
-            <button
+            <button type="button"
               key={idx}
               onClick={() => setCurrent(idx)}
               className={cn(
@@ -203,7 +203,7 @@ export function WelcomeScreen({
 
         {/* Main CTA */}
         <div className="flex justify-center">
-          <button
+          <button type="button"
             onClick={onCheckMailbox}
             className="group relative flex items-center gap-4 rounded-2xl px-10 py-5 text-xl font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4"
             style={{
@@ -221,15 +221,15 @@ export function WelcomeScreen({
 
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-          <button className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
+          <button type="button" className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
             <QrCode className="h-6 w-6" />
             <span className="text-xs font-medium">Scan QR</span>
           </button>
-          <button className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
+          <button type="button" className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
             <Mail className="h-6 w-6" />
             <span className="text-xs font-medium">Check Mail</span>
           </button>
-          <button className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
+          <button type="button" className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/50 p-4 text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors min-h-[76px]">
             <Clock className="h-6 w-6" />
             <span className="text-xs font-medium">Hours</span>
           </button>

@@ -239,7 +239,7 @@ export function BillableActionsTab() {
                     <td className="px-3 py-3 text-right text-surface-100 font-medium">{s.freeDays} days</td>
                     <td className="px-3 py-3 text-right text-surface-100 font-medium">{formatCurrency(s.dailyRate)}/day</td>
                     <td className="px-3 py-3 text-center">
-                      <button onClick={() => toggleWeekendCounting(s.id)}>
+                      <button type="button" onClick={() => toggleWeekendCounting(s.id)}>
                         {s.countWeekends ? <ToggleRight className="h-5 w-5 text-status-success-400 mx-auto" /> : <ToggleLeft className="h-5 w-5 text-surface-500 mx-auto" />}
                       </button>
                     </td>
@@ -433,7 +433,7 @@ export function BillableActionsTab() {
                   <p className="text-[10px] text-surface-500">{a.feeType}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => toggleCustomActive(a.id)}>
+                  <button type="button" onClick={() => toggleCustomActive(a.id)}>
                     {a.isActive ? <ToggleRight className="h-5 w-5 text-status-success-400" /> : <ToggleLeft className="h-5 w-5 text-surface-500" />}
                   </button>
                   <Button size="sm" variant="ghost" iconOnly><Edit3 className="h-3.5 w-3.5" /></Button>

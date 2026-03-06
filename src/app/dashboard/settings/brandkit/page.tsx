@@ -150,7 +150,7 @@ export default function BrandKitPage() {
             const id = `color-${c.hex}`;
             const isCopied = copiedId === id;
             return (
-              <button
+              <button type="button"
                 key={c.hex}
                 onClick={() => copy(id, c.hex)}
                 className="glass-card p-4 text-left group cursor-pointer hover:border-primary-500 transition-all"

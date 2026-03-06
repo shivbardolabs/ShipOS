@@ -66,7 +66,7 @@ export function UnsavedGuard({
             <AlertTriangle className="h-4 w-4 text-status-warning-600" />
             <span className="text-status-warning-800 font-medium">Unsaved changes</span>
             {onSave && (
-              <button
+              <button type="button"
                 onClick={handleSave}
                 disabled={saving}
                 className="inline-flex items-center gap-1.5 rounded-md bg-status-warning-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-status-warning-700 transition-colors disabled:opacity-50"

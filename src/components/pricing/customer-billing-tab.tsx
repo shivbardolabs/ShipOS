@@ -284,11 +284,11 @@ export function CustomerBillingTab() {
         {adjustModal && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 bg-surface-800 rounded-lg p-1">
-              <button
+              <button type="button"
                 onClick={() => setAdjustModal((p) => p ? { ...p, type: 'credit' } : p)}
                 className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'credit' ? 'bg-status-success-600 text-white' : 'text-surface-400'}`}
               ><Minus className="h-3 w-3 inline mr-1" />Credit (reduce)</button>
-              <button
+              <button type="button"
                 onClick={() => setAdjustModal((p) => p ? { ...p, type: 'debit' } : p)}
                 className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'debit' ? 'bg-status-error-600 text-white' : 'text-surface-400'}`}
               ><Plus className="h-3 w-3 inline mr-1" />Debit (increase)</button>

@@ -301,7 +301,7 @@ export default function FeatureFlagsPage() {
             </p>
           </div>
         </div>
-        <button
+        <button type="button"
           onClick={() => { setLoading(true); fetchData(); }}
           className="flex items-center gap-1.5 text-xs text-surface-400 hover:text-surface-200 transition-colors px-3 py-1.5 rounded-lg border border-surface-700 hover:border-surface-600"
           title="Refresh flags"
@@ -339,7 +339,7 @@ export default function FeatureFlagsPage() {
               className="rounded-xl border border-surface-800 overflow-hidden bg-surface-900/50"
             >
               {/* Category header */}
-              <button
+              <button type="button"
                 onClick={() => toggleCategory(category)}
                 className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-surface-800/50 transition-colors"
               >
@@ -368,7 +368,7 @@ export default function FeatureFlagsPage() {
                         {/* Flag row */}
                         <div className="flex items-center gap-3 px-5 py-3">
                           {/* Expand toggle */}
-                          <button
+                          <button type="button"
                             onClick={() => toggleFlagExpand(flag.id)}
                             className="text-surface-500 hover:text-surface-300 transition-colors"
                           >
@@ -415,7 +415,7 @@ export default function FeatureFlagsPage() {
                           )}
 
                           {/* Default toggle */}
-                          <button
+                          <button type="button"
                             onClick={() => toggleDefault(flag)}
                             disabled={saving === flag.id}
                             className={`flex items-center gap-2 flex-shrink-0 transition-opacity ${saving === flag.id ? 'opacity-50' : ''}`}
@@ -465,7 +465,7 @@ export default function FeatureFlagsPage() {
                                   >
                                     {override.enabled ? 'ON' : 'OFF'}
                                   </span>
-                                  <button
+                                  <button type="button"
                                     onClick={() => deleteOverride(override.id, flag.id)}
                                     disabled={saving === override.id}
                                     className="text-surface-600 hover:text-status-error-400 transition-colors"
@@ -478,7 +478,7 @@ export default function FeatureFlagsPage() {
 
                               {/* Add override button */}
                               <div className="border-t border-surface-800/50 px-4 py-2">
-                                <button
+                                <button type="button"
                                   onClick={() => setAddOverrideFlag(flag)}
                                   className="flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors"
                                 >
@@ -616,7 +616,7 @@ function AddOverrideModal({
         <div>
           <label className="block text-xs font-medium text-surface-400 mb-2">Override For</label>
           <div className="flex gap-2">
-            <button
+            <button type="button"
               onClick={() => { setTargetType('tenant'); setTargetId(''); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 targetType === 'tenant'
@@ -627,7 +627,7 @@ function AddOverrideModal({
               <Building2 className="h-4 w-4" />
               Tenant
             </button>
-            <button
+            <button type="button"
               onClick={() => { setTargetType('user'); setTargetId(''); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 targetType === 'user'
@@ -656,7 +656,7 @@ function AddOverrideModal({
                 const id = t.id;
                 const isSelected = targetId === id;
                 return (
-                  <button
+                  <button type="button"
                     key={id}
                     onClick={() => setTargetId(id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
@@ -693,7 +693,7 @@ function AddOverrideModal({
         <div>
           <label className="block text-xs font-medium text-surface-400 mb-2">State</label>
           <div className="flex gap-2">
-            <button
+            <button type="button"
               onClick={() => setEnabled(true)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 enabled
@@ -704,7 +704,7 @@ function AddOverrideModal({
               <Check className="h-4 w-4" />
               Enabled
             </button>
-            <button
+            <button type="button"
               onClick={() => setEnabled(false)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 !enabled

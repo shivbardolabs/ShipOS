@@ -352,7 +352,7 @@ export default function ReconciliationPage() {
             {reconciliationRuns.map((run) => {
               const isSelected = run.id === currentRun.id;
               return (
-                <button
+                <button type="button"
                   key={run.id}
                   onClick={() => setSelectedRun(run)}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all ${

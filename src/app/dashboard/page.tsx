@@ -438,7 +438,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
+                <button type="button"
                   onClick={() => setBriefingExpanded(!briefingExpanded)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-surface-300 hover:bg-surface-800/50 transition-colors"
                 >
@@ -448,7 +448,7 @@ export default function DashboardPage() {
                     <ChevronDown className="h-4 w-4" />
                   )}
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setBriefingDismissed(true)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-surface-300 hover:bg-surface-800/50 transition-colors"
                 >
@@ -613,7 +613,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setShowOnboarding(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:text-surface-300 hover:bg-surface-800/50 transition-colors"
               >
@@ -719,7 +719,7 @@ export default function DashboardPage() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500">
             Operational Pulse
           </h2>
-          <button
+          <button type="button"
             onClick={() => setShowAllStats(!showAllStats)}
             className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
           >

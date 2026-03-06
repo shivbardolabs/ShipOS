@@ -50,6 +50,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               error && 'border-status-error-500 focus:border-status-error-500 focus:ring-status-error-500/30',
               className
             )}
+          aria-label={label || props.placeholder || undefined}
             {...props}
           />
         </div>

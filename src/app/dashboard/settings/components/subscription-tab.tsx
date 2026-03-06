@@ -73,7 +73,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
 
     {/* Billing Cycle Toggle */}
     <div className="flex items-center justify-center gap-3">
-      <button
+      <button type="button"
         onClick={() => setBillingCycle('monthly')}
         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           billingCycle === 'monthly'
@@ -83,7 +83,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
       >
         Monthly
       </button>
-      <button
+      <button type="button"
         onClick={() => setBillingCycle('annual')}
         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
           billingCycle === 'annual'

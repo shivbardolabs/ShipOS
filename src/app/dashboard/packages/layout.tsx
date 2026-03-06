@@ -86,7 +86,7 @@ const PACKAGE_TABS: PackageTab[] = [
 
 function TabItem({ tab, active, onClick }: { tab: PackageTab; active: boolean; onClick: () => void }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={cn(
         'group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',

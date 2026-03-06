@@ -182,7 +182,7 @@ export function DigitalMailCostsTab() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-surface-700 overflow-hidden">
-            <button
+            <button type="button"
               onClick={() => setView('summary')}
               className={cn(
                 'px-3 py-1.5 text-xs font-medium transition-colors',
@@ -193,7 +193,7 @@ export function DigitalMailCostsTab() {
             >
               Cost Summary
             </button>
-            <button
+            <button type="button"
               onClick={() => setView('comparison')}
               className={cn(
                 'px-3 py-1.5 text-xs font-medium transition-colors',
@@ -274,7 +274,7 @@ export function DigitalMailCostsTab() {
 
             return (
               <Card key={platform.id} padding="none" className="overflow-hidden">
-                <button
+                <button type="button"
                   onClick={() => setExpandedPlatform(isExpanded ? null : platform.id)}
                   className="flex items-center justify-between w-full px-5 py-4 hover:bg-surface-800/30 transition-colors"
                 >
@@ -336,7 +336,7 @@ export function DigitalMailCostsTab() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-surface-200">{formatCurrency(cost.amount)}</span>
-                            <button className="p-1 text-surface-500 hover:text-surface-300 transition-colors">
+                            <button type="button" className="p-1 text-surface-500 hover:text-surface-300 transition-colors">
                               <Edit2 className="h-3 w-3" />
                             </button>
                           </div>

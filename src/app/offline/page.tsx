@@ -16,13 +16,13 @@ export default function OfflinePage() {
           Any changes you made while offline will sync automatically when you reconnect.
         </p>
         <div className="space-y-3">
-          <button
+          <button type="button"
             onClick={() => window.location.reload()}
             className="w-full px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             Try Again
           </button>
-          <button
+          <button type="button"
             onClick={() => window.history.back()}
             className="w-full px-4 py-2 bg-surface-100 text-surface-700 rounded-lg hover:bg-surface-200 transition-colors"
           >

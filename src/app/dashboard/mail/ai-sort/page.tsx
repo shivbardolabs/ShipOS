@@ -531,7 +531,7 @@ export default function AIMailSortPage() {
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-status-error-500/10 border border-status-error-500/20 text-status-error-300 text-sm">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
-          <button
+          <button type="button"
             onClick={() => setError(null)}
             className="ml-auto text-status-error-400 hover:text-status-error-300"
           >
@@ -566,7 +566,7 @@ export default function AIMailSortPage() {
                       <X className="h-4 w-4" />
                       Cancel
                     </Button>
-                    <button
+                    <button type="button"
                       onClick={capturePhoto}
                       className="h-14 w-14 rounded-full bg-white border-4 border-status-violet-400 hover:border-violet-300 transition-colors shadow-lg shadow-status-violet-500/20 flex items-center justify-center"
                     >
@@ -582,7 +582,7 @@ export default function AIMailSortPage() {
                   alt="Captured mail"
                   className="w-full rounded-lg aspect-[4/3] object-cover"
                 />
-                <button
+                <button type="button"
                   onClick={() => setCapturedImage(null)}
                   className="absolute top-3 right-3 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                 >
@@ -806,7 +806,7 @@ export default function AIMailSortPage() {
                             {customerResults.length > 0 && (
                               <div className="max-h-40 overflow-y-auto rounded-lg border border-surface-700 bg-surface-900">
                                 {customerResults.map((c) => (
-                                  <button
+                                  <button type="button"
                                     key={c.id}
                                     onClick={() => assignCustomer(idx, c)}
                                     className="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-surface-800 transition-colors text-left"
@@ -827,7 +827,7 @@ export default function AIMailSortPage() {
                                 ))}
                               </div>
                             )}
-                            <button
+                            <button type="button"
                               onClick={() => { setSearchingForIdx(null); setSearchQuery(''); }}
                               className="text-xs text-surface-400 hover:text-surface-300"
                             >
@@ -850,7 +850,7 @@ export default function AIMailSortPage() {
                     )}
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-surface-800">
-                      <button
+                      <button type="button"
                         onClick={() => setEditingIdx(idx)}
                         className="flex items-center gap-1.5 text-xs text-surface-400 hover:text-surface-200 transition-colors"
                       >
@@ -991,7 +991,7 @@ export default function AIMailSortPage() {
                   const Icon = cfg.icon;
                   const currentType = editPiece.overrides.mailType ?? editPiece.result.mailType;
                   return (
-                    <button
+                    <button type="button"
                       key={type}
                       onClick={() => updateOverride(editingIdx, 'mailType', type)}
                       className={cn(

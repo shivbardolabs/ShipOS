@@ -23,7 +23,7 @@ export function AppearanceTab({ theme, setTheme }: AppearanceTabProps) {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           {/* Light theme card */}
-          <button
+          <button type="button"
             onClick={() => setTheme('light')}
             className={`group relative rounded-xl border-2 p-4 text-left transition-all duration-200 ${
               theme === 'light'
@@ -65,7 +65,7 @@ export function AppearanceTab({ theme, setTheme }: AppearanceTabProps) {
           </button>
 
           {/* Dark theme card */}
-          <button
+          <button type="button"
             onClick={() => setTheme('dark')}
             className={`group relative rounded-xl border-2 p-4 text-left transition-all duration-200 ${
               theme === 'dark'

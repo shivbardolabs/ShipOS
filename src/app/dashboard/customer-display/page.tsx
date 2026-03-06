@@ -273,7 +273,7 @@ export default function CustomerDisplayPage() {
       {/* Fullscreen Preview */}
       {previewFullscreen ? (
         <div className="fixed inset-0 z-50 bg-surface-950">
-          <button
+          <button type="button"
             onClick={() => setPreviewFullscreen(false)}
             className="fixed top-4 right-4 z-[60] rounded-lg bg-surface-800/80 p-2 text-surface-400 hover:text-white backdrop-blur-sm"
           >
@@ -308,7 +308,7 @@ export default function CustomerDisplayPage() {
                     const Icon = item.icon;
                     const isActive = currentScreen === item.screen;
                     return (
-                      <button
+                      <button type="button"
                         key={item.screen}
                         onClick={() => goToScreen(item.screen)}
                         className={`w-full flex items-center gap-3 rounded-xl p-3 text-left transition-colors ${
@@ -350,7 +350,7 @@ export default function CustomerDisplayPage() {
                     {renderScreen()}
                   </div>
                   {/* Overlay click to fullscreen */}
-                  <button
+                  <button type="button"
                     onClick={() => setPreviewFullscreen(true)}
                     className="absolute inset-0 flex items-center justify-center bg-surface-950/30 opacity-0 hover:opacity-100 transition-opacity"
                   >

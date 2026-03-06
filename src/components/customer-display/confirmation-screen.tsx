@@ -142,7 +142,7 @@ export function ConfirmationScreen({
 
         {/* Parcel Details */}
         {parcels.length > 10 && (
-          <button
+          <button type="button"
             onClick={() => setShowDetails(!showDetails)}
             className="w-full flex items-center justify-center gap-2 text-sm text-surface-400 hover:text-surface-200 transition-colors"
           >
@@ -184,7 +184,7 @@ export function ConfirmationScreen({
               Would you like a receipt?
             </p>
             <div className="grid grid-cols-3 gap-3">
-              <button
+              <button type="button"
                 onClick={handleEmailReceipt}
                 className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/60 p-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors min-h-[80px]"
               >
@@ -193,7 +193,7 @@ export function ConfirmationScreen({
                   Email
                 </span>
               </button>
-              <button
+              <button type="button"
                 onClick={handlePrintReceipt}
                 className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/60 p-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors min-h-[80px]"
               >
@@ -202,7 +202,7 @@ export function ConfirmationScreen({
                   Print
                 </span>
               </button>
-              <button
+              <button type="button"
                 onClick={onNoReceipt}
                 className="flex flex-col items-center gap-2 rounded-xl bg-surface-800/60 p-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors min-h-[80px]"
               >
@@ -227,14 +227,14 @@ export function ConfirmationScreen({
               Would you like to do anything else?
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <button type="button"
                 onClick={onCheckAnother}
                 className="flex items-center justify-center gap-2 rounded-xl bg-surface-800/60 py-4 ring-1 ring-surface-700 hover:bg-surface-800 transition-colors text-surface-200 font-medium min-h-[56px]"
               >
                 <Mailbox className="h-5 w-5" />
                 Check Another Mailbox
               </button>
-              <button
+              <button type="button"
                 onClick={onDone}
                 className="flex items-center justify-center gap-2 rounded-xl bg-primary-600 py-4 text-white font-semibold hover:bg-primary-500 transition-colors min-h-[56px]"
               >

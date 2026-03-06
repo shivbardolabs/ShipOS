@@ -401,7 +401,7 @@ export default function ExpensesReportPage() {
                   <Badge variant="success" dot={false}>Active</Badge>
                 </div>
               ))}
-              <button className="flex items-center gap-2 w-full p-3 rounded-lg border border-dashed border-surface-600 text-surface-400 hover:text-surface-200 hover:border-surface-500 transition-colors text-sm">
+              <button type="button" className="flex items-center gap-2 w-full p-3 rounded-lg border border-dashed border-surface-600 text-surface-400 hover:text-surface-200 hover:border-surface-500 transition-colors text-sm">
                 <Plus className="h-4 w-4" />
                 Add Custom Category
               </button>

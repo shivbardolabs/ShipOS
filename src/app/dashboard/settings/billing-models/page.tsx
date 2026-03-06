@@ -744,7 +744,7 @@ function MeterModal({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-surface-500 hover:text-surface-300">
+          <button type="button" onClick={onClose} className="text-surface-500 hover:text-surface-300">
             <X className="h-5 w-5" />
           </button>
         </div>

@@ -192,7 +192,7 @@ export default function LegalManagementPage() {
           const typeActiveDocs = docs.filter((d) => d.type === type && d.isActive);
           const version = typeActiveDocs[0]?.version;
           return (
-            <button
+            <button type="button"
               key={type}
               onClick={() => setActiveTab(type)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
@@ -244,7 +244,7 @@ export default function LegalManagementPage() {
 
             {/* Editor / Preview toggle */}
             <div className="flex items-center gap-2 mb-2">
-              <button
+              <button type="button"
                 onClick={() => setShowPreview(false)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   !showPreview
@@ -255,7 +255,7 @@ export default function LegalManagementPage() {
                 <FileText className="h-3 w-3" />
                 Edit
               </button>
-              <button
+              <button type="button"
                 onClick={() => setShowPreview(true)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   showPreview
@@ -337,7 +337,7 @@ export default function LegalManagementPage() {
                         : 'border-surface-700 bg-surface-800/30'
                     }`}
                   >
-                    <button
+                    <button type="button"
                       onClick={() => toggleVersion(doc.id)}
                       className="w-full flex items-center justify-between px-3 py-2.5 text-left"
                     >
@@ -372,7 +372,7 @@ export default function LegalManagementPage() {
                           dangerouslySetInnerHTML={{ __html: doc.content }}
                         />
                         {!doc.isActive && (
-                          <button
+                          <button type="button"
                             onClick={() => {
                               setEditorContent(doc.content);
                               setShowPreview(false);

@@ -343,7 +343,7 @@ export default function LoyaltyDashboardPage() {
                   <td className="px-5 py-3 text-right font-semibold text-surface-200">{formatNumber(acct.currentPoints)}</td>
                   <td className="px-5 py-3 text-right text-surface-400">{formatNumber(acct.lifetimePoints)}</td>
                   <td className="px-5 py-3">
-                    <button
+                    <button type="button"
                       onClick={() => copyCode(acct.referralCode)}
                       className="flex items-center gap-1.5 text-xs font-mono text-surface-400 hover:text-primary-400 transition-colors"
                     >

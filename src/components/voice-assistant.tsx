@@ -246,7 +246,7 @@ export function VoiceAssistant() {
   // Floating button (always visible)
   if (!open) {
     return (
-      <button
+      <button type="button"
         onClick={() => {
           setOpen(true);
           // Auto-start listening after a brief delay for the panel to render
@@ -295,7 +295,7 @@ export function VoiceAssistant() {
               </p>
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={handleClose}
             className="h-7 w-7 rounded-lg flex items-center justify-center text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
           >
@@ -321,7 +321,7 @@ export function VoiceAssistant() {
                   &ldquo;{transcript}&rdquo;
                 </p>
               )}
-              <button
+              <button type="button"
                 onClick={() => {
                   if (recognitionRef.current) {
                     try {
@@ -360,7 +360,7 @@ export function VoiceAssistant() {
                     'transition-colors'
                   )}
                 />
-                <button
+                <button type="button"
                   onClick={handleTextSubmit}
                   disabled={!textInput.trim()}
                   className={cn(
@@ -380,7 +380,7 @@ export function VoiceAssistant() {
                   'How many packages today?',
                   'Send reminder to PMB 0005',
                 ].map((ex) => (
-                  <button
+                  <button type="button"
                     key={ex}
                     onClick={() => {
                       setTextInput(ex);
@@ -443,7 +443,7 @@ export function VoiceAssistant() {
               {/* Confirmation buttons */}
               {result?.requiresConfirmation && !error && !confirmed && (
                 <div className="flex gap-2 ml-8">
-                  <button
+                  <button type="button"
                     onClick={handleConfirm}
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
@@ -454,7 +454,7 @@ export function VoiceAssistant() {
                     <Check className="h-3 w-3" />
                     Confirm
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => {
                       setResult(null);
                       startListening();
@@ -496,7 +496,7 @@ export function VoiceAssistant() {
         <div className="px-4 py-3 border-t border-surface-800 flex items-center justify-between">
           {state === 'response' ? (
             <>
-              <button
+              <button type="button"
                 onClick={startListening}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
@@ -514,7 +514,7 @@ export function VoiceAssistant() {
               )}
             </>
           ) : state === 'idle' ? (
-            <button
+            <button type="button"
               onClick={startListening}
               className={cn(
                 'w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
@@ -553,7 +553,7 @@ export function VoiceAssistant() {
       </div>
 
       {/* ── Floating button (active state) ────────────────────────────── */}
-      <button
+      <button type="button"
         onClick={() => {
           if (state === 'listening' && recognitionRef.current) {
             try {
