@@ -75,9 +75,18 @@ function formatDate(iso: string) {
 
 const statusVariant = (s: string) => {
   if (s === 'active') return 'success' as const;
+  if (s === 'trial') return 'info' as const;
   if (s === 'paused') return 'warning' as const;
-  if (s === 'pending') return 'info' as const;
+  if (s === 'pending_approval') return 'warning' as const;
+  if (s === 'suspended') return 'error' as const;
+  if (s === 'disabled') return 'error' as const;
+  if (s === 'closed') return 'muted' as const;
   return 'muted' as const;
+};
+
+const statusLabel = (s: string) => {
+  if (s === 'pending_approval') return 'Pending Approval';
+  return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -260,7 +269,7 @@ export default function ClientProvisioningPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-surface-100">{client.companyName}</h3>
-                    <Badge variant={statusVariant(client.status)} dot>{client.status}</Badge>
+                    <Badge variant={statusVariant(client.status)} dot>{statusLabel(client.status)}</Badge>
                     {client.feeOverrideReason && (
                       <Badge variant="warning" dot={false}>Custom Fee</Badge>
                     )}
