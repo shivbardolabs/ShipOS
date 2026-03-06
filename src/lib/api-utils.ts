@@ -120,7 +120,7 @@ export function paginated<T>(items: T[], total: number, page: number, limit: num
 
 interface HandlerContext {
   user: LocalUser;
-  params?: Record<string, string>;
+  params: Record<string, string>;
 }
 
 type ApiHandler = (
@@ -144,13 +144,13 @@ interface WithApiHandlerOptions {
 export function withApiHandler(handler: ApiHandler, options?: WithApiHandlerOptions) {
   return async (
     request: NextRequest,
-    routeContext?: { params?: Promise<Record<string, string>> },
+    routeContext: { params: Promise<Record<string, string>> },
   ): Promise<NextResponse> => {
     let user: LocalUser | null = null;
 
     try {
       // Resolve dynamic route params
-      const params = routeContext?.params ? await routeContext.params : undefined;
+      const params = await routeContext.params;
 
       // Authenticate unless public
       if (!options?.public) {
