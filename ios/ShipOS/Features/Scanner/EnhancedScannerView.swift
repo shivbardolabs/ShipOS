@@ -1,5 +1,6 @@
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
+import Vision
 import VisionKit
 
 /// BAR-365: Enhanced Scanner — multi-format barcode/QR scanner with VisionKit DataScanner,
@@ -279,7 +280,7 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
     @ObservedObject var viewModel: EnhancedScannerViewModel
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
-        let recognizedTypes: [DataScannerViewController.RecognizedDataType] = [
+        let recognizedTypes: Set<DataScannerViewController.RecognizedDataType> = [
             .barcode(symbologies: [
                 .ean8, .ean13, .upce, .code39, .code128, .itf14,
                 .qr, .dataMatrix, .pdf417, .aztec

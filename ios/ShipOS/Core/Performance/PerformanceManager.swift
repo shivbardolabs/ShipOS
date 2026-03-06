@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 import UIKit
 import os.signpost
 import Combine
@@ -11,7 +11,7 @@ import Combine
 
 /// Two-tier image cache: in-memory (NSCache) + on-disk (FileManager).
 /// Thread-safe, memory-pressure aware, with configurable limits.
-actor ImageCache {
+final class ImageCache: @unchecked Sendable {
     static let shared = ImageCache()
 
     private let memoryCache = NSCache<NSString, UIImage>()
@@ -19,6 +19,7 @@ actor ImageCache {
     private let fileManager = FileManager.default
     private let maxDiskSizeMB: Int = 200
     private let maxMemoryCount: Int = 100
+    private let queue = DispatchQueue(label: "ai.bardolabs.shipos.imagecache")
 
     private init() {
         let caches = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
@@ -29,15 +30,15 @@ actor ImageCache {
         memoryCache.totalCostLimit = 50 * 1024 * 1024  // 50 MB
 
         // Observe memory warnings
-        Task { @MainActor in
-            NotificationCenter.default.addObserver(
-                forName: UIApplication.didReceiveMemoryWarningNotification,
-                object: nil,
-                queue: .main
-            ) { [weak memoryCache] _ in
-                memoryCache?.removeAllObjects()
-                PerformanceMonitor.shared.log("ImageCache memory purged")
-            }
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { [weak memoryCache] _ in
+            memoryCache?.removeAllObjects()
+            #if DEBUG
+            print("[ImageCache] Memory purged due to memory warning")
+            #endif
         }
     }
 

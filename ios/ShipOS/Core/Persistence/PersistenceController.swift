@@ -70,13 +70,17 @@ final class PersistenceController {
 
 extension PersistenceController {
     /// Upsert packages from API response into SwiftData.
+    /// Uses batch fetch + dictionary for O(1) lookups instead of N individual queries.
     func syncPackages(_ dtos: [PackageDTO], context: ModelContext) throws {
-        for dto in dtos {
-            let descriptor = FetchDescriptor<Package>(
-                predicate: #Predicate { $0.id == dto.id }
-            )
+        let descriptor = FetchDescriptor<Package>()
+        let existingPackages = try context.fetch(descriptor)
+        let existingById = Dictionary(
+            existingPackages.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
 
-            if let existing = try context.fetch(descriptor).first {
+        for dto in dtos {
+            if let existing = existingById[dto.id] {
                 // Update existing
                 existing.trackingNumber = dto.trackingNumber
                 existing.carrier = dto.carrier
@@ -99,13 +103,17 @@ extension PersistenceController {
     }
 
     /// Upsert customers from API response.
+    /// Uses batch fetch + dictionary for O(1) lookups instead of N individual queries.
     func syncCustomers(_ dtos: [CustomerDTO], context: ModelContext) throws {
-        for dto in dtos {
-            let descriptor = FetchDescriptor<Customer>(
-                predicate: #Predicate { $0.id == dto.id }
-            )
+        let descriptor = FetchDescriptor<Customer>()
+        let existingCustomers = try context.fetch(descriptor)
+        let existingById = Dictionary(
+            existingCustomers.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
 
-            if let existing = try context.fetch(descriptor).first {
+        for dto in dtos {
+            if let existing = existingById[dto.id] {
                 existing.firstName = dto.firstName
                 existing.lastName = dto.lastName
                 existing.email = dto.email

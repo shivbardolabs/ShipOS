@@ -100,7 +100,7 @@ struct PackageStatsWidgetView: View {
             Spacer()
 
             Text("\(entry.checkedIn)")
-                .font(.system(size: 36, design: .rounded, weight: .bold))
+                .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
 
             Text("Packages Held")
@@ -136,7 +136,7 @@ struct PackageStatsWidgetView: View {
                 Spacer()
 
                 Text("\(entry.todayCheckIns)")
-                    .font(.system(size: 40, design: .rounded, weight: .bold))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
 
                 Text("Check-ins today")
                     .font(.system(.caption, design: .rounded))

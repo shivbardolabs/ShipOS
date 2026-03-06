@@ -127,7 +127,7 @@ final class CustomerListViewModel: ObservableObject {
                 API.Customers.list(search: searchText.isEmpty ? nil : searchText, page: 1, limit: pageSize)
             )
             customers = response.customers.map { $0.toModel() }
-            totalCount = response.total ?? customers.count
+            totalCount = response.total
             currentPage = 1
             hasMore = response.customers.count >= pageSize
         } catch {

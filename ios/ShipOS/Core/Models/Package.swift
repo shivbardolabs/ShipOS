@@ -34,6 +34,7 @@ enum PackageStatus: String, Codable, CaseIterable, Identifiable {
         case .forwarded: "arrow.right.circle.fill"
         }
     }
+
 }
 
 // MARK: - Package (SwiftData)
@@ -122,6 +123,8 @@ struct CustomerSummary: Codable, Hashable {
     let firstName: String
     let lastName: String
     let pmbNumber: String?
+
+    var fullName: String { "\(firstName) \(lastName)" }
 }
 
 // MARK: - API Request/Response Models
@@ -210,7 +213,10 @@ struct PackageUpdateRequest: Encodable {
 
 struct PackageCheckOutRequest: Encodable {
     let status: String = "released"
-    let signatureUrl: String?
+    var signatureUrl: String? = nil
+    var signatureData: String? = nil
+    var idType: String? = nil
+    var idVerified: Bool? = nil
     let notes: String?
 }
 

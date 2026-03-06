@@ -200,7 +200,7 @@ final class PackageListViewModel: ObservableObject {
                 )
             )
             packages = response.packages.map { $0.toModel() }
-            totalCount = response.total ?? packages.count
+            totalCount = response.total
             currentPage = 1
             hasMore = response.packages.count >= pageSize
         } catch {
@@ -254,8 +254,9 @@ final class PackageListViewModel: ObservableObject {
             let body = NotificationSendRequest(
                 customerId: customerId,
                 packageId: pkg.id,
-                channel: "sms",
-                message: nil
+                type: "sms",
+                message: nil,
+                templateId: nil
             )
             let _: NotificationDTO = try await APIClient.shared.request(
                 API.Notifications.send(body: body)
@@ -395,17 +396,6 @@ struct TimelineRow: View {
 // MARK: - Package Status Extensions
 
 extension PackageStatus {
-    var displayName: String {
-        switch self {
-        case .checkedIn: "Checked In"
-        case .notified: "Notified"
-        case .held: "Held"
-        case .released: "Released"
-        case .returned: "Returned"
-        case .forwarded: "Forwarded"
-        }
-    }
-
     var color: Color {
         switch self {
         case .checkedIn: ShipOSTheme.Colors.info

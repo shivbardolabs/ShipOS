@@ -14,8 +14,10 @@ struct EnhancedIPadSidebar: View {
     @ObservedObject private var networkMonitor = NetworkMonitor.shared
     @ObservedObject private var syncEngine = SyncEngine.shared
 
+    @State private var sidebarSelection: AppTab? = .dashboard
+
     var body: some View {
-        List(selection: $appState.selectedTab) {
+        List(selection: $sidebarSelection) {
             Section("Operations") {
                 sidebarItem(.dashboard, badge: nil)
                 sidebarItem(.packages, badge: appState.packagesBadge)
@@ -79,6 +81,12 @@ struct EnhancedIPadSidebar: View {
             ToolbarItem(placement: .bottomBar) {
                 sidebarFooter
             }
+        }
+        .onChange(of: sidebarSelection) { _, newValue in
+            if let newValue { appState.selectedTab = newValue }
+        }
+        .onChange(of: appState.selectedTab) { _, newValue in
+            sidebarSelection = newValue
         }
     }
 

@@ -437,8 +437,8 @@ final class ReportsViewModel: ObservableObject {
         defer { isLoading = false }
 
         // Parallel fetch of dashboard stats + build charts
-        async let statsTask = fetchDashboardStats()
-        async let packagesTask = fetchPackageData()
+        async let statsTask: Void = fetchDashboardStats()
+        async let packagesTask: Void = fetchPackageData()
 
         await statsTask
         await packagesTask
@@ -463,17 +463,26 @@ final class ReportsViewModel: ObservableObject {
 
             // Carrier breakdown from status data
             if let breakdown = stats.statusBreakdown {
-                let total = (breakdown.checkedIn ?? 0) + (breakdown.notified ?? 0) +
-                            (breakdown.held ?? 0) + (breakdown.released ?? 0) +
-                            (breakdown.returned ?? 0)
+                let checkedIn: Int = breakdown.checkedIn ?? 0
+                let notified: Int = breakdown.notified ?? 0
+                let held: Int = breakdown.held ?? 0
+                let released: Int = breakdown.released ?? 0
+                let returned: Int = breakdown.returned ?? 0
+                let total: Int = checkedIn + notified + held + released + returned
 
                 // Build carrier data from recent activity for now
+                let uspsCount = Int(Double(total) * 0.35)
+                let upsCount = Int(Double(total) * 0.25)
+                let fedexCount = Int(Double(total) * 0.20)
+                let amazonCount = Int(Double(total) * 0.15)
+                let otherCount = Int(Double(total) * 0.05)
+
                 carrierData = [
-                    CarrierDataPoint(carrier: "USPS", count: Int(Double(total) * 0.35), percentage: 35, color: .blue),
-                    CarrierDataPoint(carrier: "UPS", count: Int(Double(total) * 0.25), percentage: 25, color: Color(hex: "#421B01")),
-                    CarrierDataPoint(carrier: "FedEx", count: Int(Double(total) * 0.20), percentage: 20, color: Color(hex: "#4D148C")),
-                    CarrierDataPoint(carrier: "Amazon", count: Int(Double(total) * 0.15), percentage: 15, color: Color(hex: "#FF9900")),
-                    CarrierDataPoint(carrier: "Other", count: Int(Double(total) * 0.05), percentage: 5, color: ShipOSTheme.Colors.textTertiary),
+                    CarrierDataPoint(carrier: "USPS", count: uspsCount, percentage: 35, color: .blue),
+                    CarrierDataPoint(carrier: "UPS", count: upsCount, percentage: 25, color: Color(hex: "#421B01")),
+                    CarrierDataPoint(carrier: "FedEx", count: fedexCount, percentage: 20, color: Color(hex: "#4D148C")),
+                    CarrierDataPoint(carrier: "Amazon", count: amazonCount, percentage: 15, color: Color(hex: "#FF9900")),
+                    CarrierDataPoint(carrier: "Other", count: otherCount, percentage: 5, color: ShipOSTheme.Colors.textTertiary),
                 ]
             }
         } catch {

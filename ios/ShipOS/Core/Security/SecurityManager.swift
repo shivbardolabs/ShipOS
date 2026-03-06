@@ -180,8 +180,10 @@ final class SecurityManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            if UIScreen.main.isCaptured {
-                self?.handleScreenCapture(window: window)
+            Task { @MainActor in
+                if UIScreen.main.isCaptured {
+                    self?.handleScreenCapture(window: window)
+                }
             }
         }
 
@@ -377,8 +379,11 @@ final class CertificatePinningDelegate: NSObject, URLSessionDelegate {
 // MARK: - Security Audit Log
 
 /// Append-only security event log for auditing.
-actor SecurityAuditLog {
+/// Uses a serial queue for thread safety instead of actor isolation
+/// so callers don't need async context.
+final class SecurityAuditLog: @unchecked Sendable {
     static let shared = SecurityAuditLog()
+    private let queue = DispatchQueue(label: "ai.bardolabs.shipos.auditlog")
 
     enum Level: String {
         case info, warning, critical
@@ -398,7 +403,8 @@ actor SecurityAuditLog {
     private init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         fileURL = docs.appendingPathComponent("security_audit.log")
-        deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+        deviceId = ProcessInfo.processInfo.environment["SIMULATOR_UDID"]
+            ?? UUID().uuidString  // Stable per-install via actor singleton
     }
 
     func log(_ level: Level, event: String, details: String? = nil) {
@@ -410,19 +416,21 @@ actor SecurityAuditLog {
             deviceId: deviceId
         )
 
-        guard let data = try? JSONEncoder().encode(entry),
-              let line = String(data: data, encoding: .utf8) else { return }
+        queue.async { [fileURL] in
+            guard let data = try? JSONEncoder().encode(entry),
+                  let line = String(data: data, encoding: .utf8) else { return }
 
-        let logLine = line + "\n"
+            let logLine = line + "\n"
 
-        if FileManager.default.fileExists(atPath: fileURL.path) {
-            if let handle = FileHandle(forWritingAtPath: fileURL.path) {
-                handle.seekToEndOfFile()
-                handle.write(logLine.data(using: .utf8)!)
-                handle.closeFile()
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                if let handle = FileHandle(forWritingAtPath: fileURL.path) {
+                    handle.seekToEndOfFile()
+                    handle.write(logLine.data(using: .utf8)!)
+                    handle.closeFile()
+                }
+            } else {
+                try? logLine.write(to: fileURL, atomically: true, encoding: .utf8)
             }
-        } else {
-            try? logLine.write(to: fileURL, atomically: true, encoding: .utf8)
         }
 
         #if DEBUG

@@ -482,7 +482,6 @@ struct DimensionARView: UIViewRepresentable {
 
             // Orient along the line
             let direction = normalize(end - start)
-            let up = SIMD3<Float>(0, 1, 0)
             let rotation = simd_quatf(from: SIMD3<Float>(0, 0, 1), to: direction)
             entity.orientation = rotation
 

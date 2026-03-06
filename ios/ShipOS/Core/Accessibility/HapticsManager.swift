@@ -190,7 +190,7 @@ final class HapticsManager {
             let pattern = try CHHapticPattern(events: events, parameters: [])
             try playPattern(pattern)
         } catch {
-            error()
+            print("[Haptics] Error: \(error)")
         }
     }
 
@@ -397,7 +397,7 @@ struct ReduceMotionModifier: ViewModifier {
     let animation: Animation
 
     func body(content: Content) -> some View {
-        content.animation(reduceMotion ? .none : animation)
+        content.animation(reduceMotion ? .none : animation, value: reduceMotion)
     }
 }
 

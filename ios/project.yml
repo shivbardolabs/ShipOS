@@ -4,7 +4,6 @@
 
 name: ShipOS
 options:
-  bundleIdPrefix: ai.bardolabs
   deploymentTarget:
     iOS: "17.0"
   xcodeVersion: "15.4"
@@ -39,7 +38,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: true
-        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_STRICT_CONCURRENCY: targeted
         ENABLE_PREVIEWS: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -54,8 +53,6 @@ targets:
     dependencies:
       - package: Auth0
       - package: KeychainAccess
-      - target: ShipOSWidgets
-        embed: true
     postBuildScripts:
       - name: "SwiftLint"
         script: |
@@ -91,6 +88,9 @@ targets:
     platform: iOS
     sources:
       - ShipOSTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos.tests
     dependencies:
       - target: ShipOS
 
@@ -99,6 +99,9 @@ targets:
     platform: iOS
     sources:
       - ShipOSUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.bardolabs.shipos.uitests
     dependencies:
       - target: ShipOS
 
@@ -107,7 +110,6 @@ schemes:
     build:
       targets:
         ShipOS: all
-        ShipOSWidgets: all
         ShipOSTests: [test]
         ShipOSUITests: [test]
     run:
