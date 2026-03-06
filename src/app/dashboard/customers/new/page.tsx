@@ -4,7 +4,7 @@
 /**
  * BAR-230: PMB Customer Onboarding Wizard
  *
- * 7-step wizard flow (expanded from original 5 steps):
+ * 7-step wizard flow (reordered per BAR-230 — mailbox selection first):
  *   0. Customer Info + Existing Customer Check
  *   1. Mailbox & Rate Plan Selection
  *   2. Identification + Non-Compliant ID Detection
@@ -25,25 +25,23 @@ import { Stepper, type Step } from '@/components/ui/stepper';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import type { ParsedAddress } from '@/components/ui/address-autocomplete';
 import { SignaturePad } from '@/components/ui/signature-pad';
-import { customers as mockCustomers } from '@/lib/mock-data';
+// Real customer data loaded from API (replaces mock-data for PMB availability)
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_MAILBOX_RANGES,
   getAvailableBoxNumbers,
   getRangeStats,
   formatPmbNumber,
-  validateBoxNumber,
 } from '@/lib/pmb-utils';
-import { USPS_PRIMARY_IDS, USPS_SECONDARY_IDS, validateIdPair } from '@/lib/usps-ids';
+import { USPS_PRIMARY_IDS, validateIdPair } from '@/lib/usps-ids';
 import { NON_COMPLIANT_IDS, checkIdExpiration } from '@/lib/non-compliant-ids';
-import type { MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod, BillingCycle } from '@/lib/types';
+import type { Customer, MailboxPlatform, ExtractedIdData, PS1583FormData, PlanTierOption, PmbRecipientData, PaymentMethod } from '@/lib/types';
 import {
   ArrowLeft, ArrowRight, User, CreditCard, FileText, Shield,
   ClipboardCheck, Upload, CheckCircle2, AlertCircle, X, Scan,
   Building2, Mail, Phone, MapPin, Calendar, DollarSign,
   Loader2, Mailbox, Info, ChevronDown, Search, Lock,
-  UserPlus, Crown, Trash2, AlertTriangle, Banknote, Smartphone,
-  Camera, Printer, Send, VideoOff,
+  UserPlus, Crown, Trash2, AlertTriangle, Banknote, Smartphone, Sparkles,
 } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
@@ -62,12 +60,11 @@ const BUSINESS_DOC_TYPES = [
 ];
 
 const PROOF_OF_ADDRESS_TYPES = [
-  { value: 'drivers_license', label: 'U.S. State/Territory/Tribal Driver License or Nondriver ID Card' },
-  { value: 'current_lease', label: 'Current Lease' },
   { value: 'home_vehicle_insurance', label: 'Home or Vehicle Insurance Policy' },
   { value: 'mortgage_deed_of_trust', label: 'Mortgage or Deed of Trust' },
-  { value: 'vehicle_registration', label: 'Vehicle Registration Card' },
-  { value: 'voter_registration', label: 'Voter Registration Card' },
+  { value: 'current_lease', label: 'Current Lease Agreement' },
+  { value: 'state_drivers_nondriver_id', label: "State Driver's License / Non-Driver ID" },
+  { value: 'voter_id_card', label: 'Voter Registration Card' },
 ];
 
 const BUSINESS_ENTITY_TYPES = [
@@ -87,15 +84,6 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string; desc
   { value: 'cash', label: 'Cash', icon: '💵', description: 'Record cash payment' },
 ];
 
-/** BAR-421: All billing cycle options per BAR-230 */
-const BILLING_CYCLE_OPTIONS: { value: BillingCycle; label: string; shortLabel: string; months: number }[] = [
-  { value: 'daily', label: 'Daily', shortLabel: 'day', months: 0 },
-  { value: 'monthly', label: 'Monthly', shortLabel: 'mo', months: 1 },
-  { value: 'quarterly', label: 'Quarterly', shortLabel: 'qtr', months: 3 },
-  { value: 'semi-annual', label: 'Semi-Annual', shortLabel: '6mo', months: 6 },
-  { value: 'annual', label: 'Annual (Yearly)', shortLabel: 'yr', months: 12 },
-];
-
 const STORE_INFO = {
   name: 'ShipOS Mail Center',
   address: '123 Main Street',
@@ -104,7 +92,7 @@ const STORE_INFO = {
   zip: '90210',
 };
 
-const platformLabels: Record<string, { label: string; color: string }> = {
+const platformLabels: Record<MailboxPlatform, { label: string; color: string }> = {
   physical: { label: 'Store (Physical)', color: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
   anytime: { label: 'Anytime Mailbox', color: 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' },
   iPostal: { label: 'iPostal1', color: 'bg-status-info-500/20 text-status-info-400 border-status-info-500/30' },
@@ -171,25 +159,6 @@ interface ExistingCustomerMatch {
   status: string;
 }
 
-/** BAR-411: Format phone number as user types — (555) 555-5555 */
-function formatPhoneNumber(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 10);
-  if (digits.length === 0) return '';
-  if (digits.length <= 3) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
-/** BAR-411: Calculate age from date-of-birth string */
-function getAgeFromDob(dob: string): number {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-  return age;
-}
-
 function ExistingCustomerCard({ match, onDismiss }: { match: ExistingCustomerMatch; onDismiss: () => void }) {
   return (
     <div className="rounded-lg border border-status-warning-500/30 bg-status-warning-500/5 p-4 space-y-2">
@@ -253,39 +222,10 @@ function RecipientRow({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Phone" value={recipient.phone || ''} onChange={(e) => onChange(index, 'phone', e.target.value)} placeholder="Phone" leftIcon={<Phone className="h-4 w-4" />} />
           <Input label="Email" value={recipient.email || ''} onChange={(e) => onChange(index, 'email', e.target.value)} placeholder="Email" leftIcon={<Mail className="h-4 w-4" />} />
-          <Input label="Address" value={recipient.address || ''} onChange={(e) => onChange(index, 'address', e.target.value)} placeholder="Street address" leftIcon={<MapPin className="h-4 w-4" />} />
-          <Input label="Date of Birth" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} />
         </div>
       )}
       {recipient.type === 'minor_exception' && (
-        <div className="space-y-2">
-          <Input label="Date of Birth *" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} helperText="Minors under 18 are exempt from separate PS1583 per USPS DMM 508.4" leftIcon={<Calendar className="h-4 w-4" />} error={recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 ? `Date of birth indicates this person is ${getAgeFromDob(recipient.dateOfBirth)} years old. Minor exemption requires individual to be under 18.` : undefined} />
-          {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 && (
-            <div className="rounded-lg border border-status-error-500/30 bg-status-error-500/5 p-3 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-status-error-400 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-status-error-400">This individual is {getAgeFromDob(recipient.dateOfBirth)} years old and does not qualify for the minor exemption. They must complete their own PS Form 1583 as an additional recipient.</p>
-            </div>
-          )}
-          {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) < 18 && getAgeFromDob(recipient.dateOfBirth) >= 0 && (
-            <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-3 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
-              <p className="text-xs text-status-success-400">Age verified: {getAgeFromDob(recipient.dateOfBirth)} years old — qualifies for minor exemption.</p>
-            </div>
-          )}
-        </div>
-      )}
-      {/* BAR-421: Employee exception — employees exempt from separate PS1583 per Box 12 */}
-      {recipient.type === 'employee_exception' && (
-        <div className="space-y-2">
-          <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-3 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
-            <p className="text-xs text-status-success-400">Employee of the business — exempt from separate PS1583 filing per USPS Box 12 exemptions.</p>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-surface-300 cursor-pointer">
-            <input type="checkbox" checked={recipient.isEmployee !== false} onChange={(e) => onChange(index, 'isEmployee', String(e.target.checked))} className="rounded border-surface-600 bg-surface-800 text-primary-500" />
-            Confirm this person is an employee of {recipient.firstName || 'the applicant'}
-          </label>
-        </div>
+        <Input label="Date of Birth *" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} helperText="Minors under 18 are exempt from separate PS1583 per USPS DMM 508.4" leftIcon={<Calendar className="h-4 w-4" />} />
       )}
     </div>
   );
@@ -301,12 +241,12 @@ export default function NewCustomerPage() {
   const fileInputRef1 = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   const fileInputRef3 = useRef<HTMLInputElement>(null);
-  const fileInputRefPoa = useRef<HTMLInputElement>(null);
+  // fileInputRefPoa removed — proof of address merged into secondary ID
 
-  /* ── Step 0: Customer Info state ── */
+  /* ── Step 2: Customer Info state ── */
   const [customerForm, setCustomerForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    businessName: '', platform: '' as string,
+    businessName: '', platform: '' as MailboxPlatform | '',
     pmbNumber: '', billingTerms: 'Monthly',
     homeAddress: '', homeCity: '', homeState: '', homeZip: '',
     notifyEmail: true, notifySms: true, notes: '',
@@ -326,13 +266,13 @@ export default function NewCustomerPage() {
   const [existingCheckLoading, setExistingCheckLoading] = useState(false);
   const [existingCheckDismissed, setExistingCheckDismissed] = useState(false);
 
-  /* ── Step 1: Rate plan state ── */
+  /* ── Step 0: Mailbox & Rate plan state ── */
   const [planTiers, setPlanTiers] = useState<PlanTierOption[]>([]);
   const [planTiersLoading, setPlanTiersLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-  /* ── Step 2: ID state ── */
+  /* ── Step 1: ID state ── */
   const [primaryIdType, setPrimaryIdType] = useState('');
   const [secondaryIdType, setSecondaryIdType] = useState('');
   const [primaryIdFile, setPrimaryIdFile] = useState<File | null>(null);
@@ -350,19 +290,7 @@ export default function NewCustomerPage() {
   const [nonCompliantWarning, setNonCompliantWarning] = useState<string | null>(null);
   const [expirationWarning, setExpirationWarning] = useState<string | null>(null);
 
-  /* ── BAR-421: Camera capture for ID scanning ── */
-  const [cameraMode, setCameraMode] = useState<'upload' | 'camera'>('upload');
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraSlot, setCameraSlot] = useState<'primary' | 'secondary'>('primary');
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  /* ── Step 2 continued: Proof of Address ── */
-  const [proofOfAddressType, setProofOfAddressType] = useState('');
-  const [proofOfAddressDateOfIssue, setProofOfAddressDateOfIssue] = useState('');
-  const [proofOfAddressFile, setProofOfAddressFile] = useState<File | null>(null);
-  const [proofOfAddressPreview, setProofOfAddressPreview] = useState<string | null>(null);
+  /* ── Proof of Address state removed — merged into secondary ID ── */
 
   /* ── Step 3: PS1583 + Recipients + Forwarding ── */
   const [form1583, setForm1583] = useState<Partial<PS1583FormData>>({
@@ -400,37 +328,34 @@ export default function NewCustomerPage() {
   const selectedPlan = useMemo(() => planTiers.find((t) => t.id === selectedPlanId), [planTiers, selectedPlanId]);
   const planPrice = useMemo(() => {
     if (!selectedPlan) return 0;
-    const cycleOpt = BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle);
-    if (!cycleOpt) return selectedPlan.priceMonthly;
-    if (billingCycle === 'annual') return selectedPlan.priceAnnual;
-    if (billingCycle === 'daily') return +(selectedPlan.priceMonthly / 30).toFixed(2);
-    if (billingCycle === 'quarterly') return +(selectedPlan.priceMonthly * 3 * (1 - selectedPlan.annualDiscountPct * 0.25 / 100)).toFixed(2);
-    if (billingCycle === 'semi-annual') return +(selectedPlan.priceMonthly * 6 * (1 - selectedPlan.annualDiscountPct * 0.5 / 100)).toFixed(2);
-    return selectedPlan.priceMonthly;
+    return billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
   }, [selectedPlan, billingCycle]);
 
   const WIZARD_STEPS: Step[] = useMemo(() => [
-    { id: 'info', label: 'Customer Info', description: 'Name, contact & address' },
     { id: 'plan', label: 'Mailbox & Plan', description: 'PMB & rate plan selection' },
     { id: 'ids', label: 'Identification', description: isBusinessPmb ? 'Three forms of ID' : 'Two forms of ID' },
+    { id: 'info', label: 'Customer Info', description: 'Pre-filled from ID scan' },
     { id: 'form1583', label: 'PS Form 1583', description: 'USPS CMRA form' },
     { id: 'payment', label: 'Payment', description: 'Collect payment' },
     { id: 'agreement', label: 'Agreement', description: 'Sign & countersign' },
     { id: 'review', label: 'Review & Create', description: 'Confirm details' },
   ], [isBusinessPmb]);
 
-  const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, mockCustomers), []);
+  /* ── Assigned PMBs from real DB (replaces mock data) ── */
+  const [assignedCustomers, setAssignedCustomers] = useState<Customer[]>([]);
+
+  const rangeStats = useMemo(() => getRangeStats(DEFAULT_MAILBOX_RANGES, assignedCustomers), [assignedCustomers]);
   const availableBoxes = useMemo(() => {
     const platform = customerForm.platform as MailboxPlatform | '';
-    return getAvailableBoxNumbers(DEFAULT_MAILBOX_RANGES, mockCustomers, platform || undefined);
-  }, [customerForm.platform]);
+    return getAvailableBoxNumbers(DEFAULT_MAILBOX_RANGES, assignedCustomers, platform || undefined);
+  }, [customerForm.platform, assignedCustomers]);
   const filteredBoxes = useMemo(() => {
     if (!pmbSearch) return availableBoxes.slice(0, 50);
     const q = pmbSearch.toLowerCase();
     return availableBoxes.filter((b) => b.label.toLowerCase().includes(q) || String(b.number).includes(q)).slice(0, 50);
   }, [availableBoxes, pmbSearch]);
 
-  /* ── Load plan tiers on mount ── */
+  /* ── Load plan tiers + assigned PMBs on mount ── */
   useEffect(() => {
     const loadTiers = async () => {
       setPlanTiersLoading(true);
@@ -445,7 +370,19 @@ export default function NewCustomerPage() {
       }
       setPlanTiersLoading(false);
     };
+    const loadAssignedPmbs = async () => {
+      try {
+        const res = await fetch('/api/pmb/assigned');
+        if (res.ok) {
+          const data = await res.json();
+          setAssignedCustomers(data.customers ?? []);
+        }
+      } catch (err) {
+        console.error('Failed to load assigned PMBs:', err);
+      }
+    };
     loadTiers();
+    loadAssignedPmbs();
   }, []);
 
   /* ── Existing customer check ── */
@@ -491,10 +428,6 @@ export default function NewCustomerPage() {
 
   /* ── Handlers ── */
   const updateField = useCallback((field: string, value: string | boolean) => {
-    // BAR-411: Auto-format phone numbers as user types
-    if (field === 'phone' && typeof value === 'string') {
-      value = formatPhoneNumber(value);
-    }
     setCustomerForm((prev) => ({ ...prev, [field]: value }));
     setFormErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
   }, []);
@@ -511,7 +444,7 @@ export default function NewCustomerPage() {
     });
   }, []);
 
-  const selectPmb = useCallback((num: number, platform: string) => {
+  const selectPmb = useCallback((num: number, platform: MailboxPlatform) => {
     setCustomerForm((prev) => ({ ...prev, pmbNumber: String(num), platform }));
     setPmbDropdownOpen(false); setPmbSearch('');
     setFormErrors((prev) => { const next = { ...prev }; delete next['pmbNumber']; return next; });
@@ -527,121 +460,55 @@ export default function NewCustomerPage() {
     reader.readAsDataURL(file);
   }, []);
 
-  /* ── BAR-421: Camera capture handlers ── */
-  const startCamera = useCallback(async (slot: 'primary' | 'secondary') => {
-    setCameraSlot(slot);
-    setCameraActive(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err) {
-      console.error('Camera access denied:', err);
-      setCameraActive(false);
-      setCameraMode('upload');
-    }
-  }, []);
-
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    setCameraActive(false);
-  }, []);
-
-  const captureFrame = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `id-capture-${cameraSlot}-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      handleFileUpload(file, cameraSlot);
-      stopCamera();
-      setCameraMode('upload');
-    }, 'image/jpeg', 0.92);
-  }, [cameraSlot, handleFileUpload, stopCamera]);
-
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => { if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop()); };
-  }, []);
-
-  const simulateOCR = useCallback(() => {
-    if (!primaryIdFile) return;
+  const runIdScan = useCallback(async () => {
+    if (!primaryIdFile || !primaryIdPreview) return;
     setExtracting(true);
-    setTimeout(() => {
-      const mockExtracted: ExtractedIdData = {
-        fullName: customerForm.firstName && customerForm.lastName ? `${customerForm.firstName} ${customerForm.lastName}` : 'John Doe',
-        firstName: customerForm.firstName || 'John', lastName: customerForm.lastName || 'Doe',
-        dateOfBirth: '1985-06-15',
-        idNumber: 'DL' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-        expirationDate: new Date(Date.now() + 365 * 3 * 86400000).toISOString().slice(0, 10),
-        issuingAuthority: 'State of California',
-      };
-      setExtractedData(mockExtracted);
-      setForm1583((prev) => ({
-        ...prev, applicantName: mockExtracted.fullName || '', dateOfBirth: mockExtracted.dateOfBirth || '',
-        primaryIdNumber: mockExtracted.idNumber || '', primaryIdIssuer: mockExtracted.issuingAuthority || '',
-        pmbNumber: customerForm.pmbNumber,
-      }));
-      // BAR-411 Bug 5: Check if AI detects a non-compliant ID from the scan
-      const detectedNonCompliant = NON_COMPLIANT_IDS.find((nc) =>
-        mockExtracted.issuingAuthority?.toLowerCase().includes(nc.name.toLowerCase())
-      );
-      if (detectedNonCompliant) {
-        setNonCompliantWarning(`⚠️ AI Detection: The uploaded ID appears to be a ${detectedNonCompliant.name}. ${detectedNonCompliant.reason}\n\n${detectedNonCompliant.suggestion}`);
+    try {
+      const resp = await fetch('/api/customers/id-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: primaryIdPreview, idType: primaryIdType || 'drivers_license' }),
+      });
+      const data = await resp.json();
+      if (!data.success || !data.result) {
+        console.error('ID scan failed:', data.error);
+        setExtracting(false);
+        return;
       }
-      setExtracting(false);
-    }, 2000);
-  }, [primaryIdFile, customerForm]);
-
-  /* ── BAR-411 Bug 2: Secondary ID (address doc) OCR — auto-populates home address ── */
-  const [secondaryExtracting, setSecondaryExtracting] = useState(false);
-  const [secondaryExtractedData, setSecondaryExtractedData] = useState<ExtractedIdData | null>(null);
-
-  const simulateSecondaryOCR = useCallback(() => {
-    if (!secondaryIdFile) return;
-    setSecondaryExtracting(true);
-    setTimeout(() => {
-      const mockExtracted: ExtractedIdData = {
-        address: '456 Oak Avenue',
-        city: 'Springfield',
-        state: 'CA',
-        zipCode: '90211',
-        issueDate: new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10),
+      const r = data.result;
+      const fullName = [r.firstName, r.lastName].filter(Boolean).join(' ');
+      const extracted: ExtractedIdData = {
+        fullName, firstName: r.firstName || '', lastName: r.lastName || '',
+        dateOfBirth: r.dateOfBirth || '', address: r.address || '',
+        city: r.city || '', state: r.state || '', zipCode: r.zipCode || '',
+        idNumber: r.idNumber || '', expirationDate: r.expirationDate || '',
+        issuingAuthority: '',
       };
-      setSecondaryExtractedData(mockExtracted);
-      // BAR-411 Bug 2: Auto-populate home address from secondary (address) ID
+      setExtractedData(extracted);
+      // Pre-fill customer info from ID extraction (same algorithm as AI Onboard)
       setCustomerForm((prev) => ({
         ...prev,
-        homeAddress: mockExtracted.address || prev.homeAddress,
-        homeCity: mockExtracted.city || prev.homeCity,
-        homeState: mockExtracted.state || prev.homeState,
-        homeZip: mockExtracted.zipCode || prev.homeZip,
+        firstName: r.firstName || prev.firstName,
+        lastName: r.lastName || prev.lastName,
+        homeAddress: r.address || prev.homeAddress,
+        homeCity: r.city || prev.homeCity,
+        homeState: r.state || prev.homeState,
+        homeZip: r.zipCode || prev.homeZip,
       }));
-      // Also populate Form 1583 address fields
+      // Pre-fill PS1583 form
       setForm1583((prev) => ({
-        ...prev,
-        homeAddress: mockExtracted.address || prev.homeAddress || '',
-        homeCity: mockExtracted.city || prev.homeCity || '',
-        homeState: mockExtracted.state || prev.homeState || '',
-        homeZip: mockExtracted.zipCode || prev.homeZip || '',
+        ...prev, applicantName: fullName || prev.applicantName, dateOfBirth: r.dateOfBirth || prev.dateOfBirth,
+        homeAddress: r.address || prev.homeAddress, homeCity: r.city || prev.homeCity,
+        homeState: r.state || prev.homeState, homeZip: r.zipCode || prev.homeZip,
+        primaryIdNumber: r.idNumber || prev.primaryIdNumber,
+        pmbNumber: customerForm.pmbNumber,
       }));
-      setSecondaryExtracting(false);
-    }, 2000);
-  }, [secondaryIdFile]);
+    } catch (err) {
+      console.error('ID scan error:', err);
+    } finally {
+      setExtracting(false);
+    }
+  }, [primaryIdFile, primaryIdPreview, primaryIdType, customerForm.pmbNumber]);
 
   /* ── BAR-230: Non-compliant ID check ── */
   const checkNonCompliantId = useCallback((idType: string, expirationDate: string) => {
@@ -701,42 +568,18 @@ export default function NewCustomerPage() {
   /* ── Auto-calculate payment amount from plan ── */
   useEffect(() => {
     if (selectedPlan && !paymentAmount) {
-      setPaymentAmount(planPrice.toFixed(2));
+      const price = billingCycle === 'annual' ? selectedPlan.priceAnnual : selectedPlan.priceMonthly;
+      setPaymentAmount(price.toFixed(2));
     }
-  }, [selectedPlan, billingCycle, planPrice]);
+  }, [selectedPlan, billingCycle]);
 
   /* ── Validation ── */
   const validateStep = useCallback((stepNum: number): boolean => {
     const errors: Record<string, string> = {};
     if (stepNum === 0) {
-      if (!customerForm.firstName.trim()) errors.firstName = 'Required';
-      if (!customerForm.lastName.trim()) errors.lastName = 'Required';
-      if (!customerForm.email.trim()) errors.email = 'Required';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
-      // BAR-411 Bug 1: Phone validation — must be 10 digits
-      if (!customerForm.phone.trim()) {
-        errors.phone = 'Required';
-      } else {
-        const phoneDigits = customerForm.phone.replace(/\D/g, '');
-        if (phoneDigits.length !== 10) {
-          errors.phone = 'Phone number must be 10 digits, e.g. (555) 555-5555';
-        }
-      }
-      if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
-      if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
-      if (!customerForm.homeState.trim()) errors.homeState = 'Required';
-      if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
+      if (!customerForm.pmbNumber) errors.pmbNumber = 'Select a PMB number';
     }
     if (stepNum === 1) {
-      if (!customerForm.pmbNumber) {
-        errors.pmbNumber = 'Select a PMB number';
-      } else {
-        // BAR-411 Bug 4: Validate the selected PMB is actually available
-        const pmbCheck = validateBoxNumber(parseInt(customerForm.pmbNumber), DEFAULT_MAILBOX_RANGES, mockCustomers);
-        if (!pmbCheck.valid) errors.pmbNumber = pmbCheck.error || 'This PMB is not available';
-      }
-    }
-    if (stepNum === 2) {
       const idValid = validateIdPair(primaryIdType, secondaryIdType);
       if (!idValid.valid) errors.ids = idValid.error || 'Invalid ID selection';
       if (!primaryIdFile) errors.primaryFile = 'Upload primary ID';
@@ -748,6 +591,17 @@ export default function NewCustomerPage() {
         if (!businessDocFile) errors.businessDocFile = 'Upload business documentation';
       }
     }
+    if (stepNum === 2) {
+      if (!customerForm.firstName.trim()) errors.firstName = 'Required';
+      if (!customerForm.lastName.trim()) errors.lastName = 'Required';
+      if (!customerForm.email.trim()) errors.email = 'Required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerForm.email)) errors.email = 'Invalid email';
+      if (!customerForm.phone.trim()) errors.phone = 'Required';
+      if (!customerForm.homeAddress.trim()) errors.homeAddress = 'Required';
+      if (!customerForm.homeCity.trim()) errors.homeCity = 'Required';
+      if (!customerForm.homeState.trim()) errors.homeState = 'Required';
+      if (!customerForm.homeZip.trim()) errors.homeZip = 'Required';
+    }
     // Steps 3-5 are softer — allow progression with warnings
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -755,8 +609,8 @@ export default function NewCustomerPage() {
 
   const handleNext = useCallback(() => {
     if (validateStep(step)) {
-      // Trigger existing customer check when leaving step 0
-      if (step === 0 && !existingCheckDone) {
+      // Trigger existing customer check when leaving step 2 (Customer Info)
+      if (step === 2 && !existingCheckDone) {
         checkExistingCustomer();
       }
       setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
@@ -780,7 +634,7 @@ export default function NewCustomerPage() {
           pmbNumber: customerForm.pmbNumber ? `PMB ${customerForm.pmbNumber}` : undefined,
           platform: customerForm.platform || 'physical',
           billingTerms: customerForm.billingTerms,
-          renewalTermMonths: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.months ?? 1,
+          renewalTermMonths: billingCycle === 'annual' ? 12 : (customerForm.billingTerms === 'Monthly' ? 1 : customerForm.billingTerms === 'Quarterly' ? 3 : customerForm.billingTerms === 'Semi-Annual' ? 6 : 12),
           autoRenew: false,
           homeAddress: customerForm.homeAddress,
           homeCity: customerForm.homeCity,
@@ -862,52 +716,6 @@ export default function NewCustomerPage() {
               <div className="text-sm font-semibold text-status-success-400">{agreementSigned && cmraSigned ? 'Dual Signed' : agreementSigned ? 'Customer Signed' : 'Pending'}</div>
             </div>
           </div>
-          {/* BAR-421: Email/Print MSA + PS1583 actions */}
-          <div className="rounded-lg border border-surface-700 bg-surface-900/50 p-4 max-w-xl mx-auto">
-            <p className="text-sm font-medium text-surface-300 mb-3">Send Signed Agreement</p>
-            <div className="flex items-center justify-center gap-3">
-              <Button variant="ghost" size="sm" leftIcon={<Send className="h-4 w-4" />} onClick={async () => {
-                try {
-                  const res = await fetch('/api/customers/send-agreement', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      email: customerForm.email,
-                      customerName: `${customerForm.firstName} ${customerForm.lastName}`,
-                      pmbNumber: customerForm.pmbNumber,
-                      planName: selectedPlan?.name,
-                      billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label,
-                      signatureDataUrl,
-                      cmraSignatureUrl,
-                      cmraSignedBy,
-                    }),
-                  });
-                  if (res.ok) { alert('Agreement emailed to ' + customerForm.email); }
-                  else { alert('Failed to send email. The agreement can be resent from the customer profile.'); }
-                } catch { alert('Failed to send email. The agreement can be resent from the customer profile.'); }
-              }}>Email to Customer</Button>
-              <Button variant="ghost" size="sm" leftIcon={<Printer className="h-4 w-4" />} onClick={() => {
-                const printWin = window.open('', '_blank');
-                if (!printWin) return;
-                const agreementText = getAgreementText({
-                  customerName: `${customerForm.firstName} ${customerForm.lastName}`,
-                  pmbNumber: customerForm.pmbNumber,
-                  storeName: STORE_INFO.name,
-                  storeAddress: STORE_INFO.address,
-                  storeCity: STORE_INFO.city,
-                  storeState: STORE_INFO.state,
-                  storeZip: STORE_INFO.zip,
-                  openDate: new Date().toLocaleDateString(),
-                  billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly',
-                }, isBusinessPmb, selectedPlan?.name);
-                printWin.document.write(`<html><head><title>MSA + PS1583 — ${customerForm.firstName} ${customerForm.lastName}</title><style>body{font-family:serif;white-space:pre-wrap;max-width:800px;margin:2em auto;line-height:1.6;font-size:12pt}h2{font-family:sans-serif}@media print{body{margin:0.5in}}</style></head><body><h2>Mailbox Service Agreement</h2>${agreementText.replace(/\n/g, '<br/>')}<br/><br/><strong>Customer Signature:</strong> ${signatureDataUrl ? '<img src="' + signatureDataUrl + '" style="height:60px;"/>' : '____________________'}<br/><strong>Date:</strong> ${new Date().toLocaleDateString()}<br/><br/><strong>CMRA Countersignature:</strong> ${cmraSignatureUrl ? '<img src="' + cmraSignatureUrl + '" style="height:60px;"/>' : '____________________'}<br/><strong>Signed by:</strong> ${cmraSignedBy || '____________________'}</body></html>`);
-                printWin.document.close();
-                printWin.focus();
-                printWin.print();
-              }}>Print Agreement</Button>
-            </div>
-          </div>
-
           <div className="flex items-center justify-center gap-3 pt-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/customers')}>View All Customers</Button>
             <Button onClick={() => window.location.reload()}>Add Another Customer</Button>
@@ -940,106 +748,9 @@ export default function NewCustomerPage() {
       <div className="min-h-[400px]">
 
         {/* ================================================================ */}
-        {/* Step 0: Customer Info + Existing Customer Check                   */}
+        {/* Step 0: Mailbox & Rate Plan Selection                             */}
         {/* ================================================================ */}
         {step === 0 && (
-          <div className="space-y-6">
-            {/* Existing customer match warning */}
-            {existingMatch && !existingCheckDismissed && (
-              <ExistingCustomerCard match={existingMatch} onDismiss={() => setExistingCheckDismissed(true)} />
-            )}
-
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-4 w-4 text-primary-500" />Customer Information</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="First Name *" value={customerForm.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={formErrors.firstName} placeholder="John" leftIcon={<User className="h-4 w-4" />} />
-                  <Input label="Last Name *" value={customerForm.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={formErrors.lastName} placeholder="Doe" leftIcon={<User className="h-4 w-4" />} />
-                  <Input label="Email *" type="email" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} placeholder="john@example.com" leftIcon={<Mail className="h-4 w-4" />} />
-                  <Input label="Phone *" type="tel" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} error={formErrors.phone} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
-                  <div className="sm:col-span-2">
-                    <Input label="Business Name" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Leave blank for personal accounts" leftIcon={<Building2 className="h-4 w-4" />} helperText={isBusinessPmb ? '✓ Business PMB — additional documentation required' : 'Optional — enter to create a business PMB'} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Business entity fields — only show if business name is entered */}
-            {isBusinessPmb && (
-              <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-status-warning-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Select label="Business Type (§7b)" options={BUSINESS_ENTITY_TYPES} value={customerForm.businessType} onChange={(e) => updateField('businessType', e.target.value)} placeholder="Select entity type..." />
-                    <Input label="Place of Registration (§7i)" value={customerForm.businessRegPlace} onChange={(e) => updateField('businessRegPlace', e.target.value)} placeholder="State/county or country" helperText="Where the business is registered" />
-                    <div className="sm:col-span-2"><Input label="Business Address (§7c)" value={customerForm.businessAddress} onChange={(e) => updateField('businessAddress', e.target.value)} placeholder="Business street address" leftIcon={<MapPin className="h-4 w-4" />} /></div>
-                    <Input label="City (§7d)" value={customerForm.businessCity} onChange={(e) => updateField('businessCity', e.target.value)} placeholder="City" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="State (§7e)" value={customerForm.businessState} onChange={(e) => updateField('businessState', e.target.value)} placeholder="ST" />
-                      <Input label="ZIP (§7f)" value={customerForm.businessZip} onChange={(e) => updateField('businessZip', e.target.value)} placeholder="ZIP" />
-                    </div>
-                    <Input label="Business Phone (§7h)" value={customerForm.businessPhone} onChange={(e) => updateField('businessPhone', e.target.value)} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
-                    <Input label="Business Email" value={customerForm.businessEmail} onChange={(e) => updateField('businessEmail', e.target.value)} placeholder="business@example.com" leftIcon={<Mail className="h-4 w-4" />} />
-                    <Input label="Website" value={customerForm.businessWebsite} onChange={(e) => updateField('businessWebsite', e.target.value)} placeholder="https://example.com" />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <AddressAutocomplete value={customerForm.homeAddress} onChange={(v) => updateField('homeAddress', v)} onSelect={handleAddressSelect} />
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-2"><Input label="Street Address *" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} leftIcon={<MapPin className="h-4 w-4" />} /></div>
-                    <Input label="City *" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="State *" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />
-                      <Input label="ZIP *" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} error={formErrors.homeZip} />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* BAR-411 Bug 3: Billing Terms removed from Preferences — billing is configured via Rate Plan in Step 1 */}
-            <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-surface-300">Notifications</p>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifyEmail} onChange={(e) => updateField('notifyEmail', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />Email</label>
-                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifySms} onChange={(e) => updateField('notifySms', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />SMS</label>
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2"><Textarea label="Notes" value={customerForm.notes} onChange={(e) => updateField('notes', e.target.value)} placeholder="Internal notes about this customer..." rows={2} /></div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick duplicate check button */}
-            {!existingCheckDone && customerForm.firstName && customerForm.lastName && (
-              <div className="flex justify-center">
-                <Button variant="ghost" size="sm" onClick={checkExistingCustomer} leftIcon={existingCheckLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} disabled={existingCheckLoading}>
-                  {existingCheckLoading ? 'Checking...' : 'Check for Existing Customer'}
-                </Button>
-              </div>
-            )}
-            {existingCheckDone && !existingMatch && (
-              <div className="flex items-center justify-center gap-2 text-sm text-status-success-400">
-                <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* Step 1: Mailbox & Rate Plan Selection                             */}
-        {/* ================================================================ */}
-        {step === 1 && (
           <div className="space-y-6">
             {/* PMB Number Selection */}
             <Card padding="md">
@@ -1104,11 +815,10 @@ export default function NewCustomerPage() {
             <Card padding="md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Crown className="h-4 w-4 text-status-warning-500" />Rate Plan</CardTitle>
-                {/* BAR-421: Expanded billing cycle selector (Daily, Monthly, Quarterly, Semi-Annual, Annual) */}
-                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5 flex-wrap">
-                  {BILLING_CYCLE_OPTIONS.map((opt) => (
-                    <button type="button" key={opt.value} className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap', billingCycle === opt.value ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle(opt.value)}>{opt.label}</button>
-                  ))}
+                {/* Billing cycle toggle */}
+                <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5">
+                  <button type="button" className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'monthly' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('monthly')}>Monthly</button>
+                  <button type="button" className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', billingCycle === 'annual' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => setBillingCycle('annual')}>Annual</button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1119,11 +829,10 @@ export default function NewCustomerPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {planTiers.map((tier) => {
-                      const cycleOpt = BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle);
-                      const price = billingCycle === 'annual' ? tier.priceAnnual : billingCycle === 'daily' ? +(tier.priceMonthly / 30).toFixed(2) : billingCycle === 'quarterly' ? +(tier.priceMonthly * 3 * (1 - tier.annualDiscountPct * 0.25 / 100)).toFixed(2) : billingCycle === 'semi-annual' ? +(tier.priceMonthly * 6 * (1 - tier.annualDiscountPct * 0.5 / 100)).toFixed(2) : tier.priceMonthly;
+                      const price = billingCycle === 'annual' ? tier.priceAnnual : tier.priceMonthly;
                       const isSelected = selectedPlanId === tier.id;
-                      const monthlyEquiv = billingCycle === 'daily' ? +(price * 30).toFixed(2) : billingCycle === 'annual' ? +(tier.priceAnnual / 12).toFixed(2) : billingCycle === 'quarterly' ? +(price / 3).toFixed(2) : billingCycle === 'semi-annual' ? +(price / 6).toFixed(2) : tier.priceMonthly;
-                      const savings = billingCycle !== 'monthly' && billingCycle !== 'daily' ? +((tier.priceMonthly * (cycleOpt?.months || 1)) - price).toFixed(0) : 0;
+                      const monthlyEquiv = billingCycle === 'annual' ? (tier.priceAnnual / 12) : tier.priceMonthly;
+                      const savings = billingCycle === 'annual' ? ((tier.priceMonthly * 12) - tier.priceAnnual) : 0;
                       return (
                         <button type="button" key={tier.id} onClick={() => setSelectedPlanId(tier.id)} className={cn('relative p-4 rounded-lg border text-left transition-all', isSelected ? 'border-primary-500 bg-primary-500/10 ring-2 ring-primary-500/20' : 'border-surface-700 hover:border-surface-600 bg-surface-900/50')}>
                           {isSelected && <div className="absolute -top-2 -right-2"><CheckCircle2 className="h-5 w-5 text-primary-500 bg-surface-950 rounded-full" /></div>}
@@ -1135,10 +844,10 @@ export default function NewCustomerPage() {
                             <div>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-surface-100">${price.toFixed(0)}</span>
-                                <span className="text-xs text-surface-500">/{cycleOpt?.shortLabel || 'mo'}</span>
+                                <span className="text-xs text-surface-500">/{billingCycle === 'annual' ? 'yr' : 'mo'}</span>
                               </div>
-                              {savings > 0 && (
-                                <p className="text-[11px] text-status-success-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings}/{cycleOpt?.shortLabel || 'mo'}</p>
+                              {billingCycle === 'annual' && (
+                                <p className="text-[11px] text-status-success-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings.toFixed(0)}/yr</p>
                               )}
                             </div>
                             <div className="space-y-1.5 text-[11px] text-surface-400">
@@ -1161,11 +870,10 @@ export default function NewCustomerPage() {
             </Card>
           </div>
         )}
-
         {/* ================================================================ */}
-        {/* Step 2: Identification + Non-Compliant ID Detection               */}
+        {/* Step 1: Identification + Non-Compliant ID Detection (AI Extraction)               */}
         {/* ================================================================ */}
-        {step === 2 && (
+        {step === 1 && (
           <div className="space-y-6">
             {/* Non-compliant ID warning */}
             {nonCompliantWarning && (
@@ -1195,35 +903,20 @@ export default function NewCustomerPage() {
                 <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Primary ID (Photo Required)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* BAR-411 Bug 5: Only compliant ID types listed — non-compliant IDs are detected via AI scan, not offered in dropdown */}
-                    <Select label="ID Type *" placeholder="Select primary ID..." options={USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name }))} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
+                    <Select label="ID Type *" placeholder="Select primary ID..." options={[
+                      ...USPS_PRIMARY_IDS.map((id) => ({ value: id.id, label: id.name })),
+                      { value: '_divider', label: '── Non-Compliant (will be flagged) ──', disabled: true },
+                      ...NON_COMPLIANT_IDS.map((nc) => ({ value: nc.id, label: `⚠️ ${nc.name}` })),
+                    ]} value={primaryIdType} onChange={(e) => setPrimaryIdType(e.target.value)} error={formErrors.ids} />
                     <Input label="Expiration Date" type="date" value={primaryIdExpiration} onChange={(e) => setPrimaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Leave blank if ID does not expire" />
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-sm font-medium text-surface-300">Upload or Scan ID *</label>
-                        {/* BAR-421: Toggle between Upload and Camera modes */}
-                        {!primaryIdPreview && (
-                          <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
-                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
-                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('primary'); }}><Camera className="h-3 w-3" />Camera</button>
-                          </div>
-                        )}
-                      </div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
                       <input ref={fileInputRef1} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'primary'); }} />
                       {primaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
                           <div className="absolute top-2 right-2"><button type="button" onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
-                        </div>
-                      ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'primary' ? (
-                        <div className="rounded-lg border border-primary-500/30 overflow-hidden bg-black relative">
-                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
-                          <canvas ref={canvasRef} className="hidden" />
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
-                            <button type="button" onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
-                            <button type="button" onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
-                          </div>
                         </div>
                       ) : (
                         <div role="button" tabIndex={0} onClick={() => fileInputRef1.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef1.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
@@ -1233,8 +926,8 @@ export default function NewCustomerPage() {
                       {formErrors.primaryFile && <p className="text-xs text-status-error-400 mt-1">{formErrors.primaryFile}</p>}
                     </div>
                     {primaryIdFile && !extractedData && (
-                      <Button variant="default" size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
-                        {extracting ? 'Extracting...' : 'Extract ID Data (OCR)'}
+                      <Button variant="default" size="sm" onClick={runIdScan} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
+                        {extracting ? 'Analyzing with AI...' : 'Extract ID Data (AI)'}
                       </Button>
                     )}
                     {extractedData && (
@@ -1253,39 +946,20 @@ export default function NewCustomerPage() {
               </Card>
 
               {/* Secondary ID */}
-              {/* BAR-411 Bug 6: Secondary ID uses Proof of Address list with Date of Issue */}
               <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Address Verification)</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-500" />Secondary ID (Proof of Address)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Select label="Document Type *" placeholder="Select proof of address document..." options={USPS_SECONDARY_IDS.filter((id) => id.id !== primaryIdType).map((id) => ({ value: id.id, label: id.name }))} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} helperText={primaryIdType === 'drivers_license' ? "Driver license is already used as primary ID and cannot be selected here." : "Select the document used to verify the customer's home address."} />
-                    <Input label="Date of Issue *" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the address verification document was issued" />
+                    <Select label="Document Type *" placeholder="Select proof of address..." options={PROOF_OF_ADDRESS_TYPES} value={secondaryIdType} onChange={(e) => setSecondaryIdType(e.target.value)} />
+                    <Input label="Date of Issue" type="date" value={secondaryIdExpiration} onChange={(e) => setSecondaryIdExpiration(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="Date the document was issued" />
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-sm font-medium text-surface-300">Upload or Scan Document *</label>
-                        {/* BAR-421: Camera option for secondary ID */}
-                        {!secondaryIdPreview && (
-                          <div className="flex items-center gap-1 bg-surface-800 rounded-md p-0.5">
-                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'upload' || cameraSlot !== 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('upload'); stopCamera(); }}><Upload className="h-3 w-3" />Upload</button>
-                            <button type="button" className={cn('px-2 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1', cameraMode === 'camera' && cameraSlot === 'secondary' ? 'bg-primary-600 text-white' : 'text-surface-400 hover:text-surface-200')} onClick={() => { setCameraMode('camera'); startCamera('secondary'); }}><Camera className="h-3 w-3" />Camera</button>
-                          </div>
-                        )}
-                      </div>
+                      <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload ID Scan/Photo *</label>
                       <input ref={fileInputRef2} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0], 'secondary'); }} />
                       {secondaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button type="button" onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button type="button" onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
-                        </div>
-                      ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'secondary' ? (
-                        <div className="rounded-lg border border-primary-500/30 overflow-hidden bg-black relative">
-                          <video ref={videoRef} autoPlay playsInline muted className="w-full h-48 object-cover" />
-                          <canvas ref={canvasRef} className="hidden" />
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex items-center justify-center gap-3">
-                            <button type="button" onClick={captureFrame} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium flex items-center gap-2 hover:bg-primary-500 transition-colors"><Camera className="h-4 w-4" />Capture</button>
-                            <button type="button" onClick={() => { stopCamera(); setCameraMode('upload'); }} className="px-3 py-2 rounded-lg bg-surface-800/80 text-surface-300 text-sm hover:text-white transition-colors"><VideoOff className="h-4 w-4" /></button>
-                          </div>
                         </div>
                       ) : (
                         <div role="button" tabIndex={0} onClick={() => fileInputRef2.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef2.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
@@ -1294,23 +968,6 @@ export default function NewCustomerPage() {
                       )}
                       {formErrors.secondaryFile && <p className="text-xs text-status-error-400 mt-1">{formErrors.secondaryFile}</p>}
                     </div>
-                    {/* BAR-411 Bug 2: Extract address data from secondary ID to auto-populate home address */}
-                    {secondaryIdFile && !secondaryExtractedData && (
-                      <Button variant="default" size="sm" onClick={simulateSecondaryOCR} disabled={secondaryExtracting} leftIcon={secondaryExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
-                        {secondaryExtracting ? 'Extracting Address...' : 'Extract Address Data'}
-                      </Button>
-                    )}
-                    {secondaryExtractedData && (
-                      <div className="rounded-lg border border-status-success-500/20 bg-status-success-500/5 p-3 space-y-2">
-                        <p className="text-xs font-medium text-status-success-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Address Data Extracted — Home address auto-populated</p>
-                        <div className="grid grid-cols-2 gap-1 text-[11px]">
-                          {secondaryExtractedData.address && <><span className="text-surface-500">Street</span><span className="text-surface-300">{secondaryExtractedData.address}</span></>}
-                          {secondaryExtractedData.city && <><span className="text-surface-500">City</span><span className="text-surface-300">{secondaryExtractedData.city}</span></>}
-                          {secondaryExtractedData.state && <><span className="text-surface-500">State</span><span className="text-surface-300">{secondaryExtractedData.state}</span></>}
-                          {secondaryExtractedData.zipCode && <><span className="text-surface-500">ZIP</span><span className="text-surface-300">{secondaryExtractedData.zipCode}</span></>}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1343,33 +1000,115 @@ export default function NewCustomerPage() {
               </Card>
             )}
 
-            {/* Proof of Address */}
+            {/* Proof of Address section removed — secondary ID IS the proof of address */}
+          </div>
+        )}
+
+
+        {/* Step 2: Customer Info (Pre-filled from ID Scan)                   */}
+        {/* ================================================================ */}
+        {step === 2 && (
+          <div className="space-y-6">
+            {/* AI extraction banner */}
+            {extractedData && (
+              <div className="rounded-lg border border-status-success-500/20 bg-status-success-500/5 p-4 flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-status-success-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-status-success-400">Fields Pre-filled from ID Scan</p>
+                  <p className="text-xs text-surface-400 mt-1">Name, address, and ID details were extracted from your uploaded photo ID. Please review and correct any fields as needed.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Existing customer match warning */}
+            {existingMatch && !existingCheckDismissed && (
+              <ExistingCustomerCard match={existingMatch} onDismiss={() => setExistingCheckDismissed(true)} />
+            )}
+
             <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Proof of Address</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-4 w-4 text-primary-500" />Customer Information</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <Select label="Document Type" placeholder="Select proof of address document..." options={PROOF_OF_ADDRESS_TYPES} value={proofOfAddressType} onChange={(e) => setProofOfAddressType(e.target.value)} />
-                  {proofOfAddressType && (
-                    <Input label="Date of Issue *" type="date" value={proofOfAddressDateOfIssue} onChange={(e) => setProofOfAddressDateOfIssue(e.target.value)} leftIcon={<Calendar className="h-4 w-4" />} helperText="The date the document was issued (required)" />
-                  )}
-                  <div>
-                    <label className="text-sm font-medium text-surface-300 mb-1.5 block">Upload Document Scan/Photo</label>
-                    <input ref={fileInputRefPoa} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { setProofOfAddressPreview(ev.target?.result as string); setProofOfAddressFile(file); }; reader.readAsDataURL(file); } }} />
-                    {proofOfAddressPreview ? (
-                      <div className="relative rounded-lg border border-surface-700 overflow-hidden">
-                        <img src={proofOfAddressPreview} alt="Proof of Address" className="w-full h-40 object-cover" />
-                        <div className="absolute top-2 right-2"><button type="button" onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{proofOfAddressFile?.name}</p></div>
-                      </div>
-                    ) : (
-                      <div role="button" tabIndex={0} onClick={() => fileInputRefPoa.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRefPoa.current?.click(); }} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
-                        <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
-                      </div>
-                    )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="First Name *" value={customerForm.firstName} onChange={(e) => updateField('firstName', e.target.value)} error={formErrors.firstName} placeholder="John" leftIcon={<User className="h-4 w-4" />} />
+                  <Input label="Last Name *" value={customerForm.lastName} onChange={(e) => updateField('lastName', e.target.value)} error={formErrors.lastName} placeholder="Doe" leftIcon={<User className="h-4 w-4" />} />
+                  <Input label="Email *" type="email" value={customerForm.email} onChange={(e) => updateField('email', e.target.value)} error={formErrors.email} placeholder="john@example.com" leftIcon={<Mail className="h-4 w-4" />} />
+                  <Input label="Phone *" type="tel" value={customerForm.phone} onChange={(e) => updateField('phone', e.target.value)} error={formErrors.phone} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
+                  <div className="sm:col-span-2">
+                    <Input label="Business Name" value={customerForm.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Leave blank for personal accounts" leftIcon={<Building2 className="h-4 w-4" />} helperText={isBusinessPmb ? '✓ Business PMB — additional documentation required' : 'Optional — enter to create a business PMB'} />
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Business entity fields — only show if business name is entered */}
+            {isBusinessPmb && (
+              <Card padding="md">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-status-warning-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Select label="Business Type (§7b)" options={BUSINESS_ENTITY_TYPES} value={customerForm.businessType} onChange={(e) => updateField('businessType', e.target.value)} placeholder="Select entity type..." />
+                    <Input label="Place of Registration (§7i)" value={customerForm.businessRegPlace} onChange={(e) => updateField('businessRegPlace', e.target.value)} placeholder="State/county or country" helperText="Where the business is registered" />
+                    <div className="sm:col-span-2"><Input label="Business Address (§7c)" value={customerForm.businessAddress} onChange={(e) => updateField('businessAddress', e.target.value)} placeholder="Business street address" leftIcon={<MapPin className="h-4 w-4" />} /></div>
+                    <Input label="City (§7d)" value={customerForm.businessCity} onChange={(e) => updateField('businessCity', e.target.value)} placeholder="City" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="State (§7e)" value={customerForm.businessState} onChange={(e) => updateField('businessState', e.target.value)} placeholder="ST" />
+                      <Input label="ZIP (§7f)" value={customerForm.businessZip} onChange={(e) => updateField('businessZip', e.target.value)} placeholder="ZIP" />
+                    </div>
+                    <Input label="Business Phone (§7h)" value={customerForm.businessPhone} onChange={(e) => updateField('businessPhone', e.target.value)} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
+                    <Input label="Business Email" value={customerForm.businessEmail} onChange={(e) => updateField('businessEmail', e.target.value)} placeholder="business@example.com" leftIcon={<Mail className="h-4 w-4" />} />
+                    <Input label="Website" value={customerForm.businessWebsite} onChange={(e) => updateField('businessWebsite', e.target.value)} placeholder="https://example.com" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary-500" />Home Address</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <AddressAutocomplete value={customerForm.homeAddress} onChange={(v) => updateField('homeAddress', v)} onSelect={handleAddressSelect} />
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-2"><Input label="Street Address *" value={customerForm.homeAddress} onChange={(e) => updateField('homeAddress', e.target.value)} error={formErrors.homeAddress} leftIcon={<MapPin className="h-4 w-4" />} /></div>
+                    <Input label="City *" value={customerForm.homeCity} onChange={(e) => updateField('homeCity', e.target.value)} error={formErrors.homeCity} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="State *" value={customerForm.homeState} onChange={(e) => updateField('homeState', e.target.value)} error={formErrors.homeState} />
+                      <Input label="ZIP *" value={customerForm.homeZip} onChange={(e) => updateField('homeZip', e.target.value)} error={formErrors.homeZip} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card padding="md">
+              <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-4 w-4 text-primary-500" />Preferences</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Select label="Billing Terms" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Semi-Annual', label: 'Semi-Annual' }, { value: 'Annual', label: 'Annual' }]} value={customerForm.billingTerms} onChange={(e) => updateField('billingTerms', e.target.value)} />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-surface-300">Notifications</p>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifyEmail} onChange={(e) => updateField('notifyEmail', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />Email</label>
+                      <label className="flex items-center gap-2 text-sm text-surface-400 cursor-pointer"><input type="checkbox" checked={customerForm.notifySms} onChange={(e) => updateField('notifySms', e.target.checked)} className="rounded border-surface-600 bg-surface-800 text-primary-500 focus:ring-primary-500/30" />SMS</label>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2"><Textarea label="Notes" value={customerForm.notes} onChange={(e) => updateField('notes', e.target.value)} placeholder="Internal notes about this customer..." rows={2} /></div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick duplicate check button */}
+            {!existingCheckDone && customerForm.firstName && customerForm.lastName && (
+              <div className="flex justify-center">
+                <Button variant="ghost" size="sm" onClick={checkExistingCustomer} leftIcon={existingCheckLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} disabled={existingCheckLoading}>
+                  {existingCheckLoading ? 'Checking...' : 'Check for Existing Customer'}
+                </Button>
+              </div>
+            )}
+            {existingCheckDone && !existingMatch && (
+              <div className="flex items-center justify-center gap-2 text-sm text-status-success-400">
+                <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
+              </div>
+            )}
           </div>
         )}
 
@@ -1396,32 +1135,6 @@ export default function NewCustomerPage() {
                     <Input label="CMRA Name (§4a)" value={form1583.cmraName || ''} readOnly leftIcon={<Lock className="h-4 w-4" />} />
                   </div>
 
-                  {/* BAR-421 §8b-8e: Applicant telephone & email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input label="Applicant Telephone (§8b)" value={form1583.applicantPhone || customerForm.phone || ''} onChange={(e) => setForm1583((p) => ({ ...p, applicantPhone: e.target.value }))} placeholder="(555) 555-5555" leftIcon={<Phone className="h-4 w-4" />} />
-                    <Input label="Applicant Email (§8e)" value={form1583.applicantEmail || customerForm.email || ''} onChange={(e) => setForm1583((p) => ({ ...p, applicantEmail: e.target.value }))} placeholder="email@example.com" leftIcon={<Mail className="h-4 w-4" />} />
-                  </div>
-
-                  {/* BAR-421 §9b-9g: Authorized Individual */}
-                  <div className="border-t border-surface-700 pt-4 mt-2">
-                    <p className="text-sm font-medium text-surface-300 mb-3 flex items-center gap-2"><UserPlus className="h-4 w-4 text-primary-500" /> Authorized Individual (§9)</p>
-                    <p className="text-[11px] text-surface-500 mb-3">Optional — designate an individual authorized to sign for and accept mail on behalf of the applicant.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Input label="Name (§9b)" value={form1583.authorizedIndividualName || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualName: e.target.value }))} placeholder="Full name" leftIcon={<User className="h-4 w-4" />} />
-                      <Input label="Date of Birth (§9c)" type="date" value={form1583.authorizedIndividualDob || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualDob: e.target.value }))} leftIcon={<Calendar className="h-4 w-4" />} />
-                      <Input label="Address (§9d)" value={form1583.authorizedIndividualAddress || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualAddress: e.target.value }))} placeholder="Street address" leftIcon={<MapPin className="h-4 w-4" />} />
-                      <div className="grid grid-cols-3 gap-3">
-                        <Input label="City (§9e)" value={form1583.authorizedIndividualCity || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualCity: e.target.value }))} />
-                        <Input label="State (§9f)" value={form1583.authorizedIndividualState || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualState: e.target.value }))} />
-                        <Input label="ZIP (§9g)" value={form1583.authorizedIndividualZip || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualZip: e.target.value }))} />
-                      </div>
-                      <Input label="Telephone (§9h)" value={form1583.authorizedIndividualPhone || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualPhone: e.target.value }))} placeholder="Phone" leftIcon={<Phone className="h-4 w-4" />} />
-                      <Input label="Email (§9i)" value={form1583.authorizedIndividualEmail || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualEmail: e.target.value }))} placeholder="Email" leftIcon={<Mail className="h-4 w-4" />} />
-                      <Input label="ID Type (§9j)" value={form1583.authorizedIndividualIdType || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualIdType: e.target.value }))} placeholder="ID document type" />
-                      <Input label="ID Number (§9k)" value={form1583.authorizedIndividualIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, authorizedIndividualIdNumber: e.target.value }))} placeholder="ID number" className="font-mono" />
-                    </div>
-                  </div>
-
                   {/* Court-protected individual (§4k) */}
                   <div className="rounded-lg border border-surface-700 bg-surface-900/50 p-4">
                     <label className="flex items-center gap-2 text-sm text-surface-300 cursor-pointer">
@@ -1439,7 +1152,7 @@ export default function NewCustomerPage() {
                     <Input label="Primary ID Type (§10a)" value={USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || primaryIdType} readOnly />
                     <Input label="Primary ID # (§10d)" value={form1583.primaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdNumber: e.target.value }))} placeholder="ID number" />
                     <Input label="Primary ID Issuer (§10e)" value={form1583.primaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, primaryIdIssuer: e.target.value }))} placeholder="Issuing authority" />
-                    <Input label="Secondary ID Type (§11a)" value={USPS_SECONDARY_IDS.find((id) => id.id === secondaryIdType)?.name || secondaryIdType} readOnly />
+                    <Input label="Secondary ID Type (§11a)" value={PROOF_OF_ADDRESS_TYPES.find((t) => t.value === secondaryIdType)?.label || secondaryIdType} readOnly />
                     <Input label="Secondary ID # (§11d)" value={form1583.secondaryIdNumber || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdNumber: e.target.value }))} />
                     <Input label="Secondary ID Issuer (§11e)" value={form1583.secondaryIdIssuer || ''} onChange={(e) => setForm1583((p) => ({ ...p, secondaryIdIssuer: e.target.value }))} />
                   </div>
@@ -1493,7 +1206,7 @@ export default function NewCustomerPage() {
                 {recipients.length === 0 ? (
                   <div className="text-center py-6 text-surface-500 text-sm">
                     <p>No additional recipients. Click "Add" to register additional people authorized to receive mail at this PMB.</p>
-                    <p className="text-[11px] mt-1">Each additional recipient needs their own PS1583. Minors (&lt;18) and employees are exempt per Box 12.</p>
+                    <p className="text-[11px] mt-1">Each additional recipient (non-minor, non-employee) needs their own PS1583.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1528,7 +1241,7 @@ export default function NewCustomerPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-surface-200">{selectedPlan.name}</p>
-                          <p className="text-[11px] text-surface-500">{BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly'} billing</p>
+                          <p className="text-[11px] text-surface-500">{billingCycle === 'annual' ? 'Annual' : 'Monthly'} billing</p>
                         </div>
                         <p className="text-lg font-bold text-surface-100">${planPrice.toFixed(2)}</p>
                       </div>
@@ -1629,7 +1342,7 @@ export default function NewCustomerPage() {
               <CardContent>
                 <p className="text-xs text-surface-400 mb-4">Review the agreement below. This is auto-populated with customer and store details. Stores can customize this template in Settings → Mailbox Configuration.</p>
                 <div className="rounded-lg border border-surface-700 bg-surface-950 p-6 max-h-[400px] overflow-y-auto font-mono text-xs text-surface-300 leading-relaxed whitespace-pre-wrap">
-                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly' }, isBusinessPmb, selectedPlan?.name)}
+                  {getAgreementText({ customerName: `${customerForm.firstName} ${customerForm.lastName}`, pmbNumber: customerForm.pmbNumber, storeName: STORE_INFO.name, storeAddress: STORE_INFO.address, storeCity: STORE_INFO.city, storeState: STORE_INFO.state, storeZip: STORE_INFO.zip, openDate: new Date().toLocaleDateString(), billingCycle: billingCycle === 'annual' ? 'Annual' : 'Monthly' }, isBusinessPmb, selectedPlan?.name)}
                 </div>
               </CardContent>
             </Card>
@@ -1701,8 +1414,8 @@ export default function NewCustomerPage() {
                       <p className="text-surface-500">Platform</p><p className="text-surface-200">{platformLabels[customerForm.platform as MailboxPlatform]?.label}</p>
                       {customerForm.email && (<><p className="text-surface-500">Email</p><p className="text-surface-200">{customerForm.email}</p></>)}
                       {customerForm.phone && (<><p className="text-surface-500">Phone</p><p className="text-surface-200">{customerForm.phone}</p></>)}
-                      <p className="text-surface-500">Plan</p><p className="text-surface-200">{selectedPlan?.name || 'None'}{selectedPlan ? ` · $${planPrice.toFixed(2)}/${BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.shortLabel || 'mo'}` : ''}</p>
-                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{BILLING_CYCLE_OPTIONS.find((c) => c.value === billingCycle)?.label || 'Monthly'}</p>
+                      <p className="text-surface-500">Plan</p><p className="text-surface-200">{selectedPlan?.name || 'None'}{selectedPlan ? ` · $${planPrice.toFixed(2)}/${billingCycle === 'annual' ? 'yr' : 'mo'}` : ''}</p>
+                      <p className="text-surface-500">Billing</p><p className="text-surface-200">{customerForm.billingTerms}</p>
                       <p className="text-surface-500">Notifications</p><p className="text-surface-200">{[customerForm.notifyEmail && 'Email', customerForm.notifySms && 'SMS'].filter(Boolean).join(', ') || 'None'}</p>
                       {recipients.length > 0 && (<><p className="text-surface-500">Recipients</p><p className="text-surface-200">{recipients.length} additional</p></>)}
                     </div>
@@ -1717,10 +1430,9 @@ export default function NewCustomerPage() {
                   <div className="space-y-3">
                     {[
                       { label: 'Primary ID', value: USPS_PRIMARY_IDS.find((id) => id.id === primaryIdType)?.name || 'Not selected', ok: !!primaryIdFile && !!primaryIdType && !nonCompliantWarning, step: 2 },
-                      { label: 'Secondary ID (Address Verification)', value: USPS_SECONDARY_IDS.find((id) => id.id === secondaryIdType)?.name || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
+                      { label: 'Secondary ID (Proof of Address)', value: PROOF_OF_ADDRESS_TYPES.find((t) => t.value === secondaryIdType)?.label || 'Not selected', ok: !!secondaryIdFile && !!secondaryIdType, step: 2 },
                       ...(isBusinessPmb ? [{ label: 'Business Document', value: BUSINESS_DOC_TYPES.find((d) => d.value === businessDocType)?.label || 'Not selected', ok: !!businessDocFile && !!businessDocType, step: 2 }] : []),
                       { label: 'PS Form 1583', value: form1583.applicantName ? 'Completed' : 'Incomplete', ok: !!form1583.applicantName, step: 3 },
-                      { label: 'Proof of Address', value: proofOfAddressType ? (PROOF_OF_ADDRESS_TYPES.find((t) => t.value === proofOfAddressType)?.label || proofOfAddressType) : 'Not selected', ok: !!proofOfAddressType && !!proofOfAddressDateOfIssue, warn: !!proofOfAddressType && !proofOfAddressDateOfIssue, step: 2 },
                       { label: 'USPS CRD Upload', value: form1583.crdUploaded ? 'Uploaded' : 'Pending', ok: form1583.crdUploaded, warn: !form1583.crdUploaded, step: 3 },
                       { label: 'Form 1583 Notarized', value: form1583.notarized ? 'Yes' : 'Pending', ok: form1583.notarized, warn: !form1583.notarized, step: 3 },
                       { label: 'Customer Signature', value: agreementSigned ? 'Signed' : 'Not signed', ok: agreementSigned, step: 5 },
@@ -1728,7 +1440,7 @@ export default function NewCustomerPage() {
                       { label: 'Payment', value: paymentStatus === 'completed' ? `$${parseFloat(paymentAmount).toFixed(2)} collected` : paymentSkipped ? 'Skipped' : 'Pending', ok: paymentStatus === 'completed', warn: paymentSkipped || paymentStatus === 'idle', step: 4 },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3 text-sm">
-                        {item.ok ? <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" /> : item.warn ? <AlertCircle className="h-4 w-4 text-status-warning-400 flex-shrink-0" /> : <X className="h-4 w-4 text-status-error-400 flex-shrink-0" />}
+                        {item.ok ? <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" /> : item.warn ? <AlertCircle className="h-4 w-4 text-yellow-400 flex-shrink-0" /> : <X className="h-4 w-4 text-status-error-400 flex-shrink-0" />}
                         <div className="flex-1"><p className="text-surface-300">{item.label}</p><p className="text-xs text-surface-500">{item.value}</p></div>
                         <Button variant="ghost" size="sm" onClick={() => setStep(item.step)} className="text-xs">Edit</Button>
                       </div>
@@ -1740,9 +1452,9 @@ export default function NewCustomerPage() {
 
             {/* Warnings */}
             {!form1583.crdUploaded && (
-              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-status-warning-500">
-                <AlertCircle className="h-5 w-5 text-status-warning-400 mt-0.5 flex-shrink-0" />
-                <div><p className="text-sm font-medium text-status-warning-400">CRD Upload Reminder</p><p className="text-xs text-surface-400 mt-1">Both ID documents must be uploaded to the USPS Customer Registration Database within a few days to a week. You can create the customer now and update the CRD status later.</p></div>
+              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-yellow-500">
+                <AlertCircle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div><p className="text-sm font-medium text-yellow-400">CRD Upload Reminder</p><p className="text-xs text-surface-400 mt-1">Both ID documents must be uploaded to the USPS Customer Registration Database within a few days to a week. You can create the customer now and update the CRD status later.</p></div>
               </div>
             )}
             {!cmraSigned && (
