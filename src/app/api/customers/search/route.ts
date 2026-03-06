@@ -15,16 +15,19 @@ const SearchQuerySchema = z.object({
   q: z.string().max(200).optional().default(''),
   mode: z.enum(['pmb', 'name', 'phone', 'company', 'name_company', 'general']).optional().default('pmb'),
   limit: z.coerce.number().int().min(1).max(50).default(10),
+  // BAR-429: When true, search ALL statuses (not just active) — used for duplicate detection
+  includeAll: z.enum(['true', 'false']).optional().default('false'),
 });
 
 export const GET = withApiHandler(async (request, { user }) => {
-  const { q: rawQuery, mode, limit } = validateQuery(request, SearchQuerySchema);
+  const { q: rawQuery, mode, limit, includeAll } = validateQuery(request, SearchQuerySchema);
   const query = rawQuery.trim();
 
   // Build where clause based on search mode
+  // BAR-429: includeAll=true skips status filter (for duplicate detection across all customer states)
   const where: Prisma.CustomerWhereInput = {
     tenantId: user.tenantId!,
-    status: 'active',
+    ...(includeAll === 'true' ? {} : { status: 'active' }),
     deletedAt: null,
   };
 
