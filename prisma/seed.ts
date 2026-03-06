@@ -33,6 +33,17 @@ async function main() {
   console.log("🌱 Seeding ShipOS database...\n");
 
   // Clean existing data (order matters for FK constraints)
+  await prisma.checkoutTransaction.deleteMany();
+  await prisma.chargeEvent.deleteMany();
+  await prisma.paymentRecord.deleteMany();
+  await prisma.subscription.deleteMany();
+  await prisma.loyaltyTransaction.deleteMany();
+  await prisma.loyaltyReward.deleteMany();
+  await prisma.loyaltyAccount.deleteMany();
+  await prisma.customerAgreement.deleteMany();
+  await prisma.customerDocument.deleteMany();
+  await prisma.pmbRecipient.deleteMany();
+  await prisma.form1583AuditLog.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.mailPiece.deleteMany();
