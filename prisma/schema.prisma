@@ -27,7 +27,10 @@ model Tenant {
   businessHours    String? // JSON: { mon: { open, close }, tue: … }
   taxRate          Float     @default(0)
   logoUrl          String?
-  status           String    @default("active") // active, paused, disabled, trial
+  status           String    @default("active") // pending_approval, active, trial, paused, suspended, disabled, closed
+  statusChangedAt  DateTime? // When status last changed
+  statusChangedBy  String?   // userId of who changed it (STAFF or system)
+  statusReason     String?   // Reason for pause/suspend/reject/close
   subscriptionTier String    @default("starter") // starter, pro, enterprise
   trialEndsAt      DateTime? // When trial period expires (null = no trial)
 

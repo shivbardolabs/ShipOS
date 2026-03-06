@@ -12,6 +12,8 @@ export const GET = withApiHandler(async (request, { user }) => {
   const [
     totalClients,
     activeClients,
+    pendingApproval,
+    trialClients,
     totalStores,
     totalSuperAdmins,
     activeSuperAdmins,
@@ -21,6 +23,8 @@ export const GET = withApiHandler(async (request, { user }) => {
   ] = await Promise.all([
     prisma.tenant.count(),
     prisma.tenant.count({ where: { status: 'active' } }),
+    prisma.tenant.count({ where: { status: 'pending_approval' } }),
+    prisma.tenant.count({ where: { status: 'trial' } }),
     prisma.store.count(),
     prisma.user.count({ where: { role: 'superadmin', deletedAt: null } }),
     prisma.user.count({ where: { role: 'superadmin', status: 'active', deletedAt: null } }),
@@ -51,6 +55,8 @@ export const GET = withApiHandler(async (request, { user }) => {
   return ok({
     totalClients,
     activeClients,
+    pendingApproval,
+    trialClients,
     inactiveClients,
     totalStores,
     activeStores,

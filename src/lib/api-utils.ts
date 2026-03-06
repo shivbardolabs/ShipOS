@@ -25,6 +25,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z, ZodSchema } from 'zod';
 import { getOrProvisionUser, type LocalUser } from './auth';
+import { isTenantOperational } from './tenant-status';
 
 /* ── ApiError ──────────────────────────────────────────────────────────────── */
 
@@ -131,6 +132,8 @@ type ApiHandler = (
 interface WithApiHandlerOptions {
   /** If true, skip authentication (for public endpoints). Default: false */
   public?: boolean;
+  /** If true, skip tenant status check (for routes that need to work regardless of tenant state). Default: false */
+  skipTenantCheck?: boolean;
 }
 
 /**
@@ -157,6 +160,17 @@ export function withApiHandler(handler: ApiHandler, options?: WithApiHandlerOpti
         user = await getOrProvisionUser();
         if (!user) {
           return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+        }
+
+        // BAR-399: Enforce tenant status on API routes
+        // Superadmins bypass (they manage tenants), and routes can opt out
+        if (!options?.skipTenantCheck && user.role !== 'superadmin' && user.tenant) {
+          if (!isTenantOperational(user.tenant.status)) {
+            return NextResponse.json(
+              { error: 'Account not active', tenantStatus: user.tenant.status },
+              { status: 403 },
+            );
+          }
         }
       }
 

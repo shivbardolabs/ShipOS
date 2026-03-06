@@ -74,8 +74,8 @@ export const POST = withApiHandler(async (request) => {
   for (const subscription of subscriptions) {
     const { tenant, plan } = subscription;
 
-    // Skip tenants that are not active
-    if (tenant.status !== 'active') {
+    // Skip tenants that are not in an operational state
+    if (tenant.status !== 'active' && tenant.status !== 'trial') {
       results.push({
         tenantId: tenant.id,
         tenantName: tenant.name,

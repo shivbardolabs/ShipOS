@@ -47,6 +47,8 @@ export interface LocalUser {
     taxRate: number;
     logoUrl: string | null;
     status: string;
+    statusChangedAt: string | null;
+    statusReason: string | null;
     subscriptionTier: string;
   } | null;
 }
@@ -233,6 +235,8 @@ function toLocalUser(user: any): LocalUser {
       ? {
           ...user.tenant,
           status: user.tenant.status ?? 'active',
+          statusChangedAt: user.tenant.statusChangedAt?.toISOString() ?? null,
+          statusReason: user.tenant.statusReason ?? null,
           subscriptionTier: user.tenant.subscriptionTier ?? 'starter',
         }
       : null,
