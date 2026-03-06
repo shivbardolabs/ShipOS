@@ -55,7 +55,7 @@ export default function Home() {
               Log In
             </a>
             <a
-              href="/api/auth/signup"
+              href="/signup"
               className="px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
             >
               Sign Up Free
@@ -82,7 +82,7 @@ export default function Home() {
           {/* CTA buttons */}
           <div className="flex items-center justify-center gap-4 mb-12">
             <a
-              href="/api/auth/signup"
+              href="/signup"
               className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-base font-semibold transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
             >
               Get Started

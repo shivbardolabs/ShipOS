@@ -60,7 +60,7 @@ export function PublicHeader() {
             Log In
           </a>
           <a
-            href="/api/auth/signup"
+            href="/signup"
             className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
           >
             Sign Up Free
