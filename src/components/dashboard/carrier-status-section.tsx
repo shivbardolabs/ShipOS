@@ -88,8 +88,8 @@ function StatusIndicator({
         'flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors',
         active
           ? variant === 'dropoff'
-            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            ? 'bg-status-info-500/10 text-status-info-400 border border-status-info-500/20'
+            : 'bg-status-success-500/10 text-status-success-400 border border-status-success-500/20'
           : 'bg-surface-800/30 text-surface-500 border border-surface-700/30'
       )}
     >
@@ -173,8 +173,8 @@ export function CarrierStatusSection({ className }: CarrierStatusSectionProps) {
         className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-surface-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10">
-            <Truck className="h-4.5 w-4.5 text-indigo-400" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500/10">
+            <Truck className="h-4.5 w-4.5 text-primary-400" />
           </div>
           <div className="text-left">
             <h3 className="text-sm font-semibold text-surface-200">
@@ -213,7 +213,7 @@ export function CarrierStatusSection({ className }: CarrierStatusSectionProps) {
                   className={cn(
                     'rounded-xl border p-3.5 transition-all',
                     isComplete
-                      ? 'border-emerald-500/20 bg-emerald-500/5'
+                      ? 'border-status-success-500/20 bg-status-success-500/5'
                       : 'border-surface-700/50 bg-surface-800/20'
                   )}
                 >
@@ -229,7 +229,7 @@ export function CarrierStatusSection({ className }: CarrierStatusSectionProps) {
                       </p>
                     </div>
                     {isComplete && (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
                     )}
                   </div>
 

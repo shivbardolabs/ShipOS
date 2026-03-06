@@ -42,8 +42,8 @@ interface LegalDoc {
 type DocType = 'terms' | 'privacy';
 
 const DOC_META: Record<DocType, { label: string; icon: React.ElementType; color: string }> = {
-  terms: { label: 'Terms & Conditions', icon: FileText, color: '#6366f1' },
-  privacy: { label: 'Privacy Policy', icon: Shield, color: '#10b981' },
+  terms: { label: 'Terms & Conditions', icon: FileText, color: 'var(--color-primary-500)' },
+  privacy: { label: 'Privacy Policy', icon: Shield, color: 'var(--color-status-success-500)' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -170,9 +170,9 @@ export default function LegalManagementPage() {
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl"
-            style={{ background: 'rgba(225, 29, 72, 0.1)' }}
+            style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 10%, transparent)' }}
           >
-            <ScrollText className="h-5 w-5" style={{ color: '#e11d48' }} />
+            <ScrollText className="h-5 w-5" style={{ color: 'var(--color-status-error-600)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold text-surface-100">Legal Documents</h1>
@@ -224,7 +224,7 @@ export default function LegalManagementPage() {
             {/* Current version info */}
             {currentDoc && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-800/50 border border-surface-700">
-                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                <Check className="h-4 w-4 text-status-success-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm text-surface-300">
                     Current: <strong className="text-surface-100">Version {currentDoc.version}</strong>
@@ -289,13 +289,13 @@ export default function LegalManagementPage() {
 
             {/* Publish actions */}
             {publishError && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400 flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20 text-sm text-status-error-400 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {publishError}
               </div>
             )}
             {publishSuccess && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400 flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-status-success-500/10 border border-status-success-500/20 text-sm text-status-success-400 flex items-center gap-2">
                 <Check className="h-4 w-4 shrink-0" />
                 {publishSuccess}
               </div>
@@ -333,7 +333,7 @@ export default function LegalManagementPage() {
                     key={doc.id}
                     className={`rounded-lg border transition-colors ${
                       doc.isActive
-                        ? 'border-emerald-500/30 bg-emerald-500/5'
+                        ? 'border-status-success-500/30 bg-status-success-500/5'
                         : 'border-surface-700 bg-surface-800/30'
                     }`}
                   >
@@ -351,7 +351,7 @@ export default function LegalManagementPage() {
                           v{doc.version}
                         </span>
                         {doc.isActive && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-status-success-500/20 text-status-success-400 font-medium">
                             ACTIVE
                           </span>
                         )}

@@ -12,7 +12,7 @@ export interface DetailRow {
   value: string | number;
   /** Optional color bar width 0-100 for mini horizontal bar */
   bar?: number;
-  /** Bar color class, e.g. "bg-blue-500" */
+  /** Bar color class, e.g. "bg-status-info-500" */
   barColor?: string;
   /** Optional icon */
   icon?: React.ElementType;
@@ -58,7 +58,7 @@ export function ExpandableStatCard({
   const [contentHeight, setContentHeight] = useState(0);
 
   const isPositive = change !== undefined && change >= 0;
-  const changeColor = isPositive ? 'text-emerald-600' : 'text-red-600';
+  const changeColor = isPositive ? 'text-status-success-600' : 'text-status-error-600';
   const hasDetails = details && details.length > 0;
 
   // Measure content height for smooth animation

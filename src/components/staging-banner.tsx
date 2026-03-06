@@ -30,7 +30,7 @@ export function StagingBanner() {
     <div
       role="status"
       aria-label="Staging environment"
-      className="fixed bottom-0 inset-x-0 z-[9999] flex items-center justify-center gap-2 bg-amber-500 px-3 py-1.5 text-xs font-semibold tracking-wide text-white shadow-lg select-none print:hidden"
+      className="fixed bottom-0 inset-x-0 z-[9999] flex items-center justify-center gap-2 bg-status-warning-500 px-3 py-1.5 text-xs font-semibold tracking-wide text-white shadow-lg select-none print:hidden"
     >
       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-white/80" />
       STAGING ENVIRONMENT

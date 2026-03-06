@@ -128,7 +128,7 @@ export function SendNotificationModal({ customer, open, onClose, onSent }: SendN
       size="md"
       footer={
         sent ? (
-          <div className="flex items-center gap-2 text-emerald-500">
+          <div className="flex items-center gap-2 text-status-success-500">
             <CheckCircle className="h-4 w-4" />
             <span className="text-sm font-medium">Notification sent</span>
           </div>
@@ -158,7 +158,7 @@ export function SendNotificationModal({ customer, open, onClose, onSent }: SendN
               customerChannels.map((ch) => (
                 <span
                   key={ch}
-                  className="status-badge text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200"
+                  className="status-badge text-[10px] bg-status-success-100 text-status-success-600 border-status-success-200"
                 >
                   {ch} enabled
                 </span>
@@ -206,9 +206,9 @@ export function SendNotificationModal({ customer, open, onClose, onSent }: SendN
 
         {/* Error message */}
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-300">{error}</p>
+          <div className="rounded-lg border border-status-error-500/30 bg-status-error-500/10 p-3 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-status-error-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-status-error-300">{error}</p>
           </div>
         )}
       </div>

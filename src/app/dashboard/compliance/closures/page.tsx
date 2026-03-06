@@ -180,7 +180,7 @@ export default function CrdClosuresPage() {
                     <td className="px-4 py-3">
                       <div className="text-surface-300">{c.dateClosed ? formatDate(c.dateClosed) : '—'}</div>
                       {c.crdOverdue && (
-                        <span className="text-xs text-red-400">{c.daysSinceClosure}d ago — CRD overdue!</span>
+                        <span className="text-xs text-status-error-400">{c.daysSinceClosure}d ago — CRD overdue!</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-surface-300 capitalize">

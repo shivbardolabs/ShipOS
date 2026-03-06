@@ -149,8 +149,8 @@ export default function PrinterSettingsPage() {
       {testResult && (
         <div className={`p-3 rounded-lg text-sm ${
           testResult.startsWith('✅')
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-            : 'bg-red-500/10 text-red-400 border border-red-500/20'
+            ? 'bg-status-success-500/10 text-status-success-400 border border-status-success-500/20'
+            : 'bg-status-error-500/10 text-status-error-400 border border-status-error-500/20'
         }`}>
           {testResult}
         </div>
@@ -244,7 +244,7 @@ export default function PrinterSettingsPage() {
                 <div className="mt-3 flex items-center gap-2 text-sm text-surface-400">
                   {printer.ipAddress ? (
                     <>
-                      <Wifi className="h-4 w-4 text-emerald-400" />
+                      <Wifi className="h-4 w-4 text-status-success-400" />
                       <span className="font-mono">{printer.ipAddress}:{printer.port}</span>
                     </>
                   ) : (

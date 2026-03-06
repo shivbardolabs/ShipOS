@@ -249,20 +249,20 @@ export default function BillingModelsPage() {
               onClick={() => isAdmin && updateConfig('usageBasedEnabled', !config.usageBasedEnabled)}
               className={`relative rounded-xl border-2 p-5 text-left transition-all ${
                 config.usageBasedEnabled
-                  ? 'border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/20'
+                  ? 'border-status-success-500 bg-status-success-500/5 ring-1 ring-status-success-500/20'
                   : 'border-surface-700 bg-surface-900 hover:border-surface-600'
               }`}
             >
               {config.usageBasedEnabled && (
                 <div className="absolute top-3 right-3">
-                  <Check className="h-5 w-5 text-emerald-500" />
+                  <Check className="h-5 w-5 text-status-success-500" />
                 </div>
               )}
               <div className={`p-2.5 rounded-lg w-fit mb-3 ${
-                config.usageBasedEnabled ? 'bg-emerald-500/20' : 'bg-surface-800'
+                config.usageBasedEnabled ? 'bg-status-success-500/20' : 'bg-surface-800'
               }`}>
                 <BarChart3 className={`h-5 w-5 ${
-                  config.usageBasedEnabled ? 'text-emerald-500' : 'text-surface-400'
+                  config.usageBasedEnabled ? 'text-status-success-500' : 'text-surface-400'
                 }`} />
               </div>
               <h3 className="font-semibold text-surface-100 mb-1">Usage-Based</h3>
@@ -278,20 +278,20 @@ export default function BillingModelsPage() {
               onClick={() => isAdmin && updateConfig('timeOfServiceEnabled', !config.timeOfServiceEnabled)}
               className={`relative rounded-xl border-2 p-5 text-left transition-all ${
                 config.timeOfServiceEnabled
-                  ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500/20'
+                  ? 'border-status-warning-500 bg-status-warning-500/5 ring-1 ring-status-warning-500/20'
                   : 'border-surface-700 bg-surface-900 hover:border-surface-600'
               }`}
             >
               {config.timeOfServiceEnabled && (
                 <div className="absolute top-3 right-3">
-                  <Check className="h-5 w-5 text-amber-500" />
+                  <Check className="h-5 w-5 text-status-warning-500" />
                 </div>
               )}
               <div className={`p-2.5 rounded-lg w-fit mb-3 ${
-                config.timeOfServiceEnabled ? 'bg-amber-500/20' : 'bg-surface-800'
+                config.timeOfServiceEnabled ? 'bg-status-warning-500/20' : 'bg-surface-800'
               }`}>
                 <Clock className={`h-5 w-5 ${
-                  config.timeOfServiceEnabled ? 'text-amber-500' : 'text-surface-400'
+                  config.timeOfServiceEnabled ? 'text-status-warning-500' : 'text-surface-400'
                 }`} />
               </div>
               <h3 className="font-semibold text-surface-100 mb-1">Time-of-Service</h3>
@@ -372,7 +372,7 @@ export default function BillingModelsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-500" />
+                <BarChart3 className="h-5 w-5 text-status-success-500" />
                 Usage-Based Settings
               </CardTitle>
             </CardHeader>
@@ -426,7 +426,7 @@ export default function BillingModelsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Gauge className="h-5 w-5 text-emerald-500" />
+                  <Gauge className="h-5 w-5 text-status-success-500" />
                   Usage Meters
                   <Badge variant="muted" dot={false} className="text-xs ml-1">
                     {meters.length}
@@ -464,8 +464,8 @@ export default function BillingModelsPage() {
                       className="flex items-center justify-between p-4 rounded-lg border border-surface-700 bg-surface-900/50 hover:bg-surface-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-lg bg-emerald-500/10">
-                          <Zap className="h-4 w-4 text-emerald-500" />
+                        <div className="p-2 rounded-lg bg-status-success-500/10">
+                          <Zap className="h-4 w-4 text-status-success-500" />
                         </div>
                         <div>
                           <p className="font-medium text-surface-200">{meter.name}</p>
@@ -504,7 +504,7 @@ export default function BillingModelsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-red-400 hover:text-red-300"
+                            className="text-status-error-400 hover:text-status-error-300"
                             onClick={async () => {
                               await fetch('/api/settings/billing-models', {
                                 method: 'POST',
@@ -535,7 +535,7 @@ export default function BillingModelsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
+              <Clock className="h-5 w-5 text-status-warning-500" />
               Time-of-Service Settings
             </CardTitle>
           </CardHeader>
@@ -570,11 +570,11 @@ export default function BillingModelsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`rounded-lg border p-4 ${
                   config.tosDefaultMode === 'immediate'
-                    ? 'border-amber-500/30 bg-amber-500/5'
+                    ? 'border-status-warning-500/30 bg-status-warning-500/5'
                     : 'border-surface-700 bg-surface-900'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Zap className="h-4 w-4 text-amber-500" />
+                    <Zap className="h-4 w-4 text-status-warning-500" />
                     <span className="text-sm font-medium text-surface-200">Immediate Mode</span>
                   </div>
                   <p className="text-xs text-surface-400">
@@ -584,11 +584,11 @@ export default function BillingModelsPage() {
                 </div>
                 <div className={`rounded-lg border p-4 ${
                   config.tosDefaultMode === 'deferred'
-                    ? 'border-amber-500/30 bg-amber-500/5'
+                    ? 'border-status-warning-500/30 bg-status-warning-500/5'
                     : 'border-surface-700 bg-surface-900'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-4 w-4 text-amber-500" />
+                    <DollarSign className="h-4 w-4 text-status-warning-500" />
                     <span className="text-sm font-medium text-surface-200">Deferred Mode</span>
                   </div>
                   <p className="text-xs text-surface-400">
@@ -606,7 +606,7 @@ export default function BillingModelsPage() {
       {isAdmin && (
         <div className="flex items-center justify-end gap-3">
           {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-500">
+            <span className="flex items-center gap-1.5 text-sm text-status-success-500">
               <Check className="h-4 w-4" /> Configuration saved
             </span>
           )}
@@ -732,8 +732,8 @@ function MeterModal({
       <div className="glass-card p-6 max-w-lg w-full mx-4 space-y-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10">
-              <Gauge className="h-5 w-5 text-emerald-500" />
+            <div className="p-2 rounded-lg bg-status-success-500/10">
+              <Gauge className="h-5 w-5 text-status-success-500" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-surface-100">
@@ -853,7 +853,7 @@ function MeterModal({
                     <button
                       type="button"
                       onClick={() => removeTier(i)}
-                      className="text-surface-500 hover:text-red-400 mt-[-8px]"
+                      className="text-surface-500 hover:text-status-error-400 mt-[-8px]"
                     >
                       <X className="h-4 w-4" />
                     </button>

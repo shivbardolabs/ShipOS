@@ -55,9 +55,9 @@ function getDaysHeld(checkedInAt: string | Date): number {
 }
 
 function getDaysHeldColor(days: number): string {
-  if (days >= 30) return 'text-red-400';
-  if (days >= 14) return 'text-yellow-400';
-  if (days >= 7) return 'text-orange-400';
+  if (days >= 30) return 'text-status-error-400';
+  if (days >= 14) return 'text-status-warning-400';
+  if (days >= 7) return 'text-status-warning-400';
   return 'text-surface-300';
 }
 
@@ -240,7 +240,7 @@ export function CheckoutInventoryTable({
                   {pkg.storageLocation || '—'}
                 </td>
                 <td className="px-3 py-2.5 text-right">
-                  <span className={cn('text-xs font-medium', pkg.storageFee > 0 ? 'text-yellow-400' : 'text-surface-500')}>
+                  <span className={cn('text-xs font-medium', pkg.storageFee > 0 ? 'text-status-warning-400' : 'text-surface-500')}>
                     {pkg.storageFee > 0 ? formatCurrency(pkg.storageFee) : 'Free'}
                   </span>
                 </td>

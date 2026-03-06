@@ -72,7 +72,7 @@ export function SignatureScreen({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = 'var(--color-surface-950)';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -243,7 +243,7 @@ export function SignatureScreen({
 
           {/* Error */}
           {showError && (
-            <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-sm text-status-error-400 bg-status-error-500/10 rounded-lg px-3 py-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               Signature is too small. Please sign again.
             </div>
@@ -273,7 +273,7 @@ export function SignatureScreen({
             className={cn(
               'flex-1 flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-lg transition-all min-h-[56px]',
               hasSignature && !submitted
-                ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-900/30'
+                ? 'bg-status-success-600 text-white hover:bg-status-success-500 shadow-lg shadow-emerald-900/30'
                 : 'bg-surface-700 text-surface-500 cursor-not-allowed'
             )}
           >

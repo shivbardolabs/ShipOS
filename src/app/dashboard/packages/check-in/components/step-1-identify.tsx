@@ -122,7 +122,7 @@ export function Step1IdentifyCustomer(props: Step1Props) {
                 className="!py-3"
               />
               {walkInName.trim() && (
-                <p className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                <p className="mt-2 text-xs text-status-success-400 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" /> Package will be checked in for walk-in: {walkInName}
                 </p>
               )}
@@ -246,7 +246,7 @@ export function Step1IdentifyCustomer(props: Step1Props) {
                     <button
                       type="button"
                       onClick={() => setShowRtsDialog(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/30 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-status-error-400 hover:bg-red-900/30 border border-status-error-800/30 transition-colors"
                     >
                       <Undo2 className="h-3.5 w-3.5" />
                       Return to Sender
@@ -280,7 +280,7 @@ export function Step1IdentifyCustomer(props: Step1Props) {
             />
           </div>
           {recipientName.trim() && (
-            <p className="text-xs text-emerald-400 flex items-center gap-1">
+            <p className="text-xs text-status-success-400 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Package will be checked in for: {recipientName}
               <Badge variant="default" dot={false} className="ml-1">
@@ -322,20 +322,20 @@ export function Step1IdentifyCustomer(props: Step1Props) {
               className="!py-3 font-mono"
             />
             {kinekNumber.length > 0 && kinekNumber.length < 7 && (
-              <p className="mt-1 text-xs text-amber-400 flex items-center gap-1">
+              <p className="mt-1 text-xs text-status-warning-400 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />
                 KINEK number must be 7 digits ({kinekNumber.length}/7)
               </p>
             )}
             {kinekNumber.length === 7 && (
-              <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
+              <p className="mt-1 text-xs text-status-success-400 flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 Valid KINEK number
               </p>
             )}
           </div>
           {recipientName.trim() && kinekNumber.length === 7 && (
-            <p className="text-xs text-emerald-400 flex items-center gap-1">
+            <p className="text-xs text-status-success-400 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Package will be checked in for: {recipientName}
               <Badge variant="default" dot={false} className="ml-1">KINEK #{kinekNumber}</Badge>

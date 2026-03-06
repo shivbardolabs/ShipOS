@@ -205,7 +205,7 @@ export default function ShippingPage() {
       render: (row) => {
         const profit = row.retailPrice - row.wholesaleCost;
         return (
-          <span className={profit > 0 ? 'text-emerald-600 font-medium' : 'text-red-600'}>
+          <span className={profit > 0 ? 'text-status-success-600 font-medium' : 'text-status-error-600'}>
             {formatCurrency(profit)}
           </span>
         );
@@ -264,7 +264,7 @@ export default function ShippingPage() {
               </button>
               {(row.status === 'label_created' || row.status === 'pending') && (
                 <button
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-400 hover:bg-surface-800"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-success-400 hover:bg-surface-800"
                   onClick={() => { handleStatusUpdate(row.id, 'shipped'); setActionRow(null); }}
                 >
                   <Truck className="h-3.5 w-3.5" /> Mark Shipped
@@ -272,7 +272,7 @@ export default function ShippingPage() {
               )}
               {row.status === 'shipped' && (
                 <button
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-400 hover:bg-surface-800"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-info-400 hover:bg-surface-800"
                   onClick={() => { handleStatusUpdate(row.id, 'delivered'); setActionRow(null); }}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" /> Mark Delivered
@@ -280,7 +280,7 @@ export default function ShippingPage() {
               )}
               {row.paymentStatus === 'unpaid' && (
                 <button
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-yellow-400 hover:bg-surface-800"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-warning-400 hover:bg-surface-800"
                   onClick={() => { handlePaymentUpdate(row.id, 'paid'); setActionRow(null); }}
                 >
                   <DollarSign className="h-3.5 w-3.5" /> Mark Paid
@@ -621,7 +621,7 @@ export default function ShippingPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-surface-300">Retail Price</label>
               <div className="flex items-center h-[38px] rounded-lg border border-surface-700 bg-surface-800 px-3.5 text-sm">
-                <span className="text-emerald-600 font-semibold">
+                <span className="text-status-success-600 font-semibold">
                   {formatCurrency(retailPrice)}
                 </span>
               </div>
@@ -797,7 +797,7 @@ export default function ShippingPage() {
                 </div>
                 <div>
                   <p className="text-xs text-surface-500">Profit</p>
-                  <p className={`text-lg font-bold ${Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost) > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <p className={`text-lg font-bold ${Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost) > 0 ? 'text-status-success-600' : 'text-status-error-600'}`}>
                     {formatCurrency(Number(detailShipment.retailPrice) - Number(detailShipment.wholesaleCost))}
                   </p>
                 </div>
@@ -822,13 +822,13 @@ export default function ShippingPage() {
                 </div>
                 {detailShipment.shippedAt && (
                   <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-blue-400" />
+                    <div className="h-2 w-2 rounded-full bg-status-info-400" />
                     <span className="text-xs text-surface-400">Shipped: {formatDate(String(detailShipment.shippedAt))}</span>
                   </div>
                 )}
                 {detailShipment.deliveredAt && (
                   <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <div className="h-2 w-2 rounded-full bg-status-success-400" />
                     <span className="text-xs text-surface-400">Delivered: {formatDate(String(detailShipment.deliveredAt))}</span>
                   </div>
                 )}

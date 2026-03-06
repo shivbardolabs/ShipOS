@@ -84,7 +84,7 @@ export function Modal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
           className={cn(
-            'relative w-full rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-slate-200/40',
+            'relative w-full rounded-xl border border-surface-700 bg-surface-900 shadow-2xl shadow-surface-700/40',
             sizeMap[size],
             'animate-in fade-in-0 zoom-in-95'
           )}

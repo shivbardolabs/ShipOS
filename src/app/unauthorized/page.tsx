@@ -16,11 +16,11 @@ export default function UnauthorizedPage() {
       {/* Ambient background orbs */}
       <div
         className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full"
-        style={{ background: 'rgba(225, 29, 72, 0.04)', filter: 'blur(100px)' }}
+        style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 4%, transparent)', filter: 'blur(100px)' }}
       />
       <div
         className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full"
-        style={{ background: 'rgba(225, 29, 72, 0.03)', filter: 'blur(80px)' }}
+        style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 3%, transparent)', filter: 'blur(80px)' }}
       />
 
       <div className="relative max-w-md w-full text-center">
@@ -28,9 +28,9 @@ export default function UnauthorizedPage() {
         <div className="flex items-center justify-center mb-6">
           <div
             className="flex h-20 w-20 items-center justify-center rounded-2xl"
-            style={{ background: 'rgba(225, 29, 72, 0.1)' }}
+            style={{ background: 'color-mix(in srgb, var(--color-status-error-600) 10%, transparent)' }}
           >
-            <ShieldX className="h-10 w-10 text-red-500" />
+            <ShieldX className="h-10 w-10 text-status-error-500" />
           </div>
         </div>
 
@@ -54,7 +54,7 @@ export default function UnauthorizedPage() {
           </a>
           <a
             href="/api/auth/logout"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-status-error-400 border border-status-error-500/30 hover:bg-status-error-500/10 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Sign Out

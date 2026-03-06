@@ -67,8 +67,8 @@ export function SessionTimeout() {
       size="sm"
     >
       <div className="text-center py-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 mb-4">
-          <Shield className="h-8 w-8 text-amber-500" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-status-warning-500/10 mb-4">
+          <Shield className="h-8 w-8 text-status-warning-500" />
         </div>
 
         <h3 className="text-lg font-semibold text-surface-100 mb-2">
@@ -80,8 +80,8 @@ export function SessionTimeout() {
         </p>
 
         <div className="flex items-center justify-center gap-2 mb-6">
-          <Clock className="h-5 w-5 text-amber-500" />
-          <span className="text-2xl font-mono font-bold text-amber-500">
+          <Clock className="h-5 w-5 text-status-warning-500" />
+          <span className="text-2xl font-mono font-bold text-status-warning-500">
             {formatTime(secondsRemaining)}
           </span>
         </div>

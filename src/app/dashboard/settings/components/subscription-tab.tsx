@@ -92,7 +92,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
         }`}
       >
         Annual
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-status-success-500/20 text-status-success-400 font-semibold">
           Save 20%
         </span>
       </button>
@@ -140,7 +140,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
             '100 AI scans/mo',
           ].map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-surface-300">
-              <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <Check className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />
               {f}
             </li>
           ))}
@@ -174,7 +174,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
           </div>
         ) : (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <span className="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-semibold">
+            <span className="px-3 py-1 rounded-full bg-status-warning-500 text-white text-xs font-semibold">
               Most Popular
             </span>
           </div>
@@ -207,7 +207,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
             '2,000 AI scans/mo',
           ].map((f, i) => (
             <li key={i} className={`flex items-start gap-2 text-sm ${i === 0 ? 'text-primary-400 font-medium' : 'text-surface-300'}`}>
-              {i === 0 ? <Zap className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />}
+              {i === 0 ? <Zap className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />}
               {f}
             </li>
           ))}
@@ -240,7 +240,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
           </div>
         )}
         <div className="text-center mb-6">
-          <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 mb-3">
+          <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-status-warning-500/20 text-status-warning-400 mb-3">
             <Building2 className="h-6 w-6" />
           </div>
           <h4 className="text-lg font-bold text-surface-100">Enterprise</h4>
@@ -265,8 +265,8 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
             'White-label options',
             'Dedicated account mgr',
           ].map((f, i) => (
-            <li key={i} className={`flex items-start gap-2 text-sm ${i === 0 ? 'text-amber-400 font-medium' : 'text-surface-300'}`}>
-              {i === 0 ? <Zap className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />}
+            <li key={i} className={`flex items-start gap-2 text-sm ${i === 0 ? 'text-status-warning-400 font-medium' : 'text-surface-300'}`}>
+              {i === 0 ? <Zap className="h-4 w-4 text-status-warning-400 flex-shrink-0 mt-0.5" /> : <Check className="h-4 w-4 text-status-success-500 flex-shrink-0 mt-0.5" />}
               {f}
             </li>
           ))}
@@ -326,7 +326,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
                     return (
                       <td key={plan} className={`px-4 py-3 text-center ${plan === currentPlan ? 'bg-primary-500/5' : ''}`}>
                         {val === true ? (
-                          <Check className="h-4 w-4 text-emerald-500 mx-auto" />
+                          <Check className="h-4 w-4 text-status-success-500 mx-auto" />
                         ) : val === false ? (
                           <X className="h-4 w-4 text-surface-600 mx-auto" />
                         ) : (
@@ -361,7 +361,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
         {/* Card visual */}
         <div className="relative mb-8 max-w-sm mx-auto">
           <div className="rounded-2xl p-6 text-white"
-            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed, #6366f1)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-status-violet-600), var(--color-primary-500))' }}>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -516,7 +516,7 @@ export function SubscriptionTab({ currentPlan, setCurrentPlan, billingCycle, set
     {/* Save Billing Info */}
     <div className="flex items-center justify-end gap-3">
       {billingSaved && (
-        <span className="flex items-center gap-1.5 text-sm text-emerald-500">
+        <span className="flex items-center gap-1.5 text-sm text-status-success-500">
           <Check className="h-4 w-4" /> Billing info saved
         </span>
       )}

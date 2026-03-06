@@ -106,9 +106,9 @@ const STORE_INFO = {
 
 const platformLabels: Record<string, { label: string; color: string }> = {
   physical: { label: 'Store (Physical)', color: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
-  anytime: { label: 'Anytime Mailbox', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  iPostal: { label: 'iPostal1', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  postscan: { label: 'PostScan Mail', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
+  anytime: { label: 'Anytime Mailbox', color: 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' },
+  iPostal: { label: 'iPostal1', color: 'bg-status-info-500/20 text-status-info-400 border-status-info-500/30' },
+  postscan: { label: 'PostScan Mail', color: 'bg-primary-500/20 text-primary-400 border-primary-500/30' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -192,11 +192,11 @@ function getAgeFromDob(dob: string): number {
 
 function ExistingCustomerCard({ match, onDismiss }: { match: ExistingCustomerMatch; onDismiss: () => void }) {
   return (
-    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
+    <div className="rounded-lg border border-status-warning-500/30 bg-status-warning-500/5 p-4 space-y-2">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
+        <AlertTriangle className="h-5 w-5 text-status-warning-400 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-amber-400">Possible Existing Customer</p>
+          <p className="text-sm font-medium text-status-warning-400">Possible Existing Customer</p>
           <p className="text-xs text-surface-400 mt-1">
             A customer matching this info already exists. Review before creating a duplicate.
           </p>
@@ -204,7 +204,7 @@ function ExistingCustomerCard({ match, onDismiss }: { match: ExistingCustomerMat
             <div><span className="text-surface-500">Name</span><p className="text-surface-200">{match.firstName} {match.lastName}</p></div>
             {match.pmbNumber && <div><span className="text-surface-500">PMB</span><p className="text-surface-200 font-mono">{match.pmbNumber}</p></div>}
             {match.email && <div><span className="text-surface-500">Email</span><p className="text-surface-200">{match.email}</p></div>}
-            <div><span className="text-surface-500">Status</span><Badge dot={false} className={cn('text-[10px]', match.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-surface-600/30 text-surface-400')}>{match.status}</Badge></div>
+            <div><span className="text-surface-500">Status</span><Badge dot={false} className={cn('text-[10px]', match.status === 'active' ? 'bg-status-success-500/20 text-status-success-400' : 'bg-surface-600/30 text-surface-400')}>{match.status}</Badge></div>
           </div>
         </div>
         <button onClick={onDismiss} className="p-1 rounded-md text-surface-500 hover:text-surface-300"><X className="h-4 w-4" /></button>
@@ -242,7 +242,7 @@ function RecipientRow({
           <UserPlus className="h-3.5 w-3.5 text-primary-500" />
           Recipient #{index + 1}
         </h4>
-        <button onClick={() => onRemove(index)} className="p-1 rounded-md text-surface-500 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
+        <button onClick={() => onRemove(index)} className="p-1 rounded-md text-surface-500 hover:text-status-error-400"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Select label="Type" options={typeOptions} value={recipient.type} onChange={(e) => onChange(index, 'type', e.target.value)} />
@@ -261,15 +261,15 @@ function RecipientRow({
         <div className="space-y-2">
           <Input label="Date of Birth *" type="date" value={recipient.dateOfBirth || ''} onChange={(e) => onChange(index, 'dateOfBirth', e.target.value)} helperText="Minors under 18 are exempt from separate PS1583 per USPS DMM 508.4" leftIcon={<Calendar className="h-4 w-4" />} error={recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 ? `Date of birth indicates this person is ${getAgeFromDob(recipient.dateOfBirth)} years old. Minor exemption requires individual to be under 18.` : undefined} />
           {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) >= 18 && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-red-400">This individual is {getAgeFromDob(recipient.dateOfBirth)} years old and does not qualify for the minor exemption. They must complete their own PS Form 1583 as an additional recipient.</p>
+            <div className="rounded-lg border border-status-error-500/30 bg-status-error-500/5 p-3 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-status-error-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-status-error-400">This individual is {getAgeFromDob(recipient.dateOfBirth)} years old and does not qualify for the minor exemption. They must complete their own PS Form 1583 as an additional recipient.</p>
             </div>
           )}
           {recipient.dateOfBirth && getAgeFromDob(recipient.dateOfBirth) < 18 && getAgeFromDob(recipient.dateOfBirth) >= 0 && (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-              <p className="text-xs text-emerald-400">Age verified: {getAgeFromDob(recipient.dateOfBirth)} years old — qualifies for minor exemption.</p>
+            <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-3 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
+              <p className="text-xs text-status-success-400">Age verified: {getAgeFromDob(recipient.dateOfBirth)} years old — qualifies for minor exemption.</p>
             </div>
           )}
         </div>
@@ -277,9 +277,9 @@ function RecipientRow({
       {/* BAR-421: Employee exception — employees exempt from separate PS1583 per Box 12 */}
       {recipient.type === 'employee_exception' && (
         <div className="space-y-2">
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-            <p className="text-xs text-emerald-400">Employee of the business — exempt from separate PS1583 filing per USPS Box 12 exemptions.</p>
+          <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-3 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
+            <p className="text-xs text-status-success-400">Employee of the business — exempt from separate PS1583 filing per USPS Box 12 exemptions.</p>
           </div>
           <label className="flex items-center gap-2 text-sm text-surface-300 cursor-pointer">
             <input type="checkbox" checked={recipient.isEmployee !== false} onChange={(e) => onChange(index, 'isEmployee', String(e.target.checked))} className="rounded border-surface-600 bg-surface-800 text-primary-500" />
@@ -835,8 +835,8 @@ export default function NewCustomerPage() {
       <div className="space-y-6 max-w-4xl mx-auto">
         <div className="glass-card p-12 text-center space-y-4">
           <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+            <div className="h-16 w-16 rounded-full bg-status-success-500/20 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-status-success-400" />
             </div>
           </div>
           <h2 className="text-2xl font-bold text-surface-100">Customer Created Successfully</h2>
@@ -855,11 +855,11 @@ export default function NewCustomerPage() {
             </div>
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">Payment</div>
-              <div className="text-sm font-semibold text-emerald-400">{paymentStatus === 'completed' ? `$${paymentAmount}` : 'Pending'}</div>
+              <div className="text-sm font-semibold text-status-success-400">{paymentStatus === 'completed' ? `$${paymentAmount}` : 'Pending'}</div>
             </div>
             <div className="glass-card p-3 text-center">
               <div className="text-xs text-surface-500">Agreement</div>
-              <div className="text-sm font-semibold text-emerald-400">{agreementSigned && cmraSigned ? 'Dual Signed' : agreementSigned ? 'Customer Signed' : 'Pending'}</div>
+              <div className="text-sm font-semibold text-status-success-400">{agreementSigned && cmraSigned ? 'Dual Signed' : agreementSigned ? 'Customer Signed' : 'Pending'}</div>
             </div>
           </div>
           {/* BAR-421: Email/Print MSA + PS1583 actions */}
@@ -967,7 +967,7 @@ export default function NewCustomerPage() {
             {/* Business entity fields — only show if business name is entered */}
             {isBusinessPmb && (
               <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-status-warning-500" />Business Entity Details (PS1583 §7)</CardTitle></CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Select label="Business Type (§7b)" options={BUSINESS_ENTITY_TYPES} value={customerForm.businessType} onChange={(e) => updateField('businessType', e.target.value)} placeholder="Select entity type..." />
@@ -1029,7 +1029,7 @@ export default function NewCustomerPage() {
               </div>
             )}
             {existingCheckDone && !existingMatch && (
-              <div className="flex items-center justify-center gap-2 text-sm text-emerald-400">
+              <div className="flex items-center justify-center gap-2 text-sm text-status-success-400">
                 <CheckCircle2 className="h-4 w-4" /> No existing customer found — safe to proceed
               </div>
             )}
@@ -1068,14 +1068,14 @@ export default function NewCustomerPage() {
 
                   {/* PMB picker */}
                   <div className="relative">
-                    <div onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)} className={cn('flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors', customerForm.pmbNumber ? 'border-primary-500/50 bg-primary-500/5' : 'border-surface-700 bg-surface-900/50 hover:border-surface-600', formErrors.pmbNumber && 'border-red-500/50')}>
+                    <div onClick={() => setPmbDropdownOpen(!pmbDropdownOpen)} className={cn('flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors', customerForm.pmbNumber ? 'border-primary-500/50 bg-primary-500/5' : 'border-surface-700 bg-surface-900/50 hover:border-surface-600', formErrors.pmbNumber && 'border-status-error-500/50')}>
                       <Mailbox className="h-4 w-4 text-surface-400" />
                       <span className={cn('flex-1 text-sm', customerForm.pmbNumber ? 'text-surface-100 font-mono font-medium' : 'text-surface-500')}>
                         {customerForm.pmbNumber ? formatPmbNumber(parseInt(customerForm.pmbNumber)) : 'Select PMB number...'}
                       </span>
                       <ChevronDown className={cn('h-4 w-4 text-surface-400 transition-transform', pmbDropdownOpen && 'rotate-180')} />
                     </div>
-                    {formErrors.pmbNumber && <p className="text-xs text-red-400 mt-1">{formErrors.pmbNumber}</p>}
+                    {formErrors.pmbNumber && <p className="text-xs text-status-error-400 mt-1">{formErrors.pmbNumber}</p>}
                     {pmbDropdownOpen && (
                       <div className="absolute z-20 top-full mt-1 left-0 right-0 rounded-lg border border-surface-700 bg-surface-900 shadow-xl max-h-64 overflow-hidden">
                         <div className="p-2 border-b border-surface-700">
@@ -1103,7 +1103,7 @@ export default function NewCustomerPage() {
             {/* Rate Plan Selection */}
             <Card padding="md">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Crown className="h-4 w-4 text-amber-500" />Rate Plan</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Crown className="h-4 w-4 text-status-warning-500" />Rate Plan</CardTitle>
                 {/* BAR-421: Expanded billing cycle selector (Daily, Monthly, Quarterly, Semi-Annual, Annual) */}
                 <div className="flex items-center gap-1 bg-surface-800 rounded-lg p-0.5 flex-wrap">
                   {BILLING_CYCLE_OPTIONS.map((opt) => (
@@ -1138,7 +1138,7 @@ export default function NewCustomerPage() {
                                 <span className="text-xs text-surface-500">/{cycleOpt?.shortLabel || 'mo'}</span>
                               </div>
                               {savings > 0 && (
-                                <p className="text-[11px] text-emerald-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings}/{cycleOpt?.shortLabel || 'mo'}</p>
+                                <p className="text-[11px] text-status-success-400 mt-0.5">${monthlyEquiv.toFixed(2)}/mo · Save ${savings}/{cycleOpt?.shortLabel || 'mo'}</p>
                               )}
                             </div>
                             <div className="space-y-1.5 text-[11px] text-surface-400">
@@ -1169,19 +1169,19 @@ export default function NewCustomerPage() {
           <div className="space-y-6">
             {/* Non-compliant ID warning */}
             {nonCompliantWarning && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+              <div className="rounded-lg border border-status-error-500/30 bg-status-error-500/5 p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-status-error-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-red-400">Non-Compliant ID Detected</p>
+                  <p className="text-sm font-medium text-status-error-400">Non-Compliant ID Detected</p>
                   <p className="text-xs text-surface-400 mt-1 whitespace-pre-wrap">{nonCompliantWarning}</p>
                 </div>
               </div>
             )}
             {expirationWarning && !nonCompliantWarning && (
-              <div className={cn('rounded-lg border p-4 flex items-start gap-3', expirationWarning.includes('expired') ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5')}>
-                <AlertCircle className={cn('h-5 w-5 mt-0.5 flex-shrink-0', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')} />
+              <div className={cn('rounded-lg border p-4 flex items-start gap-3', expirationWarning.includes('expired') ? 'border-status-error-500/30 bg-status-error-500/5' : 'border-status-warning-500/30 bg-status-warning-500/5')}>
+                <AlertCircle className={cn('h-5 w-5 mt-0.5 flex-shrink-0', expirationWarning.includes('expired') ? 'text-status-error-400' : 'text-status-warning-400')} />
                 <div>
-                  <p className={cn('text-sm font-medium', expirationWarning.includes('expired') ? 'text-red-400' : 'text-amber-400')}>
+                  <p className={cn('text-sm font-medium', expirationWarning.includes('expired') ? 'text-status-error-400' : 'text-status-warning-400')}>
                     {expirationWarning.includes('expired') ? 'Expired ID' : 'ID Expiring Soon'}
                   </p>
                   <p className="text-xs text-surface-400 mt-1">{expirationWarning}</p>
@@ -1213,7 +1213,7 @@ export default function NewCustomerPage() {
                       {primaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={primaryIdPreview} alt="Primary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button onClick={() => { setPrimaryIdFile(null); setPrimaryIdPreview(null); setExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{primaryIdFile?.name}</p></div>
                         </div>
                       ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'primary' ? (
@@ -1230,7 +1230,7 @@ export default function NewCustomerPage() {
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
                         </div>
                       )}
-                      {formErrors.primaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.primaryFile}</p>}
+                      {formErrors.primaryFile && <p className="text-xs text-status-error-400 mt-1">{formErrors.primaryFile}</p>}
                     </div>
                     {primaryIdFile && !extractedData && (
                       <Button variant="default" size="sm" onClick={simulateOCR} disabled={extracting} leftIcon={extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scan className="h-4 w-4" />}>
@@ -1238,8 +1238,8 @@ export default function NewCustomerPage() {
                       </Button>
                     )}
                     {extractedData && (
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
-                        <p className="text-xs font-medium text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Data Extracted</p>
+                      <div className="rounded-lg border border-status-success-500/20 bg-status-success-500/5 p-3 space-y-2">
+                        <p className="text-xs font-medium text-status-success-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Data Extracted</p>
                         <div className="grid grid-cols-2 gap-1 text-[11px]">
                           {extractedData.fullName && <><span className="text-surface-500">Name</span><span className="text-surface-300">{extractedData.fullName}</span></>}
                           {extractedData.dateOfBirth && <><span className="text-surface-500">DOB</span><span className="text-surface-300">{extractedData.dateOfBirth}</span></>}
@@ -1275,7 +1275,7 @@ export default function NewCustomerPage() {
                       {secondaryIdPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={secondaryIdPreview} alt="Secondary ID" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button onClick={() => { setSecondaryIdFile(null); setSecondaryIdPreview(null); setSecondaryExtractedData(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{secondaryIdFile?.name}</p></div>
                         </div>
                       ) : cameraMode === 'camera' && cameraActive && cameraSlot === 'secondary' ? (
@@ -1292,7 +1292,7 @@ export default function NewCustomerPage() {
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload or drag & drop</p><p className="text-xs text-surface-600 mt-1">JPG, PNG, PDF up to 10MB</p>
                         </div>
                       )}
-                      {formErrors.secondaryFile && <p className="text-xs text-red-400 mt-1">{formErrors.secondaryFile}</p>}
+                      {formErrors.secondaryFile && <p className="text-xs text-status-error-400 mt-1">{formErrors.secondaryFile}</p>}
                     </div>
                     {/* BAR-411 Bug 2: Extract address data from secondary ID to auto-populate home address */}
                     {secondaryIdFile && !secondaryExtractedData && (
@@ -1301,8 +1301,8 @@ export default function NewCustomerPage() {
                       </Button>
                     )}
                     {secondaryExtractedData && (
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
-                        <p className="text-xs font-medium text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Address Data Extracted — Home address auto-populated</p>
+                      <div className="rounded-lg border border-status-success-500/20 bg-status-success-500/5 p-3 space-y-2">
+                        <p className="text-xs font-medium text-status-success-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Address Data Extracted — Home address auto-populated</p>
                         <div className="grid grid-cols-2 gap-1 text-[11px]">
                           {secondaryExtractedData.address && <><span className="text-surface-500">Street</span><span className="text-surface-300">{secondaryExtractedData.address}</span></>}
                           {secondaryExtractedData.city && <><span className="text-surface-500">City</span><span className="text-surface-300">{secondaryExtractedData.city}</span></>}
@@ -1319,7 +1319,7 @@ export default function NewCustomerPage() {
             {/* Business Document (if business PMB) */}
             {isBusinessPmb && (
               <Card padding="md">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-amber-500" />Business Documentation</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-status-warning-500" />Business Documentation</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <Select label="Document Type *" placeholder="Select business document..." options={BUSINESS_DOC_TYPES} value={businessDocType} onChange={(e) => setBusinessDocType(e.target.value)} error={formErrors.businessDocType} />
@@ -1329,14 +1329,14 @@ export default function NewCustomerPage() {
                       {businessDocPreview ? (
                         <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                           <img src={businessDocPreview} alt="Business Doc" className="w-full h-40 object-cover" />
-                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="absolute top-2 right-2"><button onClick={() => { setBusinessDocFile(null); setBusinessDocPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                         </div>
                       ) : (
                         <div onClick={() => fileInputRef3.current?.click()} className="rounded-lg border-2 border-dashed border-surface-700 hover:border-primary-500/50 hover:bg-primary-500/5 p-6 text-center cursor-pointer transition-colors">
                           <Upload className="h-8 w-8 text-surface-500 mx-auto mb-2" /><p className="text-sm text-surface-400">Click to upload</p>
                         </div>
                       )}
-                      {formErrors.businessDocFile && <p className="text-xs text-red-400 mt-1">{formErrors.businessDocFile}</p>}
+                      {formErrors.businessDocFile && <p className="text-xs text-status-error-400 mt-1">{formErrors.businessDocFile}</p>}
                     </div>
                   </div>
                 </CardContent>
@@ -1358,7 +1358,7 @@ export default function NewCustomerPage() {
                     {proofOfAddressPreview ? (
                       <div className="relative rounded-lg border border-surface-700 overflow-hidden">
                         <img src={proofOfAddressPreview} alt="Proof of Address" className="w-full h-40 object-cover" />
-                        <div className="absolute top-2 right-2"><button onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-red-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
+                        <div className="absolute top-2 right-2"><button onClick={() => { setProofOfAddressFile(null); setProofOfAddressPreview(null); }} className="p-1.5 rounded-md bg-surface-900/80 text-surface-400 hover:text-status-error-400 backdrop-blur-sm"><X className="h-3.5 w-3.5" /></button></div>
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-900/90 to-transparent p-2"><p className="text-xs text-surface-300 truncate">{proofOfAddressFile?.name}</p></div>
                       </div>
                     ) : (
@@ -1430,7 +1430,7 @@ export default function NewCustomerPage() {
                     </label>
                     <p className="text-[11px] text-surface-500 mt-1 ml-6">Check if applicant has a court order restricting disclosure of their address</p>
                     {form1583.courtOrderedProtected && (
-                      <p className="text-xs text-amber-400 mt-2 ml-6 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> Court order documentation must be uploaded and kept on file</p>
+                      <p className="text-xs text-status-warning-400 mt-2 ml-6 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> Court order documentation must be uploaded and kept on file</p>
                     )}
                   </div>
 
@@ -1478,7 +1478,7 @@ export default function NewCustomerPage() {
                       <Input label="ZIP (§6d)" value={form1583.forwardingZip || ''} onChange={(e) => setForm1583((p) => ({ ...p, forwardingZip: e.target.value }))} />
                     </div>
                   </div>
-                  <p className="text-[11px] text-amber-400 mt-3 flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Per USPS: A new PS1583 is required each time the forwarding address changes.</p>
+                  <p className="text-[11px] text-status-warning-400 mt-3 flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Per USPS: A new PS1583 is required each time the forwarding address changes.</p>
                 </CardContent>
               )}
             </Card>
@@ -1501,9 +1501,9 @@ export default function NewCustomerPage() {
                       <RecipientRow key={idx} recipient={r} index={idx} onChange={updateRecipient} onRemove={removeRecipient} />
                     ))}
                     {selectedPlan && recipients.length >= selectedPlan.maxRecipients && (
-                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-400" />
-                        <p className="text-xs text-amber-400">This plan allows {selectedPlan.maxRecipients} recipient(s). Additional recipients may incur overage fees.</p>
+                      <div className="rounded-lg border border-status-warning-500/30 bg-status-warning-500/5 p-3 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-status-warning-400" />
+                        <p className="text-xs text-status-warning-400">This plan allows {selectedPlan.maxRecipients} recipient(s). Additional recipients may incur overage fees.</p>
                       </div>
                     )}
                   </div>
@@ -1520,7 +1520,7 @@ export default function NewCustomerPage() {
           <div className="space-y-6">
             {/* Payment summary */}
             <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-emerald-500" />Payment Summary</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-status-success-500" />Payment Summary</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {selectedPlan ? (
@@ -1590,27 +1590,27 @@ export default function NewCustomerPage() {
                     </div>
                   )}
                   {paymentStatus === 'completed' && (
-                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                    <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-4 flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-status-success-400" />
                       <div>
-                        <p className="text-sm font-medium text-emerald-400">Payment Successful</p>
+                        <p className="text-sm font-medium text-status-success-400">Payment Successful</p>
                         <p className="text-xs text-surface-400">${parseFloat(paymentAmount).toFixed(2)} via {PAYMENT_METHODS.find((m) => m.value === paymentMethod)?.label} · Ref: {paymentRef}</p>
                       </div>
                     </div>
                   )}
                   {paymentStatus === 'failed' && (
-                    <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 space-y-3">
+                    <div className="rounded-lg border border-status-error-500/30 bg-status-error-500/5 p-4 space-y-3">
                       <div className="flex items-center gap-3">
-                        <X className="h-5 w-5 text-red-400" />
-                        <p className="text-sm font-medium text-red-400">Payment Failed</p>
+                        <X className="h-5 w-5 text-status-error-400" />
+                        <p className="text-sm font-medium text-status-error-400">Payment Failed</p>
                       </div>
                       <Button variant="ghost" size="sm" onClick={() => setPaymentStatus('idle')}>Try Again</Button>
                     </div>
                   )}
                   {paymentSkipped && paymentStatus === 'idle' && (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-400" />
-                      <p className="text-xs text-amber-400">Payment skipped — customer will need to pay before account activation.</p>
+                    <div className="rounded-lg border border-status-warning-500/30 bg-status-warning-500/5 p-3 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-status-warning-400" />
+                      <p className="text-xs text-status-warning-400">Payment skipped — customer will need to pay before account activation.</p>
                     </div>
                   )}
                 </CardContent>
@@ -1640,9 +1640,9 @@ export default function NewCustomerPage() {
               <CardContent>
                 {signatureDataUrl ? (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                      <div><p className="text-sm font-medium text-emerald-400">Agreement Signed</p><p className="text-xs text-surface-400">Signed on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p></div>
+                    <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-4 flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-status-success-400" />
+                      <div><p className="text-sm font-medium text-status-success-400">Agreement Signed</p><p className="text-xs text-surface-400">Signed on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p></div>
                       <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { setSignatureDataUrl(null); setAgreementSigned(false); }}>Re-sign</Button>
                     </div>
                     <div className="rounded-lg border border-surface-700 p-3 bg-white"><img src={signatureDataUrl} alt="Customer Signature" className="max-h-24 mx-auto" /></div>
@@ -1655,7 +1655,7 @@ export default function NewCustomerPage() {
 
             {/* BAR-230: CMRA Owner/Employee Countersignature (§14a) */}
             <Card padding="md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-4 w-4 text-amber-500" />CMRA Owner / Employee Countersignature (§14a)</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-4 w-4 text-status-warning-500" />CMRA Owner / Employee Countersignature (§14a)</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xs text-surface-400 mb-4">
                   Per USPS regulations, the CMRA owner or a designee must countersign the PS Form 1583 acknowledging that the applicant has been verified.
@@ -1663,9 +1663,9 @@ export default function NewCustomerPage() {
                 <Input label="Employee / CMRA Owner Name *" value={cmraSignedBy} onChange={(e) => setCmraSignedBy(e.target.value)} placeholder="Name of person countersigning" leftIcon={<User className="h-4 w-4" />} className="mb-4" />
                 {cmraSignatureUrl ? (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                      <div><p className="text-sm font-medium text-emerald-400">Countersigned by {cmraSignedBy || 'CMRA Employee'}</p><p className="text-xs text-surface-400">{new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p></div>
+                    <div className="rounded-lg border border-status-success-500/30 bg-status-success-500/5 p-4 flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-status-success-400" />
+                      <div><p className="text-sm font-medium text-status-success-400">Countersigned by {cmraSignedBy || 'CMRA Employee'}</p><p className="text-xs text-surface-400">{new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p></div>
                       <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { setCmraSignatureUrl(null); setCmraSigned(false); }}>Re-sign</Button>
                     </div>
                     <div className="rounded-lg border border-surface-700 p-3 bg-white"><img src={cmraSignatureUrl} alt="CMRA Signature" className="max-h-24 mx-auto" /></div>
@@ -1692,7 +1692,7 @@ export default function NewCustomerPage() {
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-lg">{customerForm.firstName[0]}{customerForm.lastName[0]}</div>
                       <div>
-                        <div className="flex items-center gap-2"><p className="text-base font-semibold text-surface-100">{customerForm.firstName} {customerForm.lastName}</p>{isBusinessPmb && <Badge dot={false} className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">Business</Badge>}</div>
+                        <div className="flex items-center gap-2"><p className="text-base font-semibold text-surface-100">{customerForm.firstName} {customerForm.lastName}</p>{isBusinessPmb && <Badge dot={false} className="text-[10px] bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30">Business</Badge>}</div>
                         {customerForm.businessName && <p className="text-xs text-surface-400">{customerForm.businessName}</p>}
                       </div>
                     </div>
@@ -1728,7 +1728,7 @@ export default function NewCustomerPage() {
                       { label: 'Payment', value: paymentStatus === 'completed' ? `$${parseFloat(paymentAmount).toFixed(2)} collected` : paymentSkipped ? 'Skipped' : 'Pending', ok: paymentStatus === 'completed', warn: paymentSkipped || paymentStatus === 'idle', step: 4 },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3 text-sm">
-                        {item.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" /> : item.warn ? <AlertCircle className="h-4 w-4 text-yellow-400 flex-shrink-0" /> : <X className="h-4 w-4 text-red-400 flex-shrink-0" />}
+                        {item.ok ? <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" /> : item.warn ? <AlertCircle className="h-4 w-4 text-status-warning-400 flex-shrink-0" /> : <X className="h-4 w-4 text-status-error-400 flex-shrink-0" />}
                         <div className="flex-1"><p className="text-surface-300">{item.label}</p><p className="text-xs text-surface-500">{item.value}</p></div>
                         <Button variant="ghost" size="sm" onClick={() => setStep(item.step)} className="text-xs">Edit</Button>
                       </div>
@@ -1740,21 +1740,21 @@ export default function NewCustomerPage() {
 
             {/* Warnings */}
             {!form1583.crdUploaded && (
-              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-yellow-500">
-                <AlertCircle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div><p className="text-sm font-medium text-yellow-400">CRD Upload Reminder</p><p className="text-xs text-surface-400 mt-1">Both ID documents must be uploaded to the USPS Customer Registration Database within a few days to a week. You can create the customer now and update the CRD status later.</p></div>
+              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-status-warning-500">
+                <AlertCircle className="h-5 w-5 text-status-warning-400 mt-0.5 flex-shrink-0" />
+                <div><p className="text-sm font-medium text-status-warning-400">CRD Upload Reminder</p><p className="text-xs text-surface-400 mt-1">Both ID documents must be uploaded to the USPS Customer Registration Database within a few days to a week. You can create the customer now and update the CRD status later.</p></div>
               </div>
             )}
             {!cmraSigned && (
-              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-amber-500">
-                <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                <div><p className="text-sm font-medium text-amber-400">CMRA Countersignature Missing</p><p className="text-xs text-surface-400 mt-1">The CMRA owner/employee countersignature (PS1583 §14a) is required for full compliance. You can proceed now and collect it later.</p></div>
+              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-status-warning-500">
+                <AlertCircle className="h-5 w-5 text-status-warning-400 mt-0.5 flex-shrink-0" />
+                <div><p className="text-sm font-medium text-status-warning-400">CMRA Countersignature Missing</p><p className="text-xs text-surface-400 mt-1">The CMRA owner/employee countersignature (PS1583 §14a) is required for full compliance. You can proceed now and collect it later.</p></div>
               </div>
             )}
             {submitError && (
-              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-red-500">
-                <X className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
-                <div><p className="text-sm font-medium text-red-400">Error</p><p className="text-xs text-surface-400 mt-1">{submitError}</p></div>
+              <div className="glass-card p-4 flex items-start gap-3 border-l-4 border-status-error-500">
+                <X className="h-5 w-5 text-status-error-400 mt-0.5 flex-shrink-0" />
+                <div><p className="text-sm font-medium text-status-error-400">Error</p><p className="text-xs text-surface-400 mt-1">{submitError}</p></div>
               </div>
             )}
           </div>

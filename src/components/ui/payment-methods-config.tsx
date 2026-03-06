@@ -137,8 +137,8 @@ export function PaymentMethodsConfigPanel({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-500/10">
-            <Settings className="h-5 w-5 text-indigo-400" />
+          <div className="p-2 rounded-lg bg-primary-500/10">
+            <Settings className="h-5 w-5 text-primary-400" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Payment Methods</h3>
@@ -153,9 +153,9 @@ export function PaymentMethodsConfigPanel({
       </div>
 
       {/* Processor-agnostic notice */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 mb-6">
-        <Shield className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-300/80">
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-status-info-500/5 border border-status-info-500/10 mb-6">
+        <Shield className="h-4 w-4 text-status-info-400 mt-0.5 shrink-0" />
+        <p className="text-xs text-status-info-300/80">
           ShipOS is processor-agnostic — each store uses its own payment processor.
           Enable the methods your processor supports.
         </p>
@@ -173,14 +173,14 @@ export function PaymentMethodsConfigPanel({
               className={cn(
                 'w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left',
                 enabled
-                  ? 'border-indigo-500/40 bg-indigo-500/5'
+                  ? 'border-primary-500/40 bg-primary-500/5'
                   : 'border-zinc-700/50 bg-zinc-800/30 hover:border-zinc-600/50',
               )}
             >
               <div
                 className={cn(
                   'p-2 rounded-lg shrink-0',
-                  enabled ? 'bg-indigo-500/20 text-indigo-400' : 'bg-zinc-700/40 text-zinc-500',
+                  enabled ? 'bg-primary-500/20 text-primary-400' : 'bg-zinc-700/40 text-zinc-500',
                 )}
               >
                 {method.icon}
@@ -204,7 +204,7 @@ export function PaymentMethodsConfigPanel({
               <div
                 className={cn(
                   'w-11 h-6 rounded-full relative transition-colors shrink-0',
-                  enabled ? 'bg-indigo-500' : 'bg-zinc-700',
+                  enabled ? 'bg-primary-500' : 'bg-zinc-700',
                 )}
               >
                 <div

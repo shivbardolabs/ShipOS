@@ -110,7 +110,7 @@ export function PlanComparison({ onSelect }: { onSelect?: (tierId: string, billi
                     <span className="text-surface-400">/mo</span>
                   </div>
                   {billingCycle === 'annual' && savings.savingsPct > 0 && (
-                    <div className="mt-1 text-sm text-emerald-400 flex items-center justify-center gap-1">
+                    <div className="mt-1 text-sm text-status-success-400 flex items-center justify-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       Save {formatCurrency(savings.savings)}/year ({savings.savingsPct.toFixed(0)}% off)
                     </div>
@@ -149,7 +149,7 @@ export function PlanComparison({ onSelect }: { onSelect?: (tierId: string, billi
 function Feature({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 text-surface-300">
-      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+      <CheckCircle2 className="h-3.5 w-3.5 text-status-success-500 flex-shrink-0" />
       <span>{label}</span>
     </div>
   );

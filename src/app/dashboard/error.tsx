@@ -26,9 +26,9 @@ export default function DashboardError({
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
       <div
         className="flex h-16 w-16 items-center justify-center rounded-2xl mb-6"
-        style={{ background: 'rgba(239, 68, 68, 0.1)' }}
+        style={{ background: 'color-mix(in srgb, var(--color-status-error-500) 10%, transparent)' }}
       >
-        <AlertTriangle className="h-8 w-8 text-red-500" />
+        <AlertTriangle className="h-8 w-8 text-status-error-500" />
       </div>
 
       <h2 className="text-xl font-bold text-surface-200 mb-2">
@@ -45,7 +45,7 @@ export default function DashboardError({
           Error details
         </summary>
         <div className="mt-2 p-3 rounded-lg border border-surface-700 bg-surface-900 overflow-auto max-h-40">
-          <p className="text-xs font-mono text-red-400 whitespace-pre-wrap break-all">
+          <p className="text-xs font-mono text-status-error-400 whitespace-pre-wrap break-all">
             {error.message}
           </p>
           {error.digest && (

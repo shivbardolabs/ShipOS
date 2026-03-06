@@ -132,8 +132,8 @@ export default function LoyaltyDashboardPage() {
                 </p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-500/15 px-3 py-1 text-xs font-semibold text-status-success-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-status-success-400" />
               Active
             </span>
           </div>
@@ -144,9 +144,9 @@ export default function LoyaltyDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Members', value: formatNumber(stats.totalMembers), icon: Users, color: 'text-primary-500', bg: 'bg-primary-500/10' },
-          { label: 'Points Issued (Month)', value: formatNumber(stats.pointsIssuedThisMonth), icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Redemptions (Month)', value: formatNumber(stats.redemptionsThisMonth), icon: Gift, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Avg Points / Member', value: formatNumber(avgPointsPerMember), icon: Star, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+          { label: 'Points Issued (Month)', value: formatNumber(stats.pointsIssuedThisMonth), icon: TrendingUp, color: 'text-status-success-400', bg: 'bg-status-success-500/10' },
+          { label: 'Redemptions (Month)', value: formatNumber(stats.redemptionsThisMonth), icon: Gift, color: 'text-status-warning-400', bg: 'bg-status-warning-500/10' },
+          { label: 'Avg Points / Member', value: formatNumber(avgPointsPerMember), icon: Star, color: 'text-status-violet-400', bg: 'bg-status-violet-500/10' },
         ].map((card) => (
           <div key={card.label} className="rounded-xl border layout-border layout-card p-4">
             <div className="flex items-center justify-between mb-3">
@@ -192,7 +192,7 @@ export default function LoyaltyDashboardPage() {
                 <div className="mt-3 space-y-1">
                   {tier.benefits.slice(0, 3).map((b: string, i: number) => (
                     <p key={i} className="text-xs text-surface-400 flex items-center gap-1.5">
-                      <Check className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                      <Check className="h-3 w-3 text-status-success-400 flex-shrink-0" />
                       {b}
                     </p>
                   ))}
@@ -226,7 +226,7 @@ export default function LoyaltyDashboardPage() {
                     <p className="text-xs text-surface-500">{formatNumber(cust.points)} lifetime pts</p>
                   </div>
                 </div>
-                {tierBadge(cust.tier, loyaltyTiers.find(t => t.name === cust.tier)?.color || '#888')}
+                {tierBadge(cust.tier, loyaltyTiers.find(t => t.name === cust.tier)?.color || 'var(--color-surface-500)')}
               </div>
             ))}
           </div>
@@ -244,11 +244,11 @@ export default function LoyaltyDashboardPage() {
               return (
                 <div key={txn.id || i} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isEarn ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isEarn ? 'bg-status-success-500/10' : 'bg-status-warning-500/10'}`}>
                       {isEarn ? (
-                        <ArrowUpRight className="h-4 w-4 text-emerald-400" />
+                        <ArrowUpRight className="h-4 w-4 text-status-success-400" />
                       ) : (
-                        <ArrowDownRight className="h-4 w-4 text-amber-400" />
+                        <ArrowDownRight className="h-4 w-4 text-status-warning-400" />
                       )}
                     </div>
                     <div>
@@ -258,7 +258,7 @@ export default function LoyaltyDashboardPage() {
                       <p className="text-xs text-surface-500">{formatDate(txn.createdAt)}</p>
                     </div>
                   </div>
-                  <span className={`text-sm font-bold ${isEarn ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span className={`text-sm font-bold ${isEarn ? 'text-status-success-400' : 'text-status-warning-400'}`}>
                     {isEarn ? '+' : ''}{formatNumber(txn.points)} pts
                   </span>
                 </div>
@@ -288,7 +288,7 @@ export default function LoyaltyDashboardPage() {
               <p className="text-xs text-surface-500 leading-relaxed">{reward.description}</p>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs text-surface-500">${reward.value.toFixed(2)} value</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${reward.isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-surface-700 text-surface-400'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${reward.isActive ? 'bg-status-success-500/15 text-status-success-400' : 'bg-surface-700 text-surface-400'}`}>
                   {reward.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -349,7 +349,7 @@ export default function LoyaltyDashboardPage() {
                     >
                       {acct.referralCode}
                       {copiedCode === acct.referralCode ? (
-                        <Check className="h-3 w-3 text-emerald-400" />
+                        <Check className="h-3 w-3 text-status-success-400" />
                       ) : (
                         <Copy className="h-3 w-3" />
                       )}

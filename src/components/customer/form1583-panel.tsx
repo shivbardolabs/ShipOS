@@ -207,7 +207,7 @@ export function Form1583Panel({ customerId }: Form1583PanelProps) {
                 <p className="text-xs text-surface-500 mb-1">Notarized</p>
                 <span className="text-sm text-surface-300">
                   {data.form1583Notarized ? (
-                    <span className="flex items-center gap-1 text-emerald-400">
+                    <span className="flex items-center gap-1 text-status-success-400">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {data.form1583NotarizedAt ? formatDate(data.form1583NotarizedAt) : 'Yes'}
                     </span>
@@ -218,12 +218,12 @@ export function Form1583Panel({ customerId }: Form1583PanelProps) {
                 <p className="text-xs text-surface-500 mb-1">CRD Uploaded</p>
                 <span className="text-sm text-surface-300">
                   {data.crdUploaded ? (
-                    <span className="flex items-center gap-1 text-emerald-400">
+                    <span className="flex items-center gap-1 text-status-success-400">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {data.crdUploadDate ? formatDate(data.crdUploadDate) : 'Yes'}
                     </span>
                   ) : (
-                    <span className="text-yellow-400">Pending</span>
+                    <span className="text-status-warning-400">Pending</span>
                   )}
                 </span>
               </div>
@@ -234,19 +234,19 @@ export function Form1583Panel({ customerId }: Form1583PanelProps) {
               <div className={cn(
                 'rounded-lg p-3 border',
                 isExpired
-                  ? 'bg-red-950/30 border-red-800/50'
+                  ? 'bg-red-950/30 border-status-error-800/50'
                   : isExpiringSoon
                     ? 'bg-yellow-950/30 border-yellow-800/50'
-                    : 'bg-emerald-950/20 border-emerald-800/30'
+                    : 'bg-emerald-950/20 border-status-success-800/30'
               )}>
                 <div className="flex items-center gap-2">
                   <CalendarClock className={cn(
                     'h-4 w-4',
-                    isExpired ? 'text-red-400' : isExpiringSoon ? 'text-yellow-400' : 'text-emerald-400'
+                    isExpired ? 'text-status-error-400' : isExpiringSoon ? 'text-status-warning-400' : 'text-status-success-400'
                   )} />
                   <span className={cn(
                     'text-sm font-medium',
-                    isExpired ? 'text-red-300' : isExpiringSoon ? 'text-yellow-300' : 'text-emerald-300'
+                    isExpired ? 'text-status-error-300' : isExpiringSoon ? 'text-yellow-300' : 'text-status-success-300'
                   )}>
                     {isExpired
                       ? `Expired ${Math.abs(data.daysUntilExpiry!)}d ago — re-filing required`
@@ -262,7 +262,7 @@ export function Form1583Panel({ customerId }: Form1583PanelProps) {
             {data.form1583Status === 'needs_refiling' && (
               <div className="rounded-lg p-3 border bg-orange-950/30 border-orange-800/50">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  <AlertTriangle className="h-4 w-4 text-status-warning-400" />
                   <span className="text-sm font-medium text-orange-300">
                     PS1583-protected field(s) changed — a new Form 1583 must be filed and notarized
                   </span>
@@ -355,10 +355,10 @@ export function Form1583Panel({ customerId }: Form1583PanelProps) {
                     <p className="text-sm text-surface-200 mt-0.5">
                       <span className="text-surface-400">{entry.fieldName}</span>
                       {entry.oldValue && (
-                        <span className="text-red-400/70 line-through mx-1">{entry.oldValue}</span>
+                        <span className="text-status-error-400/70 line-through mx-1">{entry.oldValue}</span>
                       )}
                       {entry.newValue && (
-                        <span className="text-emerald-400 mx-1">→ {entry.newValue}</span>
+                        <span className="text-status-success-400 mx-1">→ {entry.newValue}</span>
                       )}
                     </p>
                     {entry.notes && (

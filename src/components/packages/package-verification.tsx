@@ -117,11 +117,11 @@ export function PackageVerification({
 
       {/* Status Messages */}
       {status === 'verified' && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-status-success-500/10 border border-status-success-500/20">
+          <CheckCircle2 className="h-5 w-5 text-status-success-500" />
           <div>
-            <p className="text-sm font-medium text-emerald-400">Package Verified</p>
-            <p className="text-xs text-emerald-400/70">
+            <p className="text-sm font-medium text-status-success-400">Package Verified</p>
+            <p className="text-xs text-status-success-400/70">
               Label PMB matches customer {expectedPmb}
             </p>
           </div>
@@ -130,11 +130,11 @@ export function PackageVerification({
 
       {status === 'mismatch' && (
         <div className="space-y-2">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-            <ShieldAlert className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+            <ShieldAlert className="h-5 w-5 text-status-error-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-red-400">⚠ PMB Mismatch!</p>
-              <p className="text-xs text-red-400/70">
+              <p className="text-sm font-bold text-status-error-400">⚠ PMB Mismatch!</p>
+              <p className="text-xs text-status-error-400/70">
                 This package does NOT belong to {expectedPmb}. Release is blocked.
               </p>
             </div>

@@ -61,12 +61,12 @@ const heading: React.CSSProperties = {
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   lineHeight: '24px',
-  color: '#374151',
+  color: 'var(--color-surface-300)',
   margin: '0 0 16px',
 };
 
 const featureBox: React.CSSProperties = {
-  backgroundColor: '#f0fdf4',
+  backgroundColor: 'var(--color-status-success-50)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',
@@ -75,7 +75,7 @@ const featureBox: React.CSSProperties = {
 
 const featureItem: React.CSSProperties = {
   fontSize: '14px',
-  color: '#166534',
+  color: 'var(--color-status-success-800)',
   margin: '6px 0',
   lineHeight: '22px',
 };

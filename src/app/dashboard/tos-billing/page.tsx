@@ -215,14 +215,14 @@ export default function TosBillingPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Revenue</p>
+                <p className="text-sm text-surface-9000">Total Revenue</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(summary?.totalAmount ?? 0)}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 opacity-50" />
+              <DollarSign className="h-8 w-8 text-status-success-500 opacity-50" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">{summary?.totalCharges ?? 0} charges</p>
+            <p className="text-xs text-surface-500 mt-1">{summary?.totalCharges ?? 0} charges</p>
           </CardContent>
         </Card>
 
@@ -230,14 +230,14 @@ export default function TosBillingPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Immediate Paid</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-surface-9000">Immediate Paid</p>
+                <p className="text-2xl font-bold text-status-success-600">
                   {formatCurrency(summary?.paidImmediateAmount ?? 0)}
                 </p>
               </div>
-              <ArrowUpRight className="h-8 w-8 text-green-400 opacity-50" />
+              <ArrowUpRight className="h-8 w-8 text-status-success-400 opacity-50" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">{summary?.paidImmediateCount ?? 0} transactions</p>
+            <p className="text-xs text-surface-500 mt-1">{summary?.paidImmediateCount ?? 0} transactions</p>
           </CardContent>
         </Card>
 
@@ -245,14 +245,14 @@ export default function TosBillingPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending Deferred</p>
-                <p className="text-2xl font-bold text-amber-600">
+                <p className="text-sm text-surface-9000">Pending Deferred</p>
+                <p className="text-2xl font-bold text-status-warning-600">
                   {formatCurrency(summary?.pendingDeferredAmount ?? 0)}
                 </p>
               </div>
-              <ArrowDownRight className="h-8 w-8 text-amber-400 opacity-50" />
+              <ArrowDownRight className="h-8 w-8 text-status-warning-400 opacity-50" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">{summary?.pendingDeferredCount ?? 0} awaiting invoice</p>
+            <p className="text-xs text-surface-500 mt-1">{summary?.pendingDeferredCount ?? 0} awaiting invoice</p>
           </CardContent>
         </Card>
 
@@ -260,16 +260,16 @@ export default function TosBillingPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Collection Rate</p>
+                <p className="text-sm text-surface-9000">Collection Rate</p>
                 <p className="text-2xl font-bold">
                   {summary && summary.totalAmount > 0
                     ? `${Math.round((summary.paidImmediateAmount / summary.totalAmount) * 100)}%`
                     : '—'}
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-blue-400 opacity-50" />
+              <TrendingUp className="h-8 w-8 text-status-info-400 opacity-50" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">Immediate vs. total</p>
+            <p className="text-xs text-surface-500 mt-1">Immediate vs. total</p>
           </CardContent>
         </Card>
       </div>
@@ -277,7 +277,7 @@ export default function TosBillingPage() {
       {/* Filters & Actions */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
           <Input
             placeholder="Search charges..."
             value={search}
@@ -324,15 +324,15 @@ export default function TosBillingPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <Loader2 className="h-6 w-6 animate-spin text-surface-500" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-gray-400 py-12">No charges found</p>
+            <p className="text-center text-surface-500 py-12">No charges found</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-gray-500">
+                  <tr className="border-b text-left text-surface-9000">
                     <th className="pb-2 font-medium">Description</th>
                     <th className="pb-2 font-medium">Mode</th>
                     <th className="pb-2 font-medium text-right">Amount</th>
@@ -344,11 +344,11 @@ export default function TosBillingPage() {
                 </thead>
                 <tbody>
                   {filtered.map(charge => (
-                    <tr key={charge.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <tr key={charge.id} className="border-b last:border-0 hover:bg-surface-900">
                       <td className="py-3">
                         <div className="font-medium">{charge.description}</div>
                         {charge.referenceType && (
-                          <span className="text-xs text-gray-400">{charge.referenceType}</span>
+                          <span className="text-xs text-surface-500">{charge.referenceType}</span>
                         )}
                       </td>
                       <td className="py-3">
@@ -363,10 +363,10 @@ export default function TosBillingPage() {
                       <td className="py-3">
                         <Badge variant={statusVariant(charge.status)}>{charge.status}</Badge>
                       </td>
-                      <td className="py-3 text-gray-500 text-xs">
+                      <td className="py-3 text-surface-9000 text-xs">
                         {formatDateTime(charge.createdAt)}
                       </td>
-                      <td className="py-3 text-gray-500 text-xs">
+                      <td className="py-3 text-surface-9000 text-xs">
                         {charge.dueDate ? formatDate(charge.dueDate) : '—'}
                       </td>
                       <td className="py-3">
@@ -380,7 +380,7 @@ export default function TosBillingPage() {
                           </Button>
                         )}
                         {charge.failureReason && (
-                          <span className="text-xs text-red-500 block mt-1">
+                          <span className="text-xs text-status-error-500 block mt-1">
                             <AlertTriangle className="h-3 w-3 inline mr-1" />
                             {charge.failureReason}
                           </span>
@@ -396,7 +396,7 @@ export default function TosBillingPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-surface-9000">
                 Page {page + 1} of {totalPages} ({total} total)
               </span>
               <div className="flex gap-2">

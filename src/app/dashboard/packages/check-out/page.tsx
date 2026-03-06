@@ -49,16 +49,16 @@ import { CheckoutInventoryTable } from '@/components/packages/checkout-inventory
 /*  Carrier badge                                                             */
 /* -------------------------------------------------------------------------- */
 const carrierColors: Record<string, { bg: string; text: string; dot: string }> = {
-  ups: { bg: 'bg-amber-900/30', text: 'text-amber-500', dot: 'bg-amber-500' },
-  fedex: { bg: 'bg-indigo-900/30', text: 'text-indigo-600', dot: 'bg-indigo-400' },
-  usps: { bg: 'bg-blue-900/30', text: 'text-blue-600', dot: 'bg-blue-400' },
-  amazon: { bg: 'bg-orange-900/30', text: 'text-orange-400', dot: 'bg-orange-400' },
-  dhl: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  lasership: { bg: 'bg-green-900/30', text: 'text-green-400', dot: 'bg-green-400' },
-  temu: { bg: 'bg-orange-900/30', text: 'text-orange-500', dot: 'bg-orange-500' },
-  ontrac: { bg: 'bg-blue-900/30', text: 'text-blue-400', dot: 'bg-blue-400' },
-  walmart: { bg: 'bg-blue-900/30', text: 'text-blue-300', dot: 'bg-blue-400' },
-  target: { bg: 'bg-red-900/30', text: 'text-red-400', dot: 'bg-red-400' },
+  ups: { bg: 'bg-amber-900/30', text: 'text-status-warning-500', dot: 'bg-status-warning-500' },
+  fedex: { bg: 'bg-primary-900/30', text: 'text-primary-600', dot: 'bg-primary-400' },
+  usps: { bg: 'bg-blue-900/30', text: 'text-status-info-600', dot: 'bg-status-info-400' },
+  amazon: { bg: 'bg-orange-900/30', text: 'text-status-warning-400', dot: 'bg-status-warning-400' },
+  dhl: { bg: 'bg-yellow-900/30', text: 'text-status-warning-400', dot: 'bg-status-warning-400' },
+  lasership: { bg: 'bg-green-900/30', text: 'text-status-success-400', dot: 'bg-status-success-400' },
+  temu: { bg: 'bg-orange-900/30', text: 'text-status-warning-alt', dot: 'bg-status-warning-alt' },
+  ontrac: { bg: 'bg-blue-900/30', text: 'text-status-info-400', dot: 'bg-status-info-400' },
+  walmart: { bg: 'bg-blue-900/30', text: 'text-status-info-300', dot: 'bg-status-info-400' },
+  target: { bg: 'bg-red-900/30', text: 'text-status-error-400', dot: 'bg-status-error-400' },
 };
 
 const carrierLabels: Record<string, string> = {
@@ -601,12 +601,12 @@ export default function CheckOutPage() {
         <div className="text-center max-w-md mx-auto px-6 animate-in fade-in-0 zoom-in-95 duration-300">
           {/* Animated checkmark */}
           <div className="relative mx-auto mb-8">
-            <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-emerald-50 ring-4 ring-emerald-500/10">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/25">
-                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+            <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-status-success-50 ring-4 ring-status-success-500/10">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-500/25">
+                <CheckCircle2 className="h-10 w-10 text-status-success-600" />
               </div>
             </div>
-            <div className="absolute -inset-4 rounded-full bg-emerald-500/5 animate-pulse" />
+            <div className="absolute -inset-4 rounded-full bg-status-success-500/5 animate-pulse" />
           </div>
 
           <h2 className="text-2xl font-bold text-surface-100 mb-2">
@@ -620,9 +620,9 @@ export default function CheckOutPage() {
           </p>
           <p className="text-surface-400 mb-2">
             {paymentMode === 'post_to_account' ? (
-              <>Posted to account: <span className="text-blue-500 font-bold text-lg">{formatCurrency(fees.total)}</span></>
+              <>Posted to account: <span className="text-status-info-500 font-bold text-lg">{formatCurrency(fees.total)}</span></>
             ) : (
-              <>Total charged: <span className="text-emerald-600 font-bold text-lg">{formatCurrency(fees.total)}</span></>
+              <>Total charged: <span className="text-status-success-600 font-bold text-lg">{formatCurrency(fees.total)}</span></>
             )}
           </p>
           {paymentMode === 'post_to_account' && (
@@ -824,7 +824,7 @@ export default function CheckOutPage() {
                         </div>
                         <div className="shrink-0 text-right">
                           {pendingPkgs > 0 ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-900/30 text-amber-400 text-xs font-semibold">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-900/30 text-status-warning-400 text-xs font-semibold">
                               <Package className="h-3 w-3" />
                               {pendingPkgs}
                             </span>
@@ -1074,9 +1074,9 @@ export default function CheckOutPage() {
                             className={cn(
                               'inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold min-w-[42px]',
                               held > 7
-                                ? 'bg-red-100 text-red-600'
+                                ? 'bg-status-error-100 text-status-error-600'
                                 : held > 3
-                                  ? 'bg-yellow-500/20 text-yellow-400'
+                                  ? 'bg-status-warning-500/20 text-status-warning-400'
                                   : 'bg-surface-700/50 text-surface-400'
                             )}
                           >
@@ -1096,7 +1096,7 @@ export default function CheckOutPage() {
                         <div className="shrink-0 text-right min-w-[80px]">
                           <p className="text-sm font-semibold text-surface-200">{formatCurrency(pkg.receivingFee)}</p>
                           {storageFee > 0 && (
-                            <p className="text-xs text-yellow-400">+{formatCurrency(storageFee)} storage</p>
+                            <p className="text-xs text-status-warning-400">+{formatCurrency(storageFee)} storage</p>
                           )}
                         </div>
 
@@ -1107,7 +1107,7 @@ export default function CheckOutPage() {
                             setPutBackPkg(pkg);
                             setShowPutBackModal(true);
                           }}
-                          className="shrink-0 p-1.5 rounded-lg text-surface-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                          className="shrink-0 p-1.5 rounded-lg text-surface-500 hover:text-status-warning-400 hover:bg-status-warning-500/10 transition-colors"
                           title="Put Back"
                         >
                           <Undo2 className="h-4 w-4" />
@@ -1219,7 +1219,7 @@ export default function CheckOutPage() {
                           </div>
                           <span className={cn(
                             "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded",
-                            paymentMode === 'post_to_account' ? "bg-emerald-100 text-emerald-600" : "bg-surface-700 text-surface-400"
+                            paymentMode === 'post_to_account' ? "bg-status-success-100 text-status-success-600" : "bg-surface-700 text-surface-400"
                           )}>Recommended</span>
                         </button>
                         <button
@@ -1242,10 +1242,10 @@ export default function CheckOutPage() {
 
                       {/* A/P context when posting to account */}
                       {paymentMode === 'post_to_account' && accountStats && (
-                        <div className="mt-4 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                        <div className="mt-4 p-3 rounded-xl bg-status-info-500/5 border border-status-info-500/10">
                           <div className="flex items-center gap-2 mb-1">
-                            <BookOpen className="h-4 w-4 text-blue-400" />
-                            <span className="text-sm font-medium text-blue-300">Account Balance</span>
+                            <BookOpen className="h-4 w-4 text-status-info-400" />
+                            <span className="text-sm font-medium text-status-info-300">Account Balance</span>
                           </div>
                           <div className="flex items-baseline gap-2">
                             <span className="text-lg font-bold text-surface-100">{formatCurrency(accountStats.runningBalance)}</span>
@@ -1285,7 +1285,7 @@ export default function CheckOutPage() {
                                 <span className="text-surface-400">
                                   {pkg.trackingNumber?.slice(-8) || 'N/A'} — {daysHeld(pkg.checkedInAt)} days @ $1.00/day (max $5)
                                 </span>
-                                <span className="text-yellow-400">{formatCurrency(5.0)}</span>
+                                <span className="text-status-warning-400">{formatCurrency(5.0)}</span>
                               </div>
                             ))}
                         </div>
@@ -1382,7 +1382,7 @@ export default function CheckOutPage() {
                         <label className="text-sm font-semibold text-surface-300 flex items-center gap-2">
                           Customer Signature
                           {signatureRequired && (
-                            <span className="text-[10px] font-medium text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Required</span>
+                            <span className="text-[10px] font-medium text-status-error-400 bg-status-error-500/10 px-1.5 py-0.5 rounded">Required</span>
                           )}
                         </label>
                         {/* BAR-189: Capture method toggle */}
@@ -1415,12 +1415,12 @@ export default function CheckOutPage() {
 
                       {releaseSignature ? (
                         <div className="space-y-2">
-                          <div className="h-28 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-center p-2">
+                          <div className="h-28 rounded-xl border border-status-success-500/30 bg-status-success-500/5 flex items-center justify-center p-2">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={releaseSignature} alt="Customer signature" className="max-h-full max-w-full object-contain" />
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                            <span className="text-[10px] text-status-success-400 flex items-center gap-1">
                               ✓ Captured via {signatureMethod === 'terminal' ? 'payment terminal' : 'touchscreen'}
                             </span>
                             <button
@@ -1478,7 +1478,7 @@ export default function CheckOutPage() {
 
                       {/* BAR-189: Missing signature warning */}
                       {signatureRequired && !releaseSignature && (
-                        <p className="text-[10px] text-amber-400 mt-2 flex items-center gap-1">
+                        <p className="text-[10px] text-status-warning-400 mt-2 flex items-center gap-1">
                           ⚠ Signature required before release
                         </p>
                       )}
@@ -1540,7 +1540,7 @@ export default function CheckOutPage() {
                           leftIcon={<BookOpen className="h-5 w-5" />}
                           onClick={handleRelease}
                           disabled={selectedIds.size === 0 || (signatureRequired && !releaseSignature)}
-                          className="!py-4 !text-base !rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 shadow-lg shadow-blue-900/30"
+                          className="!py-4 !text-base !rounded-xl bg-status-info-600 hover:bg-status-info-500 active:bg-status-info-700 shadow-lg shadow-blue-900/30"
                         >
                           Post to Account & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}
                         </Button>
@@ -1551,7 +1551,7 @@ export default function CheckOutPage() {
                           leftIcon={<PackageCheck className="h-5 w-5" />}
                           onClick={handleRelease}
                           disabled={selectedIds.size === 0 || (signatureRequired && !releaseSignature)}
-                          className="!py-4 !text-base !rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-lg shadow-emerald-900/30"
+                          className="!py-4 !text-base !rounded-xl bg-status-success-600 hover:bg-status-success-500 active:bg-status-success-700 shadow-lg shadow-emerald-900/30"
                         >
                           Collect {formatCurrency(fees.total)} & Release {selectedIds.size} Pkg{selectedIds.size !== 1 ? 's' : ''}
                         </Button>
@@ -1719,7 +1719,7 @@ function ReceiptOption({
         <div className="flex items-center gap-2">
           <span className={cn('text-sm font-medium', selected ? 'text-surface-100' : 'text-surface-300')}>{label}</span>
           {recommended && (
-            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded">
+            <span className="text-[9px] font-bold uppercase tracking-wider bg-status-success-100 text-status-success-600 px-1.5 py-0.5 rounded">
               75% prefer this
             </span>
           )}

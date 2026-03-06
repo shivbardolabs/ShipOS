@@ -292,8 +292,8 @@ export function PrintersTab({
   {printerTestResult && (
     <div className={`mb-4 p-3 rounded-lg text-sm ${
       printerTestResult.startsWith('✅')
-        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+        ? 'bg-status-success-500/10 text-status-success-400 border border-status-success-500/20'
+        : 'bg-status-error-500/10 text-status-error-400 border border-status-error-500/20'
     }`}>
       {printerTestResult}
     </div>
@@ -307,11 +307,11 @@ export function PrintersTab({
     });
     if (lowPrinters.length === 0) return null;
     return (
-      <div className="mb-4 p-3 rounded-lg text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-start gap-2">
+      <div className="mb-4 p-3 rounded-lg text-sm bg-status-warning-500/10 text-status-warning-400 border border-status-warning-500/20 flex items-start gap-2">
         <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
         <div>
           <p className="font-medium">Low label supply</p>
-          <p className="text-xs text-amber-400/80 mt-0.5">
+          <p className="text-xs text-status-warning-400/80 mt-0.5">
             {lowPrinters.map(p => {
               const s = computeRollStatus(p);
               return `${p.name}: ~${s.remaining} labels remaining`;
@@ -509,9 +509,9 @@ export function PrintersTab({
       const rollStatus = computeRollStatus(printer);
       const progressColor = rollStatus.isLow
         ? rollStatus.remaining <= 0
-          ? 'bg-red-500'
-          : 'bg-amber-500'
-        : 'bg-emerald-500';
+          ? 'bg-status-error-500'
+          : 'bg-status-warning-500'
+        : 'bg-status-success-500';
       const isConfiguring = configuringRollId === printer.id;
 
       return (
@@ -520,12 +520,12 @@ export function PrintersTab({
           <div className="flex items-center gap-4">
             <div
               className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                printer.status === 'online' ? 'bg-emerald-50' : 'bg-surface-800'
+                printer.status === 'online' ? 'bg-status-success-50' : 'bg-surface-800'
               }`}
             >
               <Printer
                 className={`h-6 w-6 ${
-                  printer.status === 'online' ? 'text-emerald-600' : 'text-surface-500'
+                  printer.status === 'online' ? 'text-status-success-600' : 'text-surface-500'
                 }`}
               />
             </div>
@@ -544,9 +544,9 @@ export function PrintersTab({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {printer.status === 'online' ? (
-                <Wifi className="h-4 w-4 text-emerald-600" />
+                <Wifi className="h-4 w-4 text-status-success-600" />
               ) : (
-                <WifiOff className="h-4 w-4 text-red-600" />
+                <WifiOff className="h-4 w-4 text-status-error-600" />
               )}
               <Badge variant={printer.status === 'online' ? 'success' : 'danger'} dot>
                 {printer.status === 'online' ? 'Connected' : 'Offline'}
@@ -585,7 +585,7 @@ export function PrintersTab({
               Test Print
             </Button>
             <Button variant="ghost" size="sm" iconOnly onClick={() => handleDeletePrinter(printer)}>
-              <Trash2 className="h-4 w-4 text-red-600" />
+              <Trash2 className="h-4 w-4 text-status-error-600" />
             </Button>
           </div>
         </div>
@@ -643,7 +643,7 @@ export function PrintersTab({
 
           {/* Status text */}
           <div className="flex items-center justify-between mt-1.5">
-            <span className={`text-xs ${rollStatus.isLow ? 'text-amber-400' : 'text-surface-500'}`}>
+            <span className={`text-xs ${rollStatus.isLow ? 'text-status-warning-400' : 'text-surface-500'}`}>
               {rollStatus.remaining <= 0
                 ? 'Roll may be empty — load a new roll'
                 : rollStatus.isLow

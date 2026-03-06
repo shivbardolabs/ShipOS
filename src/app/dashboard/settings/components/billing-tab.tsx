@@ -39,7 +39,7 @@ export function BillingTab({ cardholderName, setCardholderName, cardNumber, setC
         {/* Card visual */}
         <div className="relative mb-8 max-w-sm mx-auto">
           <div className="rounded-2xl p-6 text-white"
-            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed, #6366f1)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-status-violet-600), var(--color-primary-500))' }}>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -194,7 +194,7 @@ export function BillingTab({ cardholderName, setCardholderName, cardNumber, setC
     {/* Save */}
     <div className="flex items-center justify-end gap-3">
       {billingSaved && (
-        <span className="flex items-center gap-1.5 text-sm text-emerald-500">
+        <span className="flex items-center gap-1.5 text-sm text-status-success-500">
           <Check className="h-4 w-4" /> Billing info saved
         </span>
       )}

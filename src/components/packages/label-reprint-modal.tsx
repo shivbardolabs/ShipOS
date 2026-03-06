@@ -215,7 +215,7 @@ export function CarrierLabelReprintModal({
           </div>
 
           {reprinted && (
-            <div className="flex items-center gap-2 text-xs text-emerald-400">
+            <div className="flex items-center gap-2 text-xs text-status-success-400">
               <CheckCircle2 className="h-4 w-4" />
               Label sent to printer — no new shipment or tracking number created
             </div>

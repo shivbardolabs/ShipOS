@@ -134,20 +134,20 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                     member.deletedAt
                       ? 'bg-surface-700/30 text-surface-500 border-surface-600/30'
                       : member.status === 'active'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      ? 'bg-status-success-500/10 text-status-success-400 border-status-success-500/20'
                       : member.status === 'suspended'
-                      ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      ? 'bg-status-warning-500/10 text-status-warning-400 border-status-warning-500/20'
+                      : 'bg-status-error-500/10 text-status-error-400 border-status-error-500/20'
                   }`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${
                     member.deletedAt
                       ? 'bg-surface-500'
                       : member.status === 'active'
-                      ? 'bg-emerald-400'
+                      ? 'bg-status-success-400'
                       : member.status === 'suspended'
-                      ? 'bg-yellow-400'
-                      : 'bg-red-400'
+                      ? 'bg-status-warning-400'
+                      : 'bg-status-error-400'
                   }`} />
                   {member.deletedAt ? 'Deleted' : member.status === 'active' ? 'Active' : member.status === 'suspended' ? 'Suspended' : 'Inactive'}
                 </span>
@@ -178,7 +178,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                       <button
                         onClick={() => handleRestoreUser(member.id)}
                         disabled={restoringUser === member.id}
-                        className="text-[10px] font-semibold px-2 py-1 rounded-md border text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 transition-all disabled:opacity-50"
+                        className="text-[10px] font-semibold px-2 py-1 rounded-md border text-status-success-400 border-status-success-500/20 hover:bg-status-success-500/10 transition-all disabled:opacity-50"
                       >
                         {restoringUser === member.id ? 'Restoring…' : 'Restore'}
                       </button>
@@ -191,10 +191,10 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                           onChange={(e) => handleStatusToggle(member.id, e.target.value)}
                           className={`text-[10px] font-semibold rounded-md border px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50 bg-surface-900 ${
                             member.status === 'active'
-                              ? 'text-emerald-400 border-emerald-500/20'
+                              ? 'text-status-success-400 border-status-success-500/20'
                               : member.status === 'suspended'
-                              ? 'text-yellow-400 border-yellow-500/20'
-                              : 'text-red-400 border-red-500/20'
+                              ? 'text-status-warning-400 border-status-warning-500/20'
+                              : 'text-status-error-400 border-status-error-500/20'
                           }`}
                         >
                           <option value="active">Active</option>
@@ -205,7 +205,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                         <button
                           onClick={() => handleSoftDelete(member.id)}
                           disabled={deletingUser === member.id}
-                          className="text-[10px] font-semibold px-2 py-1 rounded-md border text-red-400 border-red-500/20 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                          className="text-[10px] font-semibold px-2 py-1 rounded-md border text-status-error-400 border-status-error-500/20 hover:bg-status-error-500/10 transition-all disabled:opacity-50"
                         >
                           Remove
                         </button>
@@ -253,8 +253,8 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
         <div className="px-6 py-5 space-y-4">
           {inviteSuccess ? (
             <div className="flex flex-col items-center py-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600/20 mb-3">
-                <Check className="h-6 w-6 text-emerald-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-status-success-600/20 mb-3">
+                <Check className="h-6 w-6 text-status-success-400" />
               </div>
               <p className="text-sm font-medium text-surface-200">Invitation created!</p>
               <p className="text-xs text-surface-500 mt-1">They&apos;ll be added to your team on sign-in.</p>
@@ -290,9 +290,9 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
               </div>
 
               {inviteError && (
-                <div className="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2.5">
-                  <X className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
-                  <p className="text-xs text-red-400">{inviteError}</p>
+                <div className="flex items-center gap-2 rounded-lg bg-status-error-500/10 border border-status-error-500/20 px-3 py-2.5">
+                  <X className="h-3.5 w-3.5 text-status-error-400 flex-shrink-0" />
+                  <p className="text-xs text-status-error-400">{inviteError}</p>
                 </div>
               )}
 
@@ -340,8 +340,8 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
               className="flex items-center justify-between p-3 rounded-lg border border-surface-700/30 hover:bg-surface-800/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
-                  <Mail className="h-3.5 w-3.5 text-amber-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-status-warning-500/10 border border-status-warning-500/20">
+                  <Mail className="h-3.5 w-3.5 text-status-warning-400" />
                 </div>
                 <div>
                   <p className="text-sm text-surface-200">{invite.email}</p>
@@ -361,7 +361,7 @@ export function UsersTab({ localUser, teamUsers, usersLoading, roleUpdating, sho
                 {revokingInvite === invite.id ? (
                   <span className="text-xs">Revoking…</span>
                 ) : (
-                  <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                  <Trash2 className="h-3.5 w-3.5 text-status-error-400" />
                 )}
               </Button>
             </div>

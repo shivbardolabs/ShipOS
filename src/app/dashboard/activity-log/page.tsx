@@ -36,18 +36,18 @@ import {
 /*  Category icon map                                                         */
 /* -------------------------------------------------------------------------- */
 const categoryIcons: Record<ActionCategory, { icon: React.ElementType; color: string; bg: string }> = {
-  package: { icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-  customer: { icon: Users, color: 'text-teal-400', bg: 'bg-teal-500/15' },
-  mail: { icon: Mail, color: 'text-cyan-600', bg: 'bg-cyan-500/15' },
-  shipment: { icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  notification: { icon: Bell, color: 'text-amber-600', bg: 'bg-amber-50' },
+  package: { icon: Package, color: 'text-status-info-600', bg: 'bg-status-info-50' },
+  customer: { icon: Users, color: 'text-teal-400', bg: 'bg-accent-teal/15' },
+  mail: { icon: Mail, color: 'text-accent-teal', bg: 'bg-accent-teal/15' },
+  shipment: { icon: Truck, color: 'text-primary-600', bg: 'bg-primary-50' },
+  notification: { icon: Bell, color: 'text-status-warning-600', bg: 'bg-status-warning-50' },
   settings: { icon: Settings, color: 'text-surface-400', bg: 'bg-surface-700/30' },
-  user: { icon: UserPlus, color: 'text-violet-400', bg: 'bg-violet-500/15' },
-  loyalty: { icon: Award, color: 'text-amber-400', bg: 'bg-amber-500/15' },
-  compliance: { icon: Shield, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-  invoice: { icon: FileText, color: 'text-orange-400', bg: 'bg-orange-500/15' },
-  report: { icon: BarChart3, color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
-  auth: { icon: Shield, color: 'text-rose-400', bg: 'bg-rose-500/15' },
+  user: { icon: UserPlus, color: 'text-status-violet-400', bg: 'bg-status-violet-500/15' },
+  loyalty: { icon: Award, color: 'text-status-warning-400', bg: 'bg-status-warning-500/15' },
+  compliance: { icon: Shield, color: 'text-status-success-400', bg: 'bg-status-success-500/15' },
+  invoice: { icon: FileText, color: 'text-status-warning-400', bg: 'bg-status-warning-alt/15' },
+  report: { icon: BarChart3, color: 'text-primary-400', bg: 'bg-primary-500/15' },
+  auth: { icon: Shield, color: 'text-status-error-400', bg: 'bg-status-error-500/15' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -82,9 +82,9 @@ function formatTimestamp(iso: string): string {
 /*  Role badge colors                                                         */
 /* -------------------------------------------------------------------------- */
 const roleBadgeStyle: Record<string, string> = {
-  admin: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
-  manager: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  employee: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
+  admin: 'bg-status-violet-500/15 text-status-violet-400 border-status-violet-500/30',
+  manager: 'bg-status-warning-500/15 text-status-warning-400 border-status-warning-500/30',
+  employee: 'bg-accent-teal/15 text-teal-400 border-accent-teal/30',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -168,10 +168,10 @@ function ActivityEntryRow({ entry }: { entry: import('@/lib/activity-log').Activ
                     <span className="font-mono text-surface-500 min-w-[100px]">{key}:</span>
                     <div className="flex flex-col gap-0.5">
                       {oldVal !== undefined && (
-                        <span className="text-red-400/70 line-through">{String(oldVal)}</span>
+                        <span className="text-status-error-400/70 line-through">{String(oldVal)}</span>
                       )}
                       {newVal !== undefined && (
-                        <span className="text-emerald-400">{String(newVal)}</span>
+                        <span className="text-status-success-400">{String(newVal)}</span>
                       )}
                     </div>
                   </div>
@@ -297,22 +297,22 @@ export default function ActivityLogPage() {
           className="[&>div>div]:bg-primary-50 [&>div>div]:text-primary-600"
         />
         <StatCard
-          icon={<TrendingUp className="h-5 w-5 text-emerald-500" />}
+          icon={<TrendingUp className="h-5 w-5 text-status-success-500" />}
           title="Total Actions"
           value={stats.totalAll}
-          className="[&>div>div]:bg-emerald-50 [&>div>div]:text-emerald-600"
+          className="[&>div>div]:bg-status-success-50 [&>div>div]:text-status-success-600"
         />
         <StatCard
-          icon={<User className="h-5 w-5 text-violet-400" />}
+          icon={<User className="h-5 w-5 text-status-violet-400" />}
           title="Most Active"
           value={stats.topUser?.name?.split(' ')[0] || '—'}
-          className="[&>div>div]:bg-violet-500/15 [&>div>div]:text-violet-400"
+          className="[&>div>div]:bg-status-violet-500/15 [&>div>div]:text-status-violet-400"
         />
         <StatCard
-          icon={<Package className="h-5 w-5 text-amber-500" />}
+          icon={<Package className="h-5 w-5 text-status-warning-500" />}
           title="Top Category"
           value={stats.topCategory?.name || '—'}
-          className="[&>div>div]:bg-amber-50 [&>div>div]:text-amber-600"
+          className="[&>div>div]:bg-status-warning-50 [&>div>div]:text-status-warning-600"
         />
       </div>
 

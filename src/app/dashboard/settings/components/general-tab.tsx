@@ -68,7 +68,7 @@ export function GeneralTab({ storeName, setStoreName, storeAddress, setStoreAddr
 
   <div className="flex items-center justify-end gap-3 mt-6">
     {tenantSaved && (
-      <span className="flex items-center gap-1.5 text-sm text-emerald-500">
+      <span className="flex items-center gap-1.5 text-sm text-status-success-500">
         <Check className="h-4 w-4" /> Saved
       </span>
     )}

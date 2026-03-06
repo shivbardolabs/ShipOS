@@ -250,11 +250,11 @@ export function ConditionNotes({
 
       {/* ── Damage Warning ── */}
       {selectedTags.some((t) => ['damaged', 'leaking', 'wet'].includes(t)) && !readOnly && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-amber-400">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-status-warning-500/10 border border-status-warning-500/20">
+          <AlertTriangle className="h-4 w-4 text-status-warning-500 flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-status-warning-400">
             <p className="font-semibold mb-0.5">Damage Detected</p>
-            <p className="text-amber-400/70">
+            <p className="text-status-warning-400/70">
               Consider taking photos of the damage for carrier claims and dispute resolution.
               Photos are stored with the package record.
             </p>

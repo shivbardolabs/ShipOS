@@ -18,14 +18,14 @@ import {
 import { CustomerAvatar } from '@/components/ui/customer-avatar';
 
 const platformBadge: Record<string, { label: string; classes: string }> = {
-  physical: { label: 'Physical PMB', classes: 'bg-amber-100 text-amber-600 border-amber-500/30' },
-  iPostal: { label: 'iPostal', classes: 'bg-blue-100 text-blue-600 border-blue-500/30' },
-  anytime: { label: 'Anytime', classes: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
-  postscan: { label: 'PostScan', classes: 'bg-indigo-100 text-indigo-600 border-indigo-200' },
+  physical: { label: 'Physical PMB', classes: 'bg-status-warning-100 text-status-warning-600 border-status-warning-500/30' },
+  iPostal: { label: 'iPostal', classes: 'bg-status-info-100 text-status-info-600 border-status-info-500/30' },
+  anytime: { label: 'Anytime', classes: 'bg-status-success-100 text-status-success-600 border-status-success-200' },
+  postscan: { label: 'PostScan', classes: 'bg-primary-100 text-primary-600 border-primary-200' },
   other: { label: 'Other', classes: 'bg-surface-600/30 text-surface-300 border-surface-600/40' },
 };
 
-const statusDot: Record<string, string> = { active: 'bg-emerald-400', suspended: 'bg-yellow-400', closed: 'bg-surface-500' };
+const statusDot: Record<string, string> = { active: 'bg-status-success-400', suspended: 'bg-status-warning-400', closed: 'bg-surface-500' };
 
 function formatClosedDate(dateStr?: string | Date | null): string | null {
   if (!dateStr) return null;
@@ -47,10 +47,10 @@ function getIdExpirationStatus(customer: Customer): { label: string; color: stri
   const now = new Date();
   const exp = new Date(customer.idExpiration);
   const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
-  if (days < 0) return { label: 'EXPIRED', color: 'bg-red-100 text-red-600 border-red-200' };
-  if (days <= 30) return { label: `${days}d left`, color: 'bg-red-100 text-red-600 border-red-200' };
-  if (days <= 90) return { label: `${days}d left`, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
-  return { label: `${days}d left`, color: 'bg-emerald-100 text-emerald-600 border-emerald-200' };
+  if (days < 0) return { label: 'EXPIRED', color: 'bg-status-error-100 text-status-error-600 border-status-error-200' };
+  if (days <= 30) return { label: `${days}d left`, color: 'bg-status-error-100 text-status-error-600 border-status-error-200' };
+  if (days <= 90) return { label: `${days}d left`, color: 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30' };
+  return { label: `${days}d left`, color: 'bg-status-success-100 text-status-success-600 border-status-success-200' };
 }
 
 const STATUS_FILTERS = [
@@ -499,7 +499,7 @@ export default function CustomersPage() {
         )}>
         {addSuccess ? (
           <div className="flex flex-col items-center text-center py-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4"><CheckCircle2 className="h-8 w-8 text-emerald-600" /></div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-50 mb-4"><CheckCircle2 className="h-8 w-8 text-status-success-600" /></div>
             <h3 className="text-lg font-semibold text-surface-100 mb-1">Customer Added!</h3>
             <p className="text-sm text-surface-400"><span className="font-medium text-surface-200">{form.firstName} {form.lastName}</span>{form.pmbNumber ? ` (${form.pmbNumber})` : ''} has been created.</p>
           </div>
@@ -580,8 +580,8 @@ export default function CustomersPage() {
             </div>
             <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileUpload(file); e.target.value = ''; }} />
             {importErrors.length > 0 && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /><div className="text-sm text-red-400">{importErrors.join('. ')}</div>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+                <XCircle className="h-4 w-4 text-status-error-500 shrink-0 mt-0.5" /><div className="text-sm text-status-error-400">{importErrors.join('. ')}</div>
               </div>
             )}
             <div className="rounded-lg border border-surface-700/50 bg-surface-800/30 p-4">
@@ -633,11 +633,11 @@ export default function CustomersPage() {
                         <td className="px-4 py-2.5">
                           <select value={mapped} onChange={(e) => handleMappingChange(header, e.target.value)}
                             className={cn('w-full rounded-md border bg-surface-900 px-2.5 py-1.5 text-xs outline-none transition-colors',
-                              mapped ? 'border-emerald-500/40 text-emerald-400' : 'border-surface-700 text-surface-400')}>
+                              mapped ? 'border-status-success-500/40 text-status-success-400' : 'border-surface-700 text-surface-400')}>
                             <option value="">&mdash; Skip this column &mdash;</option>
                             {IMPORTABLE_FIELDS.map((f) => <option key={f.key} value={f.key}>{f.label}{f.required ? ' *' : ''}</option>)}
                           </select>
-                          {fieldInfo?.required && <span className="text-[10px] text-emerald-500 ml-1">Required &#10003;</span>}
+                          {fieldInfo?.required && <span className="text-[10px] text-status-success-500 ml-1">Required &#10003;</span>}
                         </td>
                       </tr>
                     );
@@ -646,9 +646,9 @@ export default function CustomersPage() {
               </table>
             </div>
             {importErrors.length > 0 && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-red-400 space-y-1">{importErrors.map((err, i) => <p key={i}>{err}</p>)}</div>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+                <AlertCircle className="h-4 w-4 text-status-error-500 shrink-0 mt-0.5" />
+                <div className="text-sm text-status-error-400 space-y-1">{importErrors.map((err, i) => <p key={i}>{err}</p>)}</div>
               </div>
             )}
           </div>
@@ -685,9 +685,9 @@ export default function CustomersPage() {
             </div>
             {importPreview.rows.length > 20 && <p className="text-xs text-surface-500 text-center">Showing first 20 of {importPreview.rows.length} rows</p>}
             {importErrors.length > 0 && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-red-400 space-y-1">{importErrors.map((err, i) => <p key={i}>{err}</p>)}</div>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20">
+                <XCircle className="h-4 w-4 text-status-error-500 shrink-0 mt-0.5" />
+                <div className="text-sm text-status-error-400 space-y-1">{importErrors.map((err, i) => <p key={i}>{err}</p>)}</div>
               </div>
             )}
           </div>
@@ -695,12 +695,12 @@ export default function CustomersPage() {
 
         {importStep === 'done' && (
           <div className="flex flex-col items-center text-center py-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4"><CheckCircle2 className="h-8 w-8 text-emerald-600" /></div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-50 mb-4"><CheckCircle2 className="h-8 w-8 text-status-success-600" /></div>
             <h3 className="text-lg font-semibold text-surface-100 mb-1">Import Complete!</h3>
             <p className="text-sm text-surface-400">Successfully imported <span className="text-surface-200 font-medium">{importedCount}</span> customer{importedCount !== 1 ? 's' : ''}.</p>
             {importErrors.length > 0 && (
               <div className="mt-4 w-full max-w-md text-left">
-                <p className="text-sm text-yellow-400 flex items-center gap-1.5 mb-2"><AlertTriangle className="h-4 w-4" />{importErrors.length} row{importErrors.length !== 1 ? 's' : ''} skipped:</p>
+                <p className="text-sm text-status-warning-400 flex items-center gap-1.5 mb-2"><AlertTriangle className="h-4 w-4" />{importErrors.length} row{importErrors.length !== 1 ? 's' : ''} skipped:</p>
                 <div className="max-h-32 overflow-y-auto rounded-lg border border-surface-700 bg-surface-800/50 p-3 text-xs text-surface-400 space-y-1">
                   {importErrors.slice(0, 20).map((err, i) => <p key={i}>{err}</p>)}
                   {importErrors.length > 20 && <p className="text-surface-500">…and {importErrors.length - 20} more</p>}

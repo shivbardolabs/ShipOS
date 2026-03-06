@@ -145,7 +145,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
   if (totalCount === 0) {
     return (
       <div className={cn('glass-card p-4', className)}>
-        <div className="flex items-center gap-2 text-emerald-500">
+        <div className="flex items-center gap-2 text-status-success-500">
           <CheckCircle2 className="h-5 w-5" />
           <p className="text-sm font-medium">All clear — no alerts at this time ✅</p>
         </div>
@@ -164,7 +164,7 @@ export function AlertSummaryPanel({ tenantId, className }: AlertSummaryPanelProp
           <div className={cn('relative', hasTimeSensitive && 'bell-pulse')}>
             <Bell className="h-5 w-5 text-surface-300" />
             {totalCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-status-error-500 px-1 text-[10px] font-bold text-white">
                 {totalCount}
               </span>
             )}
@@ -363,7 +363,7 @@ export function AlertCountBadge({ tenantId }: AlertCountBadgeProps) {
   if (count === 0) return null;
 
   return (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-status-error-500 px-1.5 text-[10px] font-bold text-white">
       {count > 99 ? '99+' : count}
     </span>
   );

@@ -22,12 +22,12 @@ import {
 /*  Icon mapping                                                              */
 /* -------------------------------------------------------------------------- */
 const notifTypeIcon: Record<string, React.ReactNode> = {
-  package_arrival: <Package className="h-4 w-4 text-blue-400" />,
-  package_reminder: <CalendarClock className="h-4 w-4 text-amber-400" />,
-  mail_received: <MailOpen className="h-4 w-4 text-indigo-400" />,
-  id_expiring: <AlertTriangle className="h-4 w-4 text-red-400" />,
-  renewal_reminder: <Clock className="h-4 w-4 text-yellow-400" />,
-  shipment_update: <Truck className="h-4 w-4 text-emerald-400" />,
+  package_arrival: <Package className="h-4 w-4 text-status-info-400" />,
+  package_reminder: <CalendarClock className="h-4 w-4 text-status-warning-400" />,
+  mail_received: <MailOpen className="h-4 w-4 text-primary-400" />,
+  id_expiring: <AlertTriangle className="h-4 w-4 text-status-error-400" />,
+  renewal_reminder: <Clock className="h-4 w-4 text-status-warning-400" />,
+  shipment_update: <Truck className="h-4 w-4 text-status-success-400" />,
   welcome: <UserPlus className="h-4 w-4 text-primary-400" />,
 };
 

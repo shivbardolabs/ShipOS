@@ -181,7 +181,7 @@ export function CarrierIncentivesTab() {
                   <td className="px-3 py-3 text-right text-surface-100">{m.packagesPickedUp}</td>
                   <td className="px-3 py-3 text-right text-surface-100 font-medium">{formatCurrency(m.expectedCompensation)}</td>
                   <td className="px-3 py-3 text-right text-surface-100 font-medium">{formatCurrency(m.actualPayment)}</td>
-                  <td className={`px-3 py-3 text-right font-medium ${m.discrepancy === 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <td className={`px-3 py-3 text-right font-medium ${m.discrepancy === 0 ? 'text-status-success-400' : 'text-status-error-400'}`}>
                     {m.discrepancy === 0 ? '—' : formatCurrency(m.discrepancy)}
                   </td>
                   <td className="px-5 py-3 text-center">
@@ -202,19 +202,19 @@ export function CarrierIncentivesTab() {
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-surface-800/50 rounded-lg p-3 text-center">
             <p className="text-xs text-surface-500">0–30 Days</p>
-            <p className="text-lg font-bold text-emerald-400">{formatCurrency(0)}</p>
+            <p className="text-lg font-bold text-status-success-400">{formatCurrency(0)}</p>
           </div>
           <div className="bg-surface-800/50 rounded-lg p-3 text-center">
             <p className="text-xs text-surface-500">31–60 Days</p>
-            <p className="text-lg font-bold text-yellow-400">{formatCurrency(17.50)}</p>
+            <p className="text-lg font-bold text-status-warning-400">{formatCurrency(17.50)}</p>
           </div>
           <div className="bg-surface-800/50 rounded-lg p-3 text-center">
             <p className="text-xs text-surface-500">61–90 Days</p>
-            <p className="text-lg font-bold text-orange-400">{formatCurrency(13.50)}</p>
+            <p className="text-lg font-bold text-status-warning-400">{formatCurrency(13.50)}</p>
           </div>
           <div className="bg-surface-800/50 rounded-lg p-3 text-center">
             <p className="text-xs text-surface-500">90+ Days</p>
-            <p className="text-lg font-bold text-red-400">{formatCurrency(0)}</p>
+            <p className="text-lg font-bold text-status-error-400">{formatCurrency(0)}</p>
           </div>
         </div>
       </Card>

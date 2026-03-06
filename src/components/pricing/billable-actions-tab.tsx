@@ -240,7 +240,7 @@ export function BillableActionsTab() {
                     <td className="px-3 py-3 text-right text-surface-100 font-medium">{formatCurrency(s.dailyRate)}/day</td>
                     <td className="px-3 py-3 text-center">
                       <button onClick={() => toggleWeekendCounting(s.id)}>
-                        {s.countWeekends ? <ToggleRight className="h-5 w-5 text-emerald-400 mx-auto" /> : <ToggleLeft className="h-5 w-5 text-surface-500 mx-auto" />}
+                        {s.countWeekends ? <ToggleRight className="h-5 w-5 text-status-success-400 mx-auto" /> : <ToggleLeft className="h-5 w-5 text-surface-500 mx-auto" />}
                       </button>
                     </td>
                     <td className="px-5 py-3 text-right">
@@ -434,10 +434,10 @@ export function BillableActionsTab() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => toggleCustomActive(a.id)}>
-                    {a.isActive ? <ToggleRight className="h-5 w-5 text-emerald-400" /> : <ToggleLeft className="h-5 w-5 text-surface-500" />}
+                    {a.isActive ? <ToggleRight className="h-5 w-5 text-status-success-400" /> : <ToggleLeft className="h-5 w-5 text-surface-500" />}
                   </button>
                   <Button size="sm" variant="ghost" iconOnly><Edit3 className="h-3.5 w-3.5" /></Button>
-                  <Button size="sm" variant="ghost" iconOnly onClick={() => deleteCustomAction(a.id)}><Trash2 className="h-3.5 w-3.5 text-red-400" /></Button>
+                  <Button size="sm" variant="ghost" iconOnly onClick={() => deleteCustomAction(a.id)}><Trash2 className="h-3.5 w-3.5 text-status-error-400" /></Button>
                 </div>
               </div>
             ))}

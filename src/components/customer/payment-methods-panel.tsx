@@ -51,10 +51,10 @@ interface PaymentMethod {
 
 function typeIcon(type: string) {
   switch (type) {
-    case 'card': return <CreditCard className="h-5 w-5 text-blue-500" />;
-    case 'ach': return <Building2 className="h-5 w-5 text-green-500" />;
-    case 'paypal': return <Wallet className="h-5 w-5 text-indigo-500" />;
-    default: return <CreditCard className="h-5 w-5 text-gray-400" />;
+    case 'card': return <CreditCard className="h-5 w-5 text-status-info-500" />;
+    case 'ach': return <Building2 className="h-5 w-5 text-status-success-500" />;
+    case 'paypal': return <Wallet className="h-5 w-5 text-primary-500" />;
+    default: return <CreditCard className="h-5 w-5 text-surface-500" />;
   }
 }
 
@@ -192,7 +192,7 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
       {/* Loading state */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-surface-500" />
         </div>
       ) : methods.length === 0 ? (
         <div className="rounded-xl border border-surface-700 p-8 text-center text-surface-400">
@@ -203,7 +203,7 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {methods.map(m => (
-            <Card key={m.id} className={m.isDefault ? 'ring-2 ring-blue-400' : ''}>
+            <Card key={m.id} className={m.isDefault ? 'ring-2 ring-status-info-400' : ''}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -216,12 +216,12 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-surface-9000">
                   {m.type === 'card' && m.cardExpMonth && m.cardExpYear && (
                     <div className="flex items-center gap-1">
                       Expires {String(m.cardExpMonth).padStart(2, '0')}/{m.cardExpYear}
                       {isExpiringSoon(m.cardExpMonth, m.cardExpYear) && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-status-warning-500" />
                       )}
                     </div>
                   )}
@@ -234,9 +234,9 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
                 </div>
                 <div className="flex items-center gap-1 text-xs">
                   {m.verifiedAt ? (
-                    <><CheckCircle2 className="h-3 w-3 text-green-500" /> Verified {formatDate(m.verifiedAt)}</>
+                    <><CheckCircle2 className="h-3 w-3 text-status-success-500" /> Verified {formatDate(m.verifiedAt)}</>
                   ) : (
-                    <><AlertTriangle className="h-3 w-3 text-amber-500" /> Unverified</>
+                    <><AlertTriangle className="h-3 w-3 text-status-warning-500" /> Unverified</>
                   )}
                 </div>
 
@@ -249,10 +249,10 @@ export function PaymentMethodsPanel({ customerId }: PaymentMethodsPanelProps) {
                     )}
                     {m.isDefault && (
                       <Button variant="ghost" size="sm" disabled>
-                        <StarOff className="h-3.5 w-3.5 mr-1 text-gray-300" /> Default
+                        <StarOff className="h-3.5 w-3.5 mr-1 text-surface-600" /> Default
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => handleRemove(m.id)} className="text-red-500 hover:text-red-700">
+                    <Button variant="ghost" size="sm" onClick={() => handleRemove(m.id)} className="text-status-error-500 hover:text-status-error-700">
                       <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove
                     </Button>
                   </div>

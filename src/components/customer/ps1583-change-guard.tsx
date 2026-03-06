@@ -74,7 +74,7 @@ export function PS1583ChangeGuard({
         {/* Warning Banner */}
         <div className="rounded-lg p-4 bg-orange-950/30 border border-orange-800/50">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="h-5 w-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <ShieldAlert className="h-5 w-5 text-status-warning-400 flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-orange-300">
                 PS1583-Protected Fields Are Being Changed
@@ -103,11 +103,11 @@ export function PS1583ChangeGuard({
                 <span className="text-xs font-medium text-surface-400">{change.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-red-400/80 line-through flex-1 min-w-0 truncate">
+                <span className="text-sm text-status-error-400/80 line-through flex-1 min-w-0 truncate">
                   {change.oldValue || '(empty)'}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 text-surface-600 flex-shrink-0" />
-                <span className="text-sm text-emerald-400 font-medium flex-1 min-w-0 truncate">
+                <span className="text-sm text-status-success-400 font-medium flex-1 min-w-0 truncate">
                   {change.newValue || '(empty)'}
                 </span>
               </div>
@@ -120,15 +120,15 @@ export function PS1583ChangeGuard({
           <h4 className="text-xs font-medium text-surface-400 uppercase mb-2">What will happen</h4>
           <ul className="space-y-1.5">
             <li className="flex items-start gap-2 text-xs text-surface-300">
-              <AlertTriangle className="h-3 w-3 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-3 w-3 text-status-warning-400 mt-0.5 flex-shrink-0" />
               Form 1583 status will be set to <Badge variant="danger" className="text-xs ml-1">Needs Re-Filing</Badge>
             </li>
             <li className="flex items-start gap-2 text-xs text-surface-300">
-              <AlertTriangle className="h-3 w-3 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-3 w-3 text-status-warning-400 mt-0.5 flex-shrink-0" />
               An audit trail entry will be created with the old and new values
             </li>
             <li className="flex items-start gap-2 text-xs text-surface-300">
-              <AlertTriangle className="h-3 w-3 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-3 w-3 text-status-warning-400 mt-0.5 flex-shrink-0" />
               Customer must file a new notarized PS Form 1583 to restore compliance
             </li>
           </ul>

@@ -79,7 +79,7 @@ export function DropdownMenu({
       {open && (
         <div
           className={cn(
-            'absolute z-50 mt-1 min-w-[180px] rounded-lg border border-surface-700 bg-white py-1 shadow-xl shadow-slate-200/30',
+            'absolute z-50 mt-1 min-w-[180px] rounded-lg border border-surface-700 bg-white py-1 shadow-xl shadow-surface-700/30',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >
@@ -105,7 +105,7 @@ export function DropdownMenu({
                 className={cn(
                   'flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left',
                   item.danger
-                    ? 'text-red-600 hover:bg-red-50'
+                    ? 'text-status-error-600 hover:bg-status-error-50'
                     : 'text-surface-300 hover:bg-surface-800 hover:text-surface-100',
                   item.disabled && 'opacity-40 cursor-not-allowed'
                 )}

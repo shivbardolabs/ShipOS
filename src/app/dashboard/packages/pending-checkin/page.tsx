@@ -62,13 +62,13 @@ const carrierLabels: Record<string, string> = {
 };
 
 const carrierColors: Record<string, { bg: string; text: string }> = {
-  ups: { bg: 'bg-amber-900/30', text: 'text-amber-500' },
-  fedex: { bg: 'bg-indigo-900/30', text: 'text-indigo-400' },
-  usps: { bg: 'bg-blue-900/30', text: 'text-blue-400' },
-  amazon: { bg: 'bg-orange-900/30', text: 'text-orange-400' },
-  dhl: { bg: 'bg-yellow-900/30', text: 'text-yellow-400' },
-  lasership: { bg: 'bg-green-900/30', text: 'text-green-400' },
-  ontrac: { bg: 'bg-blue-900/30', text: 'text-blue-300' },
+  ups: { bg: 'bg-amber-900/30', text: 'text-status-warning-500' },
+  fedex: { bg: 'bg-primary-900/30', text: 'text-primary-400' },
+  usps: { bg: 'bg-blue-900/30', text: 'text-status-info-400' },
+  amazon: { bg: 'bg-orange-900/30', text: 'text-status-warning-400' },
+  dhl: { bg: 'bg-yellow-900/30', text: 'text-status-warning-400' },
+  lasership: { bg: 'bg-green-900/30', text: 'text-status-success-400' },
+  ontrac: { bg: 'bg-blue-900/30', text: 'text-status-info-300' },
   other: { bg: 'bg-surface-700/30', text: 'text-surface-400' },
 };
 
@@ -108,9 +108,9 @@ const packageSizeLabels: Record<string, string> = {
 /* -------------------------------------------------------------------------- */
 function StatusBadge({ status }: { status: string }) {
   const configs: Record<string, { bg: string; text: string; label: string }> = {
-    pending: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Pending' },
-    approved: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', label: 'Approved' },
-    rejected: { bg: 'bg-red-500/15', text: 'text-red-400', label: 'Rejected' },
+    pending: { bg: 'bg-status-warning-500/15', text: 'text-status-warning-400', label: 'Pending' },
+    approved: { bg: 'bg-status-success-500/15', text: 'text-status-success-400', label: 'Approved' },
+    rejected: { bg: 'bg-status-error-500/15', text: 'text-status-error-400', label: 'Rejected' },
   };
   const cfg = configs[status] || configs.pending;
   return (
@@ -129,10 +129,10 @@ function StatusBadge({ status }: { status: string }) {
 function ConfidenceIndicator({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color = pct >= 90
-    ? 'text-emerald-400'
+    ? 'text-status-success-400'
     : pct >= 75
-      ? 'text-amber-400'
-      : 'text-red-400';
+      ? 'text-status-warning-400'
+      : 'text-status-error-400';
   return (
     <span className={`text-xs font-semibold ${color}`}>
       {pct}%
@@ -151,7 +151,7 @@ function ToastBanner({ toast, onDismiss }: { toast: ToastState; onDismiss: () =>
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
-  const bg = toast.type === 'success' ? 'bg-emerald-600' : toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+  const bg = toast.type === 'success' ? 'bg-status-success-600' : toast.type === 'error' ? 'bg-status-error-600' : 'bg-status-info-600';
   return (
     <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm shadow-lg text-white ${bg}`}>
       <span>{toast.message}</span>
@@ -503,7 +503,7 @@ export default function PendingCheckinPage() {
                       className={cn(
                         'border-b border-surface-700/60 table-row-hover cursor-pointer',
                         isSelected && 'bg-primary-500/5',
-                        lowConfidence && item.status === 'pending' && 'bg-amber-500/5'
+                        lowConfidence && item.status === 'pending' && 'bg-status-warning-500/5'
                       )}
                       onClick={() => setDetailItem(item)}
                     >
@@ -518,13 +518,13 @@ export default function PendingCheckinPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <ConfidenceIndicator score={item.confidence} />
-                          {lowConfidence && <AlertTriangle className="h-3 w-3 text-amber-400" />}
+                          {lowConfidence && <AlertTriangle className="h-3 w-3 text-status-warning-400" />}
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <span className="font-mono text-xs text-surface-300">{item.trackingNumber || '—'}</span>
-                          {item.trackingNumberValid && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
+                          {item.trackingNumberValid && <CheckCircle2 className="h-3 w-3 text-status-success-400" />}
                         </div>
                       </td>
                       <td className="px-4 py-3"><CarrierBadge carrier={item.carrier} /></td>
@@ -558,13 +558,13 @@ export default function PendingCheckinPage() {
                           {item.status === 'pending' && (
                             <>
                               <Button variant="ghost" size="sm" iconOnly title="Edit" onClick={() => setEditItem(item)}>
-                                <Edit3 className="h-4 w-4 text-blue-400" />
+                                <Edit3 className="h-4 w-4 text-status-info-400" />
                               </Button>
                               <Button variant="ghost" size="sm" iconOnly title="Approve" onClick={() => approveItem(item.id)}>
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                                <CheckCircle2 className="h-4 w-4 text-status-success-400" />
                               </Button>
                               <Button variant="ghost" size="sm" iconOnly title="Reject" onClick={() => setRejectModal({ ids: [item.id] })}>
-                                <XCircle className="h-4 w-4 text-red-400" />
+                                <XCircle className="h-4 w-4 text-status-error-400" />
                               </Button>
                             </>
                           )}
@@ -722,16 +722,16 @@ function DetailModal({
 
         {/* Rejection reason */}
         {item.status === 'rejected' && item.rejectionReason && (
-          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
-            <p className="text-xs text-red-400 font-semibold mb-1">Rejection Reason</p>
+          <div className="rounded-lg bg-status-error-500/10 border border-status-error-500/20 p-3">
+            <p className="text-xs text-status-error-400 font-semibold mb-1">Rejection Reason</p>
             <p className="text-sm text-surface-300">{item.rejectionReason}</p>
           </div>
         )}
 
         {/* Approval link */}
         {item.status === 'approved' && item.checkedInPackageId && (
-          <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
-            <p className="text-xs text-emerald-400 font-semibold mb-1">Checked In</p>
+          <div className="rounded-lg bg-status-success-500/10 border border-status-success-500/20 p-3">
+            <p className="text-xs text-status-success-400 font-semibold mb-1">Checked In</p>
             <p className="text-sm text-surface-300">
               Package created with ID: <span className="font-mono text-xs">{item.checkedInPackageId}</span>
             </p>

@@ -122,8 +122,8 @@ export function CheckInModals(props: CheckInModalsProps) {
         }
       >
         <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
-            <Package className="h-7 w-7 text-amber-600" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-status-warning-50 mb-4">
+            <Package className="h-7 w-7 text-status-warning-600" />
           </div>
           <p className="text-sm text-surface-300 max-w-xs">
             This customer will be notified this package will accrue <strong className="text-surface-100">storage fees</strong> after the free storage period ends.
@@ -149,8 +149,8 @@ export function CheckInModals(props: CheckInModalsProps) {
         }
       >
         <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 mb-4">
-            <Snowflake className="h-7 w-7 text-blue-600" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-status-info-50 mb-4">
+            <Snowflake className="h-7 w-7 text-status-info-600" />
           </div>
           <p className="text-sm text-surface-300 max-w-xs">
             This customer will be notified this package <strong className="text-surface-100">must be picked up within 24 hours</strong>.
@@ -208,7 +208,7 @@ export function CheckInModals(props: CheckInModalsProps) {
                 setDuplicateAcknowledged(true);
                 setShowDuplicateModal(false);
               }}
-              className="!bg-amber-600 hover:!bg-amber-700 !text-white"
+              className="!bg-status-warning-600 hover:!bg-status-warning-700 !text-white"
             >
               Override &amp; Continue
             </Button>
@@ -217,8 +217,8 @@ export function CheckInModals(props: CheckInModalsProps) {
       >
         <div className="py-2">
           <div className="flex items-start gap-3 mb-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-status-warning-50">
+              <AlertTriangle className="h-5 w-5 text-status-warning-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-surface-200">
@@ -256,7 +256,7 @@ export function CheckInModals(props: CheckInModalsProps) {
           {/* Override reason */}
           <div>
             <label className="text-sm font-medium text-surface-300 mb-1.5 block">
-              Override Reason <span className="text-red-400">*</span>
+              Override Reason <span className="text-status-error-400">*</span>
             </label>
             <Select
               value={duplicateOverrideReason}
@@ -351,8 +351,8 @@ export function CheckInModals(props: CheckInModalsProps) {
         }
       >
         <div className="flex flex-col items-center text-center py-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
-            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-50 mb-4">
+            <CheckCircle2 className="h-8 w-8 text-status-success-600" />
           </div>
           <h3 className="text-lg font-semibold text-surface-100 mb-1">
             Successfully Checked In!
@@ -387,8 +387,8 @@ export function CheckInModals(props: CheckInModalsProps) {
           {(labelPrintFailed || notificationFailed) && (
             <div className="mt-4 w-full space-y-2">
               {labelPrintFailed && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
-                  <span className="text-amber-400 flex items-center gap-2">
+                <div className="flex items-center justify-between rounded-lg border border-status-warning-500/30 bg-status-warning-500/10 px-3 py-2 text-sm">
+                  <span className="text-status-warning-400 flex items-center gap-2">
                     <Printer className="h-4 w-4" />
                     Label print failed
                   </span>
@@ -403,8 +403,8 @@ export function CheckInModals(props: CheckInModalsProps) {
                 </div>
               )}
               {notificationFailed && (
-                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm">
-                  <span className="text-amber-400 flex items-center gap-2">
+                <div className="flex items-center justify-between rounded-lg border border-status-warning-500/30 bg-status-warning-500/10 px-3 py-2 text-sm">
+                  <span className="text-status-warning-400 flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     Notification failed
                   </span>
@@ -441,7 +441,7 @@ export function CheckInModals(props: CheckInModalsProps) {
             </Button>
             <Button
               onClick={handleClearAndReset}
-              className="flex-1 !bg-red-600 hover:!bg-red-700 !text-white"
+              className="flex-1 !bg-status-error-600 hover:!bg-status-error-700 !text-white"
             >
               Clear
             </Button>

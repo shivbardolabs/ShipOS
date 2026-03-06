@@ -11,8 +11,8 @@ import { Copy, Check, Download, Palette } from 'lucide-react';
 /* ── Brand constants ── */
 const BRAND = {
   colors: [
-    { name: 'Indigo 600', hex: '#4F46E5', role: 'Primary / brand' },
-    { name: 'Indigo 500', hex: '#6366F1', role: 'Interactive / hover' },
+    { name: 'Indigo 600', hex: 'var(--color-primary-600)', role: 'Primary / brand' },
+    { name: 'Indigo 500', hex: 'var(--color-primary-500)', role: 'Interactive / hover' },
     { name: 'Surface 100', hex: '#0F172A', role: 'Text / headings' },
   ],
   fonts: [
@@ -25,8 +25,8 @@ const BRAND = {
 const LOGO_SVG_MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F46E5"/>
-      <stop offset="100%" stop-color="#818CF8"/>
+      <stop offset="0%" stop-color="var(--color-primary-600)"/>
+      <stop offset="100%" stop-color="var(--color-primary-400)"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#g)"/>
@@ -36,14 +36,14 @@ const LOGO_SVG_MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 6
 const LOGO_SVG_FULL = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 64" width="200" height="64">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F46E5"/>
-      <stop offset="100%" stop-color="#818CF8"/>
+      <stop offset="0%" stop-color="var(--color-primary-600)"/>
+      <stop offset="100%" stop-color="var(--color-primary-400)"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#g)"/>
   <path d="M18 33L27 42L46 21" stroke="white" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <text x="76" y="30" font-family="DM Sans, system-ui, sans-serif" font-size="26" font-weight="700" fill="#0F172A">Ship</text>
-  <text x="139" y="30" font-family="DM Sans, system-ui, sans-serif" font-size="26" font-weight="700" fill="#4F46E5">OS</text>
+  <text x="139" y="30" font-family="DM Sans, system-ui, sans-serif" font-size="26" font-weight="700" fill="var(--color-primary-600)">OS</text>
   <text x="76" y="48" font-family="DM Sans, system-ui, sans-serif" font-size="11" fill="#64748B">Postal Management</text>
 </svg>`;
 

@@ -8,16 +8,16 @@ import { Camera } from 'lucide-react';
 /*  Gradient palette (deterministic by name)                                  */
 /* -------------------------------------------------------------------------- */
 const GRADIENTS = [
-  'from-blue-500 to-blue-700',
-  'from-indigo-500 to-indigo-700',
-  'from-emerald-500 to-emerald-700',
-  'from-amber-500 to-amber-700',
-  'from-rose-500 to-rose-700',
-  'from-cyan-500 to-cyan-700',
-  'from-pink-500 to-pink-700',
-  'from-teal-500 to-teal-700',
-  'from-violet-500 to-violet-700',
-  'from-orange-500 to-orange-700',
+  'from-status-info-500 to-status-info-700',
+  'from-primary-500 to-primary-700',
+  'from-status-success-500 to-status-success-700',
+  'from-status-warning-500 to-status-warning-700',
+  'from-status-error-500 to-rose-700',
+  'from-accent-teal to-cyan-700',
+  'from-status-pink-500 to-pink-700',
+  'from-accent-teal to-teal-700',
+  'from-status-violet-500 to-status-violet-700',
+  'from-status-warning-alt to-orange-700',
 ];
 
 function gradientForName(name: string): string {

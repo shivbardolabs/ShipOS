@@ -202,11 +202,11 @@ export function NotificationsTab({ emailReceipts, setEmailReceipts, smtpFrom, se
               Super Admin
             </span>
             {process.env.NEXT_PUBLIC_RESEND_CONFIGURED === 'true' ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1 rounded-full bg-status-success-50 px-2 py-0.5 text-[10px] font-semibold text-status-success-600 border border-status-success-500/20">
                 <Wifi className="h-3 w-3" /> Connected
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
+              <span className="inline-flex items-center gap-1 rounded-full bg-status-warning-50 px-2 py-0.5 text-[10px] font-semibold text-status-warning-600 border border-status-warning-500/20">
                 <WifiOff className="h-3 w-3" /> Not Configured
               </span>
             )}

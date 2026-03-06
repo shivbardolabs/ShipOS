@@ -199,7 +199,7 @@ export default function ClientProvisioningPage() {
           <p className="text-xs text-surface-400">Total Clients</p>
         </div>
         <div className="glass-card p-4">
-          <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
+          <p className="text-2xl font-bold text-status-success-400">{stats.active}</p>
           <p className="text-xs text-surface-400">Active Clients</p>
         </div>
         <div className="glass-card p-4">
@@ -207,7 +207,7 @@ export default function ClientProvisioningPage() {
           <p className="text-xs text-surface-400">Total Stores</p>
         </div>
         <div className="glass-card p-4">
-          <p className="text-2xl font-bold text-blue-400">{stats.activeStores}</p>
+          <p className="text-2xl font-bold text-status-info-400">{stats.activeStores}</p>
           <p className="text-xs text-surface-400">Active Stores</p>
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function ClientProvisioningPage() {
                     <p className="text-surface-500">Fee</p>
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-emerald-400">${monthlyRevenue.toFixed(2)}</p>
+                    <p className="font-semibold text-status-success-400">${monthlyRevenue.toFixed(2)}</p>
                     <p className="text-surface-500">MRR</p>
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export default function ClientProvisioningPage() {
                     title={client.status === 'active' ? 'Deactivate' : 'Activate'}
                     onClick={() => toggleStatus(client.id)}
                   >
-                    {client.status === 'active' ? <Pause className="h-3.5 w-3.5 text-yellow-400" /> : <Play className="h-3.5 w-3.5 text-emerald-400" />}
+                    {client.status === 'active' ? <Pause className="h-3.5 w-3.5 text-status-warning-400" /> : <Play className="h-3.5 w-3.5 text-status-success-400" />}
                   </Button>
                   <Button
                     variant="ghost"
@@ -327,7 +327,7 @@ export default function ClientProvisioningPage() {
                       <p className="text-xs font-medium text-surface-500 uppercase mb-1">Subscription</p>
                       <p className="text-sm text-surface-200">${client.subscriptionFee}/store/month</p>
                       {client.feeOverrideReason && (
-                        <p className="text-xs text-yellow-400 mt-0.5">
+                        <p className="text-xs text-status-warning-400 mt-0.5">
                           <AlertTriangle className="inline h-3 w-3 mr-1" />
                           {client.feeOverrideReason}
                         </p>
@@ -375,7 +375,7 @@ export default function ClientProvisioningPage() {
                                 </td>
                                 <td className="py-2.5">
                                   {store.cmraProof ? (
-                                    <span className="inline-flex items-center gap-1 text-emerald-400">
+                                    <span className="inline-flex items-center gap-1 text-status-success-400">
                                       <CheckCircle2 className="h-3.5 w-3.5" />
                                       Uploaded
                                     </span>
@@ -400,9 +400,9 @@ export default function ClientProvisioningPage() {
                                       disabled={store.status !== 'active' && !store.cmraProof}
                                     >
                                       {store.status === 'active' ? (
-                                        <Pause className="h-3.5 w-3.5 text-yellow-400" />
+                                        <Pause className="h-3.5 w-3.5 text-status-warning-400" />
                                       ) : (
-                                        <Play className="h-3.5 w-3.5 text-emerald-400" />
+                                        <Play className="h-3.5 w-3.5 text-status-success-400" />
                                       )}
                                     </Button>
                                     <Button variant="ghost" size="sm" iconOnly title="Edit store">

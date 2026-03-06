@@ -222,12 +222,12 @@ export function RtsInitiateDialog({
         {step === 'confirm' && selectedPackage && (
           <>
             {/* Confirmation Step */}
-            <div className="rounded-lg border border-amber-800/40 bg-amber-900/10 p-4 mb-4">
+            <div className="rounded-lg border border-status-warning-800/40 bg-amber-900/10 p-4 mb-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-status-warning-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-amber-300">Confirm Return to Sender</p>
-                  <p className="text-xs text-amber-400/80 mt-1">
+                  <p className="text-sm font-medium text-status-warning-300">Confirm Return to Sender</p>
+                  <p className="text-xs text-status-warning-400/80 mt-1">
                     This will mark the package for return. This action is logged for USPS compliance and can only be cancelled before carrier handoff.
                   </p>
                 </div>
@@ -284,7 +284,7 @@ export function RtsInitiateDialog({
             />
 
             {error && (
-              <p className="text-sm text-red-400">{error}</p>
+              <p className="text-sm text-status-error-400">{error}</p>
             )}
 
             {/* Actions */}
@@ -307,7 +307,7 @@ export function RtsInitiateDialog({
                 size="sm"
                 onClick={handleSubmit}
                 disabled={!reason || submitting}
-                className="gap-2 bg-red-600 hover:bg-red-700 text-white"
+                className="gap-2 bg-status-error-600 hover:bg-status-error-700 text-white"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

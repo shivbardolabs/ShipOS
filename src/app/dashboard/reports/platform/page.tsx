@@ -56,7 +56,7 @@ function usePlatformData(packages: any[], shipments: any[]) {
         cost: totalCost * 0.32,
         customers: seededRandom(501, 120, 200),
         avgProcessingTime: seededRandom(502, 5, 15),
-        color: '#6366f1',
+        color: 'var(--color-primary-500)',
       },
       {
         id: 'anytime',
@@ -68,7 +68,7 @@ function usePlatformData(packages: any[], shipments: any[]) {
         cost: totalCost * 0.2,
         customers: seededRandom(511, 80, 160),
         avgProcessingTime: seededRandom(512, 8, 20),
-        color: '#10b981',
+        color: 'var(--color-status-success-500)',
       },
       {
         id: 'ipostal',
@@ -80,7 +80,7 @@ function usePlatformData(packages: any[], shipments: any[]) {
         cost: totalCost * 0.28,
         customers: seededRandom(521, 60, 140),
         avgProcessingTime: seededRandom(522, 10, 25),
-        color: '#f59e0b',
+        color: 'var(--color-status-warning-500)',
       },
       {
         id: 'postscan',
@@ -92,7 +92,7 @@ function usePlatformData(packages: any[], shipments: any[]) {
         cost: totalCost * 0.2,
         customers: seededRandom(531, 50, 120),
         avgProcessingTime: seededRandom(532, 12, 28),
-        color: '#ef4444',
+        color: 'var(--color-status-error-500)',
       },
     ];
 
@@ -280,9 +280,9 @@ export default function PlatformReportPage() {
             <CardContent>
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-lg font-bold text-surface-100">{formatCurrency(data.physRevenue)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1"><ArrowUpRight className="h-3 w-3" /> +5.2%</span>
+                <span className="text-xs text-status-success-400 flex items-center gap-1"><ArrowUpRight className="h-3 w-3" /> +5.2%</span>
               </div>
-              <Sparkline data={data.physTrend} color="#6366f1" height={50} />
+              <Sparkline data={data.physTrend} color="var(--color-primary-500)" height={50} />
             </CardContent>
           </Card>
 
@@ -291,9 +291,9 @@ export default function PlatformReportPage() {
             <CardContent>
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-lg font-bold text-surface-100">{formatCurrency(data.digRevenue)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1"><ArrowUpRight className="h-3 w-3" /> +18.7%</span>
+                <span className="text-xs text-status-success-400 flex items-center gap-1"><ArrowUpRight className="h-3 w-3" /> +18.7%</span>
               </div>
-              <Sparkline data={data.digTrend} color="#10b981" height={50} />
+              <Sparkline data={data.digTrend} color="var(--color-status-success-500)" height={50} />
             </CardContent>
           </Card>
         </div>
@@ -338,7 +338,7 @@ export default function PlatformReportPage() {
                         <td className="py-2.5 text-right text-surface-300">{row.phys}</td>
                         <td className="py-2.5 text-right text-surface-300">{row.dig}</td>
                         <td className="py-2.5 text-right">
-                          <span className={row.positive ? 'text-emerald-400' : 'text-red-400'}>{row.diff}</span>
+                          <span className={row.positive ? 'text-status-success-400' : 'text-status-error-400'}>{row.diff}</span>
                         </td>
                       </tr>
                     ));
@@ -381,11 +381,11 @@ export default function PlatformReportPage() {
                     </div>
                     <div>
                       <p className="text-surface-400">Revenue</p>
-                      <p className="text-lg font-semibold text-emerald-400">{formatCurrency(p.revenue)}</p>
+                      <p className="text-lg font-semibold text-status-success-400">{formatCurrency(p.revenue)}</p>
                     </div>
                     <div>
                       <p className="text-surface-400">Profit</p>
-                      <p className="text-lg font-semibold text-emerald-400">{formatCurrency(profit)}</p>
+                      <p className="text-lg font-semibold text-status-success-400">{formatCurrency(profit)}</p>
                     </div>
                     <div>
                       <p className="text-surface-400">Margin</p>

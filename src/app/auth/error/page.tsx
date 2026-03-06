@@ -19,6 +19,8 @@ function AuthErrorContent() {
     interaction_required: 'Additional interaction is required. Please try signing in again.',
     invalid_request: 'The authentication request was invalid. Please try again.',
     unauthorized: 'You are not authorized to access this resource.',
+    callback_url_mismatch: 'Login configuration needs updating. Please contact support or try again shortly.',
+    server_error: 'Our authentication service encountered an error. Please try again in a moment.',
   };
 
   const message = error
@@ -47,8 +49,8 @@ function AuthErrorContent() {
         {/* Error card */}
         <div className="glass-card p-8">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 border border-red-200">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-status-error-50 border border-status-error-200">
+              <AlertTriangle className="h-6 w-6 text-status-error-600" />
             </div>
           </div>
 
@@ -78,7 +80,7 @@ function AuthErrorContent() {
             <a
               href="/"
               className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium text-surface-400 hover:text-surface-200 transition-colors"
-              style={{ border: '1px solid #e2e8f0' }}
+              style={{ border: '1px solid var(--color-surface-700)' }}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Home

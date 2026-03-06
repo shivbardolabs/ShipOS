@@ -191,11 +191,11 @@ export default function PricingPage() {
       {/* Ambient orbs */}
       <div
         className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-30 pointer-events-none"
-        style={{ background: "rgba(99,102,241,0.05)", filter: "blur(100px)" }}
+        style={{ background: "color-mix(in srgb, var(--color-primary-500) 5%, transparent)", filter: "blur(100px)" }}
       />
       <div
         className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full opacity-20 pointer-events-none"
-        style={{ background: "rgba(99,102,241,0.05)", filter: "blur(80px)" }}
+        style={{ background: "color-mix(in srgb, var(--color-primary-500) 5%, transparent)", filter: "blur(80px)" }}
       />
 
       {/* ── Header ── */}
@@ -455,7 +455,7 @@ export default function PricingPage() {
                           className="text-[11px] font-mono font-semibold tracking-wider uppercase text-primary-500 px-6 pt-6 pb-2"
                           style={{
                             borderBottom:
-                              "1px solid rgba(99,102,241,0.12)",
+                              "1px solid color-mix(in srgb, var(--color-primary-500) 12%, transparent)",
                           }}
                         >
                           {cat.name}

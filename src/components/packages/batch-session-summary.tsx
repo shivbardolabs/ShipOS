@@ -83,10 +83,10 @@ export function BatchSessionSummary({
   return (
     <Card className={cn('overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-4">
+      <div className="flex items-center justify-between bg-status-success-500/10 border-b border-status-success-500/20 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-success-500/20">
+            <CheckCircle2 className="h-5 w-5 text-status-success-500" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-surface-100">Batch Session Complete</h3>
@@ -171,7 +171,7 @@ export function BatchSessionSummary({
               {pkg.notified && (
                 <Mail className="h-3 w-3 text-surface-500" />
               )}
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-status-success-500" />
             </div>
           </div>
         ))}

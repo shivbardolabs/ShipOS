@@ -84,10 +84,10 @@ function useAnalyticsData(customers: any[], packages: any[], shipments: any[]) {
 
     /* Donut segments */
     const platformRevenue = [
-      { label: 'In-Store Physical', value: totalRevenue * 0.35, color: '#6366F1' },
-      { label: 'AnyTime Mailbox', value: totalRevenue * 0.22, color: '#10B981' },
-      { label: 'iPostal1', value: totalRevenue * 0.25, color: '#F59E0B' },
-      { label: 'PostScan Mail', value: totalRevenue * 0.18, color: '#EF4444' },
+      { label: 'In-Store Physical', value: totalRevenue * 0.35, color: 'var(--color-primary-500)' },
+      { label: 'AnyTime Mailbox', value: totalRevenue * 0.22, color: 'var(--color-status-success-500)' },
+      { label: 'iPostal1', value: totalRevenue * 0.25, color: 'var(--color-status-warning-500)' },
+      { label: 'PostScan Mail', value: totalRevenue * 0.18, color: 'var(--color-status-error-500)' },
     ];
 
     /* Carrier comparison bars */
@@ -181,7 +181,7 @@ function HeatmapChart({ data, days, hours }: { data: HeatmapCell[]; days: string
 /* -------------------------------------------------------------------------- */
 function StackedBarChart({ data }: { data: { month: string; shipping: number; mailbox: number; handling: number; addons: number }[] }) {
   const maxTotal = Math.max(...data.map((d) => d.shipping + d.mailbox + d.handling + d.addons), 1);
-  const colors = { shipping: '#6366F1', mailbox: '#10B981', handling: '#F59E0B', addons: '#EF4444' };
+  const colors = { shipping: 'var(--color-primary-500)', mailbox: 'var(--color-status-success-500)', handling: 'var(--color-status-warning-500)', addons: 'var(--color-status-error-500)' };
 
   return (
     <div>
@@ -328,11 +328,11 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-xl font-bold text-surface-100">{formatCurrency(data.totalRevenue)}</span>
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                <span className="text-xs text-status-success-400 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" /> +12.4% vs prior
                 </span>
               </div>
-              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="#6366f1" height={80} />
+              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="var(--color-primary-500)" height={80} />
               <div className="flex justify-between mt-2 text-[10px] text-surface-500">
                 <span>{data.revenueTrend[0]?.date}</span>
                 <span>{data.revenueTrend[data.revenueTrend.length - 1]?.date}</span>
@@ -429,21 +429,21 @@ export default function AnalyticsPage() {
               <CardHeader><CardTitle>Revenue Sparkline</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xl font-bold text-surface-100 mb-2">{formatCurrency(data.totalRevenue)}</p>
-                <Sparkline data={data.revenueTrend.map((d) => d.value)} color="#10b981" height={48} />
+                <Sparkline data={data.revenueTrend.map((d) => d.value)} color="var(--color-status-success-500)" height={48} />
               </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Packages Sparkline</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xl font-bold text-surface-100 mb-2">{formatNumber(data.totalPkgs)}</p>
-                <Sparkline data={data.packageTrend.map((d) => d.value)} color="#6366f1" height={48} />
+                <Sparkline data={data.packageTrend.map((d) => d.value)} color="var(--color-primary-500)" height={48} />
               </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Mail Sparkline</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xl font-bold text-surface-100 mb-2">{formatNumber(seededRandom(2300, 200, 500))}</p>
-                <Sparkline data={data.mailTrend.map((d) => d.value)} color="#f59e0b" height={48} />
+                <Sparkline data={data.mailTrend.map((d) => d.value)} color="var(--color-status-warning-500)" height={48} />
               </CardContent>
             </Card>
           </div>
@@ -536,7 +536,7 @@ export default function AnalyticsPage() {
           <Card>
             <CardHeader><CardTitle>Revenue Trend</CardTitle></CardHeader>
             <CardContent>
-              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="#10b981" height={60} />
+              <Sparkline data={data.revenueTrend.map((d) => d.value)} color="var(--color-status-success-500)" height={60} />
             </CardContent>
           </Card>
           <Card>
@@ -654,7 +654,7 @@ export default function AnalyticsPage() {
                         <td className="py-2.5 text-right text-surface-200">{row.format(row.current)}</td>
                         <td className="py-2.5 text-right text-surface-400">{row.format(row.prior)}</td>
                         <td className="py-2.5 text-right">
-                          <span className={change >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                          <span className={change >= 0 ? 'text-status-success-400' : 'text-status-error-400'}>
                             {change >= 0 ? '+' : ''}{row.format(change)}
                           </span>
                         </td>
@@ -694,7 +694,7 @@ export default function AnalyticsPage() {
               ].map((item) => (
                 <div key={item.label} className="p-4 rounded-lg bg-surface-800/30 text-center">
                   <p className="text-xs text-surface-400 mb-1">{item.label}</p>
-                  <p className={`text-xl font-bold ${item.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p className={`text-xl font-bold ${item.trend === 'up' ? 'text-status-success-400' : 'text-status-error-400'}`}>
                     {item.value}
                   </p>
                 </div>

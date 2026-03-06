@@ -383,10 +383,10 @@ export default function ProvisionPage() {
                           {file.name} · {formatFileSize(file.size)}
                         </p>
                       </div>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-status-success-400 flex-shrink-0" />
                       <button
                         onClick={() => removeFile(index)}
-                        className="text-surface-500 hover:text-red-400 transition-colors flex-shrink-0"
+                        className="text-surface-500 hover:text-status-error-400 transition-colors flex-shrink-0"
                         title="Remove file"
                       >
                         <X className="h-4 w-4" />
@@ -447,7 +447,7 @@ export default function ProvisionPage() {
           {/* ─── Step 3: Confirmation ─── */}
           {step === 3 && result && (
             <div className="text-center space-y-4 py-8">
-              <CheckCircle2 className="h-16 w-16 text-emerald-400 mx-auto" />
+              <CheckCircle2 className="h-16 w-16 text-status-success-400 mx-auto" />
               <h3 className="text-xl font-semibold text-surface-100">
                 Account Provisioned Successfully!
               </h3>
@@ -510,7 +510,7 @@ export default function ProvisionPage() {
 
           {/* Error */}
           {error && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 p-3 rounded-lg">
+            <div className="mt-4 flex items-center gap-2 text-sm text-status-error-400 bg-status-error-500/10 p-3 rounded-lg">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {error}
             </div>

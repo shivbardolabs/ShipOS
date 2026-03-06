@@ -53,23 +53,23 @@ export function OnlineStatus() {
     <div
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all duration-500 ${
         isOnline
-          ? 'bg-emerald-50 text-emerald-600'
-          : 'bg-amber-50 text-amber-600'
+          ? 'bg-status-success-50 text-status-success-600'
+          : 'bg-status-warning-50 text-status-warning-600'
       }`}
       style={{
-        border: `1px solid ${isOnline ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}`,
+        border: `1px solid ${isOnline ? 'rgba(16, 185, 129, 0.15)' : 'color-mix(in srgb, var(--color-status-warning-500) 15%, transparent)'}`,
       }}
     >
       <span className="relative flex h-1.5 w-1.5">
         <span
           className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-            isOnline ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'
+            isOnline ? 'bg-status-success-400 animate-ping' : 'bg-status-warning-400'
           }`}
           style={{ animationDuration: '2s' }}
         />
         <span
           className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
-            isOnline ? 'bg-emerald-400' : 'bg-amber-400'
+            isOnline ? 'bg-status-success-400' : 'bg-status-warning-400'
           }`}
         />
       </span>

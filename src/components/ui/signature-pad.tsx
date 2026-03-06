@@ -31,7 +31,7 @@ export function SignaturePad({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = 'var(--color-surface-700)';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';

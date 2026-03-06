@@ -109,9 +109,9 @@ export function MailboxTab({
 
       {/* BAR-387: Overlap warning */}
       {overlapWarning && (
-        <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-          <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-amber-300">
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-status-warning-500/30 bg-status-warning-500/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-status-warning-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-status-warning-300">
             <span className="font-medium">Overlapping ranges:</span> {overlapWarning}
           </p>
         </div>
@@ -119,9 +119,9 @@ export function MailboxTab({
 
       {/* BAR-387: API error */}
       {rangeError && !overlapWarning && (
-        <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
-          <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-red-300">{rangeError}</p>
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-status-error-500/30 bg-status-error-500/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-status-error-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-status-error-300">{rangeError}</p>
         </div>
       )}
 
@@ -139,7 +139,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${platformEnabled.store ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${platformEnabled.store ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {platformEnabled.store ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -174,8 +174,8 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!platformEnabled.anytime ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                <Mail className="h-4 w-4 text-emerald-400" />
+              <div className="h-8 w-8 rounded-lg bg-status-success-500/20 flex items-center justify-center">
+                <Mail className="h-4 w-4 text-status-success-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">Anytime Mailbox</p>
@@ -183,7 +183,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${platformEnabled.anytime ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${platformEnabled.anytime ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {platformEnabled.anytime ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -218,8 +218,8 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!platformEnabled.ipostal1 ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                <Mail className="h-4 w-4 text-blue-400" />
+              <div className="h-8 w-8 rounded-lg bg-status-info-500/20 flex items-center justify-center">
+                <Mail className="h-4 w-4 text-status-info-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">iPostal1</p>
@@ -227,7 +227,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${platformEnabled.ipostal1 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${platformEnabled.ipostal1 ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {platformEnabled.ipostal1 ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -262,8 +262,8 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!platformEnabled.postscan ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                <Mail className="h-4 w-4 text-indigo-400" />
+              <div className="h-8 w-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                <Mail className="h-4 w-4 text-primary-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">PostScan Mail</p>
@@ -271,7 +271,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${platformEnabled.postscan ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${platformEnabled.postscan ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {platformEnabled.postscan ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -335,7 +335,7 @@ export function MailboxTab({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-amber-900/30 flex items-center justify-center">
-                <Package className="h-4 w-4 text-amber-500" />
+                <Package className="h-4 w-4 text-status-warning-500" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">UPS Access Point</p>
@@ -343,7 +343,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.ups_ap ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.ups_ap ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {carrierProgramEnabled.ups_ap ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -358,8 +358,8 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!carrierProgramEnabled.fedex_hal ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                <Package className="h-4 w-4 text-indigo-400" />
+              <div className="h-8 w-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                <Package className="h-4 w-4 text-primary-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">FedEx Hold At Location</p>
@@ -367,7 +367,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.fedex_hal ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.fedex_hal ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {carrierProgramEnabled.fedex_hal ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -382,7 +382,7 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!carrierProgramEnabled.kinek ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-accent-teal/20 flex items-center justify-center">
                 <Package className="h-4 w-4 text-teal-400" />
               </div>
               <div>
@@ -391,7 +391,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.kinek ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.kinek ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {carrierProgramEnabled.kinek ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch
@@ -406,8 +406,8 @@ export function MailboxTab({
         <div className={`glass-card p-4 ${!carrierProgramEnabled.amazon ? 'opacity-60' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-                <Package className="h-4 w-4 text-orange-400" />
+              <div className="h-8 w-8 rounded-lg bg-status-warning-alt/20 flex items-center justify-center">
+                <Package className="h-4 w-4 text-status-warning-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-surface-200">Amazon</p>
@@ -415,7 +415,7 @@ export function MailboxTab({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.amazon ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
+              <Badge dot={false} className={`text-xs ${carrierProgramEnabled.amazon ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30' : 'bg-surface-700 text-surface-400 border-surface-600'}`}>
                 {carrierProgramEnabled.amazon ? 'Active' : 'Disabled'}
               </Badge>
               <ToggleSwitch

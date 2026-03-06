@@ -79,11 +79,11 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 const STEP_COLORS: Record<string, string> = {
-  initiated: 'bg-amber-900/30 text-amber-400',
-  label_printed: 'bg-blue-900/30 text-blue-400',
-  carrier_handoff: 'bg-indigo-900/30 text-indigo-400',
-  completed: 'bg-emerald-900/30 text-emerald-400',
-  cancelled: 'bg-red-900/30 text-red-400',
+  initiated: 'bg-amber-900/30 text-status-warning-400',
+  label_printed: 'bg-blue-900/30 text-status-info-400',
+  carrier_handoff: 'bg-primary-900/30 text-primary-400',
+  completed: 'bg-emerald-900/30 text-status-success-400',
+  cancelled: 'bg-red-900/30 text-status-error-400',
 };
 
 const REASON_LABELS: Record<string, string> = {
@@ -190,28 +190,28 @@ export default function RtsPage() {
           icon={Clock}
           label="Initiated"
           count={stepCounts.initiated}
-          color="text-amber-400"
+          color="text-status-warning-400"
           bg="bg-amber-900/20"
         />
         <SummaryCard
           icon={Printer}
           label="Label Printed"
           count={stepCounts.label_printed}
-          color="text-blue-400"
+          color="text-status-info-400"
           bg="bg-blue-900/20"
         />
         <SummaryCard
           icon={Truck}
           label="Carrier Handoff"
           count={stepCounts.carrier_handoff}
-          color="text-indigo-400"
-          bg="bg-indigo-900/20"
+          color="text-primary-400"
+          bg="bg-primary-900/20"
         />
         <SummaryCard
           icon={CheckCircle2}
           label="Completed"
           count={stepCounts.completed}
-          color="text-emerald-400"
+          color="text-status-success-400"
           bg="bg-emerald-900/20"
         />
       </div>

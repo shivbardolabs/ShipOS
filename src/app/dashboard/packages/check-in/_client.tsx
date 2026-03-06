@@ -1185,7 +1185,7 @@ export default function CheckInPage() {
       />
 
       {!isOnline && (
-        <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+        <div className="flex items-center gap-2 rounded-xl border border-status-warning-500/30 bg-status-warning-500/10 px-4 py-3 text-sm text-status-warning-400">
           <WifiOff className="h-4 w-4 shrink-0" />
           <span>You&apos;re offline. Package data is preserved, but check-in will be disabled until you reconnect.</span>
         </div>
@@ -1209,21 +1209,21 @@ export default function CheckInPage() {
                 step === s.id
                   ? 'bg-primary-50 text-primary-600 font-medium'
                   : s.id < step
-                    ? 'text-emerald-600 cursor-pointer hover:bg-surface-800'
+                    ? 'text-status-success-600 cursor-pointer hover:bg-surface-800'
                     : 'text-surface-500 cursor-default'
               )}
             >
               <span className={cn(
                 'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
                 step === s.id ? 'bg-primary-600 text-white'
-                  : s.id < step ? 'bg-emerald-100 text-emerald-600' : 'bg-surface-700 text-surface-500'
+                  : s.id < step ? 'bg-status-success-100 text-status-success-600' : 'bg-surface-700 text-surface-500'
               )}>
                 {s.id < step ? <Check className="h-3.5 w-3.5" /> : s.id}
               </span>
               <span className="hidden sm:inline">{s.label}</span>
             </button>
             {idx < STEPS.length - 1 && (
-              <div className={cn('mx-1 h-px w-8 sm:w-12', s.id < step ? 'bg-emerald-500/40' : 'bg-surface-700')} />
+              <div className={cn('mx-1 h-px w-8 sm:w-12', s.id < step ? 'bg-status-success-500/40' : 'bg-surface-700')} />
             )}
           </div>
         ))}
@@ -1322,7 +1322,7 @@ export default function CheckInPage() {
             <button
               type="button"
               onClick={() => setShowCancelModal(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-700/50 bg-surface-800/50 text-surface-400 hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 transition-all"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-700/50 bg-surface-800/50 text-surface-400 hover:border-status-error-500/40 hover:bg-status-error-500/10 hover:text-status-error-400 transition-all"
               title="Cancel check-in"
             >
               <XIcon className="h-4 w-4" />

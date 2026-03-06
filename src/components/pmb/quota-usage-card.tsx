@@ -114,10 +114,10 @@ export function QuotaUsageCard({ customerId }: { customerId: string }) {
         {quota.services.map((s) => {
           const isUnlimited = s.included === 0;
           const barColor = s.isOverLimit
-            ? 'bg-red-500'
+            ? 'bg-status-error-500'
             : s.percentUsed >= 80
-              ? 'bg-amber-500'
-              : 'bg-emerald-500';
+              ? 'bg-status-warning-500'
+              : 'bg-status-success-500';
 
           return (
             <div key={s.service}>
@@ -133,7 +133,7 @@ export function QuotaUsageCard({ customerId }: { customerId: string }) {
                     <span>
                       {s.used} / {s.included}
                       {s.isOverLimit && (
-                        <span className="text-red-400 ml-1">(+{s.overageCount} over)</span>
+                        <span className="text-status-error-400 ml-1">(+{s.overageCount} over)</span>
                       )}
                     </span>
                   )}

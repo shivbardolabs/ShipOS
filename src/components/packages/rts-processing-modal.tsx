@@ -206,11 +206,11 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
                     className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
                       isDone
-                        ? 'bg-emerald-600 border-emerald-500 text-white'
+                        ? 'bg-status-success-600 border-status-success-500 text-white'
                         : isCurrent
                           ? 'bg-primary-600 border-primary-500 text-white'
                           : isCancelled
-                            ? 'bg-red-900/30 border-red-800/50 text-red-400'
+                            ? 'bg-red-900/30 border-status-error-800/50 text-status-error-400'
                             : 'bg-surface-800 border-surface-600 text-surface-400',
                     )}
                   >
@@ -233,7 +233,7 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
                   <div
                     className={cn(
                       'flex-1 h-0.5 mx-2 mt-[-16px]',
-                      isDone ? 'bg-emerald-600' : 'bg-surface-700',
+                      isDone ? 'bg-status-success-600' : 'bg-surface-700',
                     )}
                   />
                 )}
@@ -244,13 +244,13 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
 
         {/* Cancelled Banner */}
         {isCancelled && (
-          <div className="rounded-lg border border-red-800/40 bg-red-900/10 p-3">
+          <div className="rounded-lg border border-status-error-800/40 bg-red-900/10 p-3">
             <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-400" />
+              <XCircle className="h-5 w-5 text-status-error-400" />
               <div>
-                <p className="text-sm font-medium text-red-300">RTS Cancelled</p>
+                <p className="text-sm font-medium text-status-error-300">RTS Cancelled</p>
                 {record.cancelReason && (
-                  <p className="text-xs text-red-400/80 mt-0.5">Reason: {record.cancelReason}</p>
+                  <p className="text-xs text-status-error-400/80 mt-0.5">Reason: {record.cancelReason}</p>
                 )}
                 <p className="text-xs text-surface-500 mt-0.5">
                   {record.cancelledAt && formatDate(record.cancelledAt)}
@@ -330,10 +330,10 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
 
         {/* Cancel form */}
         {showCancel && !isTerminal && (
-          <div className="rounded-lg border border-red-800/40 bg-red-900/10 p-4 space-y-3">
+          <div className="rounded-lg border border-status-error-800/40 bg-red-900/10 p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-              <span className="text-sm font-medium text-red-300">Cancel RTS</span>
+              <AlertTriangle className="h-4 w-4 text-status-error-400" />
+              <span className="text-sm font-medium text-status-error-300">Cancel RTS</span>
             </div>
             <Textarea
               label="Cancellation Reason *"
@@ -350,7 +350,7 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
                 size="sm"
                 onClick={() => performAction('cancel')}
                 disabled={!cancelReason.trim() || submitting}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-status-error-600 hover:bg-status-error-700 text-white"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Cancel'}
               </Button>
@@ -358,7 +358,7 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
           </div>
         )}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-status-error-400">{error}</p>}
 
         {/* Action Buttons */}
         {!isTerminal && !showCancel && (
@@ -367,7 +367,7 @@ export function RtsProcessingModal({ record, onClose, onUpdate }: RtsProcessingM
               variant="outline"
               size="sm"
               onClick={() => setShowCancel(true)}
-              className="text-red-400 hover:text-red-300"
+              className="text-status-error-400 hover:text-status-error-300"
             >
               <XCircle className="h-4 w-4 mr-1.5" />
               Cancel RTS

@@ -42,13 +42,13 @@ const discrepancyLabels: Record<string, string> = {
 };
 
 const discrepancyColors: Record<string, string> = {
-  weight_overcharge: 'bg-red-500/15 text-red-400 border-red-500/25',
-  service_mismatch: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
-  duplicate_charge: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
-  invalid_surcharge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  address_correction: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
-  residential_surcharge: 'bg-pink-500/15 text-pink-400 border-pink-500/25',
-  late_delivery: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
+  weight_overcharge: 'bg-status-error-500/15 text-status-error-400 border-status-error-500/25',
+  service_mismatch: 'bg-status-warning-alt/15 text-status-warning-400 border-status-warning-alt/25',
+  duplicate_charge: 'bg-status-error-500/15 text-status-error-400 border-status-error-500/25',
+  invalid_surcharge: 'bg-status-warning-500/15 text-status-warning-400 border-status-warning-500/25',
+  address_correction: 'bg-status-warning-500/15 text-status-warning-400 border-status-warning-500/25',
+  residential_surcharge: 'bg-status-pink-500/15 text-status-pink-400 border-status-pink-500/25',
+  late_delivery: 'bg-status-violet-500/15 text-status-violet-400 border-status-violet-500/25',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -230,7 +230,7 @@ export default function ReconciliationPage() {
           return <span className="text-surface-500 text-sm">{'\u2014'}</span>;
         const isOver = row.difference > 0;
         return (
-          <span className={`font-semibold text-sm ${isOver ? 'text-red-400' : 'text-emerald-400'}`}>
+          <span className={`font-semibold text-sm ${isOver ? 'text-status-error-400' : 'text-status-success-400'}`}>
             {isOver ? '+' : ''}{formatCurrency(row.difference)}
           </span>
         );
@@ -378,7 +378,7 @@ export default function ReconciliationPage() {
                     </div>
                   </div>
                   {run.potentialRefund > 0 && (
-                    <span className="text-xs font-semibold text-red-400 flex-shrink-0">
+                    <span className="text-xs font-semibold text-status-error-400 flex-shrink-0">
                       {formatCurrency(run.potentialRefund)}
                     </span>
                   )}
@@ -405,19 +405,19 @@ export default function ReconciliationPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 pb-4">
             <div className="rounded-lg bg-surface-800/50 border border-surface-700/40 px-3 py-2.5">
               <p className="text-lg font-bold text-white">{currentRun.matchedCount}</p>
-              <p className="text-[10px] text-emerald-400 font-medium uppercase tracking-wide">Matched</p>
+              <p className="text-[10px] text-status-success-400 font-medium uppercase tracking-wide">Matched</p>
             </div>
             <div className="rounded-lg bg-surface-800/50 border border-surface-700/40 px-3 py-2.5">
-              <p className="text-lg font-bold text-red-400">{currentRun.discrepancyCount}</p>
-              <p className="text-[10px] text-red-400/70 font-medium uppercase tracking-wide">Overcharges</p>
+              <p className="text-lg font-bold text-status-error-400">{currentRun.discrepancyCount}</p>
+              <p className="text-[10px] text-status-error-400/70 font-medium uppercase tracking-wide">Overcharges</p>
             </div>
             <div className="rounded-lg bg-surface-800/50 border border-surface-700/40 px-3 py-2.5">
-              <p className="text-lg font-bold text-orange-400">{currentRun.lateDeliveryCount}</p>
-              <p className="text-[10px] text-orange-400/70 font-medium uppercase tracking-wide">Late Deliveries</p>
+              <p className="text-lg font-bold text-status-warning-400">{currentRun.lateDeliveryCount}</p>
+              <p className="text-[10px] text-status-warning-400/70 font-medium uppercase tracking-wide">Late Deliveries</p>
             </div>
             <div className="rounded-lg bg-surface-800/50 border border-surface-700/40 px-3 py-2.5">
-              <p className="text-lg font-bold text-yellow-400">{currentRun.unmatchedCount}</p>
-              <p className="text-[10px] text-yellow-400/70 font-medium uppercase tracking-wide">Unmatched</p>
+              <p className="text-lg font-bold text-status-warning-400">{currentRun.unmatchedCount}</p>
+              <p className="text-[10px] text-status-warning-400/70 font-medium uppercase tracking-wide">Unmatched</p>
             </div>
           </div>
 
@@ -436,11 +436,11 @@ export default function ReconciliationPage() {
                         </span>
                         <span className="text-xs text-surface-500">{d.count} items</span>
                       </div>
-                      <span className="text-sm font-semibold text-red-400">+{formatCurrency(d.amount)}</span>
+                      <span className="text-sm font-semibold text-status-error-400">+{formatCurrency(d.amount)}</span>
                     </div>
                     <div className="h-2 rounded-full bg-surface-800 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-red-500/60 to-red-400/80 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-status-error-500/60 to-status-error-400/80 transition-all duration-500"
                         style={{ width: `${Math.max(pct, 3)}%` }}
                       />
                     </div>
@@ -454,7 +454,7 @@ export default function ReconciliationPage() {
             {discrepancySummary.length > 0 && (
               <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-800">
                 <span className="text-sm font-medium text-surface-300">Total Potential Refund</span>
-                <span className="text-lg font-bold text-red-400">{formatCurrency(currentRun.potentialRefund)}</span>
+                <span className="text-lg font-bold text-status-error-400">{formatCurrency(currentRun.potentialRefund)}</span>
               </div>
             )}
           </div>
@@ -532,7 +532,7 @@ export default function ReconciliationPage() {
         ) : (
           <div className="flex flex-col items-center py-8 space-y-6">
             <div className="relative">
-              <div className={`flex h-20 w-20 items-center justify-center rounded-2xl transition-colors duration-500 ${uploadPhase === 'complete' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary-500/20 text-primary-400'}`}>
+              <div className={`flex h-20 w-20 items-center justify-center rounded-2xl transition-colors duration-500 ${uploadPhase === 'complete' ? 'bg-status-success-500/20 text-status-success-400' : 'bg-primary-500/20 text-primary-400'}`}>
                 {uploadPhase === 'complete' ? (
                   <CheckCircle2 className="h-10 w-10" />
                 ) : uploadPhase === 'reconciling' ? (
@@ -574,13 +574,13 @@ export default function ReconciliationPage() {
                 return (
                   <div key={step.phase} className="flex items-center gap-3">
                     <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
-                      isDone ? 'bg-emerald-500/25 text-emerald-400 border border-emerald-500/40'
+                      isDone ? 'bg-status-success-500/25 text-status-success-400 border border-status-success-500/40'
                         : isCurrent ? 'bg-primary-500/25 text-primary-400 border border-primary-500/40'
                         : 'bg-surface-800 text-surface-500 border border-surface-700'
                     }`}>
                       {isDone ? '\u2713' : idx + 1}
                     </div>
-                    <span className={`text-sm ${isDone ? 'text-emerald-400' : isCurrent ? 'text-surface-200 font-medium' : 'text-surface-500'}`}>
+                    <span className={`text-sm ${isDone ? 'text-status-success-400' : isCurrent ? 'text-surface-200 font-medium' : 'text-surface-500'}`}>
                       {step.label}
                     </span>
                   </div>
@@ -591,7 +591,7 @@ export default function ReconciliationPage() {
             <div className="w-full max-w-sm">
               <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ease-out ${uploadPhase === 'complete' ? 'bg-emerald-500' : 'bg-primary-500'}`}
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${uploadPhase === 'complete' ? 'bg-status-success-500' : 'bg-primary-500'}`}
                   style={{
                     width: uploadPhase === 'uploading' ? '25%'
                       : uploadPhase === 'parsing' ? '50%'
@@ -644,7 +644,7 @@ export default function ReconciliationPage() {
                   <p className="text-[10px] text-surface-500">Records Audited</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-red-400">{currentRun.discrepancyCount + currentRun.lateDeliveryCount}</p>
+                  <p className="text-xl font-bold text-status-error-400">{currentRun.discrepancyCount + currentRun.lateDeliveryCount}</p>
                   <p className="text-[10px] text-surface-500">Issues Found</p>
                 </div>
                 <div>
@@ -652,7 +652,7 @@ export default function ReconciliationPage() {
                   <p className="text-[10px] text-surface-500">Total Billed</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-red-400">{formatCurrency(currentRun.potentialRefund)}</p>
+                  <p className="text-xl font-bold text-status-error-400">{formatCurrency(currentRun.potentialRefund)}</p>
                   <p className="text-[10px] text-surface-500">Refund Requested</p>
                 </div>
               </div>
@@ -674,7 +674,7 @@ export default function ReconciliationPage() {
                           {discrepancyLabels[item.discrepancyType!]}
                         </span>
                       </div>
-                      <span className="text-red-400 font-medium">+{formatCurrency(item.difference)}</span>
+                      <span className="text-status-error-400 font-medium">+{formatCurrency(item.difference)}</span>
                     </div>
                   ))}
                 {currentItems.filter((i) => i.discrepancyType).length > 8 && (
@@ -715,20 +715,20 @@ export default function ReconciliationPage() {
         {selectedDetail && (
           <div className="space-y-5">
             {selectedDetail.discrepancyType && selectedDetail.status !== 'late_delivery' && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
+              <div className="rounded-lg bg-status-error-500/10 border border-status-error-500/20 px-4 py-3 flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-status-error-400 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-red-300">{discrepancyLabels[selectedDetail.discrepancyType]}</p>
-                  <p className="text-xs text-red-400/70">Carrier overcharged by {formatCurrency(selectedDetail.difference)}</p>
+                  <p className="text-sm font-medium text-status-error-300">{discrepancyLabels[selectedDetail.discrepancyType]}</p>
+                  <p className="text-xs text-status-error-400/70">Carrier overcharged by {formatCurrency(selectedDetail.difference)}</p>
                 </div>
               </div>
             )}
             {selectedDetail.status === 'late_delivery' && (
-              <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 px-4 py-3 flex items-center gap-3">
-                <Clock className="h-5 w-5 text-orange-400 flex-shrink-0" />
+              <div className="rounded-lg bg-status-warning-alt/10 border border-status-warning-alt/20 px-4 py-3 flex items-center gap-3">
+                <Clock className="h-5 w-5 text-status-warning-400 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-orange-300">Late Delivery</p>
-                  <p className="text-xs text-orange-400/70">
+                  <p className="text-xs text-status-warning-400/70">
                     Package delivered after the guaranteed delivery date {'\u2014'} eligible for full refund of {formatCurrency(selectedDetail.billedCharge)}
                   </p>
                 </div>
@@ -783,7 +783,7 @@ export default function ReconciliationPage() {
                     </div>
                     <div className="flex items-center justify-between px-4 py-2.5">
                       <span className="text-sm text-surface-400">Billed Weight</span>
-                      <span className={`text-sm font-medium ${selectedDetail.billedWeight > selectedDetail.expectedWeight ? 'text-red-400' : 'text-surface-300'}`}>
+                      <span className={`text-sm font-medium ${selectedDetail.billedWeight > selectedDetail.expectedWeight ? 'text-status-error-400' : 'text-surface-300'}`}>
                         {selectedDetail.billedWeight} lbs
                         {selectedDetail.billedWeight > selectedDetail.expectedWeight && (
                           <span className="text-xs ml-1">(+{(selectedDetail.billedWeight - selectedDetail.expectedWeight).toFixed(1)})</span>
@@ -798,7 +798,7 @@ export default function ReconciliationPage() {
                     {selectedDetail.surcharges.map((s, i) => (
                       <div key={i} className="flex items-center justify-between ml-3 mb-1">
                         <span className="text-xs text-surface-500">{s.name}</span>
-                        <span className="text-xs text-red-400">{formatCurrency(s.amount)}</span>
+                        <span className="text-xs text-status-error-400">{formatCurrency(s.amount)}</span>
                       </div>
                     ))}
                   </div>
@@ -806,8 +806,8 @@ export default function ReconciliationPage() {
                 <div className="flex items-center justify-between px-4 py-3 bg-surface-800/30">
                   <span className="text-sm font-semibold text-surface-200">Difference</span>
                   <span className={`text-base font-bold ${
-                    selectedDetail.difference > 0 ? 'text-red-400'
-                      : selectedDetail.difference < 0 ? 'text-emerald-400'
+                    selectedDetail.difference > 0 ? 'text-status-error-400'
+                      : selectedDetail.difference < 0 ? 'text-status-success-400'
                       : 'text-surface-400'
                   }`}>
                     {selectedDetail.difference > 0 ? '+' : ''}{formatCurrency(selectedDetail.difference)}

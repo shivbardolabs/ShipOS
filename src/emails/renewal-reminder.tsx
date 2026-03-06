@@ -60,12 +60,12 @@ const heading: React.CSSProperties = {
 const paragraph: React.CSSProperties = {
   fontSize: '15px',
   lineHeight: '24px',
-  color: '#374151',
+  color: 'var(--color-surface-300)',
   margin: '0 0 16px',
 };
 
 const infoBox: React.CSSProperties = {
-  backgroundColor: '#eff6ff',
+  backgroundColor: 'var(--color-status-info-50)',
   borderRadius: '8px',
   padding: '16px',
   margin: '16px 0',

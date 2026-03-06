@@ -103,7 +103,7 @@ interface StatCardProps {
 
 export function StatCard({ icon, title, value, change, className }: StatCardProps) {
   const isPositive = change !== undefined && change >= 0;
-  const changeColor = isPositive ? 'text-emerald-600' : 'text-red-600';
+  const changeColor = isPositive ? 'text-status-success-600' : 'text-status-error-600';
 
   return (
     <div className={cn('glass-card p-5', className)}>

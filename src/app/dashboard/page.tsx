@@ -60,29 +60,29 @@ import { CarrierStatusSection } from '@/components/dashboard/carrier-status-sect
 /*  Activity icon mapping — for both legacy recentActivity and activity log   */
 /* -------------------------------------------------------------------------- */
 const activityIconMap: Record<string, { icon: React.ElementType; color: string }> = {
-  package_checkin: { icon: PackagePlus, color: 'text-blue-600 bg-blue-50' },
-  package_release: { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-  notification: { icon: Bell, color: 'text-amber-600 bg-amber-50' },
-  shipment: { icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
-  mail: { icon: Mail, color: 'text-cyan-600 bg-cyan-500/15' },
-  customer: { icon: UserPlus, color: 'text-teal-400 bg-teal-500/15' },
-  alert: { icon: ShieldAlert, color: 'text-rose-400 bg-rose-500/15' },
+  package_checkin: { icon: PackagePlus, color: 'text-status-info-600 bg-status-info-50' },
+  package_release: { icon: CheckCircle2, color: 'text-status-success-600 bg-status-success-50' },
+  notification: { icon: Bell, color: 'text-status-warning-600 bg-status-warning-50' },
+  shipment: { icon: Truck, color: 'text-primary-600 bg-primary-50' },
+  mail: { icon: Mail, color: 'text-accent-teal bg-accent-teal/15' },
+  customer: { icon: UserPlus, color: 'text-teal-400 bg-accent-teal/15' },
+  alert: { icon: ShieldAlert, color: 'text-status-error-400 bg-status-error-500/15' },
 };
 
 /** Map activity log categories to icon config */
 const categoryIconMap: Record<ActionCategory, { icon: React.ElementType; color: string }> = {
-  package: { icon: Package, color: 'text-blue-600 bg-blue-50' },
-  customer: { icon: Users, color: 'text-teal-400 bg-teal-500/15' },
-  mail: { icon: Mail, color: 'text-cyan-600 bg-cyan-500/15' },
-  shipment: { icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
-  notification: { icon: Bell, color: 'text-amber-600 bg-amber-50' },
+  package: { icon: Package, color: 'text-status-info-600 bg-status-info-50' },
+  customer: { icon: Users, color: 'text-teal-400 bg-accent-teal/15' },
+  mail: { icon: Mail, color: 'text-accent-teal bg-accent-teal/15' },
+  shipment: { icon: Truck, color: 'text-primary-600 bg-primary-50' },
+  notification: { icon: Bell, color: 'text-status-warning-600 bg-status-warning-50' },
   settings: { icon: Settings, color: 'text-surface-400 bg-surface-700/30' },
-  user: { icon: UserPlus, color: 'text-violet-400 bg-violet-500/15' },
-  loyalty: { icon: Award, color: 'text-amber-400 bg-amber-500/15' },
-  compliance: { icon: Shield, color: 'text-emerald-400 bg-emerald-500/15' },
-  invoice: { icon: FileText, color: 'text-orange-400 bg-orange-500/15' },
-  report: { icon: BarChart3, color: 'text-indigo-400 bg-indigo-500/15' },
-  auth: { icon: Shield, color: 'text-rose-400 bg-rose-500/15' },
+  user: { icon: UserPlus, color: 'text-status-violet-400 bg-status-violet-500/15' },
+  loyalty: { icon: Award, color: 'text-status-warning-400 bg-status-warning-500/15' },
+  compliance: { icon: Shield, color: 'text-status-success-400 bg-status-success-500/15' },
+  invoice: { icon: FileText, color: 'text-status-warning-400 bg-status-warning-alt/15' },
+  report: { icon: BarChart3, color: 'text-primary-400 bg-primary-500/15' },
+  auth: { icon: Shield, color: 'text-status-error-400 bg-status-error-500/15' },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -103,8 +103,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Smart Intake',
     icon: Sparkles,
     href: '/dashboard/packages/smart-intake',
-    color: 'text-violet-500',
-    bgColor: 'bg-gradient-to-br from-violet-500/15 to-blue-500/15 hover:from-violet-500/25 hover:to-blue-500/25',
+    color: 'text-status-violet-500',
+    bgColor: 'bg-gradient-to-br from-status-violet-500/15 to-status-info-500/15 hover:from-status-violet-500/25 hover:to-status-info-500/25',
     badge: 'AI',
     subtitle: 'Snap to check-in',
   },
@@ -112,8 +112,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'AI Onboard',
     icon: UserPlus,
     href: '/dashboard/customers/ai-onboard',
-    color: 'text-violet-400',
-    bgColor: 'bg-gradient-to-br from-violet-500/15 to-purple-500/15 hover:from-violet-500/25 hover:to-purple-500/25',
+    color: 'text-status-violet-400',
+    bgColor: 'bg-gradient-to-br from-status-violet-500/15 to-status-violet-500/15 hover:from-status-violet-500/25 hover:to-status-violet-500/25',
     badge: 'AI',
     subtitle: 'Scan ID to sign up',
   },
@@ -121,8 +121,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'AI Mail Sort',
     icon: MailOpen,
     href: '/dashboard/mail/ai-sort',
-    color: 'text-violet-400',
-    bgColor: 'bg-gradient-to-br from-violet-500/15 to-cyan-500/15 hover:from-violet-500/25 hover:to-cyan-500/25',
+    color: 'text-status-violet-400',
+    bgColor: 'bg-gradient-to-br from-status-violet-500/15 to-accent-teal/15 hover:from-status-violet-500/25 hover:to-accent-teal/25',
     badge: 'AI',
     subtitle: 'Snap & route mail',
   },
@@ -130,8 +130,8 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'AI Bill Audit',
     icon: ScanLine,
     href: '/dashboard/reconciliation/ai-audit',
-    color: 'text-violet-400',
-    bgColor: 'bg-gradient-to-br from-violet-500/15 to-green-500/15 hover:from-violet-500/25 hover:to-green-500/25',
+    color: 'text-status-violet-400',
+    bgColor: 'bg-gradient-to-br from-status-violet-500/15 to-status-success-500/15 hover:from-status-violet-500/25 hover:to-status-success-500/25',
     badge: 'AI',
     subtitle: 'Find overcharges',
   },
@@ -139,15 +139,15 @@ const favoriteTiles: FavoriteTile[] = [
     label: 'Check In Package',
     icon: PackagePlus,
     href: '/dashboard/packages/check-in',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-500/25',
+    color: 'text-status-info-600',
+    bgColor: 'bg-status-info-50 hover:bg-status-info-500/25',
   },
   {
     label: 'Check Out Package',
     icon: PackageOpen,
     href: '/dashboard/packages/check-out',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 hover:bg-emerald-500/25',
+    color: 'text-status-success-600',
+    bgColor: 'bg-status-success-50 hover:bg-status-success-500/25',
     badge: '__PACKAGES_HELD__',
   },
   {
@@ -155,72 +155,72 @@ const favoriteTiles: FavoriteTile[] = [
     icon: Search,
     href: '/dashboard/customers',
     color: 'text-teal-400',
-    bgColor: 'bg-teal-500/15 hover:bg-teal-500/25',
+    bgColor: 'bg-accent-teal/15 hover:bg-accent-teal/25',
   },
   {
     label: 'Send SMS',
     icon: Send,
     href: '/dashboard/notifications',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 hover:bg-amber-500/25',
+    color: 'text-status-warning-600',
+    bgColor: 'bg-status-warning-50 hover:bg-status-warning-500/25',
     subtitle: '98% open rate',
   },
   {
     label: 'New Shipment',
     icon: Truck,
     href: '/dashboard/shipping',
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-500/25',
+    color: 'text-primary-600',
+    bgColor: 'bg-primary-50 hover:bg-primary-500/25',
   },
   {
     label: 'Mail Scan',
     icon: Mail,
     href: '/dashboard/mail',
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-500/15 hover:bg-cyan-500/25',
+    color: 'text-accent-teal',
+    bgColor: 'bg-accent-teal/15 hover:bg-accent-teal/25',
   },
   {
     label: 'End of Day',
     icon: CalendarCheck,
     href: '/dashboard/end-of-day',
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/15 hover:bg-rose-500/25',
+    color: 'text-status-error-400',
+    bgColor: 'bg-status-error-500/15 hover:bg-status-error-500/25',
   },
   {
     label: 'Daily Report',
     icon: BarChart3,
     href: '/dashboard/reports',
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-500/25',
+    color: 'text-primary-600',
+    bgColor: 'bg-primary-50 hover:bg-primary-500/25',
   },
   {
     label: 'ID Expiring',
     icon: AlertTriangle,
     href: '/dashboard/compliance',
-    color: 'text-red-600',
-    bgColor: 'bg-red-50 hover:bg-red-500/25',
+    color: 'text-status-error-600',
+    bgColor: 'bg-status-error-50 hover:bg-status-error-500/25',
     badge: '__ID_EXPIRING__',
   },
   {
     label: 'Create Invoice',
     icon: FileText,
     href: '/dashboard/invoicing',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/15 hover:bg-orange-500/25',
+    color: 'text-status-warning-400',
+    bgColor: 'bg-status-warning-alt/15 hover:bg-status-warning-alt/25',
   },
   {
     label: 'Settings',
     icon: Settings,
     href: '/dashboard/settings',
-    color: 'text-gray-400',
-    bgColor: 'bg-gray-500/15 hover:bg-gray-500/25',
+    color: 'text-surface-500',
+    bgColor: 'bg-surface-9000/15 hover:bg-surface-9000/25',
   },
   {
     label: 'Package Mgmt',
     icon: Package,
     href: '/dashboard/packages',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-500/25',
+    color: 'text-status-info-600',
+    bgColor: 'bg-status-info-50 hover:bg-status-info-500/25',
   },
 ];
 
@@ -383,8 +383,8 @@ export default function DashboardPage() {
   /* Secondary stats for the "Quick Stats" sidebar */
   const secondaryStats = [
     { label: 'Active Customers', value: s.activeCustomers, icon: Users, color: 'text-primary-600', bgColor: 'bg-primary-50' },
-    { label: 'ID Expiring Soon', value: s.idExpiringSoon, icon: AlertTriangle, color: 'text-rose-400', bgColor: 'bg-rose-500/15' },
-    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+    { label: 'ID Expiring Soon', value: s.idExpiringSoon, icon: AlertTriangle, color: 'text-status-error-400', bgColor: 'bg-status-error-500/15' },
+    { label: 'Shipments Today', value: s.shipmentsToday, icon: Truck, color: 'text-primary-600', bgColor: 'bg-primary-50' },
     { label: 'Notifications Sent', value: s.notificationsSent, icon: Bell, color: 'text-primary-600', bgColor: 'bg-primary-50' },
   ];
 
@@ -411,23 +411,23 @@ export default function DashboardPage() {
       {/*  AI Morning Briefing                                                */}
       {/* ------------------------------------------------------------------ */}
       {!briefingDismissed && (
-        <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-surface-900 via-surface-900 to-violet-950/30">
+        <div className="relative overflow-hidden rounded-xl border border-status-violet-500/20 bg-gradient-to-br from-surface-900 via-surface-900 to-violet-950/30">
           {/* Decorative gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-transparent to-purple-600/5 pointer-events-none" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-status-violet-600/5 via-transparent to-status-violet-600/5 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-status-violet-500/40 to-transparent" />
 
           <div className="relative p-5">
             {/* Header row */}
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 ring-1 ring-violet-500/20">
-                  <Sparkles className="h-5 w-5 text-violet-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-status-violet-500/15 ring-1 ring-status-violet-500/20">
+                  <Sparkles className="h-5 w-5 text-status-violet-400" />
                 </div>
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-sm font-bold text-surface-100">
                     AI Morning Briefing
                   </h3>
-                  <Badge variant="default" dot={false} className="bg-violet-500/20 text-violet-400 border-violet-500/30 text-[10px] px-1.5 py-0">
+                  <Badge variant="default" dot={false} className="bg-status-violet-500/20 text-status-violet-400 border-status-violet-500/30 text-[10px] px-1.5 py-0">
                     AI
                   </Badge>
                   {briefingMode === 'demo' && !briefingLoading && (
@@ -500,9 +500,9 @@ export default function DashboardPage() {
                           : Minus;
                     const trendColor =
                       metric.trend === 'up'
-                        ? 'text-emerald-400'
+                        ? 'text-status-success-400'
                         : metric.trend === 'down'
-                          ? 'text-rose-400'
+                          ? 'text-status-error-400'
                           : 'text-surface-500';
                     return (
                       <div
@@ -526,7 +526,7 @@ export default function DashboardPage() {
                 {/* Action Items */}
                 <div>
                   <div className="flex items-center gap-2 mb-2.5">
-                    <Lightbulb className="h-3.5 w-3.5 text-violet-400" />
+                    <Lightbulb className="h-3.5 w-3.5 text-status-violet-400" />
                     <span className="text-xs font-semibold text-surface-400 uppercase tracking-wide">
                       Action Items
                     </span>
@@ -534,13 +534,13 @@ export default function DashboardPage() {
                   <div className="space-y-1.5">
                     {briefing.actionItems.map((item, idx) => {
                       const priorityColors: Record<string, string> = {
-                        high: 'border-rose-500/30 bg-rose-500/5',
-                        medium: 'border-amber-500/20 bg-amber-500/5',
+                        high: 'border-status-error-500/30 bg-status-error-500/5',
+                        medium: 'border-status-warning-500/20 bg-status-warning-500/5',
                         low: 'border-surface-700/60 bg-surface-800/30',
                       };
                       const dotColors: Record<string, string> = {
-                        high: 'bg-rose-400',
-                        medium: 'bg-amber-400',
+                        high: 'bg-status-error-400',
+                        medium: 'bg-status-warning-400',
                         low: 'bg-surface-500',
                       };
                       return (
@@ -555,7 +555,7 @@ export default function DashboardPage() {
                           <span className="flex-1 text-sm text-surface-200 group-hover:text-surface-100 transition-colors">
                             {item.text}
                           </span>
-                          <ArrowRight className="h-3.5 w-3.5 text-surface-600 group-hover:text-violet-400 transition-colors shrink-0" />
+                          <ArrowRight className="h-3.5 w-3.5 text-surface-600 group-hover:text-status-violet-400 transition-colors shrink-0" />
                         </Link>
                       );
                     })}
@@ -563,8 +563,8 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Prediction */}
-                <div className="flex items-start gap-3 rounded-lg bg-violet-500/5 border border-violet-500/15 px-3.5 py-3">
-                  <Brain className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
+                <div className="flex items-start gap-3 rounded-lg bg-status-violet-500/5 border border-status-violet-500/15 px-3.5 py-3">
+                  <Brain className="h-4 w-4 text-status-violet-400 mt-0.5 shrink-0" />
                   <p className="text-sm text-surface-300 leading-relaxed">
                     {briefing.prediction}
                   </p>
@@ -685,7 +685,7 @@ export default function DashboardPage() {
                   if (badge === '__PACKAGES_HELD__') badge = `${s.packagesHeld} held`;
                   else if (badge === '__ID_EXPIRING__') badge = `${s.idExpiringSoon}`;
                   return badge ? (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-red-500/25">
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-status-error-500 px-1.5 text-[10px] font-bold text-surface-100 shadow-lg shadow-status-error-500/25">
                       {badge}
                     </span>
                   ) : null;
@@ -735,30 +735,30 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Primary 4 — always visible, now expandable */}
           <ExpandableStatCard
-            icon={<Package className="h-5 w-5 text-amber-600" />}
+            icon={<Package className="h-5 w-5 text-status-warning-600" />}
             title="Packages Held"
             value={s.packagesHeld}
             change={-3}
             href="/dashboard/packages"
-            className="[&_div.bg-primary-50]:bg-amber-50 [&_div.text-primary-600]:text-amber-600"
+            className="[&_div.bg-primary-50]:bg-status-warning-50 [&_div.text-primary-600]:text-status-warning-600"
             details={[
               {
                 title: 'By Carrier',
                 rows: [
-                  { label: 'Amazon', value: 12, bar: 32, barColor: 'bg-amber-500', icon: Package, iconColor: 'text-amber-400' },
-                  { label: 'UPS', value: 9, bar: 24, barColor: 'bg-amber-400', icon: Package, iconColor: 'text-amber-400' },
-                  { label: 'FedEx', value: 8, bar: 22, barColor: 'bg-amber-400', icon: Package, iconColor: 'text-amber-400' },
-                  { label: 'USPS', value: 5, bar: 14, barColor: 'bg-amber-300', icon: Package, iconColor: 'text-amber-400' },
-                  { label: 'Other', value: 3, bar: 8, barColor: 'bg-amber-300', icon: Package, iconColor: 'text-amber-400' },
+                  { label: 'Amazon', value: 12, bar: 32, barColor: 'bg-status-warning-500', icon: Package, iconColor: 'text-status-warning-400' },
+                  { label: 'UPS', value: 9, bar: 24, barColor: 'bg-status-warning-400', icon: Package, iconColor: 'text-status-warning-400' },
+                  { label: 'FedEx', value: 8, bar: 22, barColor: 'bg-status-warning-400', icon: Package, iconColor: 'text-status-warning-400' },
+                  { label: 'USPS', value: 5, bar: 14, barColor: 'bg-status-warning-300', icon: Package, iconColor: 'text-status-warning-400' },
+                  { label: 'Other', value: 3, bar: 8, barColor: 'bg-status-warning-300', icon: Package, iconColor: 'text-status-warning-400' },
                 ],
               },
               {
                 title: 'Hold Duration',
                 rows: [
-                  { label: '< 24 hours', value: 15, bar: 41, barColor: 'bg-emerald-400' },
-                  { label: '1–3 days', value: 14, bar: 38, barColor: 'bg-yellow-400' },
-                  { label: '4–7 days', value: 6, bar: 16, barColor: 'bg-orange-400' },
-                  { label: '7+ days', value: 2, bar: 5, barColor: 'bg-red-400' },
+                  { label: '< 24 hours', value: 15, bar: 41, barColor: 'bg-status-success-400' },
+                  { label: '1–3 days', value: 14, bar: 38, barColor: 'bg-status-warning-400' },
+                  { label: '4–7 days', value: 6, bar: 16, barColor: 'bg-status-warning-400' },
+                  { label: '7+ days', value: 2, bar: 5, barColor: 'bg-status-error-400' },
                 ],
               },
             ]}
@@ -770,7 +770,7 @@ export default function DashboardPage() {
             value={s.packagesCheckedInToday}
             change={12}
             href="/dashboard/packages"
-            className="[&_div.bg-primary-50]:bg-teal-500/15 [&_div.text-primary-600]:text-teal-400"
+            className="[&_div.bg-primary-50]:bg-accent-teal/15 [&_div.text-primary-600]:text-teal-400"
             details={[
               {
                 title: 'By Hour',
@@ -784,7 +784,7 @@ export default function DashboardPage() {
               {
                 title: 'By Carrier',
                 rows: [
-                  { label: 'Amazon', value: 5, bar: 36, barColor: 'bg-teal-500' },
+                  { label: 'Amazon', value: 5, bar: 36, barColor: 'bg-accent-teal' },
                   { label: 'UPS', value: 4, bar: 29, barColor: 'bg-teal-400' },
                   { label: 'FedEx', value: 3, bar: 21, barColor: 'bg-teal-400' },
                   { label: 'USPS', value: 2, bar: 14, barColor: 'bg-teal-300' },
@@ -794,19 +794,19 @@ export default function DashboardPage() {
             detailSummary="Yesterday: 12 check-ins · Weekly avg: 13/day"
           />
           <ExpandableStatCard
-            icon={<PackageCheck className="h-5 w-5 text-emerald-600" />}
+            icon={<PackageCheck className="h-5 w-5 text-status-success-600" />}
             title="Released Today"
             value={s.packagesReleasedToday}
             change={8}
             href="/dashboard/packages"
-            className="[&_div.bg-primary-50]:bg-emerald-50 [&_div.text-primary-600]:text-emerald-600"
+            className="[&_div.bg-primary-50]:bg-status-success-50 [&_div.text-primary-600]:text-status-success-600"
             details={[
               {
                 title: 'By Method',
                 rows: [
-                  { label: 'Customer Pickup', value: 6, bar: 67, barColor: 'bg-emerald-500' },
-                  { label: 'Authorized Agent', value: 2, bar: 22, barColor: 'bg-emerald-400' },
-                  { label: 'Forwarded / Shipped', value: 1, bar: 11, barColor: 'bg-emerald-300' },
+                  { label: 'Customer Pickup', value: 6, bar: 67, barColor: 'bg-status-success-500' },
+                  { label: 'Authorized Agent', value: 2, bar: 22, barColor: 'bg-status-success-400' },
+                  { label: 'Forwarded / Shipped', value: 1, bar: 11, barColor: 'bg-status-success-300' },
                 ],
               },
               {
@@ -821,21 +821,21 @@ export default function DashboardPage() {
             detailSummary="Avg time-to-release: 1.8 days"
           />
           <ExpandableStatCard
-            icon={<DollarSign className="h-5 w-5 text-green-400" />}
+            icon={<DollarSign className="h-5 w-5 text-status-success-400" />}
             title="Revenue Today"
             value={formatCurrency(s.revenueToday)}
             change={6}
             href="/dashboard/invoicing"
-            className="[&_div.bg-primary-50]:bg-green-500/15 [&_div.text-primary-600]:text-green-400"
+            className="[&_div.bg-primary-50]:bg-status-success-500/15 [&_div.text-primary-600]:text-status-success-400"
             details={[
               {
                 title: 'Breakdown',
                 rows: [
-                  { label: 'Shipping Labels', value: '$412.00', bar: 49, barColor: 'bg-green-500' },
-                  { label: 'Mailbox Rentals', value: '$195.50', bar: 23, barColor: 'bg-green-400' },
-                  { label: 'Storage Fees', value: '$128.00', bar: 15, barColor: 'bg-green-400' },
-                  { label: 'Packing / Supplies', value: '$72.00', bar: 8, barColor: 'bg-green-300' },
-                  { label: 'Notary & Other', value: '$40.00', bar: 5, barColor: 'bg-green-300' },
+                  { label: 'Shipping Labels', value: '$412.00', bar: 49, barColor: 'bg-status-success-500' },
+                  { label: 'Mailbox Rentals', value: '$195.50', bar: 23, barColor: 'bg-status-success-400' },
+                  { label: 'Storage Fees', value: '$128.00', bar: 15, barColor: 'bg-status-success-400' },
+                  { label: 'Packing / Supplies', value: '$72.00', bar: 8, barColor: 'bg-status-success-300' },
+                  { label: 'Notary & Other', value: '$40.00', bar: 5, barColor: 'bg-status-success-300' },
                 ],
               },
               {
@@ -882,39 +882,39 @@ export default function DashboardPage() {
                 detailSummary="2 customers closed in last 90 days"
               />
               <ExpandableStatCard
-                icon={<AlertTriangle className="h-5 w-5 text-rose-400" />}
+                icon={<AlertTriangle className="h-5 w-5 text-status-error-400" />}
                 title="ID Expiring Soon"
                 value={s.idExpiringSoon}
                 href="/dashboard/compliance"
-                className="[&_div.bg-primary-50]:bg-rose-500/15 [&_div.text-primary-600]:text-rose-400"
+                className="[&_div.bg-primary-50]:bg-status-error-500/15 [&_div.text-primary-600]:text-status-error-400"
                 details={[
                   {
                     title: 'Expiring Customers',
                     rows: [
-                      { label: 'Steven Allen (PMB-0023)', value: '3 days', icon: AlertTriangle, iconColor: 'text-red-400' },
-                      { label: 'David Kim (PMB-0005)', value: '5 days', icon: AlertTriangle, iconColor: 'text-red-400' },
-                      { label: 'Linda Nakamura (PMB-0002)', value: '12 days', icon: AlertTriangle, iconColor: 'text-orange-400' },
-                      { label: 'Sarah Taylor (PMB-0012)', value: '30 days', icon: AlertTriangle, iconColor: 'text-yellow-400' },
+                      { label: 'Steven Allen (PMB-0023)', value: '3 days', icon: AlertTriangle, iconColor: 'text-status-error-400' },
+                      { label: 'David Kim (PMB-0005)', value: '5 days', icon: AlertTriangle, iconColor: 'text-status-error-400' },
+                      { label: 'Linda Nakamura (PMB-0002)', value: '12 days', icon: AlertTriangle, iconColor: 'text-status-warning-400' },
+                      { label: 'Sarah Taylor (PMB-0012)', value: '30 days', icon: AlertTriangle, iconColor: 'text-status-warning-400' },
                     ],
                   },
                 ]}
                 detailSummary="2 IDs already expired · 1 reminder sent today"
               />
               <ExpandableStatCard
-                icon={<Truck className="h-5 w-5 text-indigo-600" />}
+                icon={<Truck className="h-5 w-5 text-primary-600" />}
                 title="Shipments Today"
                 value={s.shipmentsToday}
                 change={15}
                 href="/dashboard/shipping"
-                className="[&_div.bg-primary-50]:bg-indigo-50 [&_div.text-primary-600]:text-indigo-600"
+                className="[&_div.bg-primary-50]:bg-primary-50 [&_div.text-primary-600]:text-primary-600"
                 details={[
                   {
                     title: 'By Carrier',
                     rows: [
-                      { label: 'FedEx', value: 2, bar: 33, barColor: 'bg-indigo-500' },
-                      { label: 'UPS', value: 2, bar: 33, barColor: 'bg-indigo-400' },
-                      { label: 'USPS', value: 1, bar: 17, barColor: 'bg-indigo-300' },
-                      { label: 'DHL', value: 1, bar: 17, barColor: 'bg-indigo-300' },
+                      { label: 'FedEx', value: 2, bar: 33, barColor: 'bg-primary-500' },
+                      { label: 'UPS', value: 2, bar: 33, barColor: 'bg-primary-400' },
+                      { label: 'USPS', value: 1, bar: 17, barColor: 'bg-primary-300' },
+                      { label: 'DHL', value: 1, bar: 17, barColor: 'bg-primary-300' },
                     ],
                   },
                   {
@@ -945,10 +945,10 @@ export default function DashboardPage() {
                   {
                     title: 'By Type',
                     rows: [
-                      { label: 'Package Arrival', value: 10, bar: 43, barColor: 'bg-blue-400' },
-                      { label: 'Pickup Reminder', value: 6, bar: 26, barColor: 'bg-amber-400' },
-                      { label: 'Renewal / ID Alert', value: 4, bar: 17, barColor: 'bg-orange-400' },
-                      { label: 'Shipment Update', value: 3, bar: 13, barColor: 'bg-indigo-400' },
+                      { label: 'Package Arrival', value: 10, bar: 43, barColor: 'bg-status-info-400' },
+                      { label: 'Pickup Reminder', value: 6, bar: 26, barColor: 'bg-status-warning-400' },
+                      { label: 'Renewal / ID Alert', value: 4, bar: 17, barColor: 'bg-status-warning-400' },
+                      { label: 'Shipment Update', value: 3, bar: 13, barColor: 'bg-primary-400' },
                     ],
                   },
                 ]}

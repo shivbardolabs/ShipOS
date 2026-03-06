@@ -51,10 +51,10 @@ function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   const color =
     pct >= 80
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-status-success-500/20 text-status-success-400 border-status-success-500/30'
       : pct >= 60
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-        : 'bg-red-500/20 text-red-400 border-red-500/30';
+        ? 'bg-status-warning-500/20 text-status-warning-400 border-status-warning-500/30'
+        : 'bg-status-error-500/20 text-status-error-400 border-status-error-500/30';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
       <Sparkles className="h-3 w-3" />
@@ -523,7 +523,7 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
               )}
 
               {cameraError && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20 text-sm text-status-error-400">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {cameraError}
                 </div>
@@ -631,7 +631,7 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
 
               {/* Error */}
               {analysisError && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-status-error-500/10 border border-status-error-500/20 text-sm text-status-error-400">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {analysisError}
                 </div>
@@ -649,7 +649,7 @@ export function CameraMeasure({ dimensions, onChange, onSuggestPackageType, disa
                       </Badge>
                     )}
                     {aiResult.suggestedPackageType && (
-                      <Badge variant="muted" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/30">
+                      <Badge variant="muted" className="text-[10px] bg-status-info-500/10 text-status-info-400 border-status-info-500/30">
                         Suggested: {aiResult.suggestedPackageType}
                       </Badge>
                     )}

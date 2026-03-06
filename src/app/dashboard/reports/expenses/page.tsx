@@ -45,7 +45,7 @@ function useExpenseData(shipments: any[]) {
         id: 'carrier_costs',
         label: 'Carrier Costs',
         amount: wholesaleCost,
-        color: '#6366f1',
+        color: 'var(--color-primary-500)',
         subcategories: [
           { label: 'FedEx Wholesale', amount: wholesaleCost * 0.35 },
           { label: 'UPS Wholesale', amount: wholesaleCost * 0.30 },
@@ -58,7 +58,7 @@ function useExpenseData(shipments: any[]) {
         id: 'packaging',
         label: 'Packaging & Supplies',
         amount: seededRandom(500, 800, 1600),
-        color: '#10b981',
+        color: 'var(--color-status-success-500)',
         subcategories: [
           { label: 'Boxes & Mailers', amount: seededRandom(501, 300, 700) },
           { label: 'Tape & Labels', amount: seededRandom(502, 100, 300) },
@@ -70,7 +70,7 @@ function useExpenseData(shipments: any[]) {
         id: 'insurance',
         label: 'Insurance Costs',
         amount: seededRandom(510, 400, 1200),
-        color: '#f59e0b',
+        color: 'var(--color-status-warning-500)',
         subcategories: [
           { label: 'Carrier Insurance', amount: seededRandom(511, 200, 600) },
           { label: 'Third-party Insurance', amount: seededRandom(512, 150, 500) },
@@ -80,7 +80,7 @@ function useExpenseData(shipments: any[]) {
         id: 'platform_fees',
         label: 'Platform Fees',
         amount: seededRandom(520, 600, 1800),
-        color: '#ef4444',
+        color: 'var(--color-status-error-500)',
         subcategories: [
           { label: 'AnyTime Mailbox Fees', amount: seededRandom(521, 150, 500) },
           { label: 'iPostal1 Fees', amount: seededRandom(522, 200, 600) },
@@ -91,7 +91,7 @@ function useExpenseData(shipments: any[]) {
         id: 'equipment',
         label: 'Equipment & Maintenance',
         amount: seededRandom(530, 200, 800),
-        color: '#8b5cf6',
+        color: 'var(--color-status-violet-500)',
         subcategories: [
           { label: 'Printer Maintenance', amount: seededRandom(531, 50, 200) },
           { label: 'Scanner Maintenance', amount: seededRandom(532, 30, 150) },
@@ -102,7 +102,7 @@ function useExpenseData(shipments: any[]) {
         id: 'labor',
         label: 'Labor (Manual Entry)',
         amount: seededRandom(540, 2000, 5000),
-        color: '#ec4899',
+        color: 'var(--color-status-pink-500)',
         subcategories: [
           { label: 'Shipping Staff', amount: seededRandom(541, 1200, 3000) },
           { label: 'Mail Processing', amount: seededRandom(542, 600, 1500) },
@@ -218,7 +218,7 @@ export default function ExpensesReportPage() {
                     <span className="text-surface-200">{formatCurrency(data.totalRevenue)}</span>
                   </div>
                   <div className="h-6 bg-surface-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: '100%' }} />
+                    <div className="h-full bg-status-success-500/60 rounded-full" style={{ width: '100%' }} />
                   </div>
                 </div>
                 <div>
@@ -227,13 +227,13 @@ export default function ExpensesReportPage() {
                     <span className="text-surface-200">{formatCurrency(data.totalExpenses)}</span>
                   </div>
                   <div className="h-6 bg-surface-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500/60 rounded-full" style={{ width: `${data.expenseRatio}%` }} />
+                    <div className="h-full bg-status-error-500/60 rounded-full" style={{ width: `${data.expenseRatio}%` }} />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-surface-400">Net Profit</span>
-                    <span className="text-emerald-400 font-semibold">{formatCurrency(data.netProfit)}</span>
+                    <span className="text-status-success-400 font-semibold">{formatCurrency(data.netProfit)}</span>
                   </div>
                   <div className="h-6 bg-surface-800 rounded-full overflow-hidden">
                     <div
@@ -275,7 +275,7 @@ export default function ExpensesReportPage() {
         <Card className="mt-6">
           <CardHeader><CardTitle>Expense Trend (30 days)</CardTitle></CardHeader>
           <CardContent>
-            <Sparkline data={data.expenseTrend.map((d) => d.value)} color="#ef4444" height={50} />
+            <Sparkline data={data.expenseTrend.map((d) => d.value)} color="var(--color-status-error-500)" height={50} />
             <div className="flex justify-between mt-2 text-[10px] text-surface-500">
               <span>{data.expenseTrend[0]?.date}</span>
               <span>{data.expenseTrend[data.expenseTrend.length - 1]?.date}</span>
@@ -346,14 +346,14 @@ export default function ExpensesReportPage() {
                           {((cc.cost / totalCarrierCost) * 100).toFixed(1)}%
                         </td>
                         <td className="py-2.5 text-right">
-                          <span className={cc.change >= 0 ? 'text-red-400' : 'text-emerald-400'}>
+                          <span className={cc.change >= 0 ? 'text-status-error-400' : 'text-status-success-400'}>
                             {cc.change >= 0 ? '+' : ''}{cc.change}%
                           </span>
                         </td>
                         <td className="py-2.5 text-right">
                           {cc.change >= 0
-                            ? <TrendingUp className="h-4 w-4 text-red-400 inline" />
-                            : <TrendingDown className="h-4 w-4 text-emerald-400 inline" />}
+                            ? <TrendingUp className="h-4 w-4 text-status-error-400 inline" />
+                            : <TrendingDown className="h-4 w-4 text-status-success-400 inline" />}
                         </td>
                       </tr>
                     );
@@ -370,11 +370,11 @@ export default function ExpensesReportPage() {
           <CardContent>
             <MiniBarChart
               data={[
-                { label: 'Amazon Counter', value: seededRandom(600, 400, 1200), color: 'bg-yellow-500/60' },
-                { label: 'FedEx HAL', value: seededRandom(601, 300, 900), color: 'bg-blue-500/60' },
-                { label: 'UPS Access Point', value: seededRandom(602, 200, 700), color: 'bg-purple-500/60' },
-                { label: 'FedEx Easy Returns', value: seededRandom(603, 150, 500), color: 'bg-emerald-500/60' },
-                { label: 'Happy Returns', value: seededRandom(604, 100, 400), color: 'bg-red-500/60' },
+                { label: 'Amazon Counter', value: seededRandom(600, 400, 1200), color: 'bg-status-warning-500/60' },
+                { label: 'FedEx HAL', value: seededRandom(601, 300, 900), color: 'bg-status-info-500/60' },
+                { label: 'UPS Access Point', value: seededRandom(602, 200, 700), color: 'bg-status-violet-500/60' },
+                { label: 'FedEx Easy Returns', value: seededRandom(603, 150, 500), color: 'bg-status-success-500/60' },
+                { label: 'Happy Returns', value: seededRandom(604, 100, 400), color: 'bg-status-error-500/60' },
               ]}
               barHeight={28}
               formatValue={(v) => formatCurrency(v)}

@@ -123,11 +123,11 @@ function AllowanceMeter({ used, limit, label }: { used: number; limit: number; l
     <div>
       <div className="flex items-center justify-between text-[10px] mb-1">
         <span className="text-surface-500">{label}</span>
-        <span className={isOver ? 'text-red-400 font-medium' : 'text-surface-400'}>{used}/{limit}</span>
+        <span className={isOver ? 'text-status-error-400 font-medium' : 'text-surface-400'}>{used}/{limit}</span>
       </div>
       <div className="h-1.5 bg-surface-800 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : pct > 80 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+          className={`h-full rounded-full transition-all ${isOver ? 'bg-status-error-500' : pct > 80 ? 'bg-status-warning-500' : 'bg-status-success-500'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -203,11 +203,11 @@ export function CustomerBillingTab() {
 
                 <div className="text-right flex-shrink-0">
                   <p className="text-xs text-surface-500">Balance</p>
-                  <p className={`text-lg font-bold ${acct.balance > 0 ? 'text-surface-100' : 'text-emerald-400'}`}>
+                  <p className={`text-lg font-bold ${acct.balance > 0 ? 'text-surface-100' : 'text-status-success-400'}`}>
                     {formatCurrency(acct.balance)}
                   </p>
                   {acct.pendingCharges > 0 && (
-                    <p className="text-[10px] text-yellow-400">+{formatCurrency(acct.pendingCharges)} pending</p>
+                    <p className="text-[10px] text-status-warning-400">+{formatCurrency(acct.pendingCharges)} pending</p>
                   )}
                 </div>
 
@@ -234,7 +234,7 @@ export function CustomerBillingTab() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {['Per-Action', 'End-of-Day Batch', 'Weekly Invoice', 'Monthly Statement', 'On-Demand'].map((opt) => (
             <div key={opt} className="bg-surface-800/50 rounded-lg px-3 py-2 text-center">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto mb-1" />
+              <CheckCircle2 className="h-4 w-4 text-status-success-400 mx-auto mb-1" />
               <p className="text-xs text-surface-300">{opt}</p>
             </div>
           ))}
@@ -252,7 +252,7 @@ export function CustomerBillingTab() {
               </div>
               <div className="bg-surface-800/50 rounded-lg p-3 text-center">
                 <p className="text-xs text-surface-500">Pending</p>
-                <p className="text-xl font-bold text-yellow-400">{formatCurrency(detailModal.account.pendingCharges)}</p>
+                <p className="text-xl font-bold text-status-warning-400">{formatCurrency(detailModal.account.pendingCharges)}</p>
               </div>
               <div className="bg-surface-800/50 rounded-lg p-3 text-center">
                 <p className="text-xs text-surface-500">Plan</p>
@@ -269,7 +269,7 @@ export function CustomerBillingTab() {
                     <p className="text-surface-200">{ch.action}</p>
                     <p className="text-[10px] text-surface-500">{ch.description}</p>
                   </div>
-                  <span className={`font-medium ${ch.amount > 0 ? 'text-surface-100' : 'text-emerald-400'}`}>
+                  <span className={`font-medium ${ch.amount > 0 ? 'text-surface-100' : 'text-status-success-400'}`}>
                     {ch.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(ch.amount))}
                   </span>
                 </div>
@@ -286,11 +286,11 @@ export function CustomerBillingTab() {
             <div className="flex items-center gap-2 bg-surface-800 rounded-lg p-1">
               <button
                 onClick={() => setAdjustModal((p) => p ? { ...p, type: 'credit' } : p)}
-                className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'credit' ? 'bg-emerald-600 text-white' : 'text-surface-400'}`}
+                className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'credit' ? 'bg-status-success-600 text-white' : 'text-surface-400'}`}
               ><Minus className="h-3 w-3 inline mr-1" />Credit (reduce)</button>
               <button
                 onClick={() => setAdjustModal((p) => p ? { ...p, type: 'debit' } : p)}
-                className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'debit' ? 'bg-red-600 text-white' : 'text-surface-400'}`}
+                className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${adjustModal.type === 'debit' ? 'bg-status-error-600 text-white' : 'text-surface-400'}`}
               ><Plus className="h-3 w-3 inline mr-1" />Debit (increase)</button>
             </div>
             <Input label="Amount ($)" type="number" step="0.01" value={adjustModal.amount} onChange={(e) => setAdjustModal((p) => p ? { ...p, amount: e.target.value } : p)} />

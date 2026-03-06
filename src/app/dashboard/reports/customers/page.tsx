@@ -95,17 +95,17 @@ function useCustomerData(customers: any[]) {
 
     /* Segmentation */
     const byPlatform = [
-      { label: 'In-Store Physical', value: analytics.filter((c) => c.platform === 'In-Store Physical').length, color: '#6366F1' },
-      { label: 'AnyTime Mailbox', value: analytics.filter((c) => c.platform === 'AnyTime Mailbox').length, color: '#10B981' },
-      { label: 'iPostal1', value: analytics.filter((c) => c.platform === 'iPostal1').length, color: '#F59E0B' },
-      { label: 'PostScan Mail', value: analytics.filter((c) => c.platform === 'PostScan Mail').length, color: '#EF4444' },
+      { label: 'In-Store Physical', value: analytics.filter((c) => c.platform === 'In-Store Physical').length, color: 'var(--color-primary-500)' },
+      { label: 'AnyTime Mailbox', value: analytics.filter((c) => c.platform === 'AnyTime Mailbox').length, color: 'var(--color-status-success-500)' },
+      { label: 'iPostal1', value: analytics.filter((c) => c.platform === 'iPostal1').length, color: 'var(--color-status-warning-500)' },
+      { label: 'PostScan Mail', value: analytics.filter((c) => c.platform === 'PostScan Mail').length, color: 'var(--color-status-error-500)' },
     ];
 
     const byTier = [
-      { label: 'Enterprise', value: analytics.filter((c) => c.tier === 'Enterprise').length, color: '#8B5CF6' },
-      { label: 'Premium', value: analytics.filter((c) => c.tier === 'Premium').length, color: '#6366F1' },
-      { label: 'Standard', value: analytics.filter((c) => c.tier === 'Standard').length, color: '#10B981' },
-      { label: 'Basic', value: analytics.filter((c) => c.tier === 'Basic').length, color: '#F59E0B' },
+      { label: 'Enterprise', value: analytics.filter((c) => c.tier === 'Enterprise').length, color: 'var(--color-status-violet-500)' },
+      { label: 'Premium', value: analytics.filter((c) => c.tier === 'Premium').length, color: 'var(--color-primary-500)' },
+      { label: 'Standard', value: analytics.filter((c) => c.tier === 'Standard').length, color: 'var(--color-status-success-500)' },
+      { label: 'Basic', value: analytics.filter((c) => c.tier === 'Basic').length, color: 'var(--color-status-warning-500)' },
     ];
 
     return {
@@ -284,7 +284,7 @@ export default function CustomersReportPage() {
                       <tr key={c.id} className="border-b border-surface-800/50 hover:bg-surface-800/30">
                         <td className="py-2 text-surface-500">{i + 1}</td>
                         <td className="py-2 text-surface-200 font-medium">{c.name}</td>
-                        <td className="py-2 text-right text-emerald-400">{formatCurrency(c.revenue)}</td>
+                        <td className="py-2 text-right text-status-success-400">{formatCurrency(c.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -354,7 +354,7 @@ export default function CustomersReportPage() {
             <CardHeader>
               <CardTitle>
                 <span className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-400" /> Inactive Customers
+                  <AlertTriangle className="h-4 w-4 text-status-warning-400" /> Inactive Customers
                 </span>
               </CardTitle>
               <div className="w-40">
@@ -429,9 +429,9 @@ export default function CustomersReportPage() {
             <CardContent className="flex items-center gap-6">
               <DonutChart
                 data={[
-                  { label: 'Active', value: data.activePMBs, color: '#10B981' },
-                  { label: 'Inactive', value: data.inactivePMBs, color: '#6B7280' },
-                  { label: 'Available', value: data.totalPMBCapacity - data.analytics.length, color: '#374151' },
+                  { label: 'Active', value: data.activePMBs, color: 'var(--color-status-success-500)' },
+                  { label: 'Inactive', value: data.inactivePMBs, color: 'var(--color-surface-500)' },
+                  { label: 'Available', value: data.totalPMBCapacity - data.analytics.length, color: 'var(--color-surface-300)' },
                 ]}
                 size={160}
                 centerValue={`${data.occupancyRate.toFixed(0)}%`}
@@ -440,7 +440,7 @@ export default function CustomersReportPage() {
               <div className="space-y-3 flex-1">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-status-success-500" />
                     <span className="text-surface-300">Active</span>
                   </div>
                   <span className="text-surface-200 font-medium">{data.activePMBs}</span>
@@ -469,7 +469,7 @@ export default function CustomersReportPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-lg bg-surface-800/30">
                   <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-yellow-400" />
+                    <Calendar className="h-5 w-5 text-status-warning-400" />
                     <div>
                       <p className="text-sm font-medium text-surface-200">Expiring This Month</p>
                       <p className="text-xs text-surface-400">Require renewal attention</p>
@@ -479,7 +479,7 @@ export default function CustomersReportPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-lg bg-surface-800/30">
                   <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-blue-400" />
+                    <Calendar className="h-5 w-5 text-status-info-400" />
                     <div>
                       <p className="text-sm font-medium text-surface-200">Upcoming (Next 90 days)</p>
                       <p className="text-xs text-surface-400">Future renewals pipeline</p>
@@ -489,7 +489,7 @@ export default function CustomersReportPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-lg bg-surface-800/30">
                   <div className="flex items-center gap-3">
-                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                    <TrendingUp className="h-5 w-5 text-status-success-400" />
                     <div>
                       <p className="text-sm font-medium text-surface-200">Renewal Rate</p>
                       <p className="text-xs text-surface-400">Last 12 months</p>
@@ -561,7 +561,7 @@ export default function CustomersReportPage() {
                   value: data.analytics
                     .filter((c) => c.platform === plat)
                     .reduce((s, c) => s + c.revenue, 0),
-                  color: ['bg-indigo-500/60', 'bg-emerald-500/60', 'bg-yellow-500/60', 'bg-red-500/60'][i],
+                  color: ['bg-primary-500/60', 'bg-status-success-500/60', 'bg-status-warning-500/60', 'bg-status-error-500/60'][i],
                 }))}
                 barHeight={32}
                 formatValue={(v) => formatCurrency(v)}

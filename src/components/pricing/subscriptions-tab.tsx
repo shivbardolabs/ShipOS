@@ -168,10 +168,10 @@ export function SubscriptionsTab() {
             const TierIcon = tierIcons[tier.name] || Star;
             return (
               <Card key={tier.id} padding="none" className="overflow-hidden">
-                <div className={`px-4 py-3 ${tier.name === 'Platinum' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20' : tier.name === 'Gold' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20' : 'bg-surface-800/50'}`}>
+                <div className={`px-4 py-3 ${tier.name === 'Platinum' ? 'bg-gradient-to-r from-status-violet-500/20 to-status-pink-500/20' : tier.name === 'Gold' ? 'bg-gradient-to-r from-status-warning-500/20 to-status-warning-alt/20' : 'bg-surface-800/50'}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <TierIcon className={`h-4 w-4 ${tier.name === 'Platinum' ? 'text-purple-400' : tier.name === 'Gold' ? 'text-yellow-400' : 'text-surface-400'}`} />
+                      <TierIcon className={`h-4 w-4 ${tier.name === 'Platinum' ? 'text-status-violet-400' : tier.name === 'Gold' ? 'text-status-warning-400' : 'text-surface-400'}`} />
                       <h4 className="font-bold text-sm text-surface-100">{tier.name}</h4>
                     </div>
                     <Badge variant="success" dot={false}>{tier.subscriberCount} active</Badge>
@@ -261,7 +261,7 @@ export function SubscriptionsTab() {
                     <td className="px-3 py-3 text-right text-surface-100">{p.revenueShare > 0 ? `${p.revenueShare}%` : '—'}</td>
                     <td className="px-3 py-3 text-right text-surface-100">{formatCurrency(p.compensationRate)}</td>
                     <td className="px-3 py-3 text-right text-surface-300">{p.minVolume}/mo</td>
-                    <td className="px-3 py-3 text-right font-medium text-emerald-400">{formatCurrency(p.monthlyRevenue)}</td>
+                    <td className="px-3 py-3 text-right font-medium text-status-success-400">{formatCurrency(p.monthlyRevenue)}</td>
                     <td className="px-3 py-3 text-center text-surface-400">{new Date(p.contractEnd).toLocaleDateString()}</td>
                     <td className="px-5 py-3 text-right">
                       <Button size="sm" variant="ghost" iconOnly onClick={() => setPartnerModal({ open: true, partner: p })}><Edit3 className="h-3.5 w-3.5" /></Button>

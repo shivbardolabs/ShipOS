@@ -43,6 +43,58 @@
   --color-accent-indigo: #4f46e5;
   --color-accent-emerald: #059669;
 
+  /* Status: Semantic state colors
+     Used for success/warning/error/info states across the UI.
+     These maintain consistent meaning regardless of theme. */
+  --color-status-success-50: #ecfdf5;
+  --color-status-success-100: #d1fae5;
+  --color-status-success-200: #a7f3d0;
+  --color-status-success-300: #6ee7b7;
+  --color-status-success-400: #34d399;
+  --color-status-success-500: #10b981;
+  --color-status-success-600: #059669;
+  --color-status-success-700: #047857;
+  --color-status-success-800: #065f46;
+
+  --color-status-warning-50: #fffbeb;
+  --color-status-warning-100: #fef3c7;
+  --color-status-warning-200: #fde68a;
+  --color-status-warning-300: #fcd34d;
+  --color-status-warning-400: #fbbf24;
+  --color-status-warning-500: #f59e0b;
+  --color-status-warning-600: #d97706;
+  --color-status-warning-700: #b45309;
+  --color-status-warning-800: #92400e;
+  --color-status-warning-alt: #f97316;
+
+  --color-status-error-50: #fef2f2;
+  --color-status-error-100: #fee2e2;
+  --color-status-error-200: #fecaca;
+  --color-status-error-300: #fca5a5;
+  --color-status-error-400: #f87171;
+  --color-status-error-500: #ef4444;
+  --color-status-error-600: #dc2626;
+  --color-status-error-700: #b91c1c;
+  --color-status-error-800: #991b1b;
+
+  --color-status-info-50: #eff6ff;
+  --color-status-info-100: #dbeafe;
+  --color-status-info-200: #bfdbfe;
+  --color-status-info-300: #93c5fd;
+  --color-status-info-400: #60a5fa;
+  --color-status-info-500: #3b82f6;
+  --color-status-info-600: #2563eb;
+  --color-status-info-700: #1d4ed8;
+  --color-status-info-800: #1e40af;
+
+  --color-status-violet-400: #a78bfa;
+  --color-status-violet-500: #8b5cf6;
+  --color-status-violet-600: #7c3aed;
+  --color-status-violet-700: #6d28d9;
+
+  --color-status-pink-400: #f472b6;
+  --color-status-pink-500: #ec4899;
+
   /* Carrier brand colors */
   --color-carrier-ups: #351c15;
   --color-carrier-fedex: #4d148c;
@@ -213,49 +265,10 @@ button > svg, [role="button"] > svg {
    DECORATIVE
    ================================================================ */
 
-/* Gradient text — brand indigo */
-.gradient-text {
-  background: linear-gradient(135deg, #4F46E5, #6366F1, #818CF8);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientMove 5s ease infinite;
-}
+/* gradient-text: removed (unused) */
 
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
 
-/* Indigo glow */
-.purple-glow {
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
-}
-.dark .purple-glow {
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
-}
 
-/* Signal soft background */
-.signal-soft {
-  background: rgba(99, 102, 241, 0.06);
-}
-.dark .signal-soft {
-  background: rgba(99, 102, 241, 0.08);
-}
-
-/* Ambient background orbs */
-.ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(99, 102, 241, 0.04);
-  filter: blur(80px);
-  pointer-events: none;
-}
-.dark .ambient-orb {
-  background: rgba(99, 102, 241, 0.06);
-}
 
 /* Instrument Serif italic */
 .brand-italic {

@@ -148,11 +148,11 @@ export default function SuperAdminDashboard() {
         <Link href="/dashboard/super-admin/billing">
           <div className="glass-card p-5 card-hover cursor-pointer">
             <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/20 text-red-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-error-500/20 text-status-error-400">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               {metrics.overduePayments > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-status-error-500/20 px-2 py-0.5 text-xs font-medium text-status-error-400">
                   Action needed
                 </span>
               )}
@@ -174,8 +174,8 @@ export default function SuperAdminDashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-400">Active</span>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${metrics.totalClients > 0 ? (metrics.activeClients / metrics.totalClients) * 120 : 0}px` }} />
-                  <span className="text-sm font-semibold text-emerald-400">{metrics.activeClients}</span>
+                  <div className="h-2 rounded-full bg-status-success-500" style={{ width: `${metrics.totalClients > 0 ? (metrics.activeClients / metrics.totalClients) * 120 : 0}px` }} />
+                  <span className="text-sm font-semibold text-status-success-400">{metrics.activeClients}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -198,8 +198,8 @@ export default function SuperAdminDashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-400">Active</span>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-blue-500" style={{ width: `${metrics.totalStores > 0 ? (metrics.activeStores / metrics.totalStores) * 120 : 0}px` }} />
-                  <span className="text-sm font-semibold text-blue-400">{metrics.activeStores}</span>
+                  <div className="h-2 rounded-full bg-status-info-500" style={{ width: `${metrics.totalStores > 0 ? (metrics.activeStores / metrics.totalStores) * 120 : 0}px` }} />
+                  <span className="text-sm font-semibold text-status-info-400">{metrics.activeStores}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -221,17 +221,17 @@ export default function SuperAdminDashboard() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-400">Paid</span>
-                <span className="text-sm font-semibold text-emerald-400">
+                <span className="text-sm font-semibold text-status-success-400">
                   {metrics.totalClients - metrics.overduePayments - metrics.pendingPayments}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-400">Pending</span>
-                <span className="text-sm font-semibold text-yellow-400">{metrics.pendingPayments}</span>
+                <span className="text-sm font-semibold text-status-warning-400">{metrics.pendingPayments}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-400">Overdue</span>
-                <span className="text-sm font-semibold text-red-400">{metrics.overduePayments}</span>
+                <span className="text-sm font-semibold text-status-error-400">{metrics.overduePayments}</span>
               </div>
             </div>
           </CardContent>

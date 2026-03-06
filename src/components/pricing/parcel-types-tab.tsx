@@ -202,7 +202,7 @@ export function ParcelTypesTab() {
         <Card><div className="text-center"><p className="text-2xl font-bold text-surface-100">{stats.standard}</p><p className="text-xs text-surface-400 mt-1">Standard Types</p></div></Card>
         <Card><div className="text-center"><p className="text-2xl font-bold text-primary-400">{stats.custom}</p><p className="text-xs text-surface-400 mt-1">Custom Types</p></div></Card>
         <Card><div className="text-center"><p className="text-2xl font-bold text-surface-100">{stats.total}</p><p className="text-xs text-surface-400 mt-1">Total Active</p></div></Card>
-        <Card><div className="text-center"><p className="text-2xl font-bold text-emerald-400">{stats.avgMargin.toFixed(1)}%</p><p className="text-xs text-surface-400 mt-1">Avg Margin</p></div></Card>
+        <Card><div className="text-center"><p className="text-2xl font-bold text-status-success-400">{stats.avgMargin.toFixed(1)}%</p><p className="text-xs text-surface-400 mt-1">Avg Margin</p></div></Card>
       </div>
 
       {/* Toolbar */}
@@ -233,7 +233,7 @@ export function ParcelTypesTab() {
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost" iconOnly onClick={() => openEdit(pt)}><Edit3 className="h-3.5 w-3.5" /></Button>
                     {pt.isCustom && (
-                      <Button size="sm" variant="ghost" iconOnly onClick={() => deleteCustomType(pt.id)}><Trash2 className="h-3.5 w-3.5 text-red-400" /></Button>
+                      <Button size="sm" variant="ghost" iconOnly onClick={() => deleteCustomType(pt.id)}><Trash2 className="h-3.5 w-3.5 text-status-error-400" /></Button>
                     )}
                   </div>
                 </div>
@@ -250,7 +250,7 @@ export function ParcelTypesTab() {
                   </div>
                   <div className="bg-surface-800/50 rounded-lg px-3 py-2 text-center">
                     <p className="text-[10px] text-surface-500 uppercase">Margin</p>
-                    <p className={`text-sm font-bold ${pt.marginPct >= 50 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                    <p className={`text-sm font-bold ${pt.marginPct >= 50 ? 'text-status-success-400' : 'text-status-warning-400'}`}>
                       {formatCurrency(pt.margin)} <span className="text-[10px]">({pt.marginPct.toFixed(0)}%)</span>
                     </p>
                   </div>
@@ -296,7 +296,7 @@ export function ParcelTypesTab() {
             <Input label="Total COGS ($)" type="number" step="0.01" value={editCogs} onChange={(e) => setEditCogs(e.target.value)} />
             <div className="bg-surface-800/50 rounded-lg p-3">
               <p className="text-xs text-surface-400">Auto-calculated margin</p>
-              <p className="text-lg font-bold text-emerald-400 mt-1">
+              <p className="text-lg font-bold text-status-success-400 mt-1">
                 {formatCurrency((parseFloat(editRevenue) || 0) - (parseFloat(editCogs) || 0))}
                 <span className="text-sm ml-2">
                   ({(parseFloat(editRevenue) || 0) > 0 ? (((parseFloat(editRevenue) || 0) - (parseFloat(editCogs) || 0)) / (parseFloat(editRevenue) || 1) * 100).toFixed(1) : '0.0'}%)

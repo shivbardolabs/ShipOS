@@ -43,7 +43,7 @@ export function ExportToolbar({ reportName, onExport }: ExportToolbarProps) {
           onClick={() => handleExport(fmt.id)}
           leftIcon={
             exported === fmt.id ? (
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              <Check className="h-3.5 w-3.5 text-status-success-400" />
             ) : (
               <Download className="h-3.5 w-3.5" />
             )

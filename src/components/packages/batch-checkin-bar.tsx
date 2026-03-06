@@ -46,12 +46,12 @@ export function BatchCheckinBar({
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3',
+        'flex items-center justify-between gap-4 rounded-xl border border-primary-500/20 bg-primary-500/5 px-4 py-3',
         className
       )}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500/10 text-primary-400">
           <Layers className="h-5 w-5" />
         </div>
         <div>

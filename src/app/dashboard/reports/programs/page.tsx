@@ -56,7 +56,7 @@ function useProgramData() {
         expenses: seededRandom(205, 1500, 4000),
         avgProcessingTime: seededRandom(206, 3, 12),
         satisfactionScore: seededRandom(207, 85, 98),
-        color: '#F59E0B',
+        color: 'var(--color-status-warning-500)',
       },
       {
         id: 'vinted',
@@ -71,7 +71,7 @@ function useProgramData() {
         expenses: seededRandom(215, 800, 2500),
         avgProcessingTime: seededRandom(216, 5, 15),
         satisfactionScore: seededRandom(217, 80, 95),
-        color: '#10B981',
+        color: 'var(--color-status-success-500)',
       },
       {
         id: 'pudo',
@@ -86,7 +86,7 @@ function useProgramData() {
         expenses: seededRandom(225, 1000, 3200),
         avgProcessingTime: seededRandom(226, 4, 10),
         satisfactionScore: seededRandom(227, 82, 96),
-        color: '#6366F1',
+        color: 'var(--color-primary-500)',
       },
       {
         id: 'the_return',
@@ -101,7 +101,7 @@ function useProgramData() {
         expenses: seededRandom(235, 600, 2000),
         avgProcessingTime: seededRandom(236, 8, 20),
         satisfactionScore: seededRandom(237, 78, 93),
-        color: '#8B5CF6',
+        color: 'var(--color-status-violet-500)',
       },
       {
         id: 'return_queen',
@@ -116,7 +116,7 @@ function useProgramData() {
         expenses: seededRandom(245, 300, 1200),
         avgProcessingTime: seededRandom(246, 10, 25),
         satisfactionScore: seededRandom(247, 75, 90),
-        color: '#EC4899',
+        color: 'var(--color-status-pink-500)',
       },
     ];
 
@@ -279,7 +279,7 @@ export default function ProgramsReportPage() {
                   .map((p) => ({
                     label: p.name,
                     value: p.avgProcessingTime,
-                    color: p.avgProcessingTime <= 8 ? 'bg-emerald-500/60' : p.avgProcessingTime <= 15 ? 'bg-yellow-500/60' : 'bg-red-500/60',
+                    color: p.avgProcessingTime <= 8 ? 'bg-status-success-500/60' : p.avgProcessingTime <= 15 ? 'bg-status-warning-500/60' : 'bg-status-error-500/60',
                   }))}
                 barHeight={28}
                 formatValue={(v) => `${v} min`}
@@ -296,7 +296,7 @@ export default function ProgramsReportPage() {
                   .map((p) => ({
                     label: p.name,
                     value: p.satisfactionScore,
-                    color: p.satisfactionScore >= 90 ? 'bg-emerald-500/60' : p.satisfactionScore >= 80 ? 'bg-yellow-500/60' : 'bg-red-500/60',
+                    color: p.satisfactionScore >= 90 ? 'bg-status-success-500/60' : p.satisfactionScore >= 80 ? 'bg-status-warning-500/60' : 'bg-status-error-500/60',
                   }))}
                 barHeight={28}
                 formatValue={(v) => `${v}%`}
@@ -309,7 +309,7 @@ export default function ProgramsReportPage() {
             <CardContent>
               <MiniBarChart
                 data={data.programs
-                  .map((p) => ({ label: p.name, value: p.revenue - p.expenses, color: 'bg-emerald-500/60' }))
+                  .map((p) => ({ label: p.name, value: p.revenue - p.expenses, color: 'bg-status-success-500/60' }))
                   .sort((a, b) => b.value - a.value)}
                 barHeight={28}
                 formatValue={(v) => formatCurrency(v)}
@@ -325,7 +325,7 @@ export default function ProgramsReportPage() {
                   .map((p) => ({
                     label: p.name,
                     value: p.received > 0 ? Math.round((p.pickedUp / p.received) * 100) : 0,
-                    color: 'bg-blue-500/60',
+                    color: 'bg-status-info-500/60',
                   }))
                   .sort((a, b) => b.value - a.value)}
                 barHeight={28}
@@ -401,7 +401,7 @@ export default function ProgramsReportPage() {
                       <Badge variant="muted" dot>Disabled</Badge>
                     )}
                     {p.enabled ? (
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <CheckCircle2 className="h-5 w-5 text-status-success-500" />
                     ) : (
                       <XCircle className="h-5 w-5 text-surface-600" />
                     )}

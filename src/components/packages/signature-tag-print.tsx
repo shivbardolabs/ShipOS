@@ -222,8 +222,8 @@ export function SignatureTagPrint({
       <Card padding="md" className={className}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10">
-              <FileText className="h-4 w-4 text-violet-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-violet-500/10">
+              <FileText className="h-4 w-4 text-status-violet-400" />
             </div>
             <div>
               <p className="text-sm font-semibold text-surface-200">Signature Tags</p>

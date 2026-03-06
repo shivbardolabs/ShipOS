@@ -155,9 +155,9 @@ export function Step4ReviewConfirm(props: Step4Props) {
 
         {/* BAR-328: Duplicate override notice in summary */}
         {duplicatePackage && duplicateAcknowledged && (
-          <div className="pt-3 border-t border-amber-500/20">
-            <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs space-y-1">
-              <div className="flex items-center gap-1.5 text-amber-300 font-medium mb-1.5">
+          <div className="pt-3 border-t border-status-warning-500/20">
+            <div className="p-3 rounded-lg border border-status-warning-500/20 bg-status-warning-500/5 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 text-status-warning-300 font-medium mb-1.5">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Duplicate Override Active
               </div>
@@ -182,7 +182,7 @@ export function Step4ReviewConfirm(props: Step4Props) {
 
         {selectedCustomer?.email && (
           <div className="flex items-center gap-3 text-sm text-surface-400">
-            <Mail className="h-4 w-4 text-blue-600" />
+            <Mail className="h-4 w-4 text-status-info-600" />
             <span>
               Email will be sent to{' '}
               <span className="text-surface-200">
@@ -193,7 +193,7 @@ export function Step4ReviewConfirm(props: Step4Props) {
         )}
         {selectedCustomer?.phone && (
           <div className="flex items-center gap-3 text-sm text-surface-400">
-            <MessageSquare className="h-4 w-4 text-emerald-600" />
+            <MessageSquare className="h-4 w-4 text-status-success-600" />
             <span>
               SMS will be sent to{' '}
               <span className="text-surface-200">
@@ -229,10 +229,10 @@ export function Step4ReviewConfirm(props: Step4Props) {
 
       {/* Submit Error (BAR-260) */}
       {submitError && (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl border border-status-error-500/30 bg-status-error-500/5 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-status-error-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-red-300">Check-in failed</p>
+            <p className="text-sm font-medium text-status-error-300">Check-in failed</p>
             <p className="text-xs text-surface-400 mt-1">{submitError}</p>
             <button
               onClick={() => setSubmitError(null)}

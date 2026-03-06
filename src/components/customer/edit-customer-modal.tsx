@@ -190,7 +190,7 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
         size="xl"
         footer={
           saved ? (
-            <div className="flex items-center gap-2 text-emerald-500">
+            <div className="flex items-center gap-2 text-status-success-500">
               <CheckCircle className="h-4 w-4" />
               <span className="text-sm font-medium">Saved successfully</span>
             </div>
@@ -339,7 +339,7 @@ export function EditCustomerModal({ customer, open, onClose, saved, onSave }: Ed
                     </div>
                     <button
                       onClick={() => removePerson(person.id)}
-                      className="text-surface-500 hover:text-red-400 transition-colors p-1"
+                      className="text-surface-500 hover:text-status-error-400 transition-colors p-1"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

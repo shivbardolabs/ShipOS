@@ -216,7 +216,7 @@ function PlatformCard({
                 key={f}
                 className="inline-flex items-center gap-1 rounded-md bg-surface-800 px-2 py-0.5 text-[10px] text-surface-300"
               >
-                <Check className="h-2.5 w-2.5 text-emerald-400" />
+                <Check className="h-2.5 w-2.5 text-status-success-400" />
                 {f}
               </span>
             ))}
@@ -233,7 +233,7 @@ function PlatformCard({
           onClick={() => !readOnly && onToggle(platform.id)}
           disabled={readOnly || platform.priority === 'phase2'}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-            platform.enabled ? 'bg-emerald-500' : 'bg-surface-600'
+            platform.enabled ? 'bg-status-success-500' : 'bg-surface-600'
           } ${readOnly || platform.priority === 'phase2' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <span
@@ -356,8 +356,8 @@ export default function PlatformConfigPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-              <Monitor className="h-5 w-5 text-emerald-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-success-500/10">
+              <Monitor className="h-5 w-5 text-status-success-400" />
             </div>
             <div>
               <p className="text-lg font-bold text-surface-100">
@@ -369,8 +369,8 @@ export default function PlatformConfigPage() {
         </Card>
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-              <Eye className="h-5 w-5 text-blue-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-info-500/10">
+              <Eye className="h-5 w-5 text-status-info-400" />
             </div>
             <div>
               <p className="text-lg font-bold text-surface-100">
@@ -382,8 +382,8 @@ export default function PlatformConfigPage() {
         </Card>
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-              <ShoppingCart className="h-5 w-5 text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-warning-500/10">
+              <ShoppingCart className="h-5 w-5 text-status-warning-400" />
             </div>
             <div>
               <p className="text-lg font-bold text-surface-100">
@@ -395,8 +395,8 @@ export default function PlatformConfigPage() {
         </Card>
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-              <Settings className="h-5 w-5 text-purple-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-violet-500/10">
+              <Settings className="h-5 w-5 text-status-violet-400" />
             </div>
             <div>
               <p className="text-lg font-bold text-surface-100">{BREAKPOINTS.length}</p>
@@ -413,7 +413,7 @@ export default function PlatformConfigPage() {
       <TabPanel active={activeTab === 'client'}>
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Info className="h-4 w-4 text-blue-400" />
+            <Info className="h-4 w-4 text-status-info-400" />
             <p className="text-xs text-surface-400">
               Configure which platforms are supported for store operator (CLIENT) access.
               Core platforms are required; secondary platforms can be toggled.
@@ -434,7 +434,7 @@ export default function PlatformConfigPage() {
       <TabPanel active={activeTab === 'customer'}>
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Info className="h-4 w-4 text-blue-400" />
+            <Info className="h-4 w-4 text-status-info-400" />
             <p className="text-xs text-surface-400">
               Configure which platforms customers (PMB account holders) can access via MailBox OS Client.
             </p>
@@ -456,23 +456,23 @@ export default function PlatformConfigPage() {
             <CardContent>
               <ul className="space-y-2 text-sm text-surface-300">
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-status-success-400 mt-0.5 flex-shrink-0" />
                   Dedicated kiosk-like display mode — no navigation chrome
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-status-success-400 mt-0.5 flex-shrink-0" />
                   Transaction flow: Welcome → Stats → Signature → Payment → Confirmation
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-status-success-400 mt-0.5 flex-shrink-0" />
                   Large fonts, high contrast, minimum 44×44px tap targets
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-status-success-400 mt-0.5 flex-shrink-0" />
                   Touchscreen signature capture fills most of screen
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-status-success-400 mt-0.5 flex-shrink-0" />
                   Auto-timeout and reset after transaction completion
                 </li>
               </ul>

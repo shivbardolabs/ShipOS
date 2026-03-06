@@ -88,27 +88,27 @@ export function InventorySummary({ packages, className }: InventorySummaryProps)
   const ageBrackets: AgeBracket[] = [
     {
       label: 'Fresh (< 7 days)',
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/20',
+      color: 'text-status-success-400',
+      bgColor: 'bg-status-success-500/10',
+      borderColor: 'border-status-success-500/20',
       count: fresh.length,
-      icon: <Package className="h-5 w-5 text-emerald-500" />,
+      icon: <Package className="h-5 w-5 text-status-success-500" />,
     },
     {
       label: 'Aging (7-14 days)',
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-500/10',
-      borderColor: 'border-amber-500/20',
+      color: 'text-status-warning-400',
+      bgColor: 'bg-status-warning-500/10',
+      borderColor: 'border-status-warning-500/20',
       count: aging.length,
-      icon: <Clock className="h-5 w-5 text-amber-500" />,
+      icon: <Clock className="h-5 w-5 text-status-warning-500" />,
     },
     {
       label: 'Overdue (14+ days)',
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10',
-      borderColor: 'border-red-500/20',
+      color: 'text-status-error-400',
+      bgColor: 'bg-status-error-500/10',
+      borderColor: 'border-status-error-500/20',
       count: overdue.length,
-      icon: <AlertTriangle className="h-5 w-5 text-red-500" />,
+      icon: <AlertTriangle className="h-5 w-5 text-status-error-500" />,
     },
   ];
 
@@ -133,8 +133,8 @@ export function InventorySummary({ packages, className }: InventorySummaryProps)
           </div>
           {critical.length > 0 && (
             <div className="mt-2 flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-              <span className="text-xs text-red-400 font-medium">
+              <AlertTriangle className="h-3.5 w-3.5 text-status-error-500" />
+              <span className="text-xs text-status-error-400 font-medium">
                 {critical.length} held 30+ days
               </span>
             </div>

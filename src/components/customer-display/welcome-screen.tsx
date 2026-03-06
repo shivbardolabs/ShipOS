@@ -115,7 +115,7 @@ export function WelcomeScreen({
   onCheckMailbox,
   announcements = [],
   marketingImages = [],
-  accentColor = '#6366f1',
+  accentColor = 'var(--color-primary-500)',
 }: WelcomeScreenProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcementIdx, setAnnouncementIdx] = useState(0);
@@ -190,12 +190,12 @@ export function WelcomeScreen({
           <div className={cn(
             'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold',
             isOpen
-              ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
-              : 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30'
+              ? 'bg-status-success-500/20 text-status-success-400 ring-1 ring-status-success-500/30'
+              : 'bg-status-error-500/20 text-status-error-400 ring-1 ring-status-error-500/30'
           )}>
             <span className={cn(
               'h-2.5 w-2.5 rounded-full animate-pulse',
-              isOpen ? 'bg-emerald-400' : 'bg-red-400'
+              isOpen ? 'bg-status-success-400' : 'bg-status-error-400'
             )} />
             {isOpen ? 'Open' : 'Closed'}
           </div>

@@ -50,20 +50,20 @@ interface StatsScreenProps {
 const statusConfig = {
   active: {
     label: 'Active',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10 ring-emerald-500/30',
+    color: 'text-status-success-400',
+    bg: 'bg-status-success-500/10 ring-status-success-500/30',
     icon: CheckCircle2,
   },
   expiring_soon: {
     label: 'Expiring Soon',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10 ring-amber-500/30',
+    color: 'text-status-warning-400',
+    bg: 'bg-status-warning-500/10 ring-status-warning-500/30',
     icon: AlertTriangle,
   },
   past_due: {
     label: 'Past Due',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10 ring-red-500/30',
+    color: 'text-status-error-400',
+    bg: 'bg-status-error-500/10 ring-status-error-500/30',
     icon: AlertTriangle,
   },
 };
@@ -112,8 +112,8 @@ export function StatsScreen({
         {/* Main Stats — Large display for POS */}
         {isEmpty ? (
           <div className="text-center py-10">
-            <CheckCircle2 className="h-16 w-16 text-emerald-400 mx-auto mb-3 opacity-80" />
-            <p className="text-xl font-semibold text-emerald-400">
+            <CheckCircle2 className="h-16 w-16 text-status-success-400 mx-auto mb-3 opacity-80" />
+            <p className="text-xl font-semibold text-status-success-400">
               All clear!
             </p>
             <p className="text-surface-400 text-sm mt-1">
@@ -135,7 +135,7 @@ export function StatsScreen({
 
             {/* Mail Count */}
             <div className="rounded-2xl bg-surface-800/60 p-6 text-center ring-1 ring-surface-700">
-              <Mail className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+              <Mail className="h-8 w-8 text-status-info-400 mx-auto mb-2" />
               <p className="text-4xl md:text-5xl font-bold text-white">
                 {stats.mailCount}
               </p>
@@ -154,13 +154,13 @@ export function StatsScreen({
                 <div className="flex items-center gap-3">
                   <Clock className={cn(
                     'h-5 w-5',
-                    stats.oldestItemDays > 14 ? 'text-amber-400' : 'text-surface-400'
+                    stats.oldestItemDays > 14 ? 'text-status-warning-400' : 'text-surface-400'
                   )} />
                   <span className="text-sm text-surface-300">Oldest Item</span>
                 </div>
                 <span className={cn(
                   'text-sm font-semibold',
-                  stats.oldestItemDays > 14 ? 'text-amber-400' : 'text-surface-200'
+                  stats.oldestItemDays > 14 ? 'text-status-warning-400' : 'text-surface-200'
                 )}>
                   {stats.oldestItemDays} day{stats.oldestItemDays !== 1 ? 's' : ''}
                 </span>
@@ -191,7 +191,7 @@ export function StatsScreen({
                   </span>
                 )}
                 {stats.notifySms && (
-                  <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300 font-medium">
+                  <span className="rounded-md bg-status-success-500/20 px-2 py-0.5 text-[10px] text-status-success-300 font-medium">
                     SMS
                   </span>
                 )}
@@ -199,12 +199,12 @@ export function StatsScreen({
             </div>
 
             {(stats.pendingForwarding > 0 || stats.pendingDisposal > 0) && (
-              <div className="flex items-center justify-between rounded-xl bg-amber-500/5 px-4 py-3 ring-1 ring-amber-500/20">
+              <div className="flex items-center justify-between rounded-xl bg-status-warning-500/5 px-4 py-3 ring-1 ring-status-warning-500/20">
                 <div className="flex items-center gap-3">
-                  <Send className="h-5 w-5 text-amber-400" />
-                  <span className="text-sm text-amber-300">Pending Actions</span>
+                  <Send className="h-5 w-5 text-status-warning-400" />
+                  <span className="text-sm text-status-warning-300">Pending Actions</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-amber-400">
+                <div className="flex items-center gap-2 text-xs text-status-warning-400">
                   {stats.pendingForwarding > 0 && (
                     <span>{stats.pendingForwarding} forwarding</span>
                   )}

@@ -123,14 +123,14 @@ function FlowIndicator({ currentScreen }: { currentScreen: DisplayScreen }) {
               isActive
                 ? 'bg-primary-500/20 text-primary-400 ring-1 ring-primary-500/30'
                 : isPast
-                ? 'bg-emerald-500/10 text-emerald-400'
+                ? 'bg-status-success-500/10 text-status-success-400'
                 : 'text-surface-500'
             }`}>
               <Icon className="h-3 w-3" />
               <span className="hidden sm:inline">{screen.label}</span>
             </div>
             {idx < screens.length - 1 && (
-              <ArrowRight className={`h-3 w-3 ${isPast ? 'text-emerald-600' : 'text-surface-700'}`} />
+              <ArrowRight className={`h-3 w-3 ${isPast ? 'text-status-success-600' : 'text-surface-700'}`} />
             )}
           </div>
         );
@@ -154,7 +154,7 @@ export default function CustomerDisplayPage() {
   const storeName = tenant?.name || 'My Mail Center';
   const storeLogo = tenant?.brandLogo || null;
   const tagline = tenant?.brandTagline || 'Your trusted mailbox and package center';
-  const accentColor = tenant?.brandAccentColor || '#6366f1';
+  const accentColor = tenant?.brandAccentColor || 'var(--color-primary-500)';
 
   const TABS = [
     { id: 'overview', label: 'Overview', icon: <Eye className="h-3.5 w-3.5" /> },
@@ -299,11 +299,11 @@ export default function CustomerDisplayPage() {
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { screen: 'welcome' as const, label: 'Welcome Screen', desc: 'Store branding, CTA, marketing carousel', icon: Monitor, color: 'text-blue-400' },
-                    { screen: 'stats' as const, label: 'Customer Stats', desc: 'Package count, mail count, account status', icon: Package, color: 'text-purple-400' },
-                    { screen: 'signature' as const, label: 'Signature Capture', desc: 'Sign for package release', icon: FileSignature, color: 'text-amber-400' },
-                    { screen: 'payment' as const, label: 'Payment', desc: 'Fee display & payment collection (if required)', icon: CreditCard, color: 'text-emerald-400' },
-                    { screen: 'confirmation' as const, label: 'Confirmation', desc: 'Release summary, receipt options', icon: CheckCircle2, color: 'text-emerald-400' },
+                    { screen: 'welcome' as const, label: 'Welcome Screen', desc: 'Store branding, CTA, marketing carousel', icon: Monitor, color: 'text-status-info-400' },
+                    { screen: 'stats' as const, label: 'Customer Stats', desc: 'Package count, mail count, account status', icon: Package, color: 'text-status-violet-400' },
+                    { screen: 'signature' as const, label: 'Signature Capture', desc: 'Sign for package release', icon: FileSignature, color: 'text-status-warning-400' },
+                    { screen: 'payment' as const, label: 'Payment', desc: 'Fee display & payment collection (if required)', icon: CreditCard, color: 'text-status-success-400' },
+                    { screen: 'confirmation' as const, label: 'Confirmation', desc: 'Release summary, receipt options', icon: CheckCircle2, color: 'text-status-success-400' },
                   ].map((item) => {
                     const Icon = item.icon;
                     const isActive = currentScreen === item.screen;
@@ -370,9 +370,9 @@ export default function CustomerDisplayPage() {
               <div className="flex items-center justify-between px-4 py-2 border-b border-surface-700 bg-surface-900">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-red-500/60" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500/60" />
-                    <div className="h-3 w-3 rounded-full bg-green-500/60" />
+                    <div className="h-3 w-3 rounded-full bg-status-error-500/60" />
+                    <div className="h-3 w-3 rounded-full bg-status-warning-500/60" />
+                    <div className="h-3 w-3 rounded-full bg-status-success-500/60" />
                   </div>
                   <span className="text-xs text-surface-500 ml-2">
                     POS 2nd Screen — {currentScreen}

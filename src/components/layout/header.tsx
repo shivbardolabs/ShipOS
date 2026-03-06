@@ -203,7 +203,7 @@ export function Header() {
                       style={{
                         background: roleCfg
                           ? `linear-gradient(135deg, ${roleCfg.stripFrom}, ${roleCfg.stripTo})`
-                          : 'linear-gradient(135deg, #6366f1, #818cf8)',
+                          : 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-400))',
                       }}
                     >
                       {initials}

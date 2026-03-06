@@ -290,9 +290,9 @@ export default function FeatureFlagsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-status-error-500/15"
           >
-            <Flag className="h-5 w-5 text-rose-500" />
+            <Flag className="h-5 w-5 text-status-error-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-surface-100">Feature Flags</h1>
@@ -314,9 +314,9 @@ export default function FeatureFlagsPage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total Flags" value={stats.total} icon={Flag} />
-        <StatCard label="Enabled by Default" value={stats.enabledByDefault} icon={ToggleRight} accentClass="text-emerald-500" />
-        <StatCard label="Tenant Overrides" value={stats.tenantOverrides} icon={Building2} accentClass="text-violet-500" />
-        <StatCard label="User Overrides" value={stats.userOverrides} icon={User} accentClass="text-amber-500" />
+        <StatCard label="Enabled by Default" value={stats.enabledByDefault} icon={ToggleRight} accentClass="text-status-success-500" />
+        <StatCard label="Tenant Overrides" value={stats.tenantOverrides} icon={Building2} accentClass="text-status-violet-500" />
+        <StatCard label="User Overrides" value={stats.userOverrides} icon={User} accentClass="text-status-warning-500" />
       </div>
 
       {/* ── Search ── */}
@@ -400,13 +400,13 @@ export default function FeatureFlagsPage() {
                           {(tenantCount > 0 || userCount > 0) && (
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {tenantCount > 0 && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-status-violet-500/10 text-status-violet-400">
                                   <Building2 className="h-3 w-3" />
                                   {tenantCount}
                                 </span>
                               )}
                               {userCount > 0 && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-status-warning-500/10 text-status-warning-400">
                                   <User className="h-3 w-3" />
                                   {userCount}
                                 </span>
@@ -422,7 +422,7 @@ export default function FeatureFlagsPage() {
                             aria-label={flag.defaultEnabled ? 'Disable default' : 'Enable default'}
                           >
                             {flag.defaultEnabled ? (
-                              <ToggleRight className="h-7 w-7 text-emerald-400" />
+                              <ToggleRight className="h-7 w-7 text-status-success-400" />
                             ) : (
                               <ToggleLeft className="h-7 w-7 text-surface-600" />
                             )}
@@ -440,7 +440,7 @@ export default function FeatureFlagsPage() {
                                   Default for all tenants &amp; users
                                 </span>
                                 <span
-                                  className={`text-xs font-semibold ${flag.defaultEnabled ? 'text-emerald-500' : 'text-red-500'}`}
+                                  className={`text-xs font-semibold ${flag.defaultEnabled ? 'text-status-success-500' : 'text-status-error-500'}`}
                                 >
                                   {flag.defaultEnabled ? 'ON' : 'OFF'}
                                 </span>
@@ -453,22 +453,22 @@ export default function FeatureFlagsPage() {
                                   className="flex items-center gap-3 px-4 py-2 border-t border-surface-800/50"
                                 >
                                   {override.targetType === 'tenant' ? (
-                                    <Building2 className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                                    <Building2 className="h-4 w-4 text-status-violet-400 flex-shrink-0" />
                                   ) : (
-                                    <User className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                                    <User className="h-4 w-4 text-status-warning-400 flex-shrink-0" />
                                   )}
                                   <span className="text-xs text-surface-300 flex-1 truncate">
                                     {getTargetName(override)}
                                   </span>
                                   <span
-                                    className={`text-xs font-semibold ${override.enabled ? 'text-emerald-500' : 'text-red-500'}`}
+                                    className={`text-xs font-semibold ${override.enabled ? 'text-status-success-500' : 'text-status-error-500'}`}
                                   >
                                     {override.enabled ? 'ON' : 'OFF'}
                                   </span>
                                   <button
                                     onClick={() => deleteOverride(override.id, flag.id)}
                                     disabled={saving === override.id}
-                                    className="text-surface-600 hover:text-red-400 transition-colors"
+                                    className="text-surface-600 hover:text-status-error-400 transition-colors"
                                     title="Remove override"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -539,7 +539,7 @@ function StatCard({
   return (
     <div className="rounded-xl border border-surface-800 px-4 py-3 bg-surface-900/50">
       <div className="flex items-center gap-2 mb-1">
-        <Icon className={`h-4 w-4 ${accentClass ?? 'text-rose-500'}`} />
+        <Icon className={`h-4 w-4 ${accentClass ?? 'text-status-error-500'}`} />
         <span className="text-[11px] text-surface-500 font-medium uppercase tracking-wide">
           {label}
         </span>
@@ -620,7 +620,7 @@ function AddOverrideModal({
               onClick={() => { setTargetType('tenant'); setTargetId(''); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 targetType === 'tenant'
-                  ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
+                  ? 'bg-status-violet-500/15 text-status-violet-400 border border-status-violet-500/30'
                   : 'text-surface-400 hover:text-surface-200 border border-surface-700'
               }`}
             >
@@ -631,7 +631,7 @@ function AddOverrideModal({
               onClick={() => { setTargetType('user'); setTargetId(''); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 targetType === 'user'
-                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  ? 'bg-status-warning-500/15 text-status-warning-400 border border-status-warning-500/30'
                   : 'text-surface-400 hover:text-surface-200 border border-surface-700'
               }`}
             >
@@ -697,7 +697,7 @@ function AddOverrideModal({
               onClick={() => setEnabled(true)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 enabled
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                  ? 'bg-status-success-500/15 text-status-success-400 border border-status-success-500/30'
                   : 'text-surface-400 hover:text-surface-200 border border-surface-700'
               }`}
             >
@@ -708,7 +708,7 @@ function AddOverrideModal({
               onClick={() => setEnabled(false)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 !enabled
-                  ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                  ? 'bg-status-error-500/15 text-status-error-400 border border-status-error-500/30'
                   : 'text-surface-400 hover:text-surface-200 border border-surface-700'
               }`}
             >
@@ -719,7 +719,7 @@ function AddOverrideModal({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400">
+          <div className="flex items-center gap-2 text-sm text-status-error-400">
             <AlertCircle className="h-4 w-4" />
             {error}
           </div>
