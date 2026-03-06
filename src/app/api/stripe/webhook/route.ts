@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withApiHandler, ok, badRequest, ApiError } from '@/lib/api-utils';
 import { getStripe, getStripeWebhookSecret } from '@/lib/stripe';
+import { isDemoMode } from '@/lib/payment-mode';
 import prisma from '@/lib/prisma';
 import type Stripe from 'stripe';
 
@@ -11,8 +12,14 @@ import type Stripe from 'stripe';
  * Records payments with billing period for idempotency with the batch job.
  *
  * Uses { public: true } because Stripe handles its own signature verification.
+ * In demo mode, returns 200 with a no-op message.
  */
 export const POST = withApiHandler(async (request: NextRequest) => {
+  // Demo mode: webhooks are not needed, just acknowledge
+  if (isDemoMode()) {
+    return ok({ received: true, demo: true, message: 'Demo mode — webhook ignored' });
+  }
+
   const stripe = getStripe();
   const webhookSecret = getStripeWebhookSecret();
 

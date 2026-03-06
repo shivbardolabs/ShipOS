@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTenant } from '@/components/tenant-provider';
+import { DemoModeBadge } from '@/components/ui/demo-mode-badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   CreditCard,
@@ -247,6 +248,9 @@ export default function BillingPage() {
         description="Manage plan, payments, and invoices."
         icon={<CreditCard className="h-6 w-6" />}
       />
+
+      {/* Demo Mode Banner */}
+      <DemoModeBadge variant="banner" />
 
       {/* Stripe not configured notice */}
       {!stripeConfigured && (
