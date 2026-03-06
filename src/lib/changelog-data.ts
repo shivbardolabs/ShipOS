@@ -21,6 +21,39 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   /* ------------------------------------------------------------------ */
+  /*  v0.31.0                                                           */
+  /* ------------------------------------------------------------------ */
+  {
+    version: '0.31.0',
+    date: '2026-03-06',
+    title: 'Mailbox Config — Multiple Sizes & Discontinuous Ranges',
+    summary:
+      'Reworked the physical mailbox configuration to support multiple box sizes (e.g. Small Box, Large Box), each with multiple discontinuous number ranges. New schema model, 6 API endpoints, full UI rebuild of the physical mailbox section, overlap validation across all platforms, and active-mailbox safeguards. 13 files changed, ~1,360 lines of new code.',
+    highlights: ['📦 Multi-Size Boxes', '🔢 Discontinuous Ranges', '🛡️ Active Mailbox Safeguards', '🔒 Super-Admin Only'],
+    changes: [
+      {
+        text: 'BAR-424 — New MailboxSize model with multiple discontinuous ranges per size: physical mailboxes can now be organized by box size (Small Box, Large Box, etc.), each with independent number ranges (e.g. Small: 1-35, 50-65; Large: 36-49, 66-74). Includes schema migration that auto-creates "Standard Box" for existing physical ranges',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-424 — 6 new API endpoints for mailbox sizes and ranges CRUD: create/update/delete sizes, add/edit/remove ranges per size, active-mailbox checks. All write operations restricted to Super-Admin role',
+        type: 'feature',
+      },
+      {
+        text: 'BAR-424 — Overlap validation across all platforms: ranges are validated against every other active range (physical and non-physical) to prevent number conflicts. Client-side warnings and server-side enforcement',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-424 — Active mailbox safeguards: disabling, deleting, or shrinking a range/size is blocked when active customers exist in the affected numbers. Warning modal displays the list of impacted mailboxes that must be individually closed first',
+        type: 'improvement',
+      },
+      {
+        text: 'BAR-424 — Rebuilt physical mailbox UI: collapsible size groups with nested range rows, inline add/edit/delete controls, Super-Admin gating with lock indicator for non-admin users. Non-physical platform sections (Anytime, iPostal1, PostScan) unchanged',
+        type: 'design',
+      },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
   /*  v0.30.0                                                           */
   /* ------------------------------------------------------------------ */
   {
