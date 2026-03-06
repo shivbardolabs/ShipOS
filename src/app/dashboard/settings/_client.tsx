@@ -62,6 +62,7 @@ import {
 /* Extracted tab components */
 import { GeneralTab } from './components/general-tab';
 import { MailboxTab } from './components/mailbox-tab';
+import type { MailboxSizeRecord } from './components/mailbox-tab';
 import { RatesTab } from './components/rates-tab';
 import { StorageLocationsTab } from './components/storage-locations-tab';
 import { DropoffTab } from './components/dropoff-tab';
@@ -745,9 +746,8 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
     ipostal1: true,
     postscan: true });
 
-  // BAR-387: Mailbox range state (controlled inputs + persistence)
+  // BAR-387: Mailbox range state (controlled inputs + persistence, non-physical platforms)
   const [mailboxRanges, setMailboxRanges] = useState<Record<string, { rangeStart: number; rangeEnd: number }>>({
-    store: { rangeStart: 1, rangeEnd: 550 },
     anytime: { rangeStart: 700, rangeEnd: 999 },
     ipostal1: { rangeStart: 1000, rangeEnd: 1200 },
     postscan: { rangeStart: 2000, rangeEnd: 2999 },
@@ -756,12 +756,16 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
   const [rangeSaved, setRangeSaved] = useState(false);
   const [rangeError, setRangeError] = useState<string | null>(null);
 
-  // BAR-387: Fetch saved ranges on mount
+  // BAR-424: Mailbox sizes state (physical platform only)
+  const [mailboxSizes, setMailboxSizes] = useState<MailboxSizeRecord[]>([]);
+
+  // BAR-387 + BAR-424: Fetch saved ranges and sizes on mount
   useEffect(() => {
     fetch('/api/settings/mailbox-ranges')
       .then((r) => r.json())
       .then((d) => {
         if (d.ranges) setMailboxRanges(d.ranges);
+        if (d.sizes) setMailboxSizes(d.sizes);
       })
       .catch(() => {});
   }, []);
@@ -931,6 +935,8 @@ By signing below, Customer acknowledges and agrees to the terms set forth in thi
               mailboxRanges={mailboxRanges} setMailboxRanges={setMailboxRanges}
               handleSaveRanges={handleSaveRanges} rangeSaving={rangeSaving}
               rangeSaved={rangeSaved} rangeError={rangeError}
+              mailboxSizes={mailboxSizes} setMailboxSizes={setMailboxSizes}
+              isSuperAdmin={localUser?.role === 'superadmin'}
             />
           </TabPanel>
 

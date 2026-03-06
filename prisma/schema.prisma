@@ -688,17 +688,37 @@ model LoyaltyReward {
   updatedAt DateTime @updatedAt
 }
 
-// ── Mailbox Ranges ───────────────────────────────────────────────────────
+// ── Mailbox Sizes & Ranges (BAR-424) ─────────────────────────────────────
+// Physical mailboxes can have multiple sizes (e.g. "Small Box", "Large Box"),
+// each with one or more discontinuous number ranges.
+// Non-physical platforms (anytime, iPostal, postscan) keep a single range
+// with no size association.
+
+model MailboxSize {
+  id        String   @id @default(cuid())
+  name      String // e.g. "Small Box", "Large Box"
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ranges MailboxRange[]
+}
 
 model MailboxRange {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   platform   String // physical, anytime, iPostal, postscan
   label      String
   rangeStart Int
   rangeEnd   Int
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isActive   Boolean      @default(true)
+  sizeId     String? // FK to MailboxSize — set for physical platform only
+  size       MailboxSize? @relation(fields: [sizeId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([sizeId])
+  @@index([platform])
 }
 
 // ── Customer Documents (ID Scans) ────────────────────────────────────────
